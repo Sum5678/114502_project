@@ -81,9 +81,9 @@ WSGI_APPLICATION = 'myproject.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',  # 使用 MySQL
-        'NAME': 'mydatabase',  # 你的 MySQL 資料庫名稱
-        'USER': '11056001',  # 你的 MySQL 使用者名稱
-        'PASSWORD': '11056001',  # 你的 MySQL 密碼
+        'NAME': 'Local instance MySQL91',  # 你的 MySQL 資料庫名稱
+        'USER': 'root',  # 你的 MySQL 使用者名稱
+        'PASSWORD': '123456789',  # 你的 MySQL 密碼
         'HOST': 'localhost',  # 如果 MySQL 在本機端運行，使用 'localhost'
         'PORT': '3306',  # MySQL 預設埠號
         'OPTIONS': {
