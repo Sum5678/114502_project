@@ -77,12 +77,13 @@ WSGI_APPLICATION = 'myproject.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',  # 使用 MySQL
-        'NAME': 'Local instance MySQL91',  # 你的 MySQL 資料庫名稱
-        'USER': 'root',  # 你的 MySQL 使用者名稱
-        'PASSWORD': '123456789',  # 你的 MySQL 密碼
+        'NAME': 'mydatabase',  # 你的 MySQL 資料庫名稱
+        'USER': '11056001',  # 你的 MySQL 使用者名稱
+        'PASSWORD': '11056001',  # 你的 MySQL 密碼
         'HOST': 'localhost',  # 如果 MySQL 在本機端運行，使用 'localhost'
         'PORT': '3306',  # MySQL 預設埠號
         'OPTIONS': {
@@ -133,6 +134,9 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'myapp/static'),
 ]
+
+# 讓 collectstatic 指定的目錄
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
