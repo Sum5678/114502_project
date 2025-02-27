@@ -2,7 +2,7 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('index.html', views.index, name='index'),
+    path('', views.index, name='index'),
     path('tables.html', views.tables, name='tables'),
     path('register.html', views.register, name='register'),
     path('password.html', views.password, name='password'),
@@ -14,3 +14,4 @@ urlpatterns = [
     path('401.html', views.error_401, name='401'),
     path('404.html', views.error_404, name='404'),
 ]
+
