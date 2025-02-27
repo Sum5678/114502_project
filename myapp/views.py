@@ -43,3 +43,6 @@ def error_401(request):
 # 500 錯誤頁面
 def error_404(request):
     return render(request, '404.html')
+
+
+# 原本沒有這些
