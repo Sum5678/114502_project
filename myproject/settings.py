@@ -79,17 +79,11 @@ WSGI_APPLICATION = 'myproject.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',  # 使用 MySQL
-        'NAME': 'Local instance MySQL80',  # 你的 MySQL 資料庫名稱
-        'USER': 'root',  # 你的 MySQL 使用者名稱
-        'PASSWORD': '123456789@',  # 你的 MySQL 密碼
-        'HOST': 'localhost',  # 如果 MySQL 在本機端運行，使用 'localhost'
-        'PORT': '3306',  # MySQL 預設埠號
-        'OPTIONS': {
-            'charset': 'utf8mb4',  # 設定 UTF-8 支援 Emoji
-        }
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / "db.sqlite3",
     }
 }
+
 
 
 
