@@ -16,6 +16,7 @@ Including another URLconf
 """
 
 
+from myapp import views  # 確保這裡有導入 views 模組
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
