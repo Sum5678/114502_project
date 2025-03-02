@@ -9,7 +9,6 @@ https://docs.djangoproject.com/en/4.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
-import os
 import pymysql
 pymysql.install_as_MySQLdb()
 
@@ -128,11 +127,15 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-STATIC_URL = '/static/'  # 靜態文件的網址
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # 收集後靜態文件的目錄
+import os
+
+STATIC_URL = '/static/'
+
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'myapp/static'),  # 你的靜態文件路徑
+    os.path.join(BASE_DIR, 'static'),  # 這裡要確保有設定
 ]
+
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  
 
 
 # 讓 collectstatic 指定的目錄
