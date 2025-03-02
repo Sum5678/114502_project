@@ -128,10 +128,10 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_URL = '/static/'  # 靜態文件的網址
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # 收集後靜態文件的目錄
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'myapp/static'),  # 確保這裡是正確的靜態文件路徑
+    os.path.join(BASE_DIR, 'myapp/static'),  # 你的靜態文件路徑
 ]
 
 
