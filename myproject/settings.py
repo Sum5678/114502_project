@@ -58,7 +58,8 @@ ROOT_URLCONF = 'myproject.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],  
+        # 改過上面
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -71,6 +72,10 @@ TEMPLATES = [
     },
 ]
 
+
+
+
+
 WSGI_APPLICATION = 'myproject.wsgi.application'
 
 
@@ -80,9 +85,11 @@ WSGI_APPLICATION = 'myproject.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / "db.sqlite3",
     }
 }
+
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+DEBUG = True
 
 
 
@@ -122,11 +129,11 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = '/static/'
-
-
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'myapp/static'),
+    os.path.join(BASE_DIR, 'myapp/static'),  # 確保這裡是正確的靜態文件路徑
 ]
+
 
 # 讓 collectstatic 指定的目錄
 STATIC_ROOT = BASE_DIR / "staticfiles"

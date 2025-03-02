@@ -1,0 +1,21 @@
+# 虛擬環境
+.venv/
+
+# Python 編譯過的檔案
+*.pyc
+__pycache__/
+
+# SQLite 資料庫
+db.sqlite3
+
+# 資料夾：靜態檔案
+/static/
+
+# 資料夾：媒體檔案
+/media/
+
+# Django 產生的檔案
+*.log
+*.pot
+*.pyc
+.coverage
