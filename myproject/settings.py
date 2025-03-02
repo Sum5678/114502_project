@@ -129,13 +129,11 @@ USE_TZ = True
 
 import os
 
-STATIC_URL = '/static/'
+STATIC_URL = '/static/'  # 必須是 /static/
 
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static'),  # 這裡要確保有設定
-]
-
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  
+STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]  # 你的開發用靜態檔案目錄
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")  # collectstatic 會收集到這裡
+  
 
 
 # 讓 collectstatic 指定的目錄
