@@ -2,6 +2,7 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    path('', views.index, name='home'),
     path('index.html', views.index, name='index'),
     # path('index.html', views.index, name='index')
     # 對,我也不知道有時換這個反而能跑,有時又不能跑    
