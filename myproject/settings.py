@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/4.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
+import os
 import pymysql
 pymysql.install_as_MySQLdb()
 
@@ -81,15 +82,13 @@ WSGI_APPLICATION = 'myproject.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
-
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
-DEBUG = True
-
 
 
 
@@ -127,13 +126,11 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-import os
-
-STATIC_URL = '/static/'  # 必須是 /static/
-
-STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]  # 你的開發用靜態檔案目錄
-STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")  # collectstatic 會收集到這裡
-  
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'myapp/static'),  # 確保這裡是正確的靜態文件路徑
+]
 
 
 # 讓 collectstatic 指定的目錄
