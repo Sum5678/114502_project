@@ -16,33 +16,27 @@ Including another URLconf
 """
 
 
-from myapp import views  # 確保這裡有導入 views 模組
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import path
-from django.http import HttpResponse
+
+
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', views.index, name='index'),  # 根路徑指向 index
-    path('index/', views.index, name='index'),
-    path('tables/', views.tables, name='tables'),
-    path('register/', views.register, name='register'),
-    path('password/', views.password, name='password'),
-    path('login/', views.login, name='login'),
-    path('layout-static/', views.layout_static, name='layout-static'),
-    path('layout-sidenav-light/', views.layout_sidenav_light, name='layout-sidenav-light'),
-    path('charts/', views.charts, name='charts'),
-    path('500/', views.error_500, name='500'),
-    path('401/', views.error_401, name='401'),
-    path('404/', views.error_404, name='404'),
+    path('', include('myapp.urls')),  # 讓應用程式的路由生效
+    
 ]
 
 # 讓 Django 在開發模式下提供靜態檔案
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS[0])
+
+
+
 
 
 # myproject/urls.py
