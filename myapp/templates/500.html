@@ -1,31 +1,51 @@
-<!DOCTYPE html>
-{% load static %}
-<html lang="en">
-    <head>
-        <script src="{% static 'js/scripts.js' %}"></script>
-        <link rel="stylesheet" href="{% static 'css/styles.css' %}">
-        <meta charset="utf-8" />
-        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-        <meta name="description" content="" />
-        <meta name="author" content="" />
-        <title>404 Error - SB Admin</title>
-        <link href="css/styles.css" rel="stylesheet" />
-        <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
+<!DOCTYPE html>  <!-- 定義 HTML5 文件類型 -->
+{% load static %}  <!-- Django 模板語法：加載 static 標籤，用於引用靜態文件 -->
+
+<html lang="zh-Hant">  <!-- 定義 HTML 頁面，並設置語言為繁體中文或 lang="zh-CN"（簡體中文） -->
+    <head>  <!-- 頁面的 head 部分，包含各種元數據、CSS 和 JavaScript 文件 -->
+        <script src="{% static 'js/scripts.js' %}"></script>  
+        <!-- Django 模板語法：加載 static/js/scripts.js 這個 JavaScript 文件 -->
+
+        <link rel="stylesheet" href="{% static 'css/styles.css' %}">  
+        <!-- Django 模板語法：加載 static/css/styles.css 這個 CSS 樣式表 -->
+
+        <meta charset="utf-8" />  <!-- 設置字符編碼為 UTF-8，確保能正確顯示各種語言 -->
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />  
+        <!-- 讓 Internet Explorer 以最新的渲染模式開啟這個頁面 -->
+
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />  
+        <!-- 設置響應式設計，使得頁面適應不同設備的螢幕大小 -->
+
+        <meta name="description" content="" />  <!-- 設置網頁的描述（目前為空） -->
+        <meta name="author" content="" />  <!-- 設置網頁的作者（目前為空） -->
+
+        <title>404 Error - SB Admin</title>  <!-- 設置網頁標題 -->
+
+        <link href="css/styles.css" rel="stylesheet" />  
+        <!-- 引用 CSS 樣式表 (這裡與上面 Django 模板載入的 styles.css 可能是同一個) -->
+
+        <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>  
+        <!-- 加載 Font Awesome 圖示庫的 JavaScript 文件 -->
     </head>
-    <body>
-        <div id="layoutError">
-            <div id="layoutError_content">
-                <main>
-                    <div class="container">
-                        <div class="row justify-content-center">
-                            <div class="col-lg-6">
-                                <div class="text-center mt-4">
-                                    <h1 class="display-1">500</h1>
-                                    <p class="lead">Internal Server Error</p>
-                                    <a href="index.html">
-                                        <i class="fas fa-arrow-left me-1"></i>
-                                        Return to Dashboard
+
+    <body>  <!-- 頁面的主要內容 -->
+        <div id="layoutError">  <!-- 包含錯誤訊息的主要區塊 -->
+            <div id="layoutError_content">  <!-- 錯誤內容的容器 -->
+                <main>  <!-- 主要內容區塊 -->
+                    <div class="container">  <!-- Bootstrap 的 container，用於響應式佈局 -->
+                        <div class="row justify-content-center">  <!-- Bootstrap 的 row，讓內容水平置中 -->
+                            <div class="col-lg-6">  <!-- 設定此區塊在大螢幕時的寬度為 6/12 -->
+                                <div class="text-center mt-4">  <!-- 讓內容置中，並在上方加一些外邊距 -->
+                                    <h1 class="display-1">500</h1>  <!-- 顯示 "500" 大標題，表示內部伺服器錯誤 -->
+                                    <p class="lead">內部伺服器錯誤</p>  
+                                    <!-- 顯示錯誤訊息 "內部伺服器錯誤" -->
+
+                                    <a href="index.html">  
+                                        <!-- 返回主頁的連結 -->
+                                        <i class="fas fa-arrow-left me-1"></i>  
+                                        <!-- Font Awesome 圖示，左箭頭 -->
+                                        返回控制面板 
+                                        <!-- 連結文字：返回儀表板 -->
                                     </a>
                                 </div>
                             </div>
@@ -33,22 +53,34 @@
                     </div>
                 </main>
             </div>
-            <div id="layoutError_footer">
-                <footer class="py-4 bg-light mt-auto">
-                    <div class="container-fluid px-4">
-                        <div class="d-flex align-items-center justify-content-between small">
-                            <div class="text-muted">Copyright &copy; Your Website 2023</div>
-                            <div>
-                                <a href="#">Privacy Policy</a>
-                                &middot;
-                                <a href="#">Terms &amp; Conditions</a>
+
+            <div id="layoutError_footer">  <!-- 頁面底部的區塊 -->
+                <footer class="py-4 bg-light mt-auto">  
+                    <!-- 頁腳，設定背景為淺色，並增加上邊距 -->
+                    <div class="container-fluid px-4">  
+                        <!-- 使用 Bootstrap 的 container-fluid 來適應全寬，並增加內邊距 -->
+                        <div class="d-flex align-items-center justify-content-between small">  
+                            <!-- 使用 Flexbox 來調整對齊方式 -->
+                            <div class="text-muted">版權所有 &copy; Your Website 2023</div>  
+                            <!-- 版權訊息 -->
+
+                            <div>  <!-- 連結區塊 -->
+                                <a href="#">隱私政策</a>  
+                                <!-- 隱私政策連結 -->
+                                &middot;  <!-- 中間的小圓點分隔符 -->
+                                <a href="#">條款 &amp; 條件</a>  
+                                <!-- 服務條款連結 -->
                             </div>
                         </div>
                     </div>
                 </footer>
             </div>
         </div>
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
-        <script src="js/scripts.js"></script>
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>  
+        <!-- 加載 Bootstrap 5 的 JavaScript 文件，提供互動功能 -->
+
+        <script src="js/scripts.js"></script>  
+        <!-- 加載本地的 JavaScript 文件 -->
     </body>
-</html>
+</html>  <!-- HTML 文件結束 -->
