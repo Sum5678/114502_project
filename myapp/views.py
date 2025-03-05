@@ -1,6 +1,5 @@
 from django.shortcuts import render
 
-
 def index(request):
     return render(request, 'index.html')  # 確保 index.html 在 templates/ 內
 
@@ -43,6 +42,7 @@ def error_401(request):
 # 500 錯誤頁面
 def error_404(request):
     return render(request, '404.html')
+
 
 
 # 原本沒有這些
