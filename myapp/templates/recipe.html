@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>食譜列表</title>
+</head>
+<body>
+    <h1>食譜列表</h1>
+    <table border="1">
+        <tr>
+            <th>Recipe No</th>
+            <th>Username</th>
+            <th>User No</th>
+            <th>Recipe</th>
+            <th>Date</th>
+        </tr>
+        {% for recipe in recipes %}
+        <tr>
+            <td>{{ recipe.recipeNo }}</td>
+            <td>{{ recipe.post_username }}</td>
+            <td>{{ recipe.user_no }}</td>
+            <td>{{ recipe.recipe }}</td>
+            <td>{{ recipe.date }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>

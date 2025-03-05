@@ -1,6 +1,7 @@
 from django.urls import path
 from . import views
 
+
 urlpatterns = [
     path('', views.index, name='home'),
     path('index.html', views.index, name='index'),
@@ -15,7 +16,7 @@ urlpatterns = [
     path('charts.html', views.charts, name='charts'),
     path('500.html', views.error_500, name='500'),
     path('401.html', views.error_401, name='401'),
-    path('404.html', views.error_404, name='404'),
+    path('404.html', views.error_404, name='404')
 ]
 
 # 原本沒有這些路徑
