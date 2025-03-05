@@ -2,10 +2,7 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-<<<<<<< HEAD
-=======
     path('', views.index, name='home'),
->>>>>>> 65edca114f16833a2e85f076bb9489b36f77cd6e
     path('index.html', views.index, name='index'),
     # path('index.html', views.index, name='index')
     # 對,我也不知道有時換這個反而能跑,有時又不能跑    
