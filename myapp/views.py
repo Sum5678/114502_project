@@ -6,6 +6,10 @@ def report_view(request):
 def index(request):
     return render(request, 'index.html')  # 確保 index.html 在 templates/ 內
 
+# 另一個首頁版本（index35.html）
+def index35(request):
+    return render(request, 'index35.html')
+
 # 表格頁面
 def tables(request):
     return render(request, 'tables.html')
@@ -55,4 +59,11 @@ def education_page(request):
 
 def nearest_police(request):
     return render(request, 'nearest_police.html')
-# 原本沒有這些
+
+# 新增的匿名聊天頁面
+def anonymous_chat(request):
+    person_name = request.GET.get('person', '未知人物')  # 獲取 URL 參數中的人物名稱
+    return render(request, 'anonymous-chat.html', {'person_name': person_name})
+
+def map_view(request):
+    return render(request, 'map.html')
