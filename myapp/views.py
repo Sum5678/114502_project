@@ -47,5 +47,12 @@ def error_404(request):
     return render(request, '404.html')
 
 
+def harassment_prevention(request):
+    return render(request, 'harassment_prevention.html')
 
+def education_page(request):
+    return render(request, 'education_page.html')
+
+def nearest_police(request):
+    return render(request, 'nearest_police.html')
 # 原本沒有這些

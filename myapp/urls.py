@@ -17,7 +17,10 @@ urlpatterns = [
     path('charts.html', views.charts, name='charts'),
     path('500.html', views.error_500, name='500'),
     path('401.html', views.error_401, name='401'),
-    path('404.html', views.error_404, name='404')
+    path('404.html', views.error_404, name='404'),
+    path('harassment_prevention/', views.harassment_prevention, name='harassment_prevention'),
+    path('education/', views.education_page, name='education_page'),
+    path('police/', views.nearest_police, name='nearest_police')
 ]
 
 # 原本沒有這些路徑

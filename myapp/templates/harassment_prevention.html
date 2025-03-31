@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>騷擾應對防治</title>
+    <style>
+        /* 讓按鈕容器置中 */
+        .button-container {
+            display: flex;
+            justify-content: center; /* 讓按鈕水平置中 */
+            gap: 20px; /* 設定按鈕之間的間距 */
+            margin-top: 20px;
+        }
+
+        /* 按鈕樣式 */
+        .button-container button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            background-color: #007BFF;
+            color: white;
+            border-radius: 5px;
+        }
+
+        /* 按鈕 hover 效果 */
+        .button-container button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1 style="text-align: center;">騷擾應對防治</h1>
+    <p style="text-align: center;">這裡提供騷擾應對的相關資訊與資源。</p>
+
+    <!-- 按鈕區塊 -->
+    <div class="button-container">
+        <button onclick="location.href='{% url 'education_page' %}'">教育網頁</button>
+        <button onclick="location.href='https://mybike.tcpd.gov.tw/fronttcpd/ap/CaseAdd.aspx'">線上報案連結</button>
+        <button onclick="location.href='{% url 'nearest_police' %}'">最近警局</button>
+    </div>
+
+    <br><br>
+    <div style="text-align: center;">
+        <a href="{% url 'home' %}">返回首頁</a>
+    </div>
+</body>
+</html>
