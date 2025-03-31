@@ -1,5 +1,8 @@
 from django.shortcuts import render
 
+def report_view(request):
+    return render(request, 'report.html')
+
 def index(request):
     return render(request, 'index.html')  # 確保 index.html 在 templates/ 內
 
