@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>怪人分布地圖</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #333;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            position: relative;
+            width: 80%;
+            max-width: 800px;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .header {
+            background: gray;
+            padding: 10px;
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            position: relative;
+        }
+        .map-container {
+            width: 100%;
+            height: 500px;
+        }
+
+        /* 返回與關閉按鈕 */
+        .icon-btn {
+            position: absolute;
+            top: 10px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        .back-btn {
+            left: 10px;
+            color: blue;
+        }
+        .close-btn {
+            right: 10px;
+            color: red;
+        }
+    </style>
+    <script>
+        function goBack() {
+            window.location.href = 'index.html'; // 替換為你的主頁連結
+        }
+        function closePage() {
+            window.close();
+            alert("請手動關閉此分頁，瀏覽器可能阻擋自動關閉功能。");
+        }
+        function initMap() {
+            var map = new google.maps.Map(document.getElementById('map'), {
+                center: { lat: 25.033964, lng: 121.564468 }, // 台北101
+                zoom: 15
+            });
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <button class="icon-btn back-btn" onclick="goBack()">←</button>
+            怪人分布地圖
+            <button class="icon-btn close-btn" onclick="closePage()">×</button>
+        </div>
+        <div id="map" class="map-container"></div>
+    </div>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap"></script>
+</body>
+</html>
