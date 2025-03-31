@@ -67,3 +67,7 @@ def anonymous_chat(request):
 
 def map_view(request):
     return render(request, 'map.html')
+
+
+def login_page(request):
+    return render(request, '001_login.html')
