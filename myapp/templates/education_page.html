@@ -1,0 +1,59 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>教育網頁資源</title>
+    <style>
+        body {
+            font-family: "Microsoft JhengHei", sans-serif;
+            background-color: #f0f8ff;
+            padding: 5px;
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .button-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 25px;
+        }
+        .img-button {
+            width: 300px;
+            height: 250px;
+            border: none;
+            background-size: cover;
+            background-position: center;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .img-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <h1>防詐騙教育資源連結</h1>
+    <div class="button-container">
+        <form action="https://ani.gamer.com.tw/animeVideo.php?sn=36632" target="_blank">
+            <button type="submit" class="img-button" style="background-image:  url('{% static 'images/image1.gif' %}');"></button>
+        </form>
+        // 照片在myapp/static/images裡面
+        <form action="https://www.cybercrime.gov.tw/" target="_blank">
+            <button type="submit" class="img-button" style="background-image: url('{% static 'images/image2.jpg' %}');"></button>
+        </form>
+        <form action="https://www.165.gov.tw/" target="_blank">
+            <button type="submit" class="img-button" style="background-image: url('{% static 'images/image3.gif' %}');"></button>
+        </form>
+        <form action="{% url 'harassment_prevention' %}">
+            <button type="submit" class="img-button" style="background-image: url('https://i.imgur.com/rW6nKt4.png');"></button>
+        </form>
+    </div>
+</body>
+</html>
