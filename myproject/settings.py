@@ -85,10 +85,15 @@ WSGI_APPLICATION = 'myproject.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',  # 使用 MySQL 代替 SQLite
+        'HOST': '140.131.114.242',             # 資料庫主機地址
+        'PORT': '3306',                        # MySQL 的預設端口號
+        'USER': '114502',                      # 資料庫使用者名稱
+        'PASSWORD': '114502Data@',             # 資料庫密碼
+        'NAME': '114-502Data',                # 這裡填入你使用的資料庫名稱
     }
 }
+
 
 
 

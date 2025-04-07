@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+        <!-- 背景圖片 -->
+        <image href="{% static 'img/1000004578.jpg' %}" width="1024" height="1024" />
+    
+        <!-- 點擊區域：你可以用多邊形來設定 -->
+        <a href="{% url 'announcement' %}">
+            <polygon class="click-area" points="489,180 529,180 529,446 489,446" />
+        </a>
+        
+        <a href="{% url 'chatroom' %}">
+            <polygon class="click-area" points="551,52 669,52 669,278 551,278" />
+        </a>
+    
+        <a href="{% url 'form' %}">
+            <polygon class="click-area" points="7,17 130,17 130,328 7,328" />
+        </a>
+    
+        <a href="{% url 'safety' %}">
+            <polygon class="click-area" points="510,455 659,455 659,692 510,692" />
+        </a>
+    
+        <a href="{% url 'autodial' %}">
+            <polygon class="click-area" points="243,237 328,237 328,444 243,444" />
+        </a>
+    
+        <a href="{% url 'mymap' %}">
+            <polygon class="click-area" points="359,237 445,237 445,444 359,444" />
+        </a>
+    
+        <a href="{% url 'settings' %}">
+            <polygon class="click-area" points="162,180 202,180 202,452 162,452" />
+        </a>
+    
+        <a href="{% url 'write' %}">
+            <polygon class="click-area" points="7,464 185,464 185,692 7,692" />
+        </a>
+    </svg>
