@@ -121,6 +121,7 @@
         <ul>
             <li><a href="{% url 'home' %}">首頁</a></li>
             <li><a href="{% url 'index35' %}">可疑人物列表</a></li>
+            <li><a href="{% url 'area' %}">地區</a></li>
         </ul>
     </nav>
 
@@ -130,11 +131,10 @@
             <h1>可疑人物公布欄</h1>
         </header>
 
-        {% comment %} <!-- 顯示的可疑人物名稱 -->
-        <h2>人物：{{ person_name }}</h2>
+        
 
         <!-- 可疑人物列表標題 -->
-        <h2>可疑人物列表</h2> {% endcomment %}
+        <h2>可疑人物列表</h2>
 
         <!-- 公布欄顯示區域 -->
         <section id="alert-container">
