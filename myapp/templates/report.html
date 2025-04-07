@@ -1,255 +1,182 @@
 <!DOCTYPE html>
 <html lang="zh">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>回報可疑人物</title>
-  <style>
-    body {
-      font-family: 'Arial', sans-serif;
-      background-color: #e6f3fb; /* 淺藍背景 */
-      background-image: url('C:/img/ccc.jpg'); /* 建議用相對路徑或線上圖片 */
-      background-size: cover;
-      background-position: center;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    .header {
-      width: 100%;
-      background: linear-gradient(90deg, #89cffa, #a7e0ff); /* 淺藍漸層 */
-      color: #033e6b;
-      text-align: center;
-      padding: 20px 0;
-      font-size: 26px;
-      font-weight: bold;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-    }
-    .container {
-      width: 90%;
-      max-width: 900px;
-      background-color: rgba(255, 255, 255, 0.95);
-      padding: 30px;
-      margin-top: 20px;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    }
-    h2 {
-      color: #036;
-      text-align: center;
-      border-bottom: 2px solid #89cffa;
-      padding-bottom: 10px;
-    }
-    .content {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 20px;
-      justify-content: space-between;
-    }
-    .form-section, .info-section {
-      flex: 1;
-      min-width: 300px;
-      padding: 20px;
-    }
-    label {
-      font-size: 14px;
-      display: block;
-      margin: 10px 0 5px;
-      font-weight: bold;
-      color: #033e6b;
-    }
-    .checkbox-container {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin: 10px 0;
-    }
-    input, textarea, button, select {
-      width: 100%;
-      padding: 12px;
-      border-radius: 8px;
-      border: 1px solid #b5d9ee;
-      box-sizing: border-box;
-      transition: all 0.3s;
-      background-color: #f7fbfd;
-    }
-    input:focus, textarea:focus, select:focus {
-      border-color: #63b3ed;
-      outline: none;
-      box-shadow: 0 0 8px rgba(99, 179, 237, 0.3);
-    }
-    button {
-      background: linear-gradient(90deg, #63b3ed, #b2e0ff);
-      color: #033e6b;
-      border: none;
-      cursor: pointer;
-      font-size: 16px;
-      transition: background 0.3s, transform 0.2s;
-      font-weight: bold;
-    }
-    button:hover {
-      transform: scale(1.05);
-    }
-    .status {
-      text-align: center;
-      font-size: 16px;
-      font-weight: bold;
-      margin-top: 15px;
-      padding: 10px;
-      border-radius: 8px;
-      background-color: #def1fc;
-      color: #055d8c;
-    }
-    .info-section {
-      background: #f0faff;
-      border-left: 5px solid #89cffa;
-      padding: 20px;
-      border-radius: 8px;
-      font-size: 14px;
-      color: #033e6b;
-    }
-    .footer {
-      margin-top: 20px;
-      text-align: center;
-      font-size: 14px;
-      color: #666;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>回報可疑人物</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-image: url('C:\img\oioioi.jpg'); /* 替換為相對路徑或網頁上可存取的圖片路徑 */
+            background-size: cover;
+            background-position: center;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .header {
+            width: 100%;
+            background: linear-gradient(90deg, #007bff, #00d4ff);
+            color: white;
+            text-align: center;
+            padding: 20px 0;
+            font-size: 26px;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .container {
+            width: 90%;
+            max-width: 900px;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 30px;
+            margin-top: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        h2 {
+            color: #333;
+            text-align: center;
+            border-bottom: 3px solid #007bff;
+            padding-bottom: 10px;
+        }
+        .content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: space-between;
+        }
+        .form-section, .info-section {
+            flex: 1;
+            min-width: 300px;
+            padding: 20px;
+        }
+        label {
+            font-size: 14px;
+            display: block;
+            margin: 10px 0 5px;
+            font-weight: bold;
+        }
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 10px 0;
+        }
+        input, textarea, button {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+            transition: all 0.3s;
+        }
+        input:focus, textarea:focus {
+            border-color: #007bff;
+            outline: none;
+            box-shadow: 0 0 8px rgba(0, 123, 255, 0.3);
+        }
+        button {
+            background: linear-gradient(90deg, #007bff, #00d4ff);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s, transform 0.2s;
+            font-weight: bold;
+        }
+        button:hover {
+            transform: scale(1.05);
+        }
+        .status {
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 8px;
+            background-color: #f1f1f1;
+        }
+        .info-section {
+            background: #eef2f7;
+            border-left: 5px solid #007bff;
+            padding: 20px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 14px;
+            color: #666;
+        }
+    </style>
 </head>
 <body>
-  <div class="header">回報可疑人物</div>
-  <div class="container">
-    <div class="content">
-      <div class="form-section">
-        <h2>填寫回報</h2>
-        <form id="reportForm">
-          <label for="name">姓名：</label>
-          <input type="text" id="name" required>
-
-          <label for="email">Gmail：</label>
-          <input type="email" id="email" required>
-
-          <label for="anonymous">匿名提交</label>
-          <div class="checkbox-container">
-            <input type="checkbox" id="anonymous">
-          </div>
-
-          <label for="category">可疑性質：</label>
-          <select id="category" required>
-            <option value="">請選擇</option>
-            <option value="騷擾">騷擾</option>
-            <option value="打架">打架</option>
-            <option value="動物">動物</option>
-            <option value="環境髒亂">環境髒亂</option>
-          </select>
-
-          <label for="subcategory">詳細分類：</label>
-          <select id="subcategory" required>
-            <option value="">請先選擇上方分類</option>
-          </select>
-
-          <label for="description">請描述可疑行為：</label>
-          <textarea id="description" rows="4" required></textarea>
-
-          <label for="location">地點：</label>
-          <input type="text" id="location" required>
-          <button type="button" onclick="getLocation()">使用 GPS</button>
-
-          <label for="image">上傳圖片：</label>
-          <input type="file" id="image" accept="image/*">
-
-          <button type="submit">提交回報</button>
-        </form>
-        <div class="status" id="statusMessage">等待提交</div>
-      </div>
-      <div class="info-section">
-        <h2>如何回報？</h2>
-        <p>請詳細描述可疑人物的特徵、行為以及發生的地點，以便我們進行進一步調查。</p>
-        <p>如果您有照片，請附上，以提供更完整的資訊。</p>
-        <h2>注意事項</h2>
-        <p>您的回報將匿名處理，我們不會透露您的個人信息。</p>
-        <p>請勿惡意提交，如發現惡意回報，我們將採取相應措施。</p>
-      </div>
+    <div class="header">回報可疑人物</div>
+    <div class="container">
+        <div class="content">
+            <div class="form-section">
+                <h2>填寫回報</h2>
+                <form id="reportForm">
+                    <label for="name">姓名：</label>
+                    <input type="text" id="name" required>
+                    <label for="email">Gmail：</label>
+                    <input type="email" id="email" required>
+                    <label for="anonymous">匿名提交</label>
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="anonymous">
+                    </div>
+                    <label for="description">請描述可疑行為：</label>
+                    <textarea id="description" rows="4" required></textarea>
+                    <label for="location">地點：</label>
+                    <input type="text" id="location" required>
+                    <button type="button" onclick="getLocation()">使用 GPS</button>
+                    <label for="image">上傳圖片：</label>
+                    <input type="file" id="image" accept="image/*">
+                    <button type="submit">提交回報</button>
+                </form>
+                <div class="status" id="statusMessage">等待提交</div>
+            </div>
+            <div class="info-section">
+                <h2>如何回報？</h2>
+                <p>請詳細描述可疑人物的特徵、行為以及發生的地點，以便我們進行進一步調查。</p>
+                <p>如果您有照片，請附上，以提供更完整的資訊。</p>
+                <h2>注意事項</h2>
+                <p>您的回報將匿名處理，我們不會透露您的個人信息。</p>
+                <p>請勿誤報，如發現惡意提交，我們將採取相應措施。</p>
+            </div>
+        </div>
     </div>
-  </div>
-  <div class="footer">© 怪怪走開 | 保留所有權利</div>
-
-  <script>
-    function getLocation() {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(function(position) {
-          document.getElementById('location').value =
-            position.coords.latitude + ", " + position.coords.longitude;
-        }, function() {
-          alert("無法獲取位置");
+    <div class="footer">© 怪，不得你來 | 保留所有權利</div>
+    <script>
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    document.getElementById('location').value = 
+                        position.coords.latitude + ", " + position.coords.longitude;
+                }, function() {
+                    alert("無法獲取位置");
+                });
+            } else {
+                alert("您的瀏覽器不支援 GPS 功能");
+            }
+        }
+        document.getElementById("reportForm").addEventListener("submit", function(event) {
+            event.preventDefault();
+            let statusMessage = document.getElementById("statusMessage");
+            statusMessage.innerText = "表單已提交";
+            statusMessage.style.backgroundColor = "#ffc107";
+            setTimeout(() => {
+                statusMessage.innerText = "審核中";
+                statusMessage.style.backgroundColor = "#17a2b8";
+            }, 2000);
+            setTimeout(() => {
+                statusMessage.innerText = "審核完成";
+                statusMessage.style.backgroundColor = "#28a745";
+            }, 5000);
         });
-      } else {
-        alert("您的瀏覽器不支援 GPS 功能");
-      }
-    }
-
-    const subcategories = {
-      "騷擾": ["推銷", "暴露狂", "跟蹤", "言語騷擾", "拍攝他人", "擋路糾纏"],
-      "打架": ["肢體衝突", "口角爭執", "幫派鬥毆", "攻擊路人"],
-      "動物": ["咬人", "無人看管寵物", "攻擊性動物", "受傷動物", "野生動物闖入"],
-      "環境髒亂": ["公共財務破壞", "可疑物品", "垃圾堆積", "噪音擾人", "惡臭", "噴漆塗鴉"]
-    };
-
-    document.getElementById("category").addEventListener("change", function () {
-      const selectedCategory = this.value;
-      const subcategorySelect = document.getElementById("subcategory");
-      subcategorySelect.innerHTML = "";
-
-      if (selectedCategory && subcategories[selectedCategory]) {
-        subcategories[selectedCategory].forEach(function (sub) {
-          const option = document.createElement("option");
-          option.value = sub;
-          option.text = sub;
-          subcategorySelect.appendChild(option);
-        });
-      } else {
-        const option = document.createElement("option");
-        option.value = "";
-        option.text = "請先選擇上方分類";
-        subcategorySelect.appendChild(option);
-      }
-    });
-
-    document.getElementById("reportForm").addEventListener("submit", function(event) {
-      event.preventDefault();
-
-      const isAnonymous = document.getElementById("anonymous").checked;
-      const reportData = {
-        name: isAnonymous ? "匿名" : document.getElementById("name").value,
-        email: isAnonymous ? "anonymous@gmail.com" : document.getElementById("email").value,
-        category: document.getElementById("category").value,
-        subcategory: document.getElementById("subcategory").value,
-        description: document.getElementById("description").value,
-        location: document.getElementById("location").value,
-        status: "待處理"
-      };
-
-      // 保存資料到 LocalStorage
-      const existingReports = JSON.parse(localStorage.getItem("reports") || "[]");
-      existingReports.push(reportData);
-      localStorage.setItem("reports", JSON.stringify(existingReports));
-
-      let statusMessage = document.getElementById("statusMessage");
-      statusMessage.innerText = "✅ 表單已提交";
-      statusMessage.style.backgroundColor = "#b8e3ff";
-      statusMessage.style.color = "#055d8c";
-
-      // 清空表單
-      this.reset();
-      const subcategorySelect = document.getElementById("subcategory");
-      subcategorySelect.innerHTML = "";
-      const defaultOption = document.createElement("option");
-      defaultOption.value = "";
-      defaultOption.text = "請先選擇上方分類";
-      subcategorySelect.appendChild(defaultOption);
-    });
-  </script>
+    </script>
 </body>
 </html>
