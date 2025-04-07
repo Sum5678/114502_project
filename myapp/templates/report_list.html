@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>我的回報紀錄</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #f0f8ff;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      width: 90%;
+      max-width: 1000px;
+      margin: 30px auto;
+      background-color: #ffffff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    h2 {
+      text-align: center;
+      color: #036;
+      margin-bottom: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 12px;
+      border-bottom: 1px solid #ddd;
+    }
+
+    th {
+      background-color: #d6ecf9;
+      color: #033e6b;
+    }
+
+    tr:hover {
+      background-color: #f2faff;
+    }
+
+    .back-button {
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    .back-button button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #3498db;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .back-button button:hover {
+      background-color: #2c80b4;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>我的回報紀錄</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>姓名</th>
+          <th>Gmail</th>
+          <th>類別</th>
+          <th>詳細分類</th>
+          <th>描述</th>
+          <th>地點</th>
+          <th>狀態</th>
+        </tr>
+      </thead>
+      <tbody id="reportTableBody">
+        <!-- 資料將由 JS 插入 -->
+      </tbody>
+    </table>
+
+    <div class="back-button">
+      <button onclick="location.href='profile.html'">返回個人頁面</button>
+    </div>
+  </div>
+
+  <script>
+    function fetchReports() {
+      const reports = JSON.parse(localStorage.getItem('reports')) || [];
+      const tableBody = document.getElementById("reportTableBody");
+
+      reports.forEach((report, index) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${index + 1}</td>
+          <td>${report.name}</td>
+          <td>${report.email}</td>
+          <td>${report.category}</td>
+          <td>${report.subcategory}</td>
+          <td>${report.description}</td>
+          <td>${report.location}</td>
+          <td>${report.status}</td>
+        `;
+        tableBody.appendChild(row);
+      });
+    }
+
+    fetchReports();
+  </script>
+</body>
+</html>
