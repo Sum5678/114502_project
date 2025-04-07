@@ -69,5 +69,30 @@ def map_view(request):
     return render(request, 'map.html')
 
 
+#想
+def announcement(request):
+    return render(request, 'announcement.html')
+
+def chatroom(request):
+    return render(request, 'chatroom.html')
+
+def form(request):
+    return render(request, 'form.html')
+
+def safety(request):
+    return render(request, 'safety.html')
+
+def autodial(request):
+    return render(request, 'autodial.html')
+
+def mymap(request):
+    return render(request, 'mymap.html')
+
 def login_page(request):
-    return render(request, '001_login.html')
+    return render(request, '0101login.html')
+
+def settings(request):
+    return render(request, 'settings.html')
+
+def write(request):
+    return render(request, 'write.html')
