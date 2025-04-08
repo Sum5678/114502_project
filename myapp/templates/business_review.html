@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>回報狀態</title>
+  <title>商家審核狀態</title>
   <style>
     body {
       font-family: 'Arial', sans-serif;
@@ -69,7 +69,7 @@
 </head>
 <body>
   <div class="container">
-    <h2>回報狀態</h2>
+    <h2>商家審核狀態</h2>
 
     <div class="status-section reviewing">
       <span>審核中</span>
@@ -81,33 +81,23 @@
       <span id="completedCheck" class="checkmark"></span>
     </div>
 
-    <button onclick="location.href='report_list.html'">返回紀錄</button>
+    <button onclick="location.href='business_list.html'">返回紀錄</button>
   </div>
 
   <script>
-    function getQueryParam(param) {
-      const urlParams = new URLSearchParams(window.location.search);
-      return urlParams.get(param);
-    }
+    // 假設只顯示第一筆商家資料的狀態
+    const businesses = JSON.parse(localStorage.getItem("businesses")) || [];
 
-    function loadStatus() {
-      const reportId = getQueryParam("reportId");
-      const reports = JSON.parse(localStorage.getItem('reports')) || [];
-
-      if (!reportId || !reports[reportId]) {
-        alert("❌ 找不到回報資料");
-        return;
-      }
-
-      const report = reports[reportId];
-      if (report.status === "completed") {
+    if (businesses.length > 0) {
+      const business = businesses[0]; // 顯示第 1 筆商家狀態
+      if (business.status === "審核完成") {
         document.getElementById("completedCheck").textContent = "✔";
       } else {
         document.getElementById("reviewingCheck").textContent = "✔";
       }
+    } else {
+      alert("❌ 找不到商家資料");
     }
-
-    loadStatus();
   </script>
 </body>
 </html>
