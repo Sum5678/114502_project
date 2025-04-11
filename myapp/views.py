@@ -69,7 +69,7 @@ def map_view(request):
     return render(request, 'map.html')
 
 
-#想
+#-----------------想-------------------------
 def announcement(request):
     return render(request, 'announcement.html')
 
@@ -96,3 +96,52 @@ def settings(request):
 
 def write(request):
     return render(request, 'write.html')
+
+
+
+#userloigin
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from .models import UserProfile
+from django.contrib.auth.hashers import make_password, check_password
+
+def user_login_page(request):
+    if request.method == 'POST':
+        # ✅ 登入邏輯
+        if 'login' in request.POST:
+            email = request.POST['email']
+            password = request.POST['password']
+            try:
+                user = UserProfile.objects.get(email=email)
+                if check_password(password, user.password):
+                    request.session['user_id'] = user.id
+                    messages.success(request, "登入成功！")
+                    return redirect('login')  # 這裡是你說的 0101login/ 對應 name='login'
+                else:
+                    messages.error(request, "密碼錯誤")
+            except UserProfile.DoesNotExist:
+                messages.error(request, "帳號不存在")
+
+        # ✅ 註冊邏輯：註冊後直接登入 + 跳首頁
+        elif 'register' in request.POST:
+            email = request.POST['email']
+            nickname = request.POST['nickname']
+            password = request.POST['password']
+
+            if UserProfile.objects.filter(email=email).exists():
+                messages.error(request, "此帳號已被註冊")
+            else:
+                hashed_pw = make_password(password)
+                user = UserProfile.objects.create(
+                    email=email,
+                    nickname=nickname,
+                    password=hashed_pw
+                )
+                request.session['user_id'] = user.id
+                messages.success(request, "註冊成功，已自動登入")
+                return redirect('login')  # 這裡一樣指向 0101login/
+    
+    return render(request, '01_userlogin.html')
+
+
+#--------------------------------01--------------------------------------------------------
