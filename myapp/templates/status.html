@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>回報狀態</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #e6f2f8;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      width: 80%;
+      margin: 50px auto;
+      background-color: #ffffff;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+
+    h2 {
+      color: #2c3e50;
+    }
+
+    .status-section {
+      margin-top: 20px;
+      padding: 20px;
+      border-radius: 8px;
+      text-align: left;
+      font-size: 22px;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .reviewing {
+      background-color: #5dade2;
+    }
+
+    .completed {
+      background-color: #48c9b0;
+    }
+
+    .checkmark {
+      font-size: 28px;
+      margin-left: 20px;
+    }
+
+    button {
+      margin-top: 30px;
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      background-color: #3498db;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #2980b9;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>回報狀態</h2>
+
+    <div class="status-section reviewing">
+      <span>審核中</span>
+      <span id="reviewingCheck" class="checkmark"></span>
+    </div>
+
+    <div class="status-section completed">
+      <span>審核完成</span>
+      <span id="completedCheck" class="checkmark"></span>
+    </div>
+
+    <button onclick="location.href='report_list.html'">返回紀錄</button>
+  </div>
+
+  <script>
+    function getQueryParam(param) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(param);
+    }
+
+    function loadStatus() {
+      const reportId = getQueryParam("reportId");
+      const reports = JSON.parse(localStorage.getItem('reports')) || [];
+
+      if (!reportId || !reports[reportId]) {
+        alert("❌ 找不到回報資料");
+        return;
+      }
+
+      const report = reports[reportId];
+      if (report.status === "completed") {
+        document.getElementById("completedCheck").textContent = "✔";
+      } else {
+        document.getElementById("reviewingCheck").textContent = "✔";
+      }
+    }
+
+    loadStatus();
+  </script>
+</body>
+</html>

@@ -121,7 +121,9 @@
         <ul>
             <li><a href="{% url 'home' %}">首頁</a></li>
             <li><a href="{% url 'index35' %}">可疑人物列表</a></li>
+            <li><a href="{% url 'area' %}">地區</a></li> <!-- 修改這一行 -->
         </ul>
+        
     </nav>
 
     <div id="content">
@@ -130,11 +132,8 @@
             <h1>可疑人物公布欄</h1>
         </header>
 
-        {% comment %} <!-- 顯示的可疑人物名稱 -->
-        <h2>人物：{{ person_name }}</h2>
-
         <!-- 可疑人物列表標題 -->
-        <h2>可疑人物列表</h2> {% endcomment %}
+        <h2>可疑人物列表</h2>
 
         <!-- 公布欄顯示區域 -->
         <section id="alert-container">
@@ -169,7 +168,7 @@
                 if (alert.times >= 4) { // 若該人物出現次數 >= 4
                     const card = document.createElement("div");
                     card.className = "alert-card";
-                    card.innerHTML = `
+                    card.innerHTML = ` 
                         <h3><a href="anonymous-chat.html?person=${encodeURIComponent(alert.name)}" target="_blank">${alert.name}</a></h3>
                         <p><strong>地點：</strong>${alert.location}</p>
                         <p><strong>行為：</strong>${alert.details}</p>

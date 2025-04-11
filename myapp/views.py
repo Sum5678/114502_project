@@ -89,6 +89,10 @@ def mymap(request):
     return render(request, 'mymap.html')
 
 def login_page(request):
+    return render(request, '001_login.html')
+
+def area_view(request):
+    return render(request, 'area.html')
     return render(request, '0101login.html')
 
 def settings(request):

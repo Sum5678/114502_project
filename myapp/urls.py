@@ -24,6 +24,9 @@ urlpatterns = [
     path('anonymous-chat/', views.anonymous_chat, name='anonymous-chat'),  # anonymous-chat 頁面
     path('index35/', views.index35, name='index35'),  # 新增 index35.html 路由
     path('map/', views.map_view, name='map'),  # 添加 map.html 路由
+    path('001_login/', views.login_page, name='login_page'),  # 讓 /001_login 也能對應
+    path('area/', views.area_view, name='area'),
+
     
 
     #想的
