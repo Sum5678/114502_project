@@ -26,6 +26,8 @@ urlpatterns = [
     path('map/', views.map_view, name='map'),  # 添加 map.html 路由
     path('001_login/', views.login_page, name='login_page'),  # 讓 /001_login 也能對應
     path('area/', views.area_view, name='area'),
+    path('police/', views.region_selector, name='region_selector'),
+    path('get_regions/', views.get_regions, name='get_regions'),
 
     
 

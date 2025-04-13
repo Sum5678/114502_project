@@ -1,4 +1,7 @@
 from django.shortcuts import render
+from .models import TaiwanRegion
+from django.http import JsonResponse
+
 
 def report_view(request):
     return render(request, 'report.html')
@@ -67,6 +70,19 @@ def anonymous_chat(request):
 
 def map_view(request):
     return render(request, 'map.html')
+
+def region_selector(request):
+    return render(request, 'region_page.html')
+
+def get_regions(request):
+    data = {}
+    regions = TaiwanRegion.objects.all()
+    for region in regions:
+        if region.country_city not in data:
+            data[region.country_city] = []
+        if region.district_town not in data[region.country_city]:
+            data[region.country_city].append(region.district_town)
+    return JsonResponse(data)
 
 
 #想
