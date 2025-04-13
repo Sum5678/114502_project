@@ -41,6 +41,7 @@ urlpatterns = [
     path('0101login/', views.login_page, name='login'),  
     path('settings/', views.settings, name='settings'),
     path('write/', views.settings, name='write'),
+    path('01userlogin/', views.user_login_page, name='userlogin'),
 ]
 
 # 原本沒有這些路徑

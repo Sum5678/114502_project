@@ -8,12 +8,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <style>
-        svg {
+        /* svg {
             max-width: 100%;
             height: auto;
             display: block;
             margin: auto;
+        } */
+
+        svg {
+            width: 1024px;
+            height: 1024px;
+            display: block;
+            margin: auto;
         }
+
+        body {
+            width: 1024px;
+            margin: auto;
+        }
+
+
 
         .click-area {
             fill: transparent;
@@ -38,6 +52,7 @@
     </style>
 </head>
 <body>
+    
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
         <!-- 背景圖片 -->
         <image href="{% static 'img/1000004578.jpg' %}" width="1024" height="1024" />
@@ -86,8 +101,11 @@
             var image = svg.querySelector('image');
     
             // 計算圖片的實際顯示尺寸
-            var imgWidth = image.width.baseVal.value;
-            var imgHeight = image.height.baseVal.value;
+            
+
+            var svgWidth = image.getBoundingClientRect().width;
+            var svgHeight = image.getBoundingClientRect().height;
+
     
             // 獲取 SVG 容器的寬高
             var svgWidth = svg.clientWidth;
