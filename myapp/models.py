@@ -27,8 +27,13 @@ class UserProfile(models.Model):
     created_time = models.DateTimeField(auto_now_add=True)
 #-------------------------------------------------------------------------
 class TaiwanRegion(models.Model):
+    id = models.AutoField(primary_key=True)
     country_city = models.CharField(max_length=50)
     district_town = models.CharField(max_length=50)
+
+    class Meta:
+        db_table = "taiwan_regions"  # 告訴 Django 使用你自己的資料表名
+        managed = False  # 不讓 Django 嘗試自己建立這個資料表
 
     def __str__(self):
         return f"{self.country_city} - {self.district_town}"

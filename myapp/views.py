@@ -74,15 +74,20 @@ def map_view(request):
 def region_selector(request):
     return render(request, 'region_page.html')
 
-def get_regions(request):
-    data = {}
+def get_city_district_data(request):
     regions = TaiwanRegion.objects.all()
+    data = {}
+
     for region in regions:
-        if region.country_city not in data:
-            data[region.country_city] = []
-        if region.district_town not in data[region.country_city]:
-            data[region.country_city].append(region.district_town)
+        city = region.country_city
+        district = region.district_town
+        if city not in data:
+            data[city] = []
+        if district not in data[city]:
+            data[city].append(district)
+
     return JsonResponse(data)
+
 
 
 #-----------------想-------------------------

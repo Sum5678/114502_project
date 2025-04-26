@@ -24,17 +24,10 @@
     <div id="controls">
       <select id="city-select">
         <option value="">選擇縣市</option>
-        <option value="台北市">台北市</option>
-        <option value="高雄市">高雄市</option>
-        <option value="台中市">台中市</option>
       </select>
 
       <select id="district-select" disabled>
         <option value="">選擇區域</option>
-      </select>
-
-      <select id="street-select" disabled>
-        <option value="">選擇街道</option>
       </select>
 
       <button onclick="locateMe()">📍 使用 GPS 查附近警局</button>
@@ -43,88 +36,62 @@
     <div id="map"></div>
 
     <script>
-      let map;
-      let marker;
-      let geocoder;
+      let map, geocoder, marker;
+      let policeMarkers = [];
       let placesService;
-      const policeMarkers = [];
-
-      const addressData = {
-        "台北市": {
-          "中正區": ["信義路", "中華路"],
-          "大安區": ["復興南路", "敦化南路"],
-        },
-        "高雄市": {
-          "苓雅區": ["中正路", "自強路"],
-          "左營區": ["蓮池潭路", "建國路"],
-        },
-        "台中市": {
-          "南區": ["建國北路", "和平路"],
-          "北區": ["建國路", "光明路"],
-        },
-      };
+      let addressData = {};
 
       function initMap() {
         map = new google.maps.Map(document.getElementById("map"), {
-          center: { lat: 23.5, lng: 121 },
-          zoom: 7,
+          center: { lat: 25.0330, lng: 121.5654 }, // 預設中心點：台北
+          zoom: 12,
         });
-
         geocoder = new google.maps.Geocoder();
         placesService = new google.maps.places.PlacesService(map);
-
-        document.getElementById("city-select").addEventListener("change", function () {
-          const city = this.value;
-          const districtSelect = document.getElementById("district-select");
-          const streetSelect = document.getElementById("street-select");
-
-          districtSelect.innerHTML = "<option value=''>選擇區域</option>";
-          streetSelect.innerHTML = "<option value=''>選擇街道</option>";
-
-          if (city) {
-            districtSelect.disabled = false;
-            for (let district in addressData[city]) {
-              const option = document.createElement("option");
-              option.value = district;
-              option.text = district;
-              districtSelect.appendChild(option);
-            }
-          } else {
-            districtSelect.disabled = true;
-            streetSelect.disabled = true;
-          }
-        });
-
-        document.getElementById("district-select").addEventListener("change", function () {
-          const city = document.getElementById("city-select").value;
-          const district = this.value;
-          const streetSelect = document.getElementById("street-select");
-
-          streetSelect.innerHTML = "<option value=''>選擇街道</option>";
-
-          if (district) {
-            streetSelect.disabled = false;
-            addressData[city][district].forEach((street) => {
-              const option = document.createElement("option");
-              option.value = street;
-              option.text = street;
-              streetSelect.appendChild(option);
-            });
-          } else {
-            streetSelect.disabled = true;
-          }
-        });
-
-        document.getElementById("street-select").addEventListener("change", function () {
-          const city = document.getElementById("city-select").value;
-          const district = document.getElementById("district-select").value;
-          const street = this.value;
-          if (street) {
-            const fullAddress = `${city} ${district} ${street}`;
-            geocodeAndSearchPolice(fullAddress);
-          }
-        });
+        fetchCityDistrictData();
       }
+
+      async function fetchCityDistrictData() {
+        const response = await fetch("/get_city_district_data/");
+        addressData = await response.json();
+
+        const citySelect = document.getElementById("city-select");
+        citySelect.innerHTML = "<option value=''>選擇縣市</option>";
+        for (let city in addressData) {
+          const option = document.createElement("option");
+          option.value = city;
+          option.text = city;
+          citySelect.appendChild(option);
+        }
+      }
+
+      document.getElementById("city-select").addEventListener("change", function () {
+        const city = this.value;
+        const districtSelect = document.getElementById("district-select");
+
+        districtSelect.innerHTML = "<option value=''>選擇區域</option>";
+
+        if (city && addressData[city]) {
+          districtSelect.disabled = false;
+          addressData[city].forEach((district) => {
+            const option = document.createElement("option");
+            option.value = district;
+            option.text = district;
+            districtSelect.appendChild(option);
+          });
+        } else {
+          districtSelect.disabled = true;
+        }
+      });
+
+      document.getElementById("district-select").addEventListener("change", function () {
+        const city = document.getElementById("city-select").value;
+        const district = this.value;
+        if (city && district) {
+          const fullAddress = `${city} ${district}`;
+          geocodeAndSearchPolice(fullAddress);
+        }
+      });
 
       function geocodeAndSearchPolice(address) {
         geocoder.geocode({ address: address }, (results, status) => {
@@ -176,13 +143,12 @@
       }
 
       function searchNearbyPolice(location) {
-        // 清除舊的警局標記
         policeMarkers.forEach((m) => m.setMap(null));
         policeMarkers.length = 0;
 
         const request = {
           location: location,
-          radius: '2000', // 公尺
+          radius: '2000',
           keyword: '警察局',
         };
 
@@ -206,7 +172,6 @@
       }
     </script>
 
-    <!-- 替換成你自己的 Google Maps API 金鑰，需啟用 Places API -->
     <script async
       src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places&callback=initMap">
     </script>
