@@ -74,6 +74,11 @@ def map_view(request):
 def region_selector(request):
     return render(request, 'region_page.html')
 
+def mail(request):
+    return render(request, 'mail.html')
+
+
+
 def get_city_district_data(request):
     regions = TaiwanRegion.objects.all()
     data = {}
