@@ -27,7 +27,8 @@ urlpatterns = [
     path('001_login/', views.login_page, name='login_page'),  # 讓 /001_login 也能對應
     path('area/', views.area_view, name='area'),
     path('police/', views.region_selector, name='region_selector'),
-    path('get_regions/', views.get_regions, name='get_regions'),
+    path('get_city_district_data/', views.get_city_district_data, name='get_city_district_data'),
+    path('mail/', views.mail, name='mail'),
 
     
 
