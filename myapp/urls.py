@@ -1,6 +1,10 @@
 from django.urls import path
 from . import views
-
+from django.contrib import admin
+from django.urls import path
+from myapp import views
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('report/', views.report_view, name='report'),
@@ -43,6 +47,13 @@ urlpatterns = [
     path('settings/', views.settings, name='settings'),
     path('write/', views.settings, name='write'),
     path('01userlogin/', views.user_login_page, name='userlogin'),
-]
+    path('profile/', views.profile, name='profile'),
+    path('userlogin_out/', views.logout_view, name='01_userlogin_out'),  # 登出路由
+    path('this_user_profile', views.create_user_profile, name='create_user_profile'),
+    path("this_user_profile", views.ThisUserProfile, name="this_user_profile"),
+    path('this_user_profile', views.update_user_profile, name='update_user_profile'),
+    # 其他路由
+
+]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 # 原本沒有這些路徑

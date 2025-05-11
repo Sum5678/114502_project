@@ -20,16 +20,17 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from django.urls import path
-
 
 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('myapp.urls')),  # 讓應用程式的路由生效
+    path('oauth/', include('social_django.urls', namespace='social')),  # Google 登入
     
 ]
+
+
 
 # 讓 Django 在開發模式下提供靜態檔案
 if settings.DEBUG:
