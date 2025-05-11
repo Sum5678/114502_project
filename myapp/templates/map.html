@@ -62,12 +62,64 @@
             window.close();
             alert("請手動關閉此分頁，瀏覽器可能阻擋自動關閉功能。");
         }
+        // function initMap() {
+        //     var map = new google.maps.Map(document.getElementById('map'), {
+        //         center: { lat: 25.033964, lng: 121.564468 }, // 台北101
+        //         zoom: 15
+        //     });
+        
+
         function initMap() {
-            var map = new google.maps.Map(document.getElementById('map'), {
-                center: { lat: 25.033964, lng: 121.564468 }, // 台北101
+            const defaultLocation = { lat: 25.033964, lng: 121.564468 }; // 預設位置（台北101）
+
+            const map = new google.maps.Map(document.getElementById('map'), {
+                center: defaultLocation,
                 zoom: 15
             });
+
+            // 嘗試取得使用者位置
+            if (navigator.geolocation) {
+                console.log("瀏覽器支援地理定位，準備呼叫 getCurrentPosition...");
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        console.log("✅ 取得位置成功！");
+                        console.log("緯度：", position.coords.latitude);
+                        console.log("經度：", position.coords.longitude);
+
+                        const userLocation = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude
+                        };
+
+                        // 地圖畫出藍色點
+                        const marker = new google.maps.Marker({
+                            position: userLocation,
+                            map: map,
+                            title: "你在這裡",
+                            icon: {
+                                path: google.maps.SymbolPath.CIRCLE,
+                                scale: 8,
+                                fillColor: "#00F",
+                                fillOpacity: 0.8,
+                                strokeWeight: 2,
+                                strokeColor: "#FFF"
+                            }
+                        });
+
+                        map.setCenter(userLocation);
+                    },
+                    function(error) {
+                        console.error("❌ 取得位置失敗！", error);
+                        alert("無法取得您的位置：" + error.message);
+                    }
+                );
+            } else {
+                console.warn("瀏覽器不支援地理定位功能");
+                alert("您的瀏覽器不支援地理位置功能");
+            }
+
         }
+
     </script>
 </head>
 <body>
@@ -79,6 +131,6 @@
         </div>
         <div id="map" class="map-container"></div>
     </div>
-    <script async defer src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap"></script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAUuPZMMJvgVWftmqVyzfX8mKTwMX4kA6o&callback=initMap"></script>
 </body>
 </html>
