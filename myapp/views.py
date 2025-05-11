@@ -174,4 +174,121 @@ def user_login_page(request):
     return render(request, '01_userlogin.html')
 
 
+
+##google登入
+from django.shortcuts import render, redirect
+from social_django.models import UserSocialAuth
+
+def profile(request):
+    user = request.user
+    if user.is_authenticated:
+        try:
+            google_login = user.social_auth.filter(provider='google-oauth2').first()
+            extra_data = google_login.extra_data
+            google_id = google_login.uid
+            email = user.email
+            name = extra_data.get('name')
+            picture = extra_data.get('picture')
+
+            return render(request, 'profile.html', {
+                'google_id': google_id,
+                'email': email,
+                'name': name,
+                'picture': picture,
+            })
+        except UserSocialAuth.DoesNotExist:
+            return render(request, 'profile.html', {
+                'error': '此帳號不是由 Google 登入',
+            })
+    return redirect('login')
+
+from django.contrib.auth import logout
+from django.shortcuts import redirect
+
+def logout_view(request):
+    logout(request)  # 登出並清除 session
+    return redirect('login')  # 重定向到登入頁
+
+
+
+####登入後填表的
+from django.shortcuts import render, redirect
+from social_django.models import UserSocialAuth
+from .models import ThisUserProfile
+from django.contrib.auth.models import User
+ 
+
+from django.shortcuts import render, redirect
+from django.contrib.auth.models import User
+from .models import ThisUserProfile
+from social_django.models import UserSocialAuth
+
+def create_user_profile(request):
+    user = request.user
+    try:
+        # 嘗試從 Google 登入獲取 Gmail 地址
+        social_user = UserSocialAuth.objects.get(user=user, provider='google-oauth2')
+        gmail = social_user.extra_data.get('email', '')
+    except UserSocialAuth.DoesNotExist:
+        # 如果沒有綁定 Google，則為空或使用其他方式獲取 Gmail
+        gmail = ''
+
+    if request.method == 'POST':
+        # 根據當前登入的使用者資料創建或更新 ThisUserProfile
+        profile, created = ThisUserProfile.objects.update_or_create(
+            gmail=gmail,  # 使用 gmail 作為識別
+            defaults={
+                'username': request.POST.get('username'),
+                'default_nickname1': request.POST.get('default_nickname1'),
+                'default_nickname2': request.POST.get('default_nickname2'),
+                'emergency_contact_phone': request.POST.get('emergency_contact_phone'),
+                'emergency_contact_gmail': request.POST.get('emergency_contact_gmail'),
+                'default_message': request.POST.get('default_message'),
+                'self_intro': request.POST.get('self_intro'),
+            }
+        )
+
+        return render(request, 'thank_you.html')
+
+    return render(request, 'usdata.html', {'gmail': gmail})
+
+
+from django.shortcuts import render, redirect
+from .models import ThisUserProfile
+
+def update_user_profile(request):
+    if request.method == 'POST':
+        # 確保圖片檔案會被儲存
+        profile_image = request.FILES.get('profile_image')  # 取得圖片檔案
+        username = request.POST['username']
+        gmail = request.POST['gmail']
+        default_nickname1 = request.POST.get('default_nickname1', '')
+        default_nickname2 = request.POST.get('default_nickname2', '')
+        emergency_contact_phone = request.POST.get('emergency_contact_phone', '')
+        emergency_contact_gmail = request.POST.get('emergency_contact_gmail', '')
+        default_message = request.POST.get('default_message', '')
+        self_intro = request.POST.get('self_intro', '')
+
+        # 更新資料或創建新資料
+        user_profile, created = ThisUserProfile.objects.update_or_create(
+            gmail=gmail,
+            defaults={
+                'username': username,
+                'default_nickname1': default_nickname1,
+                'default_nickname2': default_nickname2,
+                'emergency_contact_phone': emergency_contact_phone,
+                'emergency_contact_gmail': emergency_contact_gmail,
+                'default_message': default_message,
+                'self_intro': self_intro,
+                'user_images': profile_image,  # 儲存圖片
+            }
+        )
+
+        return redirect('profile')  # 根據需要修改返回的 URL
+
+    return render(request, 'your_template.html')
+
+
+
+
 #--------------------------------01--------------------------------------------------------

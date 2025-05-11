@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>填寫使用者資料</title>
+  <style>
+    body {
+      background-color: #e6f4ff;
+      font-family: "Segoe UI", sans-serif;
+      color: #333;
+      margin: 0;
+      padding: 20px;
+    }
+    .form-container {
+      max-width: 600px;
+      margin: auto;
+      background-color: #ffffff;
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 0 10px rgba(0, 128, 255, 0.2);
+    }
+    h1 {
+      text-align: center;
+      color: #3399ff;
+      font-size: 28px;
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+      color: #336699;
+    }
+    input[type="text"],
+    input[type="email"],
+    textarea {
+      width: 100%;
+      padding: 10px;
+      border: 2px solid #aad4ff;
+      border-radius: 10px;
+      margin-top: 5px;
+      box-sizing: border-box;
+      font-size: 14px;
+    }
+    textarea {
+      resize: vertical;
+    }
+    button {
+      margin-top: 20px;
+      background-color: #66ccff;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 15px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #3399ff;
+    }
+  </style>
+</head>
+<body>
+  <div class="form-container">
+    <h1>填寫個人資料</h1>
+    <form action="/this_user_profile" method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        {% if user.profile_image %}
+          <img src="{{ user.profile_image.url }}" alt="Profile Image" style="max-width: 200px;">
+        {% else %}
+          <p>沒有上傳頭像</p>
+        {% endif %}
+
+        <label for="username">使用者名稱：</label>
+        <input type="text" id="username" name="username" required>
+
+        <label for="gmail">使用者 Gmail：</label>
+        <input type="email" id="gmail" name="gmail" value="{{ gmail }}" readonly>
+
+        <label for="nickname1">預設暱稱 1：</label>
+        <input type="text" id="nickname1" name="default_nickname1">
+
+        <label for="nickname2">預設暱稱 2：</label>
+        <input type="text" id="nickname2" name="default_nickname2">
+
+        <label for="emergency_phone">預設求助對象電話：</label>
+        <input type="text" id="emergency_phone" name="emergency_contact_phone">
+
+        <label for="emergency_gmail">預設求助對象 Gmail：</label>
+        <input type="email" id="emergency_gmail" name="emergency_contact_gmail">
+
+        <label for="default_message">預設訊息：</label>
+        <textarea id="default_message" name="default_message" rows="3"></textarea>
+
+        <label for="self_intro">自我介紹：</label>
+        <textarea id="self_intro" name="self_intro" rows="4"></textarea>
+
+        <label for="profile_image">上傳頭像：</label>
+        <input type="file" id="profile_image" name="profile_image">
+
+        <button type="submit">送出資料</button>
+    </form>
+  </div>
+</body>
+</html>
