@@ -1,0 +1,162 @@
+[33mcommit 2fde27e3d79604a4f8dab294d79dc72928c5cd89[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mdevelopment[m[33m, [m[1;31mteam/development[m[33m, [m[1;31morigin/development[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: [1;31m11056042[m <[1;31m11056042[m@ntub.edu.tw>
+Date:   Mon May 12 11:08:30 2025 +0800
+
+    7-2-1資料表字典
+
+[33mcommit 5ccf99747e50b06768f84867a108933b092eefc9[m
+Author: [1;31m11056042[m <[1;31m11056042[m@ntub.edu.tw>
+Date:   Mon May 12 10:24:16 2025 +0800
+
+    新增資料表
+
+[33mcommit 7c2a89f63efd14b2f16c1e4f7af41dc41b49cd39[m
+Author: [1;31m11056042[m <[1;31m11056042[m@ntub.edu.tw>
+Date:   Fri May 9 18:37:13 2025 +0800
+
+    圖9-2修改
+
+[33mcommit 26ecef02f6fc56167dfd9b65cdce17d7969bf5f1[m
+Author: [1;31m11056042[m <[1;31m11056042[m@ntub.edu.tw>
+Date:   Wed May 7 20:47:08 2025 +0800
+
+    圖九細項
+
+[33mcommit 86e18895a3e195a3f65dc92ed4b77c109c2aca36[m
+Author: [1;31m11056042[m <[1;31m11056042[m@ntub.edu.tw>
+Date:   Mon May 5 20:57:43 2025 +0800
+
+    貢獻度＋工作內容
+
+[33mcommit afd993dfd67ce826bdbf1df779dafdf27571099c[m
+Author: [1;31m11056042[m <[1;31m11056042[m@ntub.edu.tw>
+Date:   Mon May 5 20:05:33 2025 +0800
+
+    圖9
+
+[33mcommit 83194d1b1a616898bfac200423103d96fdec3d70[m
+Author: [1;31m11056042[m <[1;31m11056042[m@ntub.edu.tw>
+Date:   Fri May 2 21:54:08 2025 +0800
+
+    文件3-3修改
+
+[33mcommit 3a9ead9725d80f0ffa703cb9c02f91599b2128a8[m
+Author: [1;31m11056042[m <[1;31m11056042[m@ntub.edu.tw>
+Date:   Sat Apr 26 15:51:10 2025 +0800
+
+    最近警局的下拉式選單連接資料庫
+    
+    最近警局的下拉式選單連接資料庫
+
+[33mcommit 27bf7ad9832d3ae5b9c1ed15bde923b075670ed7[m
+Author: [1;31m11056042[m <[1;31m11056042[m@ntub.edu.tw>
+Date:   Sun Apr 13 20:29:06 2025 +0800
+
+    1-3修改
+
+[33mcommit db9871c6a249016539f8e4e3b71c733e7f2950b3[m
+Merge: 20276f4 c25e721
+Author: [1;31m11056042[m <[1;31m11056042[m@ntub.edu.tw>
+Date:   Sun Apr 13 20:25:52 2025 +0800
+
+    Merge branch 'development' of https://github.com/Sum5678/114502_project into development
+    
+    # Conflicts:
+    #       myapp/models.py
+
+[33mcommit 20276f498b61bccd601c33b594e9ad56ff20736f[m
+Author: [1;31m11056042[m <[1;31m11056042[m@ntub.edu.tw>
+Date:   Sun Apr 13 20:23:44 2025 +0800
+
+    最近警局-2
+
+[33mcommit 2465a93821cd5d17375f2493cd26598378698842[m
+Author: [1;31m11056042[m <[1;31m11056042[m@ntub.edu.tw>
+Date:   Mon Apr 7 10:33:30 2025 +0800
+
+    最近警局和教育網頁
+
+[33mcommit 7a171035262224616b6df4e065c046f67ed6c14e[m
+Author: [1;31m11056042[m <[1;31m11056042[m@ntub.edu.tw>
+Date:   Fri Apr 4 23:10:43 2025 +0800
+
+    1-3和2-3修改
+
+[33mcommit 79d9b570ec13107b9fac95df11ab718e15a407e4[m
+Author: [1;31m11056042[m <[1;31m11056042[m@ntub.edu.tw>
+Date:   Tue Apr 1 22:53:16 2025 +0800
+
+    2025.04.01 資料表討論和功能更改
+
+[33mcommit 852990363dd9289b9da858fc8f1fd2d3c3233d66[m
+Author: [1;31m11056042[m <[1;31m11056042[m@ntub.edu.tw>
+Date:   Mon Mar 31 10:49:33 2025 +0800
+
+    品臻的網頁(harassment_prevention)
+
+[33mcommit 2978767ffee08ab34314a45c3f1f4d3f9d7b4ded[m
+Author: [1;31m11056042[m <[1;31m11056042[m@ntub.edu.tw>
+Date:   Wed Mar 5 22:58:19 2025 +0800
+
+    500.html和urls.py
+    
+    500.html和urls.py
+
+[33mcommit 0cf1cb4ca61b16b697ce1a7ba49a42d4d9b1dfa9[m
+Merge: d189001 65edca1
+Author: [1;31m11056042[m <[1;31m11056042[m@ntub.edu.tw>
+Date:   Wed Mar 5 22:49:53 2025 +0800
+
+    解决合并冲突，删除 .pyc 文件
+
+[33mcommit d1890010da59a487dfe2c1c566fefbe44f44693a[m
+Author: [1;31m11056042[m <[1;31m11056042[m@ntub.edu.tw>
+Date:   Wed Mar 5 22:43:01 2025 +0800
+
+    Commit remaining changes
+
+[33mcommit 9c5793de874ad23e3c821f8b1d1de8b0a8fa6c79[m
+Author: [1;31m11056042[m <[1;31m11056042[m@ntub.edu.tw>
+Date:   Wed Mar 5 22:41:41 2025 +0800
+
+    Remove .pyc files from the repository
+
+[33mcommit 372f1eb9afc88b663621d5b85a0793fc0cdc8ffc[m
+Author: [1;31m11056042[m <[1;31m11056042[m@ntub.edu.tw>
+Date:   Wed Mar 5 22:38:09 2025 +0800
+
+    Removed cached .pyc files
+
+[33mcommit 7e776737691be0e701b7116cc496a6488a665310[m
+Author: [1;31m11056042[m <[1;31m11056042[m@ntub.edu.tw>
+Date:   Wed Feb 26 23:07:28 2025 +0800
+
+    1234
+
+[33mcommit 045665cd3b48e85bdf2186f0697b0f3b9fda62e3[m
+Merge: c1526aa 31f0f36
+Author: [1;31m11056042[m <[1;31m11056042[m@ntub.edu.tw>
+Date:   Wed Feb 26 23:06:08 2025 +0800
+
+    Merge branch 'development' of https://github.com/Sum5678/114502_project into development
+    
+    # Conflicts:
+    #       myproject/settings.py
+
+[33mcommit c1526aac3d717ce7f25488bbc8153574123a4b7b[m
+Author: [1;31m11056042[m <[1;31m11056042[m@ntub.edu.tw>
+Date:   Wed Feb 26 22:28:56 2025 +0800
+
+    描述你的更動
+
+[33mcommit dd7195ae2b1b3534fc1191af4bf028cfece111d3[m
+Author: [1;31m11056042[m <[1;31m11056042[m@ntub.edu.tw>
+Date:   Thu Feb 20 10:10:05 2025 +0800
+
+    33
+
+[33mcommit 172b4161a06956ed0ae0b398ab5416f8e01135dd[m
+Author: [1;31m11056042[m <[1;31m11056042[m@ntub.edu.tw>
+Date:   Thu Feb 20 10:06:57 2025 +0800
+
+    23
