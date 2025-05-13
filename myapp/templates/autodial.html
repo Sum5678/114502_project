@@ -1,0 +1,50 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>自動撥號</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+    <div class="container" style="max-width: 500px; margin: auto; padding: 20px;">
+        <h2>自動撥號頁面</h2>
+
+        <p><strong>電話號碼：</strong> {{ phone }}</p>
+
+        <form method="post">
+            {% csrf_token %}
+            
+            <!-- 撥打電話 -->
+            <button type="submit" name="action" value="call" style="margin: 10px 0;">
+                撥打 {{ phone }}
+            </button>
+
+            <!-- 輸入預設訊息 -->
+            <div style="margin-top: 15px;">
+                {{ form.default_message.label_tag }}<br>
+                {{ form.default_message }}
+            </div>
+
+            <!-- 傳送訊息：第一階段是確認 -->
+            {% if confirm_stage %}
+                <p style="margin-top: 15px; color: red;"><strong>你確定要傳送這則訊息嗎？</strong></p>
+                <button type="submit" name="action" value="message">
+                    ✅ 確認傳送
+                </button>
+                <input type="hidden" name="confirm" value="yes">
+            {% else %}
+                <button type="submit" name="action" value="message" style="margin-top: 10px;">
+                    傳送訊息給 {{ phone }}
+                </button>
+            {% endif %}
+        </form>
+
+        {% if result %}
+            <p style="margin-top: 20px; color: green;">
+                <strong>{{ result }}</strong>
+            </p>
+        {% endif %}
+    </div>
+</body>
+</html>
