@@ -78,6 +78,9 @@ def region_selector(request):
 def mail(request):
     return render(request, 'mail.html')
 
+def mychatroom(request):
+    return render(request, 'mychatroom.html')
+
 
 
 def get_city_district_data(request):
