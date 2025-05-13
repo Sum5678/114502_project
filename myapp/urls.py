@@ -33,6 +33,7 @@ urlpatterns = [
     path('police/', views.region_selector, name='region_selector'),
     path('get_city_district_data/', views.get_city_district_data, name='get_city_district_data'),
     path('mail/', views.mail, name='mail'),
+    path('autodial/', views.autodial_view, name='autodial'),
 
     
 

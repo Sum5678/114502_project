@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from .models import TaiwanRegion
 from django.http import JsonResponse
+from .forms import AutoDialForm
 
 
 def report_view(request):
@@ -127,6 +128,38 @@ def settings(request):
 def write(request):
     return render(request, 'write.html')
 
+
+#自動撥號
+FIXED_PHONE = '0900123456'
+
+def autodial_view(request):
+    initial_message = request.session.get('default_message', '')
+    form = AutoDialForm(initial={'default_message': initial_message})
+    result = None
+    confirm_stage = False
+
+    if request.method == 'POST':
+        form = AutoDialForm(request.POST)
+        if form.is_valid():
+            message = form.cleaned_data['default_message']
+            request.session['default_message'] = message
+            action = request.POST.get('action')
+
+            if action == 'call':
+                result = f"模擬撥打電話給 {FIXED_PHONE}"
+            elif action == 'message':
+                # 第一次送出為確認階段
+                if request.POST.get('confirm') != 'yes':
+                    confirm_stage = True  # 顯示確認畫面
+                else:
+                    result = f"✅ 成功傳送訊息給 {FIXED_PHONE}，內容是：{message}"
+
+    return render(request, 'autodial.html', {
+        'form': form,
+        'phone': FIXED_PHONE,
+        'result': result,
+        'confirm_stage': confirm_stage,
+    })
 
 
 #userloigin
