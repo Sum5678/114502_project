@@ -1,4 +1,98 @@
 <!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>主選單</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      background-color: #f9eeee;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .grid-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: repeat(4, 100px);
+      gap: 0;
+      background-color: white;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .grid-item {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 18px;
+      font-weight: bold;
+      border: 1px solid #eee;
+      text-decoration: none;
+      color: #000;
+    }
+    .blue {
+      background-color: #ccf5ff;
+    }
+    .yellow {
+      background-color: #fff6cc;
+    }
+  </style>
+</head>
+<body>
+  <div class="grid-container">
+    <a href="{% url 'userlogin' %}" class="grid-item yellow">公佈欄</a>
+    <a href="{% url 'userlogin' %}" class="grid-item blue">我的聊天室</a>
+    <a href="{% url 'map' %}" class="grid-item blue">事件地圖</a>
+    <a href="{% url 'userlogin' %}" class="grid-item yellow">安全商家地圖</a>
+    <a href="{% url 'userlogin' %}" class="grid-item yellow">我要填表</a>
+    <a href="{% url 'userlogin' %}" class="grid-item blue">教育網頁</a>
+    <a href="{% url 'userlogin' %}" class="grid-item blue">個人設定</a>
+    <a href="{% url 'userlogin' %}" class="grid-item yellow">我要求助</a>
+  </div>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- <!DOCTYPE html>
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
@@ -71,4 +165,4 @@
         }
     </script>
 </body>
-</html>
+</html> -->

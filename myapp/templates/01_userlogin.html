@@ -50,16 +50,48 @@
         .google-btn {
             background-color: #db4437;
             color: white;
-        }
-        .messages {
-            color: red;
-            font-size: 0.9rem;
+            padding: 0.75rem;
+            border-radius: 8px;
+            display: block;
             text-align: center;
-            margin-top: 0.5rem;
+            text-decoration: none;
+            margin-top: 1rem;
         }
         .show-password {
             margin-top: 0.5rem;
             font-size: 0.9rem;
+        }
+
+        .messages {
+            background-color: #ffe6e6;
+            border: 1px solid #ff4d4d;
+            color: #cc0000;
+            font-size: 0.95rem;
+            text-align: left;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            position: relative;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .messages p {
+            margin: 0.3rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .messages p::before {
+            content: "⚠️";
+            position: absolute;
+            left: 0;
+            top: 0;
+            font-size: 1rem;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
@@ -74,6 +106,7 @@
         {% else %}
             <!-- 否則顯示 Google 登入按鈕 -->
             <a href="{% url 'social:begin' 'google-oauth2' %}" class="google-btn">以 Google 登入</a>
+            <a href="https://accounts.google.com/signup" class="google-btn" target="_blank">註冊 Google 帳戶</a>
         {% endif %}
 
         {% if messages %}
