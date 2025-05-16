@@ -1,23 +1,178 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <title>使用者資訊</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>個人資料設定</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #e6f2f9;
+      display: flex;
+      justify-content: center;
+      padding: 50px 20px;
+    }
+    .profile-container {
+      width: 100%;
+      max-width: 600px;
+      background-color: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      margin-top: 20px;
+      text-align: center;
+    }
+    .profile-image {
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      object-fit: cover;
+      cursor: pointer;
+      border: 3px solid #ccc;
+      transition: opacity 0.3s;
+    }
+    .profile-image:hover {
+      opacity: 0.7;
+    }
+    .hidden-input {
+      display: none;
+    }
+    h2 {
+      margin-bottom: 30px;
+      color: #036;
+    }
+    .profile-item {
+      padding: 15px;
+      margin-bottom: 15px;
+      background-color: #fafafa;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .profile-item:hover {
+      background-color: #f0f0f0;
+    }
+    .profile-item span {
+      font-weight: bold;
+      color: #333;
+    }
+    .edit-form {
+      display: none;
+    }
+    .input-field {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      background-color: #fff;
+      font-size: 16px;
+    }
+    .bio-input {
+      width: 100%;
+      height: 100px;
+      resize: none;
+    }
+    .button-container {
+      margin-top: 30px;
+    }
+    .button-container button {
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      background-color: #3498db;
+      color: white;
+      cursor: pointer;
+    }
+    .button-container button:hover {
+      background-color: #2c80b4;
+    }
+  </style>
+  <script>
+    function editField(field) {
+      document.getElementById(field + '-display').style.display = 'none';
+      document.getElementById(field + '-edit').style.display = 'block';
+    }
+
+    function saveField(field) {
+      const value = document.getElementById(field).value;
+      document.getElementById(field + '-text').textContent = value;
+      document.getElementById(field + '-display').style.display = 'block';
+      document.getElementById(field + '-edit').style.display = 'none';
+    }
+
+    function previewImage(event) {
+      const reader = new FileReader();
+      reader.onload = function () {
+        document.getElementById('profile-pic').src = reader.result;
+      };
+      reader.readAsDataURL(event.target.files[0]);
+    }
+  </script>
 </head>
 <body>
-    {% if error %}
-        <p style="color: red;">{{ error }}</p>
-    {% else %}
-        <h2>歡迎，{{ name }}</h2>
-        <p>Google ID：{{ google_id }}</p>
-        <p>Email：{{ email }}</p>
-        <img src="{{ picture }}" alt="你的大頭照" style="border-radius: 50%; width: 100px;">
-        
-        <!-- 登出按鈕 -->
-        <form action="{% url '01_userlogin_out' %}" method="post">
-            {% csrf_token %}
-            <button type="submit">登出</button>
-        </form>
-    {% endif %}
+  <div class="profile-container">
+    <h2>個人資料設定</h2>
+
+    <!-- 頭像 -->
+    <label for="upload-image">
+      <img src="https://via.placeholder.com/150" alt="頭像" id="profile-pic" class="profile-image">
+    </label>
+    <input type="file" id="upload-image" class="hidden-input" accept="image/*" onchange="previewImage(event)">
+
+    <div class="profile-item" onclick="editField('google_name')" id="google_name-display">
+      <span>Google名稱：</span> <span id="google_name-text">請輸入</span>
+    </div>
+    <div class="edit-form" id="google_name-edit">
+      <input type="text" id="google_name" class="input-field" onblur="saveField('google_name')" placeholder="請輸入 Google 名稱">
+    </div>
+
+    <div class="profile-item" onclick="editField('nickname')" id="nickname-display">
+      <span>暱稱：</span> <span id="nickname-text">請輸入</span>
+    </div>
+    <div class="edit-form" id="nickname-edit">
+      <input type="text" id="nickname" class="input-field" onblur="saveField('nickname')" placeholder="請輸入暱稱">
+    </div>
+
+    <div class="profile-item" onclick="editField('email')" id="email-display">
+      <span>Email：</span> <span id="email-text">請輸入</span>
+    </div>
+    <div class="edit-form" id="email-edit">
+      <input type="email" id="email" class="input-field" onblur="saveField('email')" placeholder="請輸入 Email">
+    </div>
+
+    <div class="profile-item" onclick="editField('phone')" id="phone-display">
+      <span>手機號碼：</span> <span id="phone-text">請輸入</span>
+    </div>
+    <div class="edit-form" id="phone-edit">
+      <input type="tel" id="phone" class="input-field" pattern="[0-9]{10}" onblur="saveField('phone')" placeholder="請輸入手機號碼">
+    </div>
+
+    <div class="profile-item" onclick="editField('intro')" id="intro-display">
+      <span>自我介紹：</span> <span id="intro-text">請輸入</span>
+    </div>
+    <div class="edit-form" id="intro-edit">
+      <textarea id="intro" class="input-field bio-input" onblur="saveField('intro')" placeholder="請輸入自我介紹"></textarea>
+    </div>
+
+    <div class="profile-item" onclick="editField('show_name_option')" id="show_name_option-display">
+      <span>名稱顯示：</span> <span id="show_name_option-text">請選擇</span>
+    </div>
+    <div class="edit-form" id="show_name_option-edit">
+      <select id="show_name_option" class="input-field" onchange="saveField('show_name_option')">
+        <option value="google_name">使用 Google 名稱</option>
+        <option value="nickname">使用暱稱</option>
+      </select>
+    </div>
+
+    <!-- 查看回報紀錄按鈕 -->
+    <div class="button-container">
+      <button onclick="location.href='report_list.html'">查看回報紀錄</button>
+    </div>
+  </div>
 </body>
 </html>
