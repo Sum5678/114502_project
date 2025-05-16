@@ -58,17 +58,20 @@
   <div class="container">
     <h2>商家資料上傳</h2>
     <form id="businessForm">
-      <label>商家店名</label>
-      <input type="text" name="bs_name" required>
+      <label for="bs_name">商家店名</label>
+      <input type="text" name="bs_name" id="bs_name" required>
 
-      <label>營業時間</label>
-      <input type="text" name="bs_time" required>
+      <label for="bs_time_start">營業開始時間</label>
+      <input type="time" name="bs_time_start" id="bs_time_start" required>
 
-      <label>地址</label>
-      <input type="text" name="bs_address" required>
+      <label for="bs_time_end">營業結束時間</label>
+      <input type="time" name="bs_time_end" id="bs_time_end" required>
 
-      <label>電話</label>
-      <input type="text" name="bs_phone" required>
+      <label for="bs_address">地址</label>
+      <input type="text" name="bs_address" id="bs_address" required>
+
+      <label for="bs_phone">電話</label>
+      <input type="text" name="bs_phone" id="bs_phone" required>
 
       <button type="submit">上傳</button>
     </form>
@@ -80,13 +83,32 @@
       const formData = new FormData(e.target);
       const data = Object.fromEntries(formData.entries());
 
-      const list = JSON.parse(localStorage.getItem("businesses")) || [];
-      data.business_id = "B" + Date.now();
-      data.status = "審核中";
-      list.push(data);
-      localStorage.setItem("businesses", JSON.stringify(list));
-      alert("資料已上傳！");
-      e.target.reset();
+      // 合併營業時間
+      data.business_hours = data.bs_time_start + " - " + data.bs_time_end;
+      delete data.bs_time_start;
+      delete data.bs_time_end;
+
+      // 加入 st_id 和 created_at
+      data.st_id = "B" + Date.now();
+      data.created_at = new Date().toISOString();
+
+      // 發送到後端 PHP 處理
+      fetch("upload.php", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data)
+      })
+      .then(res => res.text())
+      .then(result => {
+        alert(result);
+        e.target.reset();
+      })
+      .catch(err => {
+        console.error(err);
+        alert("上傳失敗！");
+      });
     });
   </script>
 </body>
