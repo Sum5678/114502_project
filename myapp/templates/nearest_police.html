@@ -1,179 +1,67 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>查詢最近警局</title>
-    <meta charset="utf-8" />
-    <style>
-      #controls {
-        padding: 10px;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-      }
-      select, button {
-        padding: 10px;
-        font-size: 16px;
-      }
-      #map {
-        height: 80vh;
-        width: 100%;
-      }
-    </style>
-  </head>
-  <body>
-    <div id="controls">
-      <select id="city-select">
-        <option value="">選擇縣市</option>
-      </select>
+<select id="district-select">
+  <option value="">請選擇行政區</option>
+  <!-- 這裡你可以用 Django 模板語法動態生成 TaiwanRegion 的區域 -->
+  <option value="中正區">中正區</option>
+  <option value="大安區">大安區</option>
+</select>
 
-      <select id="district-select" disabled>
-        <option value="">選擇區域</option>
-      </select>
+<div id="map" style="height: 400px; width: 100%;"></div>
 
-      <button onclick="locateMe()">📍 使用 GPS 查附近警局</button>
-    </div>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAUuPZMMJvgVWftmqVyzfX8mKTwMX4kA6o&callback=initMap" async defer></script>
 
-    <div id="map"></div>
+<script>
+let map;
+let markers = [];
 
-    <script>
-      let map, geocoder, marker;
-      let policeMarkers = [];
-      let placesService;
-      let addressData = {};
+function initMap() {
+  map = new google.maps.Map(document.getElementById("map"), {
+    center: { lat: 23.7, lng: 121 },
+    zoom: 8,
+  });
+}
 
-      function initMap() {
-        map = new google.maps.Map(document.getElementById("map"), {
-          center: { lat: 25.0330, lng: 121.5654 }, // 預設中心點：台北
-          zoom: 12,
-        });
-        geocoder = new google.maps.Geocoder();
-        placesService = new google.maps.places.PlacesService(map);
-        fetchCityDistrictData();
-      }
+function clearMarkers() {
+  markers.forEach(marker => marker.setMap(null));
+  markers = [];
+}
 
-      async function fetchCityDistrictData() {
-        const response = await fetch("/get_city_district_data/");
-        addressData = await response.json();
+function addMarkers(policeList) {
+  clearMarkers();
 
-        const citySelect = document.getElementById("city-select");
-        citySelect.innerHTML = "<option value=''>選擇縣市</option>";
-        for (let city in addressData) {
-          const option = document.createElement("option");
-          option.value = city;
-          option.text = city;
-          citySelect.appendChild(option);
-        }
-      }
+  if(policeList.length === 0) {
+    alert('此區無警局資料');
+    return;
+  }
 
-      document.getElementById("city-select").addEventListener("change", function () {
-        const city = this.value;
-        const districtSelect = document.getElementById("district-select");
+  let bounds = new google.maps.LatLngBounds();
 
-        districtSelect.innerHTML = "<option value=''>選擇區域</option>";
+  policeList.forEach(station => {
+    let position = { lat: station.latitude, lng: station.longitude };
+    let marker = new google.maps.Marker({
+      position: position,
+      map: map,
+      title: station.name,
+    });
 
-        if (city && addressData[city]) {
-          districtSelect.disabled = false;
-          addressData[city].forEach((district) => {
-            const option = document.createElement("option");
-            option.value = district;
-            option.text = district;
-            districtSelect.appendChild(option);
-          });
-        } else {
-          districtSelect.disabled = true;
-        }
-      });
+    let infoWindow = new google.maps.InfoWindow({
+      content: `<b>${station.name}</b><br>電話：${station.phone}`
+    });
 
-      document.getElementById("district-select").addEventListener("change", function () {
-        const city = document.getElementById("city-select").value;
-        const district = this.value;
-        if (city && district) {
-          const fullAddress = `${city} ${district}`;
-          geocodeAndSearchPolice(fullAddress);
-        }
-      });
+    marker.addListener('click', () => infoWindow.open(map, marker));
+    markers.push(marker);
+    bounds.extend(position);
+  });
 
-      function geocodeAndSearchPolice(address) {
-        geocoder.geocode({ address: address }, (results, status) => {
-          if (status === "OK") {
-            const location = results[0].geometry.location;
-            map.setCenter(location);
-            map.setZoom(16);
+  map.fitBounds(bounds);
+}
 
-            if (marker) marker.setMap(null);
-            marker = new google.maps.Marker({
-              map: map,
-              position: location,
-            });
+document.getElementById('district-select').addEventListener('change', function() {
+  const district = this.value;
+  if(!district) return;
 
-            searchNearbyPolice(location);
-          } else {
-            alert("地址查詢失敗：" + status);
-          }
-        });
-      }
-
-      function locateMe() {
-        if (navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition(
-            (position) => {
-              const location = {
-                lat: position.coords.latitude,
-                lng: position.coords.longitude,
-              };
-              map.setCenter(location);
-              map.setZoom(16);
-
-              if (marker) marker.setMap(null);
-              marker = new google.maps.Marker({
-                map: map,
-                position: location,
-                title: "你的位置",
-              });
-
-              searchNearbyPolice(location);
-            },
-            () => {
-              alert("無法取得位置，請檢查定位權限");
-            }
-          );
-        } else {
-          alert("此瀏覽器不支援 GPS");
-        }
-      }
-
-      function searchNearbyPolice(location) {
-        policeMarkers.forEach((m) => m.setMap(null));
-        policeMarkers.length = 0;
-
-        const request = {
-          location: location,
-          radius: '5000',
-          keyword: '警局',
-        };
-
-        placesService.nearbySearch(request, (results, status) => {
-          if (status === google.maps.places.PlacesServiceStatus.OK) {
-            results.forEach((place) => {
-              const policeMarker = new google.maps.Marker({
-                map: map,
-                position: place.geometry.location,
-                title: place.name,
-                icon: {
-                  url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
-                },
-              });
-              policeMarkers.push(policeMarker);
-            });
-          } else {
-            alert("找不到附近警局：" + status);
-          }
-        });
-      }
-    </script>
-
-    <script async
-      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAUuPZMMJvgVWftmqVyzfX8mKTwMX4kA6o&callback=initMap">
-    </script>
-  </body>
-</html>
+  fetch(`/api/police/?district=${encodeURIComponent(district)}`)
+    .then(response => response.json())
+    .then(data => addMarkers(data))
+    .catch(error => console.error('錯誤:', error));
+});
+</script>
