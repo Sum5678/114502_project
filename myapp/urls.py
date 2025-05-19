@@ -1,7 +1,6 @@
 from django.urls import path
 from . import views
 from django.contrib import admin
-from django.urls import path
 from myapp import views
 from django.conf import settings
 from django.conf.urls.static import static
@@ -25,13 +24,15 @@ urlpatterns = [
     path('harassment_prevention/', views.harassment_prevention, name='harassment_prevention'),
     path('education/', views.education_page, name='education_page'),
     path('police/', views.nearest_police, name='nearest_police'),
+    path('api/cities/', views.get_cities, name='get_cities'),
+    path('api/districts/', views.get_districts, name='get_districts'),
+    path('api/police/', views.get_police_by_district, name='get_police_by_district'),
     path('anonymous-chat/', views.anonymous_chat, name='anonymous-chat'),  # anonymous-chat 頁面
     path('index35/', views.index35, name='index35'),  # 新增 index35.html 路由
     path('map/', views.map_view, name='map'),  # 添加 map.html 路由
     path('001_login/', views.login_page, name='login_page'),  # 讓 /001_login 也能對應
     path('area/', views.area_view, name='area'),
     path('police/', views.region_selector, name='region_selector'),
-    path('get_city_district_data/', views.get_city_district_data, name='get_city_district_data'),
     path('mail/', views.mail, name='mail'),
     path('autodial/', views.autodial_view, name='autodial'),
     path('mychatroom/', views.mychatroom, name='mychatroom'),
