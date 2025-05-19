@@ -1,5 +1,6 @@
 from django.shortcuts import render
-from .models import TaiwanRegion
+from .models import TaiwanRegion, PoliceAddress #資料表的
+from django.views.decorators.http import require_GET
 from django.http import JsonResponse
 from .forms import AutoDialForm
 
@@ -62,7 +63,65 @@ def education_page(request):
     return render(request, 'education_page.html')
 
 def nearest_police(request):
+    # 顯示下拉選單與地圖的主頁面
     return render(request, 'nearest_police.html')
+
+def get_cities(request):
+    cities = TaiwanRegion.objects.values_list('country_city', flat=True).distinct()
+    return JsonResponse(list(cities), safe=False)
+
+def get_city_district_data(request):
+    # 從資料庫撈出所有縣市與區
+    data = {}
+    regions = TaiwanRegion.objects.all()
+    for region in regions:
+        city = region.county_city
+        district = region.district_town
+        if city not in data:
+            data[city] = []
+        data[city].append(district)
+    return JsonResponse(data)
+
+def get_districts(request):
+    city = request.GET.get('city')
+    districts = TaiwanRegion.objects.filter(country_city=city).values_list('district_town', flat=True).distinct()
+    return JsonResponse(list(districts), safe=False)
+
+def get_police_by_district(request):
+    district = request.GET.get('district')
+    print(f"收到 district: {district}")  # ← 加這個看看有沒有收到資料
+
+    data = []
+    if district:
+        results = TaiwanRegion.objects.filter(district_town=district)
+        for r in results:
+            data.append({
+                'station': r.police_station,
+                'phone': r.phone,
+                'lat': r.latitude,
+                'lng': r.longitude,
+            })
+    return JsonResponse({'data': data})
+
+@require_GET
+def get_police_by_district(request):
+    district = request.GET.get('district')
+    if not district:
+        return JsonResponse([], safe=False)
+
+    # 假設 district 是字串，可以直接過濾
+    police_stations = PoliceAddress.objects.filter(district=district)
+
+    data = []
+    for station in police_stations:
+        data.append({
+            'name': station.name,
+            'phone': station.phone,
+            'latitude': station.latitude,
+            'longitude': station.longitude,
+        })
+
+    return JsonResponse(data, safe=False)
 
 # 新增的匿名聊天頁面
 def anonymous_chat(request):
@@ -81,21 +140,6 @@ def mail(request):
 def mychatroom(request):
     return render(request, 'mychatroom.html')
 
-
-
-def get_city_district_data(request):
-    regions = TaiwanRegion.objects.all()
-    data = {}
-
-    for region in regions:
-        city = region.country_city
-        district = region.district_town
-        if city not in data:
-            data[city] = []
-        if district not in data[city]:
-            data[city].append(district)
-
-    return JsonResponse(data)
 
 
 

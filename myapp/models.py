@@ -91,13 +91,17 @@ def create_user_profile(request):
 
 #-------------------------------------------------------------------------
 class TaiwanRegion(models.Model):
-    id = models.AutoField(primary_key=True)
+    zipcode = models.CharField(max_length=10)
     country_city = models.CharField(max_length=50)
     district_town = models.CharField(max_length=50)
 
-    class Meta:
-        db_table = "taiwan_regions"  # 告訴 Django 使用你自己的資料表名
-        managed = False  # 不讓 Django 嘗試自己建立這個資料表
+class PoliceAddress(models.Model):
+    分局名稱 = models.CharField(max_length=100)
+    郵遞區號 = models.CharField(max_length=10)
+    地址 = models.CharField(max_length=200)
+    電話 = models.CharField(max_length=50)
+    POINT_X = models.FloatField()  # 經度
+    POINT_Y = models.FloatField()  # 緯度
 
     def __str__(self):
-        return f"{self.country_city} - {self.district_town}"
+        return self.分局名稱
