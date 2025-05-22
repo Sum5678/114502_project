@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>我要發文｜交流區</title>
+  <style>
+    body { font-family: sans-serif; background: #f8f8f8; padding: 20px; }
+    .form-container {
+      max-width: 700px;
+      margin: auto;
+      background: #fff;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+    }
+    h2 { text-align: center; }
+    label { display: block; margin-top: 15px; font-weight: bold; }
+    input, textarea, select {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    button {
+      margin-top: 20px;
+      padding: 12px;
+      width: 100%;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+    }
+    button:hover { background-color: #0056b3; }
+    .avatar-preview {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .avatar-preview img {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      border: 2px solid #ccc;
+    }
+  </style>
+</head>
+<body>
+  <div class="form-container">
+    <h2>我要發文</h2>
+    <form>
+      <label for="nickname">發文名稱</label>
+      <select id="nickname" onchange="updateAvatar()">
+        <option value="匿名">匿名</option>
+        <option value="小明">小明</option>
+        <option value="暱稱001">暱稱001</option>
+      </select>
+
+      <div class="avatar-preview">
+        <img id="avatar" src="" alt="匿名頭像">
+        <span id="nickname-label">匿名</span>
+      </div>
+
+      <label for="title">文章標題</label>
+      <input type="text" id="title" placeholder="請輸入標題">
+
+      <label for="content">文章內容</label>
+      <textarea id="content" rows="6" placeholder="請輸入文章內容"></textarea>
+
+      <button type="button" onclick="alert('文章已送出，等待審核')">送出發文</button>
+    </form>
