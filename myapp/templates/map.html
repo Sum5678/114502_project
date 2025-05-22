@@ -55,6 +55,8 @@
         }
     </style>
     <script>
+        let map;
+
         function goBack() {
             window.location.href = 'index.html'; // 替換為你的主頁連結
         }
@@ -62,17 +64,11 @@
             window.close();
             alert("請手動關閉此分頁，瀏覽器可能阻擋自動關閉功能。");
         }
-        // function initMap() {
-        //     var map = new google.maps.Map(document.getElementById('map'), {
-        //         center: { lat: 25.033964, lng: 121.564468 }, // 台北101
-        //         zoom: 15
-        //     });
-        
 
         function initMap() {
             const defaultLocation = { lat: 25.033964, lng: 121.564468 }; // 預設位置（台北101）
 
-            const map = new google.maps.Map(document.getElementById('map'), {
+            map = new google.maps.Map(document.getElementById('map'), {
                 center: defaultLocation,
                 zoom: 15
             });
@@ -91,7 +87,6 @@
                             lng: position.coords.longitude
                         };
 
-                        // 地圖畫出藍色點
                         const marker = new google.maps.Marker({
                             position: userLocation,
                             map: map,
@@ -118,8 +113,63 @@
                 alert("您的瀏覽器不支援地理位置功能");
             }
 
-        }
+            // 下拉式選單資料
+            const locationData = {
+                "台北市": {
+                    "中正區": {
+                        "忠孝東路": { lat: 25.04181, lng: 121.53517 },
+                        "羅斯福路": { lat: 25.02677, lng: 121.52283 }
+                    },
+                    "大安區": {
+                        "信義路": { lat: 25.0330, lng: 121.5430 },
+                        "復興南路": { lat: 25.0260, lng: 121.5440 }
+                    }
+                }
+            };
 
+            document.getElementById('city-select').addEventListener('change', function () {
+                const city = this.value;
+                const districtSelect = document.getElementById('district-select');
+                districtSelect.innerHTML = '<option value="">選擇區域</option>';
+
+                if (locationData[city]) {
+                    for (const district in locationData[city]) {
+                        districtSelect.innerHTML += `<option value="${district}">${district}</option>`;
+                    }
+                }
+
+                document.getElementById('street-select').innerHTML = '<option value="">選擇街道</option>';
+            });
+
+            document.getElementById('district-select').addEventListener('change', function () {
+                const city = document.getElementById('city-select').value;
+                const district = this.value;
+                const streetSelect = document.getElementById('street-select');
+                streetSelect.innerHTML = '<option value="">選擇街道</option>';
+
+                if (locationData[city] && locationData[city][district]) {
+                    for (const street in locationData[city][district]) {
+                        streetSelect.innerHTML += `<option value="${street}">${street}</option>`;
+                    }
+                }
+            });
+
+            document.getElementById('street-select').addEventListener('change', function () {
+                const city = document.getElementById('city-select').value;
+                const district = document.getElementById('district-select').value;
+                const street = this.value;
+
+                if (locationData[city] && locationData[city][district] && locationData[city][district][street]) {
+                    const location = locationData[city][district][street];
+                    map.setCenter(location);
+                    new google.maps.Marker({
+                        position: location,
+                        map: map,
+                        title: `${city}${district}${street}`
+                    });
+                }
+            });
+        }
     </script>
 </head>
 <body>
@@ -129,8 +179,27 @@
             怪人分布地圖
             <button class="icon-btn close-btn" onclick="closePage()">×</button>
         </div>
+
+        <!-- ↓↓↓ 新增的下拉選單區域 ↓↓↓ -->
+        <div class="controls" style="padding: 10px; background: #f0f0f0; color: black;">
+            <select id="city-select">
+                <option value="">選擇縣市</option>
+                <option value="台北市">台北市</option>
+            </select>
+
+            <select id="district-select">
+                <option value="">選擇區域</option>
+            </select>
+
+            <select id="street-select">
+                <option value="">選擇街道</option>
+            </select>
+        </div>
+        <!-- ↑↑↑ 新增結束 ↑↑↑ -->
+
         <div id="map" class="map-container"></div>
     </div>
+
     <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAUuPZMMJvgVWftmqVyzfX8mKTwMX4kA6o&callback=initMap"></script>
 </body>
 </html>
