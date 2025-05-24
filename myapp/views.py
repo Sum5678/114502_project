@@ -140,6 +140,9 @@ def mail(request):
 def mychatroom(request):
     return render(request, 'mychatroom.html')
 
+def community(request):
+    return render(request, 'community.html')
+
 
 
 
