@@ -36,6 +36,7 @@ urlpatterns = [
     path('mail/', views.mail, name='mail'),
     path('autodial/', views.autodial_view, name='autodial'),
     path('mychatroom/', views.mychatroom, name='mychatroom'),
+    path('community/', views.community, name='community'),
     
 
     
