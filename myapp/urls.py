@@ -37,6 +37,7 @@ urlpatterns = [
     path('autodial/', views.autodial_view, name='autodial'),
     path('mychatroom/', views.mychatroom, name='mychatroom'),
     path('community/', views.community, name='community'),
+    path('face_detection/', views.face_detection_view, name='face_detection'), #人臉辨識
     
 
     
