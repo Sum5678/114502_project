@@ -37,6 +37,7 @@ urlpatterns = [
     path('autodial/', views.autodial_view, name='autodial'),
     path('mychatroom/', views.mychatroom, name='mychatroom'),
     path('community/', views.community, name='community'),
+    path('face_detection/', views.face_detection_view, name='face_detection'), #人臉辨識
     
 
     
@@ -59,7 +60,12 @@ urlpatterns = [
     path('this_user_profile', views.update_user_profile, name='update_user_profile'),
     path('api/incidents/', views.incident_list, name='incident_list'),
     # 其他路由
+    #思璇
+     #思璇
+    path('api/submit_report/', views.submit_report, name='submit_report'),
+
 
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 # 原本沒有這些路徑
+

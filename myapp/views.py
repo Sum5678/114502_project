@@ -143,6 +143,43 @@ def mychatroom(request):
 def community(request):
     return render(request, 'community.html')
 
+# views.py
+
+from django.shortcuts import render
+from django.core.files.storage import default_storage
+import cv2
+import os
+
+# 載入人臉辨識模型（記得在 settings.py 設定 STATICFILES_DIRS）
+face_cascade = cv2.CascadeClassifier('myapp\static\haarcascade_frontalface_default.xml')
+
+def face_detection_view(request):
+    result_img = None
+
+    if request.method == 'POST' and request.FILES.get('image'):
+        file = request.FILES['image']
+        input_path = os.path.join('myapp', 'static', 'input.jpg')
+        with open(input_path, 'wb+') as destination:
+            for chunk in file.chunks():
+                destination.write(chunk)
+
+        img = cv2.imread(input_path)
+        if img is None:
+            return render(request, 'index0527.html', {'result_img': None, 'error': '無法讀取圖片，請重新上傳'})
+
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        faces = face_cascade.detectMultiScale(gray, 1.1, 5)
+        for (x, y, w, h) in faces:
+            cv2.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0), 2)
+
+        output_path = os.path.join('myapp', 'static', 'output.jpg')
+        cv2.imwrite(output_path, img)
+        result_img = 'output.jpg'
+
+    return render(request, 'index0527.html', {'result_img': result_img})
+
+
+
 
 
 
@@ -392,3 +429,43 @@ def incident_list(request):
 
 
 #--------------------------------01--------------------------------------------------------
+# -------------------------------- submit_report（我要填單功能） --------------------------------
+# myapp/views.py
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+import json
+from .models import PemapAll
+
+@csrf_exempt  # 暫時關閉 CSRF 驗證，之後可用 token 或前端設置
+def submit_report(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+
+            # 從前端資料抓欄位
+            poster_id = data.get('poster_id', 'anonymous')  # 你可以依需求調整
+            display_name = data.get('display_name', '匿名')
+            kind = data.get('kind')
+            reason = data.get('reason')
+            address = data.get('address')
+            latitude = float(data.get('latitude', 0))
+            longitude = float(data.get('longitude', 0))
+            img_url = data.get('img_url', '')
+
+            # 建立資料庫紀錄
+            report = PemapAll.objects.create(
+                poster_id=poster_id,
+                display_name=display_name,
+                kind=kind,
+                reason=reason,
+                address=address,
+                latitude=latitude,
+                longitude=longitude,
+                img_url=img_url,
+                review_status='待處理'
+            )
+
+            return JsonResponse({'status': 'success', 'message': '回報成功'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+    return JsonResponse({'status': 'error', 'message': '只支援POST'})
