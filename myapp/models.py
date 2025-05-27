@@ -93,7 +93,18 @@ def create_user_profile(request):
     return render(request, 'usdata.html')
 
 
-    
+from django.db import models
+
+class Incident(models.Model):
+    description = models.TextField()  # 事件描述
+    latitude = models.FloatField()    # 緯度
+    longitude = models.FloatField()   # 經度
+    time = models.DateTimeField()     # 發生時間
+    created_at = models.DateTimeField(auto_now_add=True)  # 回報時間
+
+    def __str__(self):
+        return f"{self.description} ({self.latitude}, {self.longitude})"
+
 
 #-------------------------------------------------------------------------
 class TaiwanRegion(models.Model):
