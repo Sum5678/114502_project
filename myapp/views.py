@@ -374,4 +374,21 @@ def update_user_profile(request):
 
 
 
+from django.http import JsonResponse
+from .models import Incident
+
+def incident_list(request):
+    incidents = Incident.objects.all().order_by('-time')
+    data = [
+        {
+            'description': incident.description,
+            'lat': incident.latitude,
+            'lng': incident.longitude,
+            'time': incident.time.strftime('%Y-%m-%d %H:%M')
+        }
+        for incident in incidents
+    ]
+    return JsonResponse(data, safe=False)
+
+
 #--------------------------------01--------------------------------------------------------

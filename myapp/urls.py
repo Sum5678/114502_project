@@ -57,6 +57,7 @@ urlpatterns = [
     path('this_user_profile', views.create_user_profile, name='create_user_profile'),
     path("this_user_profile", views.ThisUserProfile, name="this_user_profile"),
     path('this_user_profile', views.update_user_profile, name='update_user_profile'),
+    path('api/incidents/', views.incident_list, name='incident_list'),
     # 其他路由
 
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

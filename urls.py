@@ -24,6 +24,7 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('myapp.urls')),  # 讓應用程式的路由生效
+    path('', include('events.urls')), 
 ]
 
 # 讓 Django 在開發模式下提供靜態檔案
