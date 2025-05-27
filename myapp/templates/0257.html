@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>怪人分布地圖</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #333;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            position: relative;
+            width: 80%;
+            max-width: 800px;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .header {
+            background: gray;
+            padding: 10px;
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            position: relative;
+        }
+        .map-container {
+            width: 100%;
+            height: 500px;
+        }
+        .icon-btn {
+            position: absolute;
+            top: 10px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        .back-btn {
+            left: 10px;
+            color: blue;
+        }
+        .close-btn {
+            right: 10px;
+            color: red;
+        }
+    </style>
+    <script>
+        let map;
+
+        function goBack() {
+            window.location.href = 'index.html';
+        }
+        function closePage() {
+            window.close();
+            alert("請手動關閉此分頁，瀏覽器可能阻擋自動關閉功能。");
+        }
+
+        function initMap() {
+            const defaultLocation = { lat: 25.033964, lng: 121.564468 };
+
+            map = new google.maps.Map(document.getElementById('map'), {
+                center: defaultLocation,
+                zoom: 15
+            });
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        const userLocation = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude
+                        };
+
+                        new google.maps.Marker({
+                            position: userLocation,
+                            map: map,
+                            title: "你在這裡",
+                            icon: {
+                                path: google.maps.SymbolPath.CIRCLE,
+                                scale: 8,
+                                fillColor: "#00F",
+                                fillOpacity: 0.8,
+                                strokeWeight: 2,
+                                strokeColor: "#FFF"
+                            }
+                        });
+
+                        map.setCenter(userLocation);
+
+                        // 加入假資料事件
+                        const eventData = [
+                            {
+                                lat: 25.033964,
+                                lng: 121.564468,
+                                description: "有陌生人尾隨",
+                                time: "2025-05-25 21:30"
+                            },
+                            {
+                                lat: 25.047675,
+                                lng: 121.517055,
+                                description: "遭遇言語騷擾",
+                                time: "2025-05-26 19:15"
+                            }
+                        ];
+
+                        eventData.forEach(event => {
+                            const marker = new google.maps.Marker({
+                                position: { lat: event.lat, lng: event.lng },
+                                map: map,
+                                title: event.description,
+                                icon: {
+                                    url: "http://maps.google.com/mapfiles/ms/icons/red-dot.png"
+                                }
+                            });
+
+                            const infoWindow = new google.maps.InfoWindow({
+                                content: `<b>事件：</b>${event.description}<br><b>時間：</b>${event.time}`
+                            });
+
+                            marker.addListener("click", () => {
+                                infoWindow.open(map, marker);
+                            });
+                        });
+
+                    },
+                    function(error) {
+                        console.error("❌ 取得位置失敗！", error);
+                        alert("無法取得您的位置：" + error.message);
+                    }
+                );
+            } else {
+                alert("您的瀏覽器不支援地理位置功能");
+            }
+
+            // 下拉資料
+            const locationData = {
+                "台北市": {
+                    "中正區": {
+                        "忠孝東路": { lat: 25.04181, lng: 121.53517 },
+                        "羅斯福路": { lat: 25.02677, lng: 121.52283 }
+                    },
+                    "大安區": {
+                        "信義路": { lat: 25.0330, lng: 121.5430 },
+                        "復興南路": { lat: 25.0260, lng: 121.5440 }
+                    }
+                }
+            };
+
+            document.getElementById('city-select').addEventListener('change', function () {
+                const city = this.value;
+                const districtSelect = document.getElementById('district-select');
+                districtSelect.innerHTML = '<option value="">選擇區域</option>';
+
+                if (locationData[city]) {
+                    for (const district in locationData[city]) {
+                        districtSelect.innerHTML += `<option value="${district}">${district}</option>`;
+                    }
+                }
+
+                document.getElementById('street-select').innerHTML = '<option value="">選擇街道</option>';
+            });
+
+            document.getElementById('district-select').addEventListener('change', function () {
+                const city = document.getElementById('city-select').value;
+                const district = this.value;
+                const streetSelect = document.getElementById('street-select');
+                streetSelect.innerHTML = '<option value="">選擇街道</option>';
+
+                if (locationData[city] && locationData[city][district]) {
+                    for (const street in locationData[city][district]) {
+                        streetSelect.innerHTML += `<option value="${street}">${street}</option>`;
+                    }
+                }
+            });
+
+            document.getElementById('street-select').addEventListener('change', function () {
+                const city = document.getElementById('city-select').value;
+                const district = document.getElementById('district-select').value;
+                const street = this.value;
+
+                if (locationData[city] && locationData[city][district] && locationData[city][district][street]) {
+                    const location = locationData[city][district][street];
+                    map.setCenter(location);
+                    new google.maps.Marker({
+                        position: location,
+                        map: map,
+                        title: `${city}${district}${street}`
+                    });
+                }
+            });
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <button class="icon-btn back-btn" onclick="goBack()">←</button>
+            怪人分布地圖
+            <button class="icon-btn close-btn" onclick="closePage()">×</button>
+        </div>
+
+        <div class="controls" style="padding: 10px; background: #f0f0f0; color: black;">
+            <select id="city-select">
+                <option value="">選擇縣市</option>
+                <option value="台北市">台北市</option>
+            </select>
+
+            <select id="district-select">
+                <option value="">選擇區域</option>
+            </select>
+
+            <select id="street-select">
+                <option value="">選擇街道</option>
+            </select>
+        </div>
+
+        <div id="map" class="map-container"></div>
+    </div>
+
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAUuPZMMJvgVWftmqVyzfX8mKTwMX4kA6o&callback=initMap"></script>
+</body>
+</html>

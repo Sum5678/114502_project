@@ -1,0 +1,93 @@
+<!-- community_board.html -->
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>交流區文章展示</title>
+  <style>
+    body { font-family: sans-serif; background: #f3f3f3; padding: 20px; }
+    .container {
+      max-width: 900px;
+      margin: auto;
+      background: #fff;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h1 { text-align: center; color: #333; }
+    .post {
+      display: flex;
+      gap: 15px;
+      border-bottom: 1px solid #ddd;
+      padding: 15px 0;
+    }
+    .post:last-child {
+      border-bottom: none;
+    }
+    .avatar {
+      flex-shrink: 0;
+    }
+    .avatar img {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+    }
+    .post-content-box {
+      flex-grow: 1;
+    }
+    .post-title {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+    .post-meta {
+      font-size: 13px;
+      color: #777;
+      margin-bottom: 5px;
+    }
+    .post-content {
+      font-size: 15px;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>交流區文章展示</h1>
+
+    <div class="post">
+      <div class="avatar">
+        <img src="https://i.pravatar.cc/100?u=匿名A" alt="匿名頭像">
+      </div>
+      <div class="post-content-box">
+        <div class="post-title">如何準備期末考試？</div>
+        <div class="post-meta">由 匿名 發佈 ｜ 2025-05-20</div>
+        <div class="post-content">大家有推薦的讀書方法嗎？我最近壓力好大 QQ...</div>
+      </div>
+    </div>
+
+    <div class="post">
+      <div class="avatar">
+        <img src="https://i.pravatar.cc/100?u=小明" alt="小明頭像">
+      </div>
+      <div class="post-content-box">
+        <div class="post-title">推薦一個好用的筆記 App！</div>
+        <div class="post-meta">由 小明 發佈 ｜ 2025-05-19</div>
+        <div class="post-content">Notion 真的是神，整理資料太方便了～</div>
+      </div>
+    </div>
+
+    <div class="post">
+      <div class="avatar">
+        <img src="https://i.pravatar.cc/100?u=暱稱001" alt="匿名頭像">
+      </div>
+      <div class="post-content-box">
+        <div class="post-title">考試完大家要去哪玩？</div>
+        <div class="post-meta">由 暱稱001 發佈 ｜ 2025-05-18</div>
+        <div class="post-content">想去墾丁衝浪，有沒有人想揪團 😎</div>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>
