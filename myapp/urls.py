@@ -59,7 +59,12 @@ urlpatterns = [
     path("this_user_profile", views.ThisUserProfile, name="this_user_profile"),
     path('this_user_profile', views.update_user_profile, name='update_user_profile'),
     # 其他路由
+    #思璇
+     #思璇
+    path('api/submit_report/', views.submit_report, name='submit_report'),
+
 
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 # 原本沒有這些路徑
+

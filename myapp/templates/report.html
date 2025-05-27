@@ -88,6 +88,7 @@
       font-size: 16px;
       transition: background 0.3s, transform 0.2s;
       font-weight: bold;
+      margin-top: 10px;
     }
     button:hover {
       transform: scale(1.05);
@@ -221,35 +222,69 @@
       event.preventDefault();
 
       const isAnonymous = document.getElementById("anonymous").checked;
-      const reportData = {
-        name: isAnonymous ? "匿名" : document.getElementById("name").value,
-        email: isAnonymous ? "anonymous@gmail.com" : document.getElementById("email").value,
-        category: document.getElementById("category").value,
-        subcategory: document.getElementById("subcategory").value,
-        description: document.getElementById("description").value,
-        location: document.getElementById("location").value,
-        status: "待處理"
+      const name = isAnonymous ? "匿名" : document.getElementById("name").value.trim();
+      const email = isAnonymous ? "anonymous@gmail.com" : document.getElementById("email").value.trim();
+
+      const category = document.getElementById("category").value;
+      const subcategory = document.getElementById("subcategory").value;
+      const kind = category + " - " + subcategory;
+
+      const description = document.getElementById("description").value.trim();
+
+      const locationStr = document.getElementById("location").value.trim();
+      const locationParts = locationStr.split(",").map(s => s.trim());
+      let latitude = 0, longitude = 0;
+      if(locationParts.length === 2){
+        latitude = parseFloat(locationParts[0]) || 0;
+        longitude = parseFloat(locationParts[1]) || 0;
+      }
+
+      // 圖片暫不支援檔案上傳，先傳空字串
+      // 若要改成上傳，可用 FormData + AJAX，Django 端需用 request.FILES
+      const img_url = "";
+
+      const formData = {
+        poster_id: email,
+        display_name: name,
+        kind: kind,
+        reason: description,
+        address: locationStr,
+        latitude: latitude,
+        longitude: longitude,
+        img_url: img_url
       };
 
-      // 保存資料到 LocalStorage
-      const existingReports = JSON.parse(localStorage.getItem("reports") || "[]");
-      existingReports.push(reportData);
-      localStorage.setItem("reports", JSON.stringify(existingReports));
-
-      let statusMessage = document.getElementById("statusMessage");
-      statusMessage.innerText = "✅ 表單已提交";
-      statusMessage.style.backgroundColor = "#b8e3ff";
+      const statusMessage = document.getElementById("statusMessage");
+      statusMessage.style.backgroundColor = "#def1fc";
       statusMessage.style.color = "#055d8c";
+      statusMessage.innerText = "提交中...";
 
-      // 清空表單
-      this.reset();
-      const subcategorySelect = document.getElementById("subcategory");
-      subcategorySelect.innerHTML = "";
-      const defaultOption = document.createElement("option");
-      defaultOption.value = "";
-      defaultOption.text = "請先選擇上方分類";
-      subcategorySelect.appendChild(defaultOption);
+      fetch('/api/submit_report/', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(formData)
+      })
+      .then(response => response.json())
+      .then(data => {
+        if(data.status === "success"){
+          statusMessage.innerText = "✅ 表單已成功提交";
+          this.reset();
+          // 重設子分類
+          const subcategorySelect = document.getElementById("subcategory");
+          subcategorySelect.innerHTML = '<option value="">請先選擇上方分類</option>';
+        } else {
+          statusMessage.style.backgroundColor = "#ffcccc";
+          statusMessage.style.color = "#900";
+          statusMessage.innerText = "❌ 提交失敗：" + data.message;
+        }
+      })
+      .catch(() => {
+        statusMessage.style.backgroundColor = "#ffcccc";
+        statusMessage.style.color = "#900";
+        statusMessage.innerText = "❌ 網路錯誤，請稍後再試";
+      });
     });
+
   </script>
 </body>
 </html>

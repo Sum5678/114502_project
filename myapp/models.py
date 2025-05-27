@@ -111,3 +111,22 @@ class PoliceAddress(models.Model):
 
     def __str__(self):
         return self.分局名稱
+    
+# ------------------------- Pemap 回報資料模型（對應 pemap_all 資料表） -------------------------
+
+class PemapAll(models.Model):
+    p_id = models.AutoField(primary_key=True)
+    poster_id = models.CharField(max_length=100)
+    display_name = models.CharField(max_length=100)
+    kind = models.CharField(max_length=50)
+    reason = models.TextField()
+    address = models.CharField(max_length=255)
+    latitude = models.FloatField()
+    longitude = models.FloatField()
+    img_url = models.CharField(max_length=255, blank=True, null=True)  # 如果儲存圖片路徑
+    time_created = models.DateTimeField(auto_now_add=True)
+    time_reviewed = models.DateTimeField(blank=True, null=True)
+    review_status = models.CharField(max_length=50, default='待處理')
+
+    class Meta:
+        db_table = 'pemap_all'
