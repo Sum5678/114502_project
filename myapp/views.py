@@ -412,3 +412,43 @@ def update_user_profile(request):
 
 
 #--------------------------------01--------------------------------------------------------
+# -------------------------------- submit_report（我要填單功能） --------------------------------
+# myapp/views.py
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+import json
+from .models import PemapAll
+
+@csrf_exempt  # 暫時關閉 CSRF 驗證，之後可用 token 或前端設置
+def submit_report(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+
+            # 從前端資料抓欄位
+            poster_id = data.get('poster_id', 'anonymous')  # 你可以依需求調整
+            display_name = data.get('display_name', '匿名')
+            kind = data.get('kind')
+            reason = data.get('reason')
+            address = data.get('address')
+            latitude = float(data.get('latitude', 0))
+            longitude = float(data.get('longitude', 0))
+            img_url = data.get('img_url', '')
+
+            # 建立資料庫紀錄
+            report = PemapAll.objects.create(
+                poster_id=poster_id,
+                display_name=display_name,
+                kind=kind,
+                reason=reason,
+                address=address,
+                latitude=latitude,
+                longitude=longitude,
+                img_url=img_url,
+                review_status='待處理'
+            )
+
+            return JsonResponse({'status': 'success', 'message': '回報成功'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+    return JsonResponse({'status': 'error', 'message': '只支援POST'})
