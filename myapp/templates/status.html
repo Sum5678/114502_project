@@ -38,12 +38,16 @@
       justify-content: space-between;
     }
 
-    .reviewing {
+    .reviewing2 {
       background-color: #5dade2;
     }
 
-    .completed {
+    .approved {
       background-color: #48c9b0;
+    }
+
+    .rejected {
+      background-color: #e74c3c;
     }
 
     .checkmark {
@@ -71,14 +75,19 @@
   <div class="container">
     <h2>回報狀態</h2>
 
-    <div class="status-section reviewing">
-      <span>審核中</span>
-      <span id="reviewingCheck" class="checkmark"></span>
+    <div class="status-section reviewing2">
+      <span>二次審核中</span>
+      <span class="checkmark">✔</span> <!-- 固定打勾 -->
     </div>
 
-    <div class="status-section completed">
-      <span>審核完成</span>
-      <span id="completedCheck" class="checkmark"></span>
+    <div class="status-section approved">
+      <span>審核通過</span>
+      <span id="approvedCheck" class="checkmark"></span>
+    </div>
+
+    <div class="status-section rejected">
+      <span>審核失敗</span>
+      <span id="rejectedCheck" class="checkmark"></span>
     </div>
 
     <button onclick="location.href='report_list.html'">返回紀錄</button>
@@ -100,10 +109,10 @@
       }
 
       const report = reports[reportId];
-      if (report.status === "completed") {
-        document.getElementById("completedCheck").textContent = "✔";
-      } else {
-        document.getElementById("reviewingCheck").textContent = "✔";
+      if (report.status === "approved") {
+        document.getElementById("approvedCheck").textContent = "✔";
+      } else if (report.status === "rejected") {
+        document.getElementById("rejectedCheck").textContent = "✔";
       }
     }
 
