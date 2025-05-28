@@ -58,7 +58,11 @@ urlpatterns = [
     path('this_user_profile', views.create_user_profile, name='create_user_profile'),
     path("this_user_profile", views.ThisUserProfile, name="this_user_profile"),
     path('this_user_profile', views.update_user_profile, name='update_user_profile'),
-    path('api/incidents/', views.incident_list, name='incident_list'),
+    path('api/incidents/', views.incident_list, name='incident_list'),#地圖顯示測試
+    path('api/fake_incidents/', views.fake_incident_lookup, name='fake_incident_lookup'), #地圖顯示測試
+    path('lookup/', views.lookup_page, name='lookup_page'),#地圖顯示測試
+    path('fake_incident_lookup/', views.fake_incident_lookup, name='fake_incident_lookup'),#地圖顯示測試
+    path('map0257/', views.show_map, name='show_map'),#地圖顯示測試
     # 其他路由
     #思璇
      #思璇
