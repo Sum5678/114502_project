@@ -169,17 +169,23 @@ def face_detection_view(request):
 
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         faces = face_cascade.detectMultiScale(gray, 1.1, 5)
+
         for (x, y, w, h) in faces:
-            cv2.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0), 2)
+            # 取得人臉區域
+            face_roi = img[y:y+h, x:x+w]
+
+            # 縮小再放大做馬賽克
+            small = cv2.resize(face_roi, (10, 10), interpolation=cv2.INTER_LINEAR)
+            mosaic = cv2.resize(small, (w, h), interpolation=cv2.INTER_NEAREST)
+
+            # 替換原圖區域為馬賽克
+            img[y:y+h, x:x+w] = mosaic
 
         output_path = os.path.join('myapp', 'static', 'output.jpg')
         cv2.imwrite(output_path, img)
         result_img = 'output.jpg'
 
     return render(request, 'index0527.html', {'result_img': result_img})
-
-
-
 
 
 
