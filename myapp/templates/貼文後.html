@@ -123,7 +123,7 @@
       </div>
       <div class="post-content-box">
         <div class="post-title">深夜遇到拿洋蔥的人？</div>
-        <div class="post-meta">由 匿名 發佈 ｜ 2025-05-20</div>
+        <div class="post-meta" data-time="2025-05-20T23:12:34">由 匿名 發佈 ｜ </div>
         <div class="post-content">昨晚十一點走回宿舍的路上，一個男子突然靠近我，手上拿著一顆洋蔥，問我「妳相信洋蔥能改變命運嗎？」我當下只想逃跑，太詭異了啦！</div>
       </div>
     </div>
@@ -134,7 +134,7 @@
       </div>
       <div class="post-content-box">
         <div class="post-title">公車上的騷擾事件</div>
-        <div class="post-meta">由 小明 發佈 ｜ 2025-05-19</div>
+        <div class="post-meta" data-time="2025-05-19T14:35:02">由 小明 發佈 ｜ </div>
         <div class="post-content">今天搭公車時，一個中年男子靠我超近，不斷試圖搭話，還說「學生就是青春洋溢啊」。我移開後他還笑著說「不要害羞」。真的很不舒服，司機也沒處理。</div>
       </div>
     </div>
@@ -145,10 +145,27 @@
       </div>
       <div class="post-content-box">
         <div class="post-title">圖書館被騷擾了</div>
-        <div class="post-meta">由 暱稱001 發佈 ｜ 2025-05-18</div>
+        <div class="post-meta" data-time="2025-05-18T09:50:11">由 暱稱001 發佈 ｜ </div>
         <div class="post-content">昨天在圖書館自習，一位陌生男生突然坐到我對面，開始不斷問我讀哪科、是不是單身。我冷回應他還不走，真的希望大家注意安全。</div>
       </div>
     </div>
   </div>
+
+  <script>
+    // 自動將 data-time 格式化並顯示在 post-meta 內
+    document.querySelectorAll('.post-meta').forEach(meta => {
+      const timeString = meta.getAttribute('data-time');
+      if (timeString) {
+        const date = new Date(timeString);
+        const y = date.getFullYear();
+        const m = (date.getMonth() + 1).toString().padStart(2, '0');
+        const d = date.getDate().toString().padStart(2, '0');
+        const hh = date.getHours().toString().padStart(2, '0');
+        const mm = date.getMinutes().toString().padStart(2, '0');
+        const ss = date.getSeconds().toString().padStart(2, '0');
+        meta.textContent += `${y}-${m}-${d} ${hh}:${mm}:${ss}`;
+      }
+    });
+  </script>
 </body>
 </html>
