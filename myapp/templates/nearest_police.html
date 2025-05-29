@@ -1,67 +1,68 @@
-<select id="district-select">
-  <option value="">請選擇行政區</option>
-  <!-- 這裡你可以用 Django 模板語法動態生成 TaiwanRegion 的區域 -->
-  <option value="中正區">中正區</option>
-  <option value="大安區">大安區</option>
-</select>
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>查詢警察局</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>查詢警察局</h1>
 
-<div id="map" style="height: 400px; width: 100%;"></div>
+    <form method="get">
+        <label for="country_city">縣市：</label>
+        <select name="country_city" id="country_city">
+            <option value="">-- 選擇縣市 --</option>
+            {% for city in cities %}
+                <option value="{{ city }}" {% if city == selected_city %}selected{% endif %}>{{ city }}</option>
+            {% endfor %}
+        </select>
 
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAUuPZMMJvgVWftmqVyzfX8mKTwMX4kA6o&callback=initMap" async defer></script>
+        <label for="district_town">行政區：</label>
+        <select name="district_town" id="district_town">
+            <option value="">-- 選擇行政區 --</option>
+            {% for district in districts %}
+                <option value="{{ district }}" {% if district == selected_district %}selected{% endif %}>{{ district }}</option>
+            {% endfor %}
+        </select>
 
-<script>
-let map;
-let markers = [];
+        <button type="submit">查詢</button>
+    </form>
 
-function initMap() {
-  map = new google.maps.Map(document.getElementById("map"), {
-    center: { lat: 23.7, lng: 121 },
-    zoom: 8,
-  });
-}
+    <hr>
 
-function clearMarkers() {
-  markers.forEach(marker => marker.setMap(null));
-  markers = [];
-}
+    {% if police_list %}
+        <h2>查詢結果：</h2>
+        <ul>
+        {% for police in police_list %}
+            <li>
+                <strong>{{ police.precinct_name }}</strong><br>
+                地址：{{ police.address }}<br>
+                電話：{{ police.phone }}<br>
+                座標：({{ police.POINT_Y }}, {{ police.POINT_X }})
+            </li>
+        {% endfor %}
+        </ul>
+    {% elif selected_city and selected_district %}
+        <p>查無此地區的警局資料。</p>
+    {% endif %}
 
-function addMarkers(policeList) {
-  clearMarkers();
-
-  if(policeList.length === 0) {
-    alert('此區無警局資料');
-    return;
-  }
-
-  let bounds = new google.maps.LatLngBounds();
-
-  policeList.forEach(station => {
-    let position = { lat: station.latitude, lng: station.longitude };
-    let marker = new google.maps.Marker({
-      position: position,
-      map: map,
-      title: station.name,
-    });
-
-    let infoWindow = new google.maps.InfoWindow({
-      content: `<b>${station.name}</b><br>電話：${station.phone}`
-    });
-
-    marker.addListener('click', () => infoWindow.open(map, marker));
-    markers.push(marker);
-    bounds.extend(position);
-  });
-
-  map.fitBounds(bounds);
-}
-
-document.getElementById('district-select').addEventListener('change', function() {
-  const district = this.value;
-  if(!district) return;
-
-  fetch(`/api/police/?district=${encodeURIComponent(district)}`)
-    .then(response => response.json())
-    .then(data => addMarkers(data))
-    .catch(error => console.error('錯誤:', error));
-});
-</script>
+    <script>
+        $('#country_city').change(function () {
+            let city = $(this).val();
+            $.ajax({
+                url: "{% url 'ajax_load_districts' %}",
+                data: {
+                    'country_city': city
+                },
+                success: function (data) {
+                    let options = '<option value="">-- 選擇行政區 --</option>';
+                    for (let i = 0; i < data.districts.length; i++) {
+                        options += `<option value="${data.districts[i]}">${data.districts[i]}</option>`;
+                    }
+                    $('#district_town').html(options);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

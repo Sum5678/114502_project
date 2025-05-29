@@ -66,6 +66,11 @@ def nearest_police(request):
     # 顯示下拉選單與地圖的主頁面
     return render(request, 'nearest_police.html')
 
+def load_districts(request):
+    country_city = request.GET.get('country_city')
+    districts = list(TaiwanRegion.objects.filter(country_city=country_city).values_list('district_town', flat=True).distinct())
+    return JsonResponse({'districts': districts})
+
 def get_cities(request):
     cities = TaiwanRegion.objects.values_list('country_city', flat=True).distinct()
     return JsonResponse(list(cities), safe=False)
