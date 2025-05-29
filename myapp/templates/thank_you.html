@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>感謝您的填寫</title>
+    <style>
+        body {
+            background-color: #e0f7fa; /* 淺藍底 */
+            font-family: Arial, sans-serif;
+            padding: 30px;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            max-width: 700px;
+            margin: auto;
+        }
+        h1 {
+            color: #00796b;
+        }
+        p {
+            margin: 8px 0;
+        }
+        img {
+            max-width: 300px;
+            margin-top: 10px;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>感謝您的填寫！</h1>
+
+        <p><strong>帳號名稱：</strong>{{ user.username }}</p>
+        <p><strong>Email：</strong>{{ user.email }}</p>
+
+        {% if profile %}
+            <p><strong>姓名：</strong>{{ profile.default_nickname1 }}</p>
+            <p><strong>備用暱稱：</strong>{{ profile.default_nickname2 }}</p>
+            <p><strong>緊急聯絡人電話：</strong>{{ profile.emergency_contact_phone }}</p>
+            <p><strong>緊急聯絡人 Email：</strong>{{ profile.emergency_contact_gmail }}</p>
+            <p><strong>預設訊息：</strong>{{ profile.default_message }}</p>
+            <p><strong>自我介紹：</strong>{{ profile.self_intro }}</p>
+            <p><strong>狀態顏色：</strong>{{ profile.status_color }}</p>
+
+            <p><strong>上傳圖片：</strong></p>
+            {% if profile.user_images %}
+                <img src="{{ profile.user_images.url }}" alt="使用者圖片">
+            {% else %}
+                <p>尚未上傳圖片</p>
+            {% endif %}
+        {% else %}
+            <p>未找到您的使用者資料</p>
+        {% endif %}
+    </div>
+</body>
+</html>
