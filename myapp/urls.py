@@ -24,6 +24,7 @@ urlpatterns = [
     path('harassment_prevention/', views.harassment_prevention, name='harassment_prevention'),
     path('education/', views.education_page, name='education_page'),
     path('police/', views.nearest_police, name='nearest_police'),
+    path('police/ajax/districts/', views.load_districts, name='ajax_load_districts'),
     path('api/cities/', views.get_cities, name='get_cities'),
     path('api/districts/', views.get_districts, name='get_districts'),
     path('api/police/', views.get_police_by_district, name='get_police_by_district'),
@@ -38,7 +39,8 @@ urlpatterns = [
     path('mychatroom/', views.mychatroom, name='mychatroom'),
     path('community/', views.community, name='community'),
     path('face_detection/', views.face_detection_view, name='face_detection'), #人臉辨識
-       
+    
+    
 
     
 
