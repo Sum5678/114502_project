@@ -108,6 +108,8 @@ def get_police_by_district(request):
             })
     return JsonResponse({'data': data})
 
+
+#地圖顯示資料 0528
 @require_GET
 def get_police_by_district(request):
     district = request.GET.get('district')
@@ -127,6 +129,32 @@ def get_police_by_district(request):
         })
 
     return JsonResponse(data, safe=False)
+
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+import json
+
+@csrf_exempt
+def fake_incident_lookup(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            address = data.get('address', '')
+
+            # 模擬查詢結果
+            fake_result = {
+                'address': address,
+                'nearby_incidents': [
+                    {'id': 1, 'kind': '騷擾', 'description': '某人尾隨我', 'lat': 25.03, 'lng': 121.56},
+                    {'id': 2, 'kind': '偷拍', 'description': '有人拿手機偷拍', 'lat': 25.04, 'lng': 121.55},
+                ]
+            }
+
+            return JsonResponse(fake_result)
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    return JsonResponse({'error': 'POST request required'}, status=405)
 
 # 新增的匿名聊天頁面
 def anonymous_chat(request):
@@ -315,23 +343,35 @@ def profile(request):
     if user.is_authenticated:
         try:
             google_login = user.social_auth.filter(provider='google-oauth2').first()
-            extra_data = google_login.extra_data
-            google_id = google_login.uid
-            email = user.email
-            name = extra_data.get('name')
-            picture = extra_data.get('picture')
-
-            return render(request, 'profile.html', {
-                'google_id': google_id,
-                'email': email,
-                'name': name,
-                'picture': picture,
-            })
-        except UserSocialAuth.DoesNotExist:
-            return render(request, 'profile.html', {
-                'error': '此帳號不是由 Google 登入',
-            })
+            extra_data = google_login.extra_data if google_login else {}
+            return render(request, 'profile.html', {'extra_data': extra_data})
+        except Exception as e:
+            return render(request, 'profile.html', {'error': str(e)})
     return redirect('login')
+
+
+# def profile(request):
+#     user = request.user
+#     if user.is_authenticated:
+#         try:
+#             google_login = user.social_auth.filter(provider='google-oauth2').first()
+#             extra_data = google_login.extra_data
+#             google_id = google_login.uid
+#             email = user.email
+#             name = extra_data.get('name')
+#             picture = extra_data.get('picture')
+
+#             return render(request, 'profile.html', {
+#                 'google_id': google_id,
+#                 'email': email,
+#                 'name': name,
+#                 'picture': picture,
+#             })
+#         except UserSocialAuth.DoesNotExist:
+#             return render(request, 'profile.html', {
+#                 'error': '此帳號不是由 Google 登入',
+#             })
+#     return redirect('login')
 
 from django.contrib.auth import logout
 from django.shortcuts import redirect
@@ -353,16 +393,14 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
 from .models import ThisUserProfile
 from social_django.models import UserSocialAuth
-
 def create_user_profile(request):
     user = request.user
-    try:
-        # 嘗試從 Google 登入獲取 Gmail 地址
-        social_user = UserSocialAuth.objects.get(user=user, provider='google-oauth2')
+    social_user = UserSocialAuth.objects.filter(user=user, provider='google-oauth2').first()
+    if social_user:
         gmail = social_user.extra_data.get('email', '')
-    except UserSocialAuth.DoesNotExist:
-        # 如果沒有綁定 Google，則為空或使用其他方式獲取 Gmail
+    else:
         gmail = ''
+
 
     if request.method == 'POST':
         # 根據當前登入的使用者資料創建或更新 ThisUserProfile
@@ -417,7 +455,25 @@ def update_user_profile(request):
 
         return redirect('profile')  # 根據需要修改返回的 URL
 
-    return render(request, 'your_template.html')
+    return render(request, 'thank_you.html')
+
+##登入後顯示資料
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+from .models import ThisUserProfile  # 假設你的使用者資料模型叫這個
+
+@login_required
+def profile(request):
+    user = request.user
+    try:
+        profile = ThisUserProfile.objects.get(user=user)
+    except ThisUserProfile.DoesNotExist:
+        profile = None
+
+    return render(request, 'thank_you.html', {
+        'user': user,
+        'profile': profile
+    })
 
 
 
@@ -437,6 +493,21 @@ def incident_list(request):
         for incident in incidents
     ]
     return JsonResponse(data, safe=False)
+
+
+###地圖讀資料測試
+
+from django.shortcuts import render    
+
+def lookup_page(request):
+    return render(request, '0257.html')
+
+from django.shortcuts import render
+
+def show_map(request):
+    return render(request, '0257.html')
+
+
 
 
 #--------------------------------01--------------------------------------------------------
