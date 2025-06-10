@@ -65,6 +65,7 @@ urlpatterns = [
     path('lookup/', views.lookup_page, name='lookup_page'),#地圖顯示測試
     path('fake_incident_lookup/', views.fake_incident_lookup, name='fake_incident_lookup'),#地圖顯示測試
     path('map0257/', views.show_map, name='show_map'),#地圖顯示測試
+    path('<str:room_name>/', views.room, name='room'),
     # 其他路由
     #思璇
      #思璇
