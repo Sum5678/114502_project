@@ -551,3 +551,12 @@ def submit_report(request):
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)})
     return JsonResponse({'status': 'error', 'message': '只支援POST'})
+
+
+#test_0610chatroom 試寫聊天室
+from django.shortcuts import render
+
+def room(request, room_name):
+    return render(request, 'test_0610chatroom', {
+        'room_name': room_name
+    })
