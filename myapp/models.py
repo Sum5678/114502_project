@@ -125,6 +125,16 @@ class PoliceAddress(models.Model):
     def __str__(self):
         return self.分局名稱
     
+
+from django.db import models
+
+class TaiwanRegion(models.Model):
+    zipcode = models.CharField(max_length=3)
+    country_city = models.CharField(max_length=50)
+    district_town = models.CharField(max_length=50)
+
+    class Meta:
+        db_table = 'taiwan_regions'
 # ------------------------- Pemap 回報資料模型（對應 pemap_all 資料表） -------------------------
 # models.py
 from django.db import models
