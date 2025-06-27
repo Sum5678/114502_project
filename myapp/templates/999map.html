@@ -15,6 +15,7 @@
 
     <script>
     function initMap() {
+        console.log("initMap called");
         const center = { lat: 25.055, lng: 121.576 };
         const map = new google.maps.Map(document.getElementById("map"), {
             zoom: 13,
@@ -22,23 +23,34 @@
         });
 
         fetch("{% url 'reports_json' %}")
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) throw new Error("Network response was not ok");
+                return response.json();
+            })
             .then(data => {
+                console.log("取得報告資料:", data);
                 data.forEach(report => {
-                    const marker = new google.maps.Marker({
-                        position: { lat: report.latitude, lng: report.longitude },
-                        map: map,
-                        title: report.display_name
-                    });
-                    const infowindow = new google.maps.InfoWindow({
-                        content: `<strong>${report.display_name}</strong><br>
-                                  原因: ${report.reason}<br>
-                                  時間: ${report.time_created}`
-                    });
-                    marker.addListener('click', () => {
-                        infowindow.open(map, marker);
-                    });
+                    if (typeof report.latitude === 'number' && typeof report.longitude === 'number') {
+                        const marker = new google.maps.Marker({
+                            position: { lat: report.latitude, lng: report.longitude },
+                            map: map,
+                            title: report.display_name
+                        });
+                        const infowindow = new google.maps.InfoWindow({
+                            content: `<strong>${report.display_name}</strong><br>
+                                      原因: ${report.reason}<br>
+                                      時間: ${report.time_created}`
+                        });
+                        marker.addListener('click', () => {
+                            infowindow.open(map, marker);
+                        });
+                    } else {
+                        console.warn("經緯度格式錯誤:", report);
+                    }
                 });
+            })
+            .catch(error => {
+                console.error("fetch 錯誤:", error);
             });
     }
     </script>
@@ -48,3 +60,140 @@
     </script>
 </body>
 </html>
+
+
+
+
+<!-- 自訂意標籤的寫法,但不知道為甚麼就標註不到了 
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8" />
+    <title>動物受傷報告地圖（優化版）</title>
+    <style>
+        #map {
+            height: 600px;
+            width: 100%;
+        }
+        .custom-marker {
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            border: 2px solid white;
+            box-shadow: 0 0 6px rgba(0,0,0,0.3);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+            user-select: none;
+            transition: box-shadow 0.3s ease;
+        }
+        .custom-marker:hover {
+            box-shadow: 0 0 12px rgba(0,0,0,0.7);
+        }
+    </style>
+</head>
+<body>
+    <h1>動物受傷報告地圖（優化版）</h1>
+    <div id="map"></div>
+
+    <script>
+    // 根據動物種類回傳對應顏色
+    function getMarkerColor(kind) {
+        const colors = {
+            '動物 - 受傷動物': '#e74c3c',  // 紅色
+            '動物 - 流浪動物': '#27ae60',  // 綠色
+            '動物 - 其他': '#2980b9'       // 藍色
+        };
+        return colors[kind] || '#7f8c8d'; // 預設灰色
+    }
+
+    // 建立自訂標記元素
+    function createMarkerContent(kind) {
+        const div = document.createElement('div');
+        div.className = 'custom-marker';
+        div.style.backgroundColor = getMarkerColor(kind);
+        div.textContent = '🐾';  // 你可以換成 emoji 或文字
+        return div;
+    }
+
+    // 建立 InfoWindow 內容
+    function createInfoContent(report) {
+        return `
+            <div>
+                <strong>${report.display_name}</strong><br/>
+                <em>類型：</em>${report.kind}<br/>
+                <em>原因：</em>${report.reason}<br/>
+                <em>時間：</em>${new Date(report.time_created).toLocaleString()}
+            </div>
+        `;
+    }
+
+    async function initMap() {
+        try {
+            // 載入 Google Maps 相關 library
+            const { Map } = await google.maps.importLibrary("maps");
+            const { AdvancedMarkerElement } = await google.maps.importLibrary("marker");
+
+            const center = { lat: 25.055, lng: 121.576 };
+            const map = new Map(document.getElementById("map"), {
+                zoom: 13,
+                center: center
+            });
+
+            // 從後端取得資料
+            const response = await fetch("{% url 'reports_json' %}");
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const data = await response.json();
+
+            if (data.length === 0) {
+                alert("目前沒有已審核的動物受傷報告資料。");
+                return;
+            }
+
+            data.forEach(report => {
+                if (typeof report.latitude !== 'number' || typeof report.longitude !== 'number') {
+                    console.warn('經緯度格式錯誤:', report);
+                    return;
+                }
+
+                // 建立自訂標記內容
+                const markerContent = createMarkerContent(report.kind);
+
+                // 建立標記
+                const marker = new AdvancedMarkerElement({
+                    map,
+                    position: { lat: report.latitude, lng: report.longitude },
+                    content: markerContent,
+                    title: report.display_name
+                });
+
+                // 建立 InfoWindow
+                const infowindow = new google.maps.InfoWindow({
+                    content: createInfoContent(report)
+                });
+
+                // 點擊標記顯示 InfoWindow
+                markerContent.addEventListener('click', () => {
+                    infowindow.open(map, marker);
+                });
+            });
+
+        } catch (error) {
+            console.error("初始化地圖或取得資料時發生錯誤:", error);
+            alert("載入地圖資料時發生錯誤，請稍後再試。");
+        }
+    }
+    </script>
+
+    <script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAUuPZMMJvgVWftmqVyzfX8mKTwMX4kA6o&callback=initMap&libraries=marker,maps">
+    </script>
+</body>
+</html>
+
+
+-->
