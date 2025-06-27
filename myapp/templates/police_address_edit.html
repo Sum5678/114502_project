@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ action }}警局資料</title>
+</head>
+<body>
+<h1>{{ action }}警局資料</h1>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">儲存</button>
+</form>
+<a href="{% url 'police_address_list' %}">返回列表</a>
+</body>
+</html>

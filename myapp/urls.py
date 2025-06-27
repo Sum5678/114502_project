@@ -29,6 +29,10 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('admin/region/', views.taiwan_regions_admin, name='taiwan_regions_admin'),
     path('taiwan-regions-admin/', views.taiwan_regions_admin, name='taiwan_regions_admin'),
+    path('police-address/', views.police_address_list, name='police_address_list'),
+    path('police-address/add/', views.police_address_add, name='police_address_add'),
+    path('police-address/edit/<str:pk>/', views.police_address_edit, name='police_address_edit'),
+    path('police-address/delete/<str:pk>/', views.police_address_delete, name='police_address_delete'),
     path('anonymous-chat/', views.anonymous_chat, name='anonymous-chat'),  # anonymous-chat 頁面
     path('index35/', views.index35, name='index35'),  # 新增 index35.html 路由
     path('map/', views.map_view, name='map'),  # 添加 map.html 路由
