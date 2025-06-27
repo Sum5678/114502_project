@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>審核資料列表</title>
+  <style>
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background-color: #f0f8ff; /* 淺藍底 */
+      padding: 20px;
+    }
+
+    h1 {
+      color: #336699;
+      text-align: center;
+    }
+
+    table {
+      width: 80%;
+      margin: auto;
+      border-collapse: collapse;
+      background-color: #ffffff;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    th, td {
+      border: 1px solid #cce;
+      padding: 12px;
+      text-align: center;
+    }
+
+    thead {
+      background-color: #cceeff;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f9fcff;
+    }
+
+    a {
+      color: #0066cc;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    td[colspan="4"] {
+      color: #888;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <h1>審核資料列表</h1>
+  <table>
+    <thead>
+      <tr>
+        <th>p_id</th>
+        <th>display_name</th>
+        <th>review_status</th>
+        <th>操作</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for obj in pemap_list %}
+      <tr>
+        <td>{{ obj.p_id }}</td>
+        <td>{{ obj.display_name }}</td>
+        <td>{{ obj.get_review_status_display }}</td>
+        <td><a href="{% url 'pemap_detail' obj.p_id %}">審核/修改</a></td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="4">沒有資料</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</body>
+</html>
