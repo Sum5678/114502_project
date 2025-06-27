@@ -577,7 +577,7 @@ def room(request, room_name):
 from django.shortcuts import render
 
 def map_view(request):
-    return render(request, 'myapp/999map.html')
+    return render(request, '999map.html')
 
 
 
@@ -585,7 +585,7 @@ from django.http import JsonResponse
 from .models import PemapAll  # 改成引用 PemapAll
 
 def reports_json(request):
-    reports = PemapAll.objects.filter(review_status='已審核').values(
+    reports = PemapAll.objects.filter(review_status='待審核').values(
         'latitude', 'longitude', 'display_name', 'reason', 'time_created'
     )
     data = list(reports)
