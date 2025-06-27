@@ -84,6 +84,32 @@ def get_police_by_district(request):
 
     return JsonResponse(data, safe=False)
 
+
+#縣市後端
+# regions/views.py
+from django.shortcuts import render, redirect, get_object_or_404
+from .models import TaiwanRegion
+from .region_forms import TaiwanRegionForm
+
+def taiwan_regions_admin(request):
+    if request.method == 'POST':
+        if 'edit_id' in request.POST and request.POST['edit_id']:
+            region = get_object_or_404(TaiwanRegion, id=request.POST['edit_id'])
+            form = TaiwanRegionForm(request.POST, instance=region)
+        else:
+            form = TaiwanRegionForm(request.POST)
+
+        if form.is_valid():
+            form.save()
+            return redirect('taiwan_regions_admin')
+    elif 'delete_id' in request.GET:
+        TaiwanRegion.objects.filter(id=request.GET['delete_id']).delete()
+        return redirect('taiwan_regions_admin')
+
+    data = TaiwanRegion.objects.all().order_by('country_city', 'district_town')
+    return render(request, 'taiwan_regions_admin.html', {'regions': data})
+
+
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
