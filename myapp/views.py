@@ -31,6 +31,8 @@ def password(request):
 def login(request):
     return render(request, 'login.html')
 
+
+
 # 布局 - 靜態頁面
 def layout_static(request):
     return render(request, 'layout-static.html')
@@ -585,8 +587,60 @@ from django.http import JsonResponse
 from .models import PemapAll  # 改成引用 PemapAll
 
 def reports_json(request):
-    reports = PemapAll.objects.filter(review_status='待審核').values(
+    reports = PemapAll.objects.filter(review_status='0').values(
         'latitude', 'longitude', 'display_name', 'reason', 'time_created'
     )
     data = list(reports)
     return JsonResponse(data, safe=False)
+
+
+
+##處理管理員對pemap資料狀態
+from django.shortcuts import get_object_or_404, redirect
+from django.utils import timezone
+from django.contrib import messages
+from django.contrib.admin.views.decorators import staff_member_required
+from .models import PemapAll
+
+
+def pemap_approve(request, p_id, stage):
+    obj = get_object_or_404(PemapAll, p_id=p_id)
+    if stage == 1 and obj.review_status == 0:
+        obj.review_status = 1
+        obj.time_reviewed = timezone.now()
+        obj.save()
+        messages.success(request, f"第一次審核通過: {obj}")
+    elif stage == 2 and obj.review_status == 1:
+        obj.review_status = 2
+        obj.time_reviewed = timezone.now()
+        obj.save()
+        messages.success(request, f"第二次審核通過: {obj}")
+    else:
+        messages.error(request, "審核狀態不符，無法審核")
+    return redirect(request.META.get('HTTP_REFERER', '/admin/'))\
+    
+
+from django.views.generic import ListView, UpdateView
+from django.urls import reverse_lazy
+from django.utils import timezone
+from django.contrib.admin.views.decorators import staff_member_required
+from django.utils.decorators import method_decorator
+from .models import PemapAll
+
+# @method_decorator(staff_member_required, name='dispatch')
+class PemapAllListView(ListView):
+    model = PemapAll
+    template_name = 'pemapall_list.html'
+    context_object_name = 'pemap_list'
+
+# @method_decorator(staff_member_required, name='dispatch')
+class PemapAllUpdateView(UpdateView):
+    model = PemapAll
+    fields = ['review_status']
+    template_name = 'pemapall_update.html'
+    pk_url_kwarg = 'p_id'
+    success_url = reverse_lazy('pemap_list')
+
+    def form_valid(self, form):
+        form.instance.time_reviewed = timezone.now()
+        return super().form_valid(form)

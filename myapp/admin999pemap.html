@@ -1,0 +1,39 @@
+{% extends "admin/change_list.html" %}
+
+{% block content %}  ##處理管理員對pemap資料狀態
+<h1>審核列表</h1>
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>p_id</th>
+      <th>poster_id</th>
+      <th>display_name</th>
+      <th>kind</th>
+      <th>review_status</th>
+      <th>time_reviewed</th>
+      <th>操作</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for obj in cl.result_list %}
+    <tr>
+      <td>{{ obj.p_id }}</td>
+      <td>{{ obj.poster_id }}</td>
+      <td>{{ obj.display_name }}</td>
+      <td>{{ obj.kind }}</td>
+      <td>{{ obj.get_review_status_display }}</td>
+      <td>{{ obj.time_reviewed }}</td>
+      <td>
+        {% if obj.review_status == 0 %}
+          <a href="{% url 'admin:pemap_approve' obj.p_id 1 %}" class="button">第一次審核通過</a>
+        {% elif obj.review_status == 1 %}
+          <a href="{% url 'admin:pemap_approve' obj.p_id 2 %}" class="button">第二次審核通過</a>
+        {% else %}
+          <span>已完成審核</span>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

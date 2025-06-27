@@ -131,6 +131,7 @@ from django.db import models
 from django.utils import timezone
 
 class PemapAll(models.Model):
+    # 你的欄位定義
     p_id = models.AutoField(primary_key=True)
     poster_id = models.CharField(max_length=100)
     display_name = models.CharField(max_length=100)
@@ -142,11 +143,15 @@ class PemapAll(models.Model):
     img_url = models.URLField()
     time_created = models.DateTimeField(auto_now_add=True)
     time_reviewed = models.DateTimeField(null=True, blank=True)
-    review_status = models.IntegerField(default=0)  # 0:未審核, 1:第一次審核通過, 2:第二次審核通過
+    review_status = models.IntegerField(choices=(
+        (0, '未審核'),
+        (1, '第一次審核通過'),
+        (2, '第二次審核通過'),
+    ), default=0)
 
-    def __str__(self):
-        return f"{self.display_name} ({self.p_id})"
-
+    class Meta:
+        db_table = 'pemap_all'  # 指定資料表名稱
+        # managed = False  # 如果你不想 Django 管理此表（不會自動建立或修改資料表）
 
 
 

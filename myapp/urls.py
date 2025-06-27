@@ -4,6 +4,8 @@ from django.contrib import admin
 from myapp import views
 from django.conf import settings
 from django.conf.urls.static import static
+from django.urls import path
+from .views import PemapAllListView, PemapAllUpdateView
 
 urlpatterns = [
     path('report/', views.report_view, name='report'),
@@ -42,7 +44,7 @@ urlpatterns = [
     
     
 
-    
+
 
     #想的
     path('announcement/', views.announcement, name='announcement'),
@@ -67,6 +69,11 @@ urlpatterns = [
     path('map0257/', views.show_map, name='show_map'),#地圖顯示測試
     path('999map/', views.map_view, name='map_view'),#地圖顯示測試again(pemap_all的)
     path('api/reports/', views.reports_json, name='reports_json'),#地圖顯示測試again(pemap_all的)
+    
+    path('admin/pemap/approve/<int:p_id>/<int:stage>/', views.pemap_approve, name='pemap_approve'),  ##處理管理員對pemap資料狀態
+    path('pemap/', PemapAllListView.as_view(), name='pemap_list'),##處理管理員對pemap資料狀態
+    path('pemap/<int:p_id>/edit/', PemapAllUpdateView.as_view(), name='pemap_detail'),##處理管理員對pemap資料狀態
+
     path('<str:room_name>/', views.room, name='room'),
 
     # 其他路由
