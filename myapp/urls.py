@@ -23,11 +23,7 @@ urlpatterns = [
     path('404.html', views.error_404, name='404'),
     path('harassment_prevention/', views.harassment_prevention, name='harassment_prevention'),
     path('education/', views.education_page, name='education_page'),
-    path('police/', views.nearest_police, name='nearest_police'),
-    path('police/ajax/districts/', views.load_districts, name='ajax_load_districts'),
-    path('api/cities/', views.get_cities, name='get_cities'),
-    path('api/districts/', views.get_districts, name='get_districts'),
-    path('api/police/', views.get_police_by_district, name='get_police_by_district'),
+   
     path('anonymous-chat/', views.anonymous_chat, name='anonymous-chat'),  # anonymous-chat 頁面
     path('index35/', views.index35, name='index35'),  # 新增 index35.html 路由
     path('map/', views.map_view, name='map'),  # 添加 map.html 路由
