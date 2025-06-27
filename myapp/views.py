@@ -62,52 +62,6 @@ def harassment_prevention(request):
 def education_page(request):
     return render(request, 'education_page.html')
 
-def nearest_police(request):
-    # 顯示下拉選單與地圖的主頁面
-    return render(request, 'nearest_police.html')
-
-def load_districts(request):
-    country_city = request.GET.get('country_city')
-    districts = list(TaiwanRegion.objects.filter(country_city=country_city).values_list('district_town', flat=True).distinct())
-    return JsonResponse({'districts': districts})
-
-def get_cities(request):
-    cities = TaiwanRegion.objects.values_list('country_city', flat=True).distinct()
-    return JsonResponse(list(cities), safe=False)
-
-def get_city_district_data(request):
-    # 從資料庫撈出所有縣市與區
-    data = {}
-    regions = TaiwanRegion.objects.all()
-    for region in regions:
-        city = region.county_city
-        district = region.district_town
-        if city not in data:
-            data[city] = []
-        data[city].append(district)
-    return JsonResponse(data)
-
-def get_districts(request):
-    city = request.GET.get('city')
-    districts = TaiwanRegion.objects.filter(country_city=city).values_list('district_town', flat=True).distinct()
-    return JsonResponse(list(districts), safe=False)
-
-def get_police_by_district(request):
-    district = request.GET.get('district')
-    print(f"收到 district: {district}")  # ← 加這個看看有沒有收到資料
-
-    data = []
-    if district:
-        results = TaiwanRegion.objects.filter(district_town=district)
-        for r in results:
-            data.append({
-                'station': r.police_station,
-                'phone': r.phone,
-                'lat': r.latitude,
-                'lng': r.longitude,
-            })
-    return JsonResponse({'data': data})
-
 
 #地圖顯示資料 0528
 @require_GET
