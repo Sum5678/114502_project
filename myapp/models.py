@@ -143,3 +143,7 @@ class PemapAll(models.Model):
 
     class Meta:
         db_table = 'pemap_all'
+
+
+##測試資料能不能放到地圖上
+##暫時使用的是沒審核的pemap_all資料庫

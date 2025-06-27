@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>動物受傷報告地圖</title>
+    <style>
+        #map {
+            height: 600px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1>動物受傷報告地圖</h1>
+    <div id="map"></div>
+
+    <script>
+    function initMap() {
+        const center = { lat: 25.055, lng: 121.576 };
+        const map = new google.maps.Map(document.getElementById("map"), {
+            zoom: 13,
+            center: center
+        });
+
+        fetch("{% url 'reports_json' %}")
+            .then(response => response.json())
+            .then(data => {
+                data.forEach(report => {
+                    const marker = new google.maps.Marker({
+                        position: { lat: report.latitude, lng: report.longitude },
+                        map: map,
+                        title: report.display_name
+                    });
+                    const infowindow = new google.maps.InfoWindow({
+                        content: `<strong>${report.display_name}</strong><br>
+                                  原因: ${report.reason}<br>
+                                  時間: ${report.time_created}`
+                    });
+                    marker.addListener('click', () => {
+                        infowindow.open(map, marker);
+                    });
+                });
+            });
+    }
+    </script>
+
+    <script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAUuPZMMJvgVWftmqVyzfX8mKTwMX4kA6o&callback=initMap">
+    </script>
+</body>
+</html>

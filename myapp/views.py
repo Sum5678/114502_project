@@ -557,6 +557,36 @@ def submit_report(request):
 from django.shortcuts import render
 
 def room(request, room_name):
-    return render(request, 'test_0610chatroom', {
+    return render(request, 'test_0610chatroom.html', {
         'room_name': room_name
     })
+
+
+##測試資料能不能放到地圖上
+##暫時使用的是沒審核的pemap_all資料庫
+# from django.http import JsonResponse
+# from .models import Report
+
+# def reports_json(request):
+#     reports = Report.objects.filter(review_status='已審核').values(
+#         'latitude', 'longitude', 'display_name', 'reason', 'time_created'
+#     )
+#     data = list(reports)
+#     return JsonResponse(data, safe=False)
+
+from django.shortcuts import render
+
+def map_view(request):
+    return render(request, 'myapp/999map.html')
+
+
+
+from django.http import JsonResponse
+from .models import PemapAll  # 改成引用 PemapAll
+
+def reports_json(request):
+    reports = PemapAll.objects.filter(review_status='已審核').values(
+        'latitude', 'longitude', 'display_name', 'reason', 'time_created'
+    )
+    data = list(reports)
+    return JsonResponse(data, safe=False)
