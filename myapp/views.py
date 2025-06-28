@@ -111,6 +111,43 @@ def taiwan_regions_admin(request):
     data = TaiwanRegion.objects.all().order_by('country_city', 'district_town')
     return render(request, 'taiwan_regions_admin.html', {'regions': data})
 
+#警局地址後端
+from django.shortcuts import render, get_object_or_404, redirect
+from .models import PoliceAddress
+from .police_forms import PoliceAddressForm
+
+def police_address_list(request):
+    addresses = PoliceAddress.objects.all().order_by('precinct_name')
+    return render(request, 'police_address_admin.html', {'addresses': addresses})
+
+def police_address_add(request):
+    if request.method == 'POST':
+        form = PoliceAddressForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('police_address_list')
+    else:
+        form = PoliceAddressForm()
+    return render(request, 'police_address_edit.html', {'form': form, 'action': '新增'})
+
+def police_address_edit(request, pk):
+    address = get_object_or_404(PoliceAddress, pk=pk)
+    if request.method == 'POST':
+        form = PoliceAddressForm(request.POST, instance=address)
+        if form.is_valid():
+            form.save()
+            return redirect('police_address_list')
+    else:
+        form = PoliceAddressForm(instance=address)
+    return render(request, 'police_address_edit.html', {'form': form, 'action': '編輯'})
+
+def police_address_delete(request, pk):
+    address = get_object_or_404(PoliceAddress, pk=pk)
+    if request.method == 'POST':
+        address.delete()
+        return redirect('police_address_list')
+    return render(request, 'police_address_confirm_delete.html', {'address': address})
+
 
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt

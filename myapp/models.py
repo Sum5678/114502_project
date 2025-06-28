@@ -135,6 +135,20 @@ class TaiwanRegion(models.Model):
 
     class Meta:
         db_table = 'taiwan_regions'
+
+class PoliceAddress(models.Model):
+    precinct_name = models.TextField()
+    zipcode = models.CharField(max_length=3)
+    address = models.TextField()
+    phone = models.TextField()
+    POINT_X = models.FloatField()  # DOUBLE 對應 FloatField
+    POINT_Y = models.FloatField()
+
+    def __str__(self):
+        return f"{self.precinct_name} ({self.zipcode})"
+
+    class Meta:
+        db_table = 'PoliceAddress'
 # ------------------------- Pemap 回報資料模型（對應 pemap_all 資料表） -------------------------
 # models.py
 from django.db import models
