@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>刪除警局資料</title>
+</head>
+<body>
+<h1>刪除警局資料</h1>
+<p>確定要刪除警局：<strong>{{ address.precinct_name }}</strong> 嗎？</p>
+
+<form method="post">
+    {% csrf_token %}
+    <button type="submit">確定刪除</button>
+    <a href="{% url 'police_address_list' %}">取消</a>
+</form>
+</body>
+</html>
