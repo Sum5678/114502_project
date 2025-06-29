@@ -692,6 +692,10 @@ from django.http import JsonResponse
 import json
 import re
 
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+import json
+
 @csrf_exempt
 def ai_judge(request):
     if request.method != 'POST':
@@ -704,13 +708,13 @@ def ai_judge(request):
         if not description:
             return JsonResponse({'result': 0, 'reason': '描述為空'})
 
-        # 敏感詞庫 (可自己擴充)
+        # 敏感詞庫（可擴充）
         categories = {
             '仇恨言論': ['仇恨', '恨死', '殺光', '滅絕'],
             '恐懼煽動': ['恐怖', '害怕', '恐慌', '嚇死'],
             '暴力': ['暴力', '打死', '砍', '攻擊', '虐待'],
             '歧視': ['歧視', '種族主義', '排擠', '偏見'],
-            '不相關': ['天氣', '食物', '電影', '遊戲'],  # 與案件無關字詞示例
+            '不相關': ['天氣', '食物', '電影', '遊戲'],  # 與案件無關的詞
         }
 
         found_issues = []
@@ -718,18 +722,23 @@ def ai_judge(request):
         # 檢查敏感詞
         for category, words in categories.items():
             for w in words:
-                if re.search(r'\b' + re.escape(w) + r'\b', description):
+                if w in description:
                     found_issues.append(f"{category} (包含詞：{w})")
 
-        # 簡單檢查是否有提及案件相關字詞，若都沒提及可視為「不相關」
-        case_related_keywords = ['案件', '事件', '警方', '嫌疑人', '報案', '證據']
-        if not any(re.search(r'\b' + kw + r'\b', description) for kw in case_related_keywords):
+        # 案件相關詞（擴充版，並改用 in 判斷）
+        case_related_keywords = [
+            '案件', '事件', '警方', '警察', '報警', '報案', '證據',
+            '被跟蹤', '跟蹤', '尾隨', '偷拍', '性騷擾', '偷窺', '侵入',
+            '陌生男子', '紅衣男子', '追蹤', '恐嚇', '求助', '監視'
+        ]
+        if not any(kw in description for kw in case_related_keywords):
             found_issues.append("內容與案件描述無明顯相關")
 
-        # 文本過短判斷 (字數少於10視為不充分)
+        # 判斷是否過短
         if len(description) < 10:
             found_issues.append("描述內容過短，不足以判斷")
 
+        # 回傳結果
         if found_issues:
             reason = "，".join(found_issues)
             return JsonResponse({'result': 0, 'reason': reason})
@@ -740,7 +749,10 @@ def ai_judge(request):
         return JsonResponse({'result': 0, 'reason': f"系統錯誤：{str(e)}"})
 
 
+
 ###容易爆額度先關
+# 原本要用openai的chatgpt但我沒付費額度會不夠
+# 就先用上面比較簡單的判斷方式
 
 # @csrf_exempt
 # def ai_judge(request):
