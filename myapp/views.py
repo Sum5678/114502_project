@@ -672,8 +672,6 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
-import openai
-
 
 
 def show_judge_page(request):
@@ -685,8 +683,8 @@ import openai
 from openai import OpenAI
 
 #OpenAI API 金鑰
-client = OpenAI(api_key="BJDFZE_i7da68A"  
-)
+
+client = OpenAI(api_key="我的先拿下")
 
 
 from django.views.decorators.csrf import csrf_exempt
