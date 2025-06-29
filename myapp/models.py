@@ -169,8 +169,9 @@ class PemapAll(models.Model):
     time_reviewed = models.DateTimeField(null=True, blank=True)
     review_status = models.IntegerField(choices=(
         (0, '未審核'),
-        (1, '第一次審核通過'),
-        (2, '第二次審核通過'),
+        (1, 'ai審核通過'),
+        (2, 'ai審核未通過,還須人工審核'),
+        (3, '人工審核通過'),
     ), default=0)
 
     class Meta:
