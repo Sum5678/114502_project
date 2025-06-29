@@ -77,10 +77,6 @@ urlpatterns = [
     path('pemap/', PemapAllListView.as_view(), name='pemap_list'),##處理管理員對pemap資料狀態
     path('pemap/<int:p_id>/edit/', PemapAllUpdateView.as_view(), name='pemap_detail'),##處理管理員對pemap資料狀態
 
-    
-    path('99judge/', views.show_judge_page, name='show_judge_page'),#ai檢測
-    path('ai_judge/', views.ai_judge, name='ai_judge'),#ai檢測
-
     path('<str:room_name>/', views.room, name='room'),
 
     # 其他路由
