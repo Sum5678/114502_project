@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>事件描述判斷</title>
+  <style>
+    /* 全頁背景白色 */
+    body {
+      background-color: #f0f4ff;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      color: #003366;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+      min-height: 100vh;
+      margin: 0;
+    }
+
+    h1 {
+      color: #00509e;
+      margin-bottom: 30px;
+      font-weight: 700;
+      text-shadow: 1px 1px 2px #b3d1ff;
+    }
+
+    textarea {
+      width: 100%;
+      max-width: 600px;
+      height: 140px;
+      padding: 15px;
+      border: 2px solid #00509e;
+      border-radius: 8px;
+      font-size: 1rem;
+      resize: vertical;
+      box-shadow: inset 1px 1px 5px #cfe3ff;
+      transition: border-color 0.3s ease;
+    }
+    textarea:focus {
+      outline: none;
+      border-color: #003366;
+      box-shadow: 0 0 8px #00509e88;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 12px 28px;
+      font-size: 1.1rem;
+      color: white;
+      background: linear-gradient(90deg, #00509e, #0077cc);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 4px 10px #00509eaa;
+      transition: background 0.3s ease;
+    }
+    button:hover {
+      background: linear-gradient(90deg, #0077cc, #003366);
+      box-shadow: 0 6px 14px #003366cc;
+    }
+    button:active {
+      background: #003366;
+      box-shadow: none;
+    }
+
+    #result {
+      margin-top: 25px;
+      font-size: 1.2rem;
+      font-weight: 600;
+      min-height: 1.5em;
+      max-width: 600px;
+      text-align: center;
+      padding: 12px;
+      border-radius: 8px;
+      color: white;
+    }
+    #result.success {
+      background-color: #007700cc;
+      box-shadow: 0 0 10px #007700bb;
+    }
+    #result.error {
+      background-color: #cc0000cc;
+      box-shadow: 0 0 10px #cc0000bb;
+    }
+  </style>
+</head>
+<body>
+  <h1>事件描述 AI 判斷</h1>
+
+  <textarea id="description" placeholder="請輸入事件描述內容..."></textarea><br>
+
+  <button onclick="submitDescription()">送出並判斷</button>
+
+  <p id="result"></p>
+
+  <script>
+    function submitDescription() {
+      const description = document.getElementById("description").value;
+
+      fetch('/ai_judge/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ description: description })
+      })
+      .then(response => response.json())
+      .then(data => {
+        const resultElem = document.getElementById("result");
+        if (data.result === 1) {
+          resultElem.innerText = "✅ 通過審核";
+          resultElem.className = "success";
+        } else {
+          resultElem.innerText = "❌ 未通過審核：" + data.reason;
+          resultElem.className = "error";
+        }
+      })
+      .catch(error => {
+        const resultElem = document.getElementById("result");
+        resultElem.innerText = "❌ 發生錯誤：" + error;
+        resultElem.className = "error";
+      });
+    }
+  </script>
+</body>
+</html>

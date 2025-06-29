@@ -3,6 +3,8 @@ from .models import TaiwanRegion, PoliceAddress #資料表的
 from django.views.decorators.http import require_GET
 from django.http import JsonResponse
 from .forms import AutoDialForm
+from django.views.decorators.csrf import csrf_exempt
+
 
 
 def report_view(request):
@@ -661,3 +663,125 @@ class PemapAllUpdateView(UpdateView):
     def form_valid(self, form):
         form.instance.time_reviewed = timezone.now()
         return super().form_valid(form)
+
+
+#================================================================================================
+# #仇恨言論檢測模組
+
+from django.shortcuts import render
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+import json
+import openai
+
+
+
+def show_judge_page(request):
+    return render(request, '99judge.html')
+
+
+
+import openai
+from openai import OpenAI
+
+#OpenAI API 金鑰
+client = OpenAI(api_key="BJDFZE_i7da68A"  
+)
+
+
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+import json
+import re
+
+@csrf_exempt
+def ai_judge(request):
+    if request.method != 'POST':
+        return JsonResponse({'result': 0, 'reason': '請使用 POST 請求'})
+
+    try:
+        data = json.loads(request.body)
+        description = data.get('description', '').strip()
+
+        if not description:
+            return JsonResponse({'result': 0, 'reason': '描述為空'})
+
+        # 敏感詞庫 (可自己擴充)
+        categories = {
+            '仇恨言論': ['仇恨', '恨死', '殺光', '滅絕'],
+            '恐懼煽動': ['恐怖', '害怕', '恐慌', '嚇死'],
+            '暴力': ['暴力', '打死', '砍', '攻擊', '虐待'],
+            '歧視': ['歧視', '種族主義', '排擠', '偏見'],
+            '不相關': ['天氣', '食物', '電影', '遊戲'],  # 與案件無關字詞示例
+        }
+
+        found_issues = []
+
+        # 檢查敏感詞
+        for category, words in categories.items():
+            for w in words:
+                if re.search(r'\b' + re.escape(w) + r'\b', description):
+                    found_issues.append(f"{category} (包含詞：{w})")
+
+        # 簡單檢查是否有提及案件相關字詞，若都沒提及可視為「不相關」
+        case_related_keywords = ['案件', '事件', '警方', '嫌疑人', '報案', '證據']
+        if not any(re.search(r'\b' + kw + r'\b', description) for kw in case_related_keywords):
+            found_issues.append("內容與案件描述無明顯相關")
+
+        # 文本過短判斷 (字數少於10視為不充分)
+        if len(description) < 10:
+            found_issues.append("描述內容過短，不足以判斷")
+
+        if found_issues:
+            reason = "，".join(found_issues)
+            return JsonResponse({'result': 0, 'reason': reason})
+
+        return JsonResponse({'result': 1})
+
+    except Exception as e:
+        return JsonResponse({'result': 0, 'reason': f"系統錯誤：{str(e)}"})
+
+
+###容易爆額度先關
+
+# @csrf_exempt
+# def ai_judge(request):
+#     if request.method == 'POST':
+#         try:
+#             data = json.loads(request.body)
+#             description = data.get('description', '')
+
+#             if not description.strip():
+#                 return JsonResponse({'result': 0, 'reason': '描述為空'})
+
+#             prompt = f"""
+# 請判斷以下文字描述是否過於主觀，包含仇恨言論、恐懼煽動，或者不當內容？或是對與案件描述太無關？
+# 若沒有，請只回覆「通過」；若有問題，請說明理由。
+
+# 文字描述：
+# {description}
+# """
+
+#             response = client.chat.completions.create(
+#                 model="gpt-3.5-turbo",
+#                 messages=[
+#                     {"role": "user", "content": prompt}
+#                 ],
+#                 temperature=0
+#             )
+
+#             reply = response.choices[0].message.content.strip()
+
+#             if "通過" in reply:
+#                 return JsonResponse({'result': 1})
+#             else:
+#                 return JsonResponse({'result': 0, 'reason': reply})
+
+#         except Exception as e:
+#             return JsonResponse({'result': 0, 'reason': f"系統錯誤：{str(e)}"})
+
+#     return JsonResponse({'result': 0, 'reason': '請使用 POST 請求'})
+###容易爆額度先關
+
+
+#================================================================================================
