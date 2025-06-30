@@ -73,6 +73,43 @@ def education_page(request):
     pages = EducationPage.objects.all()
     return render(request, 'education_page.html', {'pages': pages})
 
+#教育網頁新增改刪
+rom django.shortcuts import render, redirect, get_object_or_404
+from .models import EducationPage
+from .education_forms import EducationPageUploadForm
+
+def education_list(request):
+    pages = EducationPage.objects.all()
+    return render(request, 'education_crud/education_list.html', {'pages': pages})
+
+def education_create(request):
+    if request.method == 'POST':
+        form = EducationPageUploadForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            return redirect('education_list')
+    else:
+        form = EducationPageUploadForm()
+    return render(request, 'education_crud/education_form.html', {'form': form})
+
+def education_update(request, pk):
+    page = get_object_or_404(EducationPage, pk=pk)
+    if request.method == 'POST':
+        form = EducationPageUploadForm(request.POST, request.FILES, instance=page)
+        if form.is_valid():
+            form.save()
+            return redirect('education_list')
+    else:
+        form = EducationPageUploadForm(instance=page)
+    return render(request, 'education_crud/education_form.html', {'form': form})
+
+def education_delete(request, pk):
+    page = get_object_or_404(EducationPage, pk=pk)
+    if request.method == 'POST':
+        page.delete()
+        return redirect('education_list')
+    return render(request, 'education_crud/education_confirm_delete.html', {'page': page})
+
 #地圖顯示資料 0528
 @require_GET
 def get_police_by_district(request):

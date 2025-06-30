@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>新增 / 編輯教育資源</title>
+</head>
+<body>
+    <h2>新增 / 編輯教育資源</h2>
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">儲存</button>
+    </form>
+    <a href="{% url 'education_list' %}">返回列表</a>
+</body>
+</html>
