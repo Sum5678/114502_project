@@ -43,17 +43,17 @@
       <a href="index.html" class="logo d-flex align-items-center me-auto me-xl-0">
         <!-- Uncomment the line below if you also wish to use an image logo -->
         <!-- <img src="assets/img/logo.png" alt=""> -->
-        <h1 class="sitename">Append</h1><span>.</span>
+        <h1 class="sitename">怪怪走開，護您安全</h1><span></span>
       </a>
 
       <nav id="navmenu" class="navmenu">
         <ul>
           <li><a href="index.html#hero" class="active">Home</a></li>
-          <li><a href="index.html#about">About</a></li>
+           <li><a href="index.html#about">About</a></li>
           <li><a href="index.html#services">Services</a></li>
           <li><a href="index.html#portfolio">Portfolio</a></li>
           <li><a href="index.html#pricing">Pricing</a></li>
-          <li><a href="index.html#team">Team</a></li>
+          <li><a href="{% url 'map' %}">事件地圖</a></li>
           <li><a href="blog.html">Blog</a></li>
           <li class="dropdown"><a href="#"><span>Dropdown</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
             <ul>
@@ -87,7 +87,7 @@
     <!-- Hero Section -->
     <section id="hero" class="hero section dark-background">
 
-      <img src="assets/img/hero-bg.jpg" alt="" data-aos="fade-in">
+      <img src="{% static 'assets/img/1.png' %}" alt="" data-aos="fade-in"> <!-- 改背景圖片 -->
 
       <div class="container">
         <div class="row">
@@ -116,27 +116,31 @@
         <div class="row gy-4">
 
           <div class="col-xl-2 col-md-3 col-6 client-logo">
-            <img src="assets/img/clients/client-1.png" class="img-fluid" alt="">
+            <img src="{% static 'assets/img/clients/client-1.png' %}" class="img-fluid" alt="">
           </div><!-- End Client Item -->
 
           <div class="col-xl-2 col-md-3 col-6 client-logo">
-            <img src="assets/img/clients/client-2.png" class="img-fluid" alt="">
+            <img src="{% static 'assets/img/clients/client-2.png' %}" class="img-fluid" alt="">
+
           </div><!-- End Client Item -->
 
           <div class="col-xl-2 col-md-3 col-6 client-logo">
-            <img src="assets/img/clients/client-3.png" class="img-fluid" alt="">
+            <img src="{% static 'assets/img/clients/client-3.png' %}" class="img-fluid" alt="">
+
           </div><!-- End Client Item -->
 
           <div class="col-xl-2 col-md-3 col-6 client-logo">
-            <img src="assets/img/clients/client-4.png" class="img-fluid" alt="">
+            <img src="{% static 'assets/img/clients/client-4.png' %}" class="img-fluid" alt="">
           </div><!-- End Client Item -->
 
           <div class="col-xl-2 col-md-3 col-6 client-logo">
-            <img src="assets/img/clients/client-5.png" class="img-fluid" alt="">
+            <img src="{% static 'assets/img/clients/client-5.png' %}" class="img-fluid" alt="">
+
           </div><!-- End Client Item -->
 
           <div class="col-xl-2 col-md-3 col-6 client-logo">
-            <img src="assets/img/clients/client-6.png" class="img-fluid" alt="">
+            <img src="{% static 'assets/img/clients/client-6.png' %}" class="img-fluid" alt="">
+
           </div><!-- End Client Item -->
 
         </div>
@@ -395,7 +399,7 @@
           <div class="row gy-4 isotope-container" data-aos="fade-up" data-aos-delay="200">
 
             <div class="col-lg-4 col-md-6 portfolio-item isotope-item filter-app">
-              <img src="assets/img/masonry-portfolio/masonry-portfolio-1.jpg" class="img-fluid" alt="">
+             <img src="{% static 'assets/img/masonry-portfolio/masonry-portfolio-1.jpg' %}" class="img-fluid" alt="">
               <div class="portfolio-info">
                 <h4>App 1</h4>
                 <p>Lorem ipsum, dolor sit</p>
@@ -405,11 +409,11 @@
             </div><!-- End Portfolio Item -->
 
             <div class="col-lg-4 col-md-6 portfolio-item isotope-item filter-product">
-              <img src="assets/img/masonry-portfolio/masonry-portfolio-2.jpg" class="img-fluid" alt="">
+              <img src="{% static 'assets/img/masonry-portfolio/masonry-portfolio-2.jpg' %}" class="img-fluid" alt="">
               <div class="portfolio-info">
                 <h4>Product 1</h4>
                 <p>Lorem ipsum, dolor sit</p>
-                <a href="assets/img/masonry-portfolio/masonry-portfolio-2.jpg" title="Product 1" data-gallery="portfolio-gallery-product" class="glightbox preview-link"><i class="bi bi-zoom-in"></i></a>
+                <a href="{% static 'assets/img/masonry-portfolio/masonry-portfolio-2.jpg' %}" title="Product 1" data-gallery="portfolio-gallery-product" class="glightbox preview-link"><i class="bi bi-zoom-in"></i>
                 <a href="portfolio-details.html" title="More Details" class="details-link"><i class="bi bi-link-45deg"></i></a>
               </div>
             </div><!-- End Portfolio Item -->
