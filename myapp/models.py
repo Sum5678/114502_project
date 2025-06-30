@@ -109,6 +109,19 @@ class Incident(models.Model):
 
 
 #-------------------------------------------------------------------------
+class EducationPage(models.Model):
+    title = models.CharField(max_length=255)
+    url = models.CharField(max_length=255)
+    image_url = models.CharField(max_length=255)
+
+    class Meta:
+        db_table = 'education_page'  # 指定實際資料表名稱
+        managed = False  # 不讓 Django 管理這張表（不會對它做 migrate）
+
+    def __str__(self):
+        return self.title
+    
+
 class TaiwanRegion(models.Model):
     zipcode = models.CharField(max_length=10)
     country_city = models.CharField(max_length=50)

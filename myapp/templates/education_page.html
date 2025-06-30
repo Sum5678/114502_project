@@ -46,25 +46,12 @@
 <body>
     <h1>防身相關知識網頁</h1>
     <div class="button-container">
-        <form action="https://www.wpb.police.ntpc.gov.tw/cp-3284-116967-30.html" target="_blank">
-            <button type="submit" class="img-button" style="background-image: url('{% static 'images/image1.png' %}');"></button>
-            <p class="button-text">兒童防身術</p>
+        {% for page in pages %}
+        <form action="{{ page.url }}" target="_blank">
+            <button type="submit" class="img-button" style="background-image: url('{% if page.image_url|slice:":4" == "http" %}{{ page.image_url }}{% else %}{% static page.image_url %}{% endif %}');"></button>
+            <p class="button-text">{{ page.title }}</p>
         </form>
-        
-        <form action="https://www.uho.com.tw/article-50049.html" target="_blank">
-            <button type="submit" class="img-button" style="background-image: url('{% static 'images/image2.jpg' %}');"></button>
-            <p class="button-text">牢記防身術四要點　靠人前先靠自己</p>
-        </form>
-
-        <form action="https://www.pthg.gov.tw/womenchild/News_Content.aspx?n=198E5101A4B63ED9&s=02865F9DABE07F70" target="_blank">
-            <button type="submit" class="img-button" style="background-image: url('{% static 'images/image3.jpg' %}');"></button>
-            <p class="button-text">「認識搭訕騷擾懶人包」看過來！</p>
-        </form>
-
-        <form action="{% url 'harassment_prevention' %}">
-            <button type="submit" class="img-button" style="background-image: url('https://i.imgur.com/rW6nKt4.png');"></button>
-            <p class="button-text">防止騷擾相關資訊</p>
-        </form>
+        {% endfor %}
     </div>
 </body>
 </html>

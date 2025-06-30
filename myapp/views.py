@@ -66,6 +66,12 @@ def harassment_prevention(request):
 def education_page(request):
     return render(request, 'education_page.html')
 
+#教育網頁
+from .models import EducationPage
+
+def education_page(request):
+    pages = EducationPage.objects.all()
+    return render(request, 'education_page.html', {'pages': pages})
 
 #地圖顯示資料 0528
 @require_GET
