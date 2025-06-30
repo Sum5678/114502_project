@@ -74,7 +74,7 @@ def education_page(request):
     return render(request, 'education_page.html', {'pages': pages})
 
 #教育網頁新增改刪
-rom django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, redirect, get_object_or_404
 from .models import EducationPage
 from .education_forms import EducationPageUploadForm
 
@@ -248,7 +248,7 @@ import cv2
 import os
 
 # 載入人臉辨識模型（記得在 settings.py 設定 STATICFILES_DIRS）
-face_cascade = cv2.CascadeClassifier('myapp\static\haarcascade_frontalface_default.xml')
+face_cascade = cv2.CascadeClassifier('myapp/static/haarcascade_frontalface_default.xml')
 
 def face_detection_view(request):
     result_img = None
