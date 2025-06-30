@@ -41,6 +41,22 @@
             margin-top: 10px;
             color: #555;
         }
+        .back-button {
+            margin-top: 30px;
+        }
+        .back-button a {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+        .back-button a:hover {
+            background-color: #0056b3;
+        }
     </style>
 </head>
 <body>
@@ -48,10 +64,16 @@
     <div class="button-container">
         {% for page in pages %}
         <form action="{{ page.url }}" target="_blank">
-            <button type="submit" class="img-button" style="background-image: url('{% if page.image_url|slice:":4" == "http" %}{{ page.image_url }}{% else %}{% static page.image_url %}{% endif %}');"></button>
+            <button type="submit" class="img-button"
+                style="background-image: url('{% if page.image_url|slice:":4" == "http" %}{{ page.image_url }}{% else %}{% static page.image_url %}{% endif %}');">
+            </button>
             <p class="button-text">{{ page.title }}</p>
         </form>
         {% endfor %}
+    </div>
+
+    <div class="back-button">
+        <a href="http://127.0.0.1:8000/harassment_prevention/">返回防止騷擾頁面</a>
     </div>
 </body>
 </html>
