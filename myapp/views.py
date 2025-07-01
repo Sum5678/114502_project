@@ -566,6 +566,9 @@ from django.shortcuts import render
 def lookup_page(request):
     return render(request, '0257.html')
 
+def show_map(request):
+    # 處理邏輯
+    return render(request, 'map0257.html')
 
 
 
@@ -726,10 +729,8 @@ from openai import OpenAI
 client = OpenAI(api_key="我的先拿下")
 
 
-from django.views.decorators.csrf import csrf_exempt
-from django.http import JsonResponse
-import json
-import re
+
+
 
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
@@ -738,16 +739,16 @@ import json
 @csrf_exempt
 def ai_judge(request):
     if request.method != 'POST':
-        return JsonResponse({'result': 0, 'reason': '請使用 POST 請求'})
+        return JsonResponse({'result': 2, 'reason': '請使用 POST 請求'})
 
     try:
         data = json.loads(request.body)
         description = data.get('description', '').strip()
 
         if not description:
-            return JsonResponse({'result': 0, 'reason': '描述為空'})
+            return JsonResponse({'result': 1, 'reason': '描述內容過短，不足以判斷'})
 
-        # 敏感詞庫（可擴充）
+        # 敏感詞庫
         categories = {
             '仇恨言論': ['仇恨', '恨死', '殺光', '滅絕'],
             '恐懼煽動': ['恐怖', '害怕', '恐慌', '嚇死'],
@@ -755,36 +756,34 @@ def ai_judge(request):
             '歧視': ['歧視', '種族主義', '排擠', '偏見'],
         }
 
-        found_issues = []
-
-        # 檢查敏感詞
+        found_flag = False
         for category, words in categories.items():
             for w in words:
                 if w in description:
-                    found_issues.append(f"{category} (包含詞：{w})")
+                    found_flag = True
 
-        # 案件相關詞（擴充版，並改用 in 判斷）
+        # 案件關聯詞
         case_related_keywords = [
             '案件', '事件', '警方', '警察', '報警', '報案', '證據',
             '被跟蹤', '跟蹤', '尾隨', '偷拍', '性騷擾', '偷窺', '侵入',
             '陌生男子', '紅衣男子', '追蹤', '恐嚇', '求助', '監視'
         ]
-        if not any(kw in description for kw in case_related_keywords):
-            found_issues.append("內容與案件描述無明顯相關,請描述事件為 '被跟蹤', '跟蹤', '尾隨', '偷拍', '性騷擾', '偷窺', '侵入'")
+        is_related = any(kw in description for kw in case_related_keywords)
 
-        # 判斷是否過短
+        # 描述太短
         if len(description) < 10:
-            found_issues.append("描述內容過短，不足以判斷")
+            return JsonResponse({'result': 1, 'reason': '描述內容過短，不足以判斷'})
 
-        # 回傳結果
-        if found_issues:
-            reason = "，".join(found_issues)
-            return JsonResponse({'result': 0, 'reason': reason})
+        # 有敏感詞或內容無關
+        if found_flag or not is_related:
+            return JsonResponse({'result': 2, 'reason': '需再由人工審核'})
 
-        return JsonResponse({'result': 1})
+        # ✅ 通過
+        return JsonResponse({'result': 0, 'reason': '人工審核通過'})
 
     except Exception as e:
-        return JsonResponse({'result': 0, 'reason': f"系統錯誤：{str(e)}"})
+        return JsonResponse({'result': 2, 'reason': f"系統錯誤：{str(e)}"})
+
 
 
 
