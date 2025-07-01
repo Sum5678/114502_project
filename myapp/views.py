@@ -566,10 +566,6 @@ from django.shortcuts import render
 def lookup_page(request):
     return render(request, '0257.html')
 
-from django.shortcuts import render
-
-def show_map(request):
-    return render(request, '0257.html')
 
 
 
@@ -757,7 +753,6 @@ def ai_judge(request):
             '恐懼煽動': ['恐怖', '害怕', '恐慌', '嚇死'],
             '暴力': ['暴力', '打死', '砍', '攻擊', '虐待'],
             '歧視': ['歧視', '種族主義', '排擠', '偏見'],
-            '不相關': ['天氣', '食物', '電影', '遊戲'],  # 與案件無關的詞
         }
 
         found_issues = []
@@ -775,7 +770,7 @@ def ai_judge(request):
             '陌生男子', '紅衣男子', '追蹤', '恐嚇', '求助', '監視'
         ]
         if not any(kw in description for kw in case_related_keywords):
-            found_issues.append("內容與案件描述無明顯相關")
+            found_issues.append("內容與案件描述無明顯相關,請描述事件為 '被跟蹤', '跟蹤', '尾隨', '偷拍', '性騷擾', '偷窺', '侵入'")
 
         # 判斷是否過短
         if len(description) < 10:
