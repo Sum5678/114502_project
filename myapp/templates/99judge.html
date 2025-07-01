@@ -73,19 +73,29 @@
       padding: 12px;
       border-radius: 8px;
       color: white;
+      transition: background-color 0.3s ease;
     }
     #result.success {
-      background-color: #007700cc;
-      box-shadow: 0 0 10px #007700bb;
+      background-color: #0077cc;  /* 藍色底 */
+      box-shadow: 0 0 10px #00509e;
+    }
+    #result.warning {
+      background-color: #fd7e14cc; /* 橘色底 */
+      box-shadow: 0 0 10px #cc7000;
     }
     #result.error {
-      background-color: #cc0000cc;
-      box-shadow: 0 0 10px #cc0000bb;
+      background-color: #cc0000cc; /* 紅色底 */
+      box-shadow: 0 0 10px #990000;
     }
   </style>
 </head>
 <body>
   <h1>事件描述 AI 判斷</h1>
+
+  <p style="margin-bottom: 30px; font-size: 1.1rem;">
+    👋 歡迎管理員：ID {{ request.session.admin_id }}，姓名 {{ request.session.admin_name }}
+  </p>
+
 
   <textarea id="description" placeholder="請輸入事件描述內容..."></textarea><br>
 
@@ -107,12 +117,18 @@
       .then(response => response.json())
       .then(data => {
         const resultElem = document.getElementById("result");
-        if (data.result === 1) {
-          resultElem.innerText = "✅ 通過審核";
-          resultElem.className = "success";
+        // 先清空class
+        resultElem.className = '';
+
+        if (data.result === 0) {
+          resultElem.innerText = "✅ 人工審核通過";
+          resultElem.classList.add('success');
+        } else if (data.result === 1) {
+          resultElem.innerText = "⚠️ 描述內容過短，不足以判斷";
+          resultElem.classList.add('warning');
         } else {
-          resultElem.innerText = "❌ 未通過審核：" + data.reason;
-          resultElem.className = "error";
+          resultElem.innerText = "❌ 需再由人工審核：" + data.reason;
+          resultElem.classList.add('error');
         }
       })
       .catch(error => {

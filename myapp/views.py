@@ -731,7 +731,6 @@ client = OpenAI(api_key="我的先拿下")
 
 
 
-
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 import json
@@ -745,44 +744,39 @@ def ai_judge(request):
         data = json.loads(request.body)
         description = data.get('description', '').strip()
 
-        if not description:
+        if not description or len(description) < 10:
             return JsonResponse({'result': 1, 'reason': '描述內容過短，不足以判斷'})
 
-        # 敏感詞庫
-        categories = {
+        # 敏感詞分類詞庫
+        sensitive_categories = {
             '仇恨言論': ['仇恨', '恨死', '殺光', '滅絕'],
-            '恐懼煽動': ['恐怖', '害怕', '恐慌', '嚇死'],
             '暴力': ['暴力', '打死', '砍', '攻擊', '虐待'],
             '歧視': ['歧視', '種族主義', '排擠', '偏見'],
         }
 
-        found_flag = False
-        for category, words in categories.items():
-            for w in words:
-                if w in description:
-                    found_flag = True
+        # 檢查是否含敏感詞
+        has_sensitive_word = any(
+            keyword in description
+            for keywords in sensitive_categories.values()
+            for keyword in keywords
+        )
 
-        # 案件關聯詞
+        # 案件關聯詞彙
         case_related_keywords = [
             '案件', '事件', '警方', '警察', '報警', '報案', '證據',
             '被跟蹤', '跟蹤', '尾隨', '偷拍', '性騷擾', '偷窺', '侵入',
             '陌生男子', '紅衣男子', '追蹤', '恐嚇', '求助', '監視'
         ]
-        is_related = any(kw in description for kw in case_related_keywords)
+        is_case_related = any(kw in description for kw in case_related_keywords)
 
-        # 描述太短
-        if len(description) < 10:
-            return JsonResponse({'result': 1, 'reason': '描述內容過短，不足以判斷'})
-
-        # 有敏感詞或內容無關
-        if found_flag or not is_related:
+        if has_sensitive_word or not is_case_related:
             return JsonResponse({'result': 2, 'reason': '需再由人工審核'})
 
-        # ✅ 通過
         return JsonResponse({'result': 0, 'reason': '人工審核通過'})
 
     except Exception as e:
-        return JsonResponse({'result': 2, 'reason': f"系統錯誤：{str(e)}"})
+        return JsonResponse({'result': 2, 'reason': f'系統錯誤：{str(e)}'})
+
 
 
 
@@ -832,3 +826,24 @@ def ai_judge(request):
 
 
 #================================================================================================
+#管理者登入
+from django.shortcuts import render, redirect
+from .models import Admins
+
+def admin_login(request):
+    if request.method == "POST":
+        gmail = request.POST.get('admin_gmail')
+        password = request.POST.get('password')
+
+        try:
+            admin = Admins.objects.get(admin_gmail=gmail, password=password)
+            request.session['admin_id'] = admin.admin_id
+            request.session['admin_name'] = admin.name  # 如果你後面會用到名字
+            return redirect('show_judge_page')
+        except Admins.DoesNotExist:
+            return render(request, 'admin_login.html', {'error': '帳號或密碼錯誤'})
+
+    return render(request, 'admin_login.html')
+
+
+
