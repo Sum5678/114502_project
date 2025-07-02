@@ -1,16 +1,18 @@
+<!-- myapp/templates/education_form.html -->
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>新增 / 編輯教育資源</title>
+    <title>新增或編輯教育資源</title>
 </head>
 <body>
     <h2>新增 / 編輯教育資源</h2>
     <form method="POST" enctype="multipart/form-data">
         {% csrf_token %}
         {{ form.as_p }}
-        <button type="submit">儲存</button>
+        <p><strong>（如果不重新上傳，會保留原圖片）</strong></p>
+        <button type="submit">💾 儲存</button>
+        <a href="{% url 'education_list' %}">取消</a>
     </form>
-    <a href="{% url 'education_list' %}">返回列表</a>
 </body>
 </html>
