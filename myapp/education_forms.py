@@ -1,6 +1,7 @@
 from django import forms
 from .models import EducationPage
 import os
+import time
 
 class EducationPageUploadForm(forms.ModelForm):
     upload = forms.ImageField(required=False, label="上傳圖片（可選）")
@@ -14,7 +15,7 @@ class EducationPageUploadForm(forms.ModelForm):
         upload = self.cleaned_data.get('upload')
 
         if upload:
-            filename = upload.name
+            filename = f"{int(time.time())}_{upload.name}"
             save_path = os.path.join('myapp', 'static', 'images', filename)
 
             with open(save_path, 'wb+') as destination:

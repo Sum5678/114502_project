@@ -765,21 +765,25 @@ section,
 --------------------------------------------------------------*/
 .hero {
   width: 100%;
-  min-height: 100vh;
+  height: 100vh;
   position: relative;
-  padding: 80px 0;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-
-  background-image: url("../img/f6f8ef4b-b134-4bfe-bbad-ae6c07dc695d.png");
-  background-size: cover;
-  background-position: center center;
-  background-repeat: no-repeat;
 }
 
-/* .hero img block removed */
+.hero img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;               /* 圖片鋪滿 */
+  object-position: center bottom; /* 人物貼底居中 */
+  display: block;
+}
 
+/* 半透明遮罩（如不需要可刪） */
 .hero:before {
   content: "";
   background: color-mix(in srgb, var(--background-color), transparent 50%);
@@ -788,11 +792,13 @@ section,
   z-index: 2;
 }
 
+/* 保留內容容器層（文字或按鈕） */
 .hero .container {
   position: relative;
   z-index: 3;
 }
 
+/* 文字樣式（如沒使用，可刪） */
 .hero h2 {
   margin: 0;
   font-size: 44px;
@@ -805,6 +811,7 @@ section,
   font-size: 20px;
 }
 
+/* 表單（可選擇刪除） */
 .hero .sign-up-form {
   margin-top: 20px;
   margin-bottom: 15px;
@@ -841,6 +848,7 @@ section,
   background-color: color-mix(in srgb, var(--accent-color), transparent 10%);
 }
 
+/* 響應式排版 */
 @media (max-width: 768px) {
   .hero h2 {
     font-size: 32px;

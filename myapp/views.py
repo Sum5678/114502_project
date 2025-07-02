@@ -80,7 +80,7 @@ from .education_forms import EducationPageUploadForm
 
 def education_list(request):
     pages = EducationPage.objects.all()
-    return render(request, 'education_crud/education_list.html', {'pages': pages})
+    return render(request, 'education_list.html', {'pages': pages})
 
 def education_create(request):
     if request.method == 'POST':
@@ -90,7 +90,7 @@ def education_create(request):
             return redirect('education_list')
     else:
         form = EducationPageUploadForm()
-    return render(request, 'education_crud/education_form.html', {'form': form})
+    return render(request, 'education_form.html', {'form': form})
 
 def education_update(request, pk):
     page = get_object_or_404(EducationPage, pk=pk)
@@ -101,14 +101,14 @@ def education_update(request, pk):
             return redirect('education_list')
     else:
         form = EducationPageUploadForm(instance=page)
-    return render(request, 'education_crud/education_form.html', {'form': form})
+    return render(request, 'education_form.html', {'form': form})
 
 def education_delete(request, pk):
     page = get_object_or_404(EducationPage, pk=pk)
     if request.method == 'POST':
         page.delete()
         return redirect('education_list')
-    return render(request, 'education_crud/education_confirm_delete.html', {'page': page})
+    return render(request, 'education_confirm_delete.html', {'page': page})
 
 #地圖顯示資料 0528
 @require_GET

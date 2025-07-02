@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>刪除確認</title>
+</head>
+<body>
+    <h2>你確定要刪除「{{ page.title }}」嗎？</h2>
+    <form method="POST">
+        {% csrf_token %}
+        <button type="submit">🗑 確認刪除</button>
+        <a href="{% url 'education_list' %}">取消</a>
+    </form>
+</body>
+</html>
