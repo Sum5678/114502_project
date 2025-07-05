@@ -18,23 +18,30 @@
 }
 
 /* Global Colors - The following color variables are used throughout the website. Updating them here will change the color scheme of the entire website */
-:root { 
-  --background-color: #ffffff; /* Background color for the entire website, including individual sections */
-  --default-color: #212529; /* Default color used for the majority of the text content across the entire website */
-  --heading-color: #32353a; /* Color for headings, subheadings and title throughout the website */
-  --accent-color: #e84545; /* Accent color that represents your brand on the website. It's used for buttons, links, and other elements that need to stand out */
-  --surface-color: #ffffff; /* The surface color is used as a background of boxed elements within sections, such as cards, icon boxes, or other elements that require a visual separation from the global background. */
-  --contrast-color: #ffffff; /* Contrast color for text, ensuring readability against backgrounds of accent, heading, or default colors. */
+:root {
+  --background-color: #e6f3fb;
+  --default-color: #033e6b;
+  --heading-color: #033e6b;
+  --accent-color: #63b3ed;
+  --surface-color: #ffffff;
+  --contrast-color: #ffffff;
+  --nav-color: #033e6b;
+  --nav-hover-color: #89cffa;
+  --nav-mobile-background-color: #f0faff;
+  --nav-dropdown-background-color: #f0faff;
+  --nav-dropdown-color: #033e6b;
+  --nav-dropdown-hover-color: #a7e0ff;
 }
+
 
 /* Nav Menu Colors - The following color variables are used specifically for the navigation menu. They are separate from the global colors to allow for more customization options */
 :root {
-  --nav-color: #3a3939;  /* The default color of the main navmenu links */
-  --nav-hover-color: #e84545; /* Applied to main navmenu links when they are hovered over or active */
-  --nav-mobile-background-color: #ffffff; /* Used as the background color for mobile navigation menu */
-  --nav-dropdown-background-color: #ffffff; /* Used as the background color for dropdown items that appear when hovering over primary navigation items */
-  --nav-dropdown-color: #3a3939; /* Used for navigation links of the dropdown items in the navigation menu. */
-  --nav-dropdown-hover-color: #e84545; /* Similar to --nav-hover-color, this color is applied to dropdown navigation links when they are hovered over. */
+  --nav-color: #033e6b;
+  --nav-hover-color: #89cffa;
+  --nav-mobile-background-color: #f0faff;
+  --nav-dropdown-background-color: #f0faff;
+  --nav-dropdown-color: #033e6b;
+  --nav-dropdown-hover-color: #a7e0ff;
 }
 
 /* Color Presets - These classes override global colors when applied to any section or element, providing reuse of the sam color scheme. */
@@ -91,7 +98,7 @@ h6 {
 ------------------------------*/
 .php-email-form .error-message {
   display: none;
-  background: #df1529;
+  background: #ff0000;
   color: #ffffff;
   text-align: left;
   padding: 15px;
@@ -102,7 +109,7 @@ h6 {
 .php-email-form .sent-message {
   display: none;
   color: #ffffff;
-  background: #059652;
+  background: #ff0905;
   text-align: center;
   padding: 15px;
   margin-bottom: 24px;
@@ -224,16 +231,18 @@ h6 {
   --background-color: rgba(255, 255, 255, 0);
   --heading-color: #ffffff;
   --nav-color: rgba(255, 255, 255, 0.5);
-  --nav-hover-color: #ffffff;
+  --nav-hover-color: #89cffa;
 }
 
 /* ✅ 往下滾動後：變白底黑字 */
+
 .index-page.scrolled .header {
   --background-color: #ffffff;
-  --heading-color: #32353a;
-  --nav-color: #3a3939;
-  --nav-hover-color: #e84545;
+  --heading-color: #033e6b;
+  --nav-color: #033e6b;
+  --nav-hover-color: #63b3ed;
 }
+
 
 
 
@@ -2801,4 +2810,37 @@ section,
   padding-left: 5px;
   color: color-mix(in srgb, var(--default-color), transparent 60%);
   font-size: 14px;
+}
+
+/* === Hero Section Fullscreen Fix === */
+body, html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+.hero {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.hero img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  z-index: -1;
+}
+
+/* Optional: compensate for header height if needed */
+.index-page .hero {
+  margin-top: -80px; /* adjust if your header height differs */
 }
