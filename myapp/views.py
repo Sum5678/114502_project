@@ -853,7 +853,8 @@ def admin_login(request):
 
     return render(request, 'admin_login.html')
 
-#--------管理員自介
+#--------管理員自介-------
+from .forms import AdminProfileForm
 
 def admin_interview(request):
     admin_id = request.session.get('admin_id')
@@ -865,6 +866,21 @@ def admin_interview(request):
     except Admins.DoesNotExist:
         return redirect('admin_login')
 
-    return render(request, 'admin_interview.html', {'admin': admin})
+    if request.method == 'POST':
+        form = AdminProfileForm(request.POST, instance=admin)
+        if form.is_valid():
+            form.save()
+            message = "✅ 資料已更新成功"
+        else:
+            message = "❌ 資料更新失敗，請檢查輸入"
+    else:
+        form = AdminProfileForm(instance=admin)
+        message = None
+
+    return render(request, 'admin_interview.html', {
+        'form': form,
+        'message': message,
+    })
+
 
 

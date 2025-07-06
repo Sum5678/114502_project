@@ -2,73 +2,160 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8">
-  <title>管理員個人資料</title>
+  <title>管理員資料編輯</title>
   <style>
     body {
-      background-color: #eef4ff;
-      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-      color: #003366;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      padding: 60px 20px;
-      min-height: 100vh;
       margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      min-height: 100vh;
+      background-color: #eef4ff;
     }
 
-    .profile-card {
+    /* 左側導覽列 */
+    .sidebar {
+      width: 200px;
+      background-color: #00509e;
+      padding: 30px 20px;
+      box-sizing: border-box;
+      color: white;
+    }
+
+    .sidebar h3 {
+      color: #ffffff;
+      font-size: 1.2rem;
+      margin-bottom: 25px;
+      text-align: center;
+    }
+
+    .sidebar a {
+      display: block;
+      color: white;
+      text-decoration: none;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 6px;
+      transition: background 0.2s;
+    }
+
+    .sidebar a:hover {
+      background-color: #0077cc;
+    }
+
+    /* 右側內容 */
+    .main {
+      flex: 1;
+      padding: 40px;
+    }
+
+    .profile-form {
       background: white;
       padding: 40px;
       border-radius: 12px;
       box-shadow: 0 4px 12px rgba(0, 80, 180, 0.2);
-      width: 100%;
-      max-width: 500px;
+      max-width: 600px;
+      margin: auto;
     }
 
-    .profile-card h2 {
+    .profile-form h2 {
       text-align: center;
       color: #00509e;
-      margin-bottom: 30px;
+      margin-bottom: 20px;
     }
 
-    .profile-item {
-      margin-bottom: 15px;
+    .info-item {
+      margin-bottom: 10px;
     }
 
-    .profile-item label {
+    .info-item label {
       font-weight: bold;
       display: inline-block;
-      width: 120px;
+      width: 100px;
+      color: #00509e;
+    }
+
+    .info-item span {
+      color: #333;
+    }
+
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
       color: #003366;
     }
 
-    .profile-item span {
-      color: #333;
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      font-size: 1rem;
+      margin-top: 5px;
+      border: 1px solid #cce0ff;
+      border-radius: 6px;
+      box-sizing: border-box;
+    }
+
+    button {
+      margin-top: 25px;
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(90deg, #00509e, #0077cc);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    .message {
+      margin-top: 15px;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    .success {
+      color: green;
+    }
+
+    .error {
+      color: red;
     }
   </style>
 </head>
 <body>
-  <div class="profile-card">
-    <h2>管理員個人資料</h2>
 
-    <div class="profile-item">
-      <label>ID：</label><span>{{ admin.admin_id }}</span>
-    </div>
+  <!-- 左側導覽 -->
+  <div class="sidebar">
+    <h3>管理員選單</h3>
+    <a href="admin_interview.html">自我介紹</a>
+    <a href="99judge.html">審核表單</a>
+    <a href="admin_logout.html">登出</a>
+  </div>
 
-    <div class="profile-item">
-      <label>姓名：</label><span>{{ admin.name }}</span>
-    </div>
+  <!-- 右側主內容 -->
+  <div class="main">
+    <div class="profile-form">
+      <h2>管理員資料編輯</h2>
 
-    <div class="profile-item">
-      <label>Email：</label><span>{{ admin.admin_gmail }}</span>
-    </div>
+      {% if message %}
+        <p class="message {% if '成功' in message %}success{% else %}error{% endif %}">
+          {{ message }}
+        </p>
+      {% endif %}
 
-    <div class="profile-item">
-      <label>電話：</label><span>{{ admin.phone }}</span>
-    </div>
+      <div class="info-item">
+        <label>ID：</label><span>{{ form.instance.admin_id }}</span>
+      </div>
 
-    <div class="profile-item">
-      <label>簡介：</label><span>{{ admin.bio }}</span>
+      <div class="info-item">
+        <label>Email：</label><span>{{ form.instance.admin_gmail }}</span>
+      </div>
+
+      <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">儲存變更</button>
+      </form>
     </div>
   </div>
 </body>
