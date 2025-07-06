@@ -63,7 +63,7 @@
         <div class="card">
             <a href="{{ page.url }}" target="_blank">
                 <div class="img-button"
-                     style="background-image: url('{% if page.image_url|slice:':4' == 'http' %}{{ page.image_url }}{% else %}{% static page.image_url %}{% endif %}');">
+                     style="background-image: url('{% url 'education_image' page.id %}');">
                 </div>
             </a>
             <p>{{ page.title }}</p>

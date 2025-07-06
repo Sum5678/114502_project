@@ -37,6 +37,7 @@ urlpatterns = [
     path('education-crud/new/', views.education_create, name='education_create'),
     path('education-crud/edit/<int:pk>/', views.education_update, name='education_update'),
     path('education-crud/delete/<int:pk>/', views.education_delete, name='education_delete'),
+    path('education-crud/image/<int:pk>/', views.education_image, name='education_image'), 
     path('anonymous-chat/', views.anonymous_chat, name='anonymous-chat'),  # anonymous-chat 頁面
     path('index35/', views.index35, name='index35'),  # 新增 index35.html 路由
     path('map/', views.map_view, name='map'),  # 添加 map.html 路由
@@ -85,6 +86,8 @@ urlpatterns = [
     path('99judge/', views.show_judge_page, name='show_judge_page'),#ai檢測
     path('ai_judge/', views.ai_judge, name='ai_judge'),#ai檢測
     path('admin_login/', views.admin_login, name='admin_login'),
+    path('admin_interview/', views.admin_interview, name='admin_interview'),#管理員自介
+
    
 
     path('<str:room_name>/', views.room, name='room'),
@@ -98,4 +101,3 @@ urlpatterns = [
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 # 原本沒有這些路徑
-
