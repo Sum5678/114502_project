@@ -112,7 +112,7 @@ class Incident(models.Model):
 class EducationPage(models.Model):
     title = models.CharField(max_length=255)
     url = models.CharField(max_length=255)
-    image_url = models.CharField(max_length=255)
+    image_url = models.BinaryField()
 
     class Meta:
         db_table = 'education_page'  # 指定實際資料表名稱
