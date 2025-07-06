@@ -853,5 +853,18 @@ def admin_login(request):
 
     return render(request, 'admin_login.html')
 
+#--------管理員自介
+
+def admin_interview(request):
+    admin_id = request.session.get('admin_id')
+    if not admin_id:
+        return redirect('admin_login')
+
+    try:
+        admin = Admins.objects.get(admin_id=admin_id)
+    except Admins.DoesNotExist:
+        return redirect('admin_login')
+
+    return render(request, 'admin_interview.html', {'admin': admin})
 
 
