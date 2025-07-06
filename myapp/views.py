@@ -110,6 +110,14 @@ def education_delete(request, pk):
         return redirect('education_list')
     return render(request, 'education_confirm_delete.html', {'page': page})
 
+from django.http import HttpResponse
+
+def education_image(request, pk):
+    page = get_object_or_404(EducationPage, pk=pk)
+    if page.image_url:
+        return HttpResponse(page.image_url, content_type="image/png")
+    return HttpResponse(status=404)
+
 #地圖顯示資料 0528
 @require_GET
 def get_police_by_district(request):
@@ -845,5 +853,18 @@ def admin_login(request):
 
     return render(request, 'admin_login.html')
 
+#--------管理員自介
+
+def admin_interview(request):
+    admin_id = request.session.get('admin_id')
+    if not admin_id:
+        return redirect('admin_login')
+
+    try:
+        admin = Admins.objects.get(admin_id=admin_id)
+    except Admins.DoesNotExist:
+        return redirect('admin_login')
+
+    return render(request, 'admin_interview.html', {'admin': admin})
 
 
