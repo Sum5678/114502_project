@@ -882,5 +882,10 @@ def admin_interview(request):
         'message': message,
     })
 
+#-------管理員登出-----
+
+def admin_logout(request):
+    request.session.flush()
+    return redirect('admin_login')  # 登出後回登入畫面
 
 
