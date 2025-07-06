@@ -19,7 +19,7 @@
 
 /* Global Colors - The following color variables are used throughout the website. Updating them here will change the color scheme of the entire website */
 :root {
-  --background-color: #e6f3fb;
+  --background-color: #ffffff;
   --default-color: #033e6b;
   --heading-color: #033e6b;
   --accent-color: #63b3ed;
@@ -2843,4 +2843,41 @@ body, html {
 /* Optional: compensate for header height if needed */
 .index-page .hero {
   margin-top: -80px; /* adjust if your header height differs */
+}
+
+
+
+/* 強化行動選單樣式 */
+@media (max-width: 1200px) {
+  .navmenu {
+    background-color: #ffffff !important;
+  }
+  .navmenu a {
+    color: #033e6b !important;
+    font-weight: bold;
+    font-size: 1.1rem;
+    text-shadow: 0 0 2px rgba(255,255,255,0.5);
+  }
+  .navmenu a:hover,
+  .navmenu a.active {
+    color: #63b3ed !important;
+    text-decoration: underline;
+  }
+  .navmenu .dropdown ul a {
+    color: #033e6b !important;
+  }
+  .navmenu .dropdown ul a:hover {
+    color: #63b3ed !important;
+  }
+}
+
+
+/* 強化 mobile nav 三條線 toggle icon 顏色 */
+.mobile-nav-toggle {
+  color: #033e6b !important;
+  font-size: 30px;
+}
+
+.mobile-nav-toggle:hover {
+  color: #63b3ed !important;
 }
