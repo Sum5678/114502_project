@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>管理員個人資料</title>
+  <style>
+    body {
+      background-color: #eef4ff;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      color: #003366;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 60px 20px;
+      min-height: 100vh;
+      margin: 0;
+    }
+
+    .profile-card {
+      background: white;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 80, 180, 0.2);
+      width: 100%;
+      max-width: 500px;
+    }
+
+    .profile-card h2 {
+      text-align: center;
+      color: #00509e;
+      margin-bottom: 30px;
+    }
+
+    .profile-item {
+      margin-bottom: 15px;
+    }
+
+    .profile-item label {
+      font-weight: bold;
+      display: inline-block;
+      width: 120px;
+      color: #003366;
+    }
+
+    .profile-item span {
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <div class="profile-card">
+    <h2>管理員個人資料</h2>
+
+    <div class="profile-item">
+      <label>ID：</label><span>{{ admin.admin_id }}</span>
+    </div>
+
+    <div class="profile-item">
+      <label>姓名：</label><span>{{ admin.name }}</span>
+    </div>
+
+    <div class="profile-item">
+      <label>Email：</label><span>{{ admin.admin_gmail }}</span>
+    </div>
+
+    <div class="profile-item">
+      <label>電話：</label><span>{{ admin.phone }}</span>
+    </div>
+
+    <div class="profile-item">
+      <label>簡介：</label><span>{{ admin.bio }}</span>
+    </div>
+  </div>
+</body>
+</html>

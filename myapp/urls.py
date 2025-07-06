@@ -86,6 +86,8 @@ urlpatterns = [
     path('99judge/', views.show_judge_page, name='show_judge_page'),#ai檢測
     path('ai_judge/', views.ai_judge, name='ai_judge'),#ai檢測
     path('admin_login/', views.admin_login, name='admin_login'),
+    path('admin_interview/', views.admin_interview, name='admin_interview'),#管理員自介
+
    
 
     path('<str:room_name>/', views.room, name='room'),
