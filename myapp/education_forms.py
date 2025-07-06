@@ -1,7 +1,5 @@
 from django import forms
 from .models import EducationPage
-import os
-import time
 
 class EducationPageUploadForm(forms.ModelForm):
     upload = forms.ImageField(required=False, label="上傳圖片（可選）")
@@ -15,16 +13,8 @@ class EducationPageUploadForm(forms.ModelForm):
         upload = self.cleaned_data.get('upload')
 
         if upload:
-            filename = f"{int(time.time())}_{upload.name}"
-            save_path = os.path.join('myapp', 'static', 'images', filename)
-
-            with open(save_path, 'wb+') as destination:
-                for chunk in upload.chunks():
-                    destination.write(chunk)
-
-            instance.image_url = f'images/{filename}'
+            instance.image_url = upload.read()  # 讀取圖片的二進位內容
 
         if commit:
             instance.save()
-
         return instance
