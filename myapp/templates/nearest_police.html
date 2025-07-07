@@ -2,67 +2,95 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <title>查詢警察局</title>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <title>查詢最近的派出所</title>
+    <style>
+        #map {
+            height: 500px;
+            width: 100%;
+            margin-top: 20px;
+        }
+    </style>
 </head>
 <body>
-    <h1>查詢警察局</h1>
+    <h1>查詢最近的派出所</h1>
 
     <form method="get">
-        <label for="country_city">縣市：</label>
-        <select name="country_city" id="country_city">
-            <option value="">-- 選擇縣市 --</option>
+        縣市：
+        <select name="country_city" id="id_country_city">
+            <option value="">請選擇縣市</option>
             {% for city in cities %}
                 <option value="{{ city }}" {% if city == selected_city %}selected{% endif %}>{{ city }}</option>
             {% endfor %}
         </select>
 
-        <label for="district_town">行政區：</label>
-        <select name="district_town" id="district_town">
-            <option value="">-- 選擇行政區 --</option>
-            {% for district in districts %}
-                <option value="{{ district }}" {% if district == selected_district %}selected{% endif %}>{{ district }}</option>
-            {% endfor %}
+        行政區：
+        <select name="district_town" id="id_district_town">
+            {% if selected_city %}
+                {% for district in all_regions_json|dictsort:0 %}
+                    {% if district.0 == selected_city %}
+                        {% for dt in district.1 %}
+                            <option value="{{ dt }}" {% if dt == selected_district %}selected{% endif %}>{{ dt }}</option>
+                        {% endfor %}
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
         </select>
 
-        <button type="submit">查詢</button>
+        <button type="submit">確定</button>
     </form>
 
-    <hr>
-
-    {% if police_list %}
-        <h2>查詢結果：</h2>
-        <ul>
-        {% for police in police_list %}
-            <li>
-                <strong>{{ police.precinct_name }}</strong><br>
-                地址：{{ police.address }}<br>
-                電話：{{ police.phone }}<br>
-                座標：({{ police.POINT_Y }}, {{ police.POINT_X }})
-            </li>
-        {% endfor %}
-        </ul>
-    {% elif selected_city and selected_district %}
-        <p>查無此地區的警局資料。</p>
-    {% endif %}
+    <div id="map"></div>
 
     <script>
-        $('#country_city').change(function () {
-            let city = $(this).val();
-            $.ajax({
-                url: "{% url 'ajax_load_districts' %}",
-                data: {
-                    'country_city': city
-                },
-                success: function (data) {
-                    let options = '<option value="">-- 選擇行政區 --</option>';
-                    for (let i = 0; i < data.districts.length; i++) {
-                        options += `<option value="${data.districts[i]}">${data.districts[i]}</option>`;
-                    }
-                    $('#district_town').html(options);
-                }
+        const regions = {{ all_regions_json|safe }};
+        const citySelect = document.getElementById("id_country_city");
+        const districtSelect = document.getElementById("id_district_town");
+
+        citySelect.addEventListener("change", function () {
+            const selected = this.value;
+            const districts = regions[selected] || [];
+
+            districtSelect.innerHTML = "";
+            districts.forEach(d => {
+                const opt = document.createElement("option");
+                opt.value = d;
+                opt.textContent = d;
+                districtSelect.appendChild(opt);
             });
         });
+
+        function initMap() {
+            const map = new google.maps.Map(document.getElementById("map"), {
+                zoom: 13,
+                center: { lat: 23.5, lng: 121 },
+            });
+
+            const precincts = {{ precincts|safe }};
+            precincts.forEach(p => {
+                const marker = new google.maps.Marker({
+                    position: { lat: p.POINT_Y, lng: p.POINT_X },
+                    map: map,
+                    title: p.precinct_name,
+                });
+
+                const infowindow = new google.maps.InfoWindow({
+                    content: `<strong>${p.precinct_name}</strong><br>${p.address}<br>${p.phone}`
+                });
+
+                marker.addListener("click", () => {
+                    infowindow.open(map, marker);
+                });
+            });
+
+            if (precincts.length > 0) {
+                map.setCenter({ lat: precincts[0].POINT_Y, lng: precincts[0].POINT_X });
+            }
+        }
+    </script>
+
+    <!-- Google Maps API -->
+    <script async
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAUuPZMMJvgVWftmqVyzfX8mKTwMX4kA6o&callback=initMap">
     </script>
 </body>
 </html>

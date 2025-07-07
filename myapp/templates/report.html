@@ -230,59 +230,60 @@
       const kind = category + " - " + subcategory;
 
       const description = document.getElementById("description").value.trim();
-
       const locationStr = document.getElementById("location").value.trim();
-      const locationParts = locationStr.split(",").map(s => s.trim());
-      let latitude = 0, longitude = 0;
-      if(locationParts.length === 2){
-        latitude = parseFloat(locationParts[0]) || 0;
-        longitude = parseFloat(locationParts[1]) || 0;
-      }
-
-      // 圖片暫不支援檔案上傳，先傳空字串
-      // 若要改成上傳，可用 FormData + AJAX，Django 端需用 request.FILES
-      const img_url = "";
-
-      const formData = {
-        poster_id: email,
-        display_name: name,
-        kind: kind,
-        reason: description,
-        address: locationStr,
-        latitude: latitude,
-        longitude: longitude,
-        img_url: img_url
-      };
+      const imageFile = document.getElementById("image").files[0];
 
       const statusMessage = document.getElementById("statusMessage");
       statusMessage.style.backgroundColor = "#def1fc";
       statusMessage.style.color = "#055d8c";
-      statusMessage.innerText = "提交中...";
+      statusMessage.innerText = "處理圖片中...";
 
-      fetch('/api/submit_report/', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(formData)
-      })
-      .then(response => response.json())
-      .then(data => {
-        if(data.status === "success"){
-          statusMessage.innerText = "✅ 表單已成功提交";
-          this.reset();
-          // 重設子分類
-          const subcategorySelect = document.getElementById("subcategory");
-          subcategorySelect.innerHTML = '<option value="">請先選擇上方分類</option>';
-        } else {
+      // 如果有選擇圖片，轉 base64
+      if (imageFile) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const base64Image = e.target.result;  // ✅保留完整 data:image/jpeg;base64,...
+
+          sendDataToServer(base64Image);
+        };
+        reader.readAsDataURL(imageFile);
+      } else {
+        // 沒有圖片就直接送空字串
+        sendDataToServer("");
+      }
+
+      function sendDataToServer(base64Image) {
+        const formData = {
+          display_name: name,
+          kind: kind,
+          reason: description,
+          address: locationStr,
+          img_url: base64Image
+        };
+
+        fetch('/api/submit_report/', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(formData)
+        })
+        .then(response => response.json())
+        .then(data => {
+          if(data.status === "success"){
+            statusMessage.innerText = "✅ 表單已成功提交";
+            document.getElementById("reportForm").reset();
+            document.getElementById("subcategory").innerHTML = '<option value="">請先選擇上方分類</option>';
+          } else {
+            statusMessage.style.backgroundColor = "#ffcccc";
+            statusMessage.style.color = "#900";
+            statusMessage.innerText = "❌ 提交失敗：" + data.message;
+          }
+        })
+        .catch(() => {
           statusMessage.style.backgroundColor = "#ffcccc";
           statusMessage.style.color = "#900";
-          statusMessage.innerText = "❌ 提交失敗：" + data.message;
-        }
-      })
-      .catch(() => {
-        statusMessage.style.backgroundColor = "#ffcccc";
-        statusMessage.style.color = "#900";
-        statusMessage.innerText = "❌ 網路錯誤，請稍後再試";
-      });
+          statusMessage.innerText = "❌ 網路錯誤，請稍後再試";
+        });
+      }
     });
 
   </script>

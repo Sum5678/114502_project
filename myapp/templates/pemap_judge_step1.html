@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>審核事件 #{{ item.p_id }}</title>
+  <style>
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f0f8ff;
+      padding: 40px;
+      color: #003366;
+    }
+    h1 {
+      color: #00509e;
+      margin-bottom: 20px;
+    }
+    label {
+      font-weight: bold;
+      margin-top: 20px;
+      display: block;
+    }
+    select, textarea {
+      width: 100%;
+      padding: 10px;
+      margin-top: 8px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 1rem;
+      color: white;
+      background-color: #00509e;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #003f7f;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>審核事件 #{{ item.p_id }}</h1>
+
+  <p><strong>暱稱：</strong>{{ item.display_name }}</p>
+  <p><strong>分類：</strong>{{ item.kind }}</p>
+  <p><strong>理由：</strong>{{ item.reason }}</p>
+  <p><strong>經緯度：</strong>{{ item.address }}</p>
+
+  <form method="post">
+    {% csrf_token %}
+    <label for="review_status">審核狀態</label>
+    <select name="review_status" id="review_status">
+      <option value="0" {% if item.review_status == 0 %}selected{% endif %}>未審核</option>
+      <option value="1" {% if item.review_status == 1 %}selected{% endif %}>AI 審核通過</option>
+      <option value="2" {% if item.review_status == 2 %}selected{% endif %}>AI 審核未通過，需人工審核</option>
+      <option value="3" {% if item.review_status == 3 %}selected{% endif %}>人工審核通過</option>
+    </select>
+
+    <button type="submit">儲存變更</button>
+  </form>
+
+</body>
+</html>

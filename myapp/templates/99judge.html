@@ -1,20 +1,62 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
   <title>事件描述判斷</title>
   <style>
-    /* 全頁背景白色 */
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      background-color: #f0f4ff;
+      margin: 0;
       font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-      color: #003366;
+    }
+
+    .container {
+      display: flex;
+      height: 100vh;
+      width: 100%;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 220px;
+      background-color: #00509e;
+      padding: 30px 20px;
+      color: white;
+      flex-shrink: 0;
+    }
+
+    .sidebar h3 {
+      color: #ffffff;
+      font-size: 1.2rem;
+      margin-bottom: 25px;
+      text-align: center;
+    }
+
+    .sidebar a {
+      display: block;
+      color: white;
+      text-decoration: none;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 6px;
+      transition: background 0.2s;
+    }
+
+    .sidebar a:hover {
+      background-color: #0077cc;
+    }
+
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      background-color: #f0f4ff;
+      padding: 40px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 40px 20px;
-      min-height: 100vh;
-      margin: 0;
     }
 
     h1 {
@@ -36,6 +78,7 @@
       box-shadow: inset 1px 1px 5px #cfe3ff;
       transition: border-color 0.3s ease;
     }
+
     textarea:focus {
       outline: none;
       border-color: #003366;
@@ -54,10 +97,12 @@
       box-shadow: 0 4px 10px #00509eaa;
       transition: background 0.3s ease;
     }
+
     button:hover {
       background: linear-gradient(90deg, #0077cc, #003366);
       box-shadow: 0 6px 14px #003366cc;
     }
+
     button:active {
       background: #003366;
       box-shadow: none;
@@ -75,33 +120,53 @@
       color: white;
       transition: background-color 0.3s ease;
     }
+
     #result.success {
-      background-color: #0077cc;  /* 藍色底 */
+      background-color: #0077cc;
       box-shadow: 0 0 10px #00509e;
     }
+
     #result.warning {
-      background-color: #fd7e14cc; /* 橘色底 */
+      background-color: #fd7e14cc;
       box-shadow: 0 0 10px #cc7000;
     }
+
     #result.error {
-      background-color: #cc0000cc; /* 紅色底 */
+      background-color: #cc0000cc;
       box-shadow: 0 0 10px #990000;
+    }
+
+    .admin-info {
+      margin-bottom: 20px;
+      font-size: 1.05rem;
+      color: #003366;
     }
   </style>
 </head>
 <body>
-  <h1>事件描述 AI 判斷</h1>
+  <div class="container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <h3>管理員選單</h3>
+      <a href="{% url 'admin_interview' %}">自我介紹</a>
+      <a href="{% url 'show_judge_page' %}">審核表單</a>
+      <a href="{% url 'pemap_judge' %}">事件清單審核</a>
+      <a href="{% url 'admin_logout' %}">登出</a>
+    </div>
 
-  <p style="margin-bottom: 30px; font-size: 1.1rem;">
-    👋 歡迎管理員：ID {{ request.session.admin_id }}，姓名 {{ request.session.admin_name }}
-  </p>
+    <!-- Main Content -->
+    <div class="main-content">
+      <h1>事件描述 AI 判斷</h1>
 
+      <div class="admin-info">
+        👋 歡迎管理員：ID {{ request.session.admin_id }}，姓名 {{ request.session.admin_name }}
+      </div>
 
-  <textarea id="description" placeholder="請輸入事件描述內容..."></textarea><br>
-
-  <button onclick="submitDescription()">送出並判斷</button>
-
-  <p id="result"></p>
+      <textarea id="description" placeholder="請輸入事件描述內容..."></textarea><br>
+      <button onclick="submitDescription()">送出並判斷</button>
+      <p id="result"></p>
+    </div>
+  </div>
 
   <script>
     function submitDescription() {
@@ -117,7 +182,6 @@
       .then(response => response.json())
       .then(data => {
         const resultElem = document.getElementById("result");
-        // 先清空class
         resultElem.className = '';
 
         if (data.result === 0) {

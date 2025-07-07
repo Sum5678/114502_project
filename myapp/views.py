@@ -118,6 +118,52 @@ def education_image(request, pk):
         return HttpResponse(page.image_url, content_type="image/png")
     return HttpResponse(status=404)
 
+
+#最近警局
+from django.shortcuts import render
+from .models import TaiwanRegion, PoliceAddress
+import json
+from django.core.serializers.json import DjangoJSONEncoder
+
+from django.shortcuts import render
+from .models import TaiwanRegion, PoliceAddress
+
+def nearest_police(request):
+    all_regions = {}
+    for region in TaiwanRegion.objects.all():
+        all_regions.setdefault(region.country_city, []).append(region.district_town)
+
+    selected_city = request.GET.get('country_city')
+    selected_district = request.GET.get('district_town')
+    precincts = []
+
+    if selected_city and selected_district:
+        zipcode_entry = TaiwanRegion.objects.filter(
+            country_city=selected_city,
+            district_town=selected_district
+        ).first()
+
+        if zipcode_entry:
+            # 🔽 在這裡加上 debug 印出
+            selected_precincts = list(PoliceAddress.objects.filter(zipcode=zipcode_entry.zipcode).values())
+            print("=== DEBUG Precincts ===")
+            for p in selected_precincts:
+                print(f"{p['precinct_name']}: ({p['POINT_Y']}, {p['POINT_X']})")
+
+            precincts = selected_precincts
+
+    cities = sorted(all_regions.keys())
+
+    return render(request, 'nearest_police.html', {
+        'all_regions_json': all_regions,
+        'cities': cities,
+        'selected_city': selected_city,
+        'selected_district': selected_district,
+        'precincts': precincts
+    })
+
+    
+
 #地圖顯示資料 0528
 @require_GET
 def get_police_by_district(request):
@@ -838,20 +884,28 @@ def ai_judge(request):
 from django.shortcuts import render, redirect
 from .models import Admins
 
+from django.shortcuts import render, redirect
+from .models import Admins
+
 def admin_login(request):
-    if request.method == "POST":
-        gmail = request.POST.get('admin_gmail')
+    if request.method == 'POST':
+        admin_gmail = request.POST.get('admin_gmail')
         password = request.POST.get('password')
 
         try:
-            admin = Admins.objects.get(admin_gmail=gmail, password=password)
-            request.session['admin_id'] = admin.admin_id
-            request.session['admin_name'] = admin.name  # 如果你後面會用到名字
-            return redirect('show_judge_page')
+            admin = Admins.objects.get(admin_gmail=admin_gmail)
+            if admin.password == password:
+                # 登入成功，寫入 session
+                request.session['admin_id'] = admin.admin_id
+                request.session['admin_name'] = admin.name
+                return redirect('admin_interview')  # 成功跳轉
+            else:
+                return render(request, 'admin_login.html', {'error': '密碼錯誤'})
         except Admins.DoesNotExist:
-            return render(request, 'admin_login.html', {'error': '帳號或密碼錯誤'})
+            return render(request, 'admin_login.html', {'error': '帳號不存在'})
 
     return render(request, 'admin_login.html')
+
 
 #--------管理員自介-------
 from .forms import AdminProfileForm
@@ -882,5 +936,42 @@ def admin_interview(request):
         'message': message,
     })
 
+#-------管理員登出-----
+from django.shortcuts import redirect
+
+def admin_logout(request):
+    request.session.flush()  # 清空所有 session 資料
+    return redirect('admin_login')  # 登出後導向登入頁
 
 
+#---------------事件審核的--------------------------------------------------------------------
+from django.shortcuts import render
+from .models import PemapAll
+
+def pemap_judge(request):
+    all_data = PemapAll.objects.all().order_by('-time_created')  # 最新的在上
+    return render(request, 'pemap_judge.html', {'data': all_data})
+
+#--step1
+from django.shortcuts import render, get_object_or_404, redirect
+from .models import PemapAll
+
+def pemap_judge_step1(request, p_id):
+    form_data = get_object_or_404(PemapAll, p_id=p_id)
+
+    if request.method == 'POST':
+        new_status = request.POST.get('review_status')
+        if new_status is not None and new_status.isdigit():
+            form_data.review_status = int(new_status)
+            form_data.time_reviewed = timezone.now()
+
+            # 👉 記錄修改人（例如存 log、或印出 log）
+            admin_name = request.session.get('admin_name', '未知管理員')
+            print(f"表單 {p_id} 被 {admin_name} 修改狀態為 {new_status}")
+
+            form_data.save()
+            return redirect('pemap_judge')  # 完成後回事件清單頁
+
+    return render(request, 'pemap_judge_step1.html', {
+        'item': form_data
+    })
