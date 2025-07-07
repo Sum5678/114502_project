@@ -1,10 +1,10 @@
-{% load static %}
 <!DOCTYPE html>
+{% load static %}
 <html lang="zh-Hant">
+
 <head>
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0" name="viewport">
-
   <title>{% block title %}首頁{% endblock %}</title>
   <meta content="" name="description">
   <meta content="" name="keywords">
@@ -33,120 +33,126 @@
 </head>
 
 <body class="index-page">
+  <header id="header" class="header d-flex align-items-center fixed-top">
+    <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
+      <a href="index.html" class="logo d-flex align-items-center me-auto me-xl-0">
+        <h1 class="sitename">怪怪走開，護您安全</h1><span></span>
+      </a>
+      <nav id="navmenu" class="navmenu">
+        <ul>
+          <li><a href="{% url 'home' %}#hero" class="active">主頁</a></li>
+          <li><a href="index.html#about">簡介及功能介紹</a></li>
+          <li><a href="{% url 'report' %}">填寫表單</a></li>
+          <li><a href="index.html#portfolio">Portfolio</a></li>
+          <li><a href="index.html#pricing">Pricing</a></li>
+          <li><a href="{% url 'map' %}">事件地圖</a></li>
+          <li><a href="blog.html">Blog</a></li>
+          <li class="dropdown"><a href="#"><span>Dropdown</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+            <ul>
+              <li><a href="#">Dropdown 1</a></li>
+              <li class="dropdown"><a href="#"><span>Deep Dropdown</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+                <ul>
+                  <li><a href="#">Deep Dropdown 1</a></li>
+                  <li><a href="#">Deep Dropdown 2</a></li>
+                  <li><a href="#">Deep Dropdown 3</a></li>
+                  <li><a href="#">Deep Dropdown 4</a></li>
+                  <li><a href="#">Deep Dropdown 5</a></li>
+                </ul>
+              </li>
+              <li><a href="#">Dropdown 2</a></li>
+              <li><a href="#">Dropdown 3</a></li>
+              <li><a href="#">Dropdown 4</a></li>
+            </ul>
+          </li>
+          <li><a href="index.html#contact">Contact</a></li>
+        </ul>
+        <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+      </nav>
+      <a class="btn-getstarted" href="index.html#about">Get Started</a>
+    </div>
+  </header>
 
-<header id="header" class="header d-flex align-items-center fixed-top">
-  <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
-    <a href="index.html" class="logo d-flex align-items-center me-auto me-xl-0">
-      <h1 class="sitename">怪怪走開，護您安全</h1><span></span>
-    </a>
+  <main class="main">
+    <!-- Hero Section -->
+    <section class="hero">
+      <img src="{% static 'assets/img/1.png' %}" alt="Hero Image">
+    </section>
 
-    <nav id="navmenu" class="navmenu">
-      <ul>
-        <li><a href="{% url 'home' %}#hero" class="active">主頁</a></li>
-        <li><a href="index.html#about">簡介及功能介紹</a></li>
-        <li><a href="{% url 'report' %}">填寫表單</a></li>
-        <li><a href="index.html#portfolio">Portfolio</a></li>
-        <li><a href="index.html#pricing">Pricing</a></li>
-        <li><a href="{% url 'map' %}">事件地圖</a></li>
-        <li><a href="blog.html">Blog</a></li>
-        <li class="dropdown"><a href="#"><span>Dropdown</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
-          <ul>
-            <li><a href="#">Dropdown 1</a></li>
-            <li class="dropdown"><a href="#"><span>Deep Dropdown</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
-              <ul>
-                <li><a href="#">Deep Dropdown 1</a></li>
-                <li><a href="#">Deep Dropdown 2</a></li>
-                <li><a href="#">Deep Dropdown 3</a></li>
-                <li><a href="#">Deep Dropdown 4</a></li>
-                <li><a href="#">Deep Dropdown 5</a></li>
-              </ul>
-            </li>
-            <li><a href="#">Dropdown 2</a></li>
-            <li><a href="#">Dropdown 3</a></li>
-            <li><a href="#">Dropdown 4</a></li>
-          </ul>
-        </li>
-        <li><a href="index.html#contact">Contact</a></li>
-      </ul>
-      <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
-    </nav>
-
-    <a class="btn-getstarted" href="index.html#about">Get Started</a>
-  </div>
-</header>
-
-<main class="main">
-
-  <!-- Hero Section -->
-  <section class="hero">
-    <img src="{% static 'assets/img/1.png' %}" alt="Hero Image">
-  </section>
-
-  <!-- About Section -->
-  <section id="about" class="about section light-background">
-    <div class="container" data-aos="fade-up" data-aos-delay="100">
-      <div class="row align-items-xl-center gy-5">
-
-        <div class="col-xl-5 content">
-          <h2>守護你的日常安全</h2>
-          <p>本系統致力於建立一個可疑人物或事件回報與案件視覺化平台，結合地圖定位與分析，提升民眾自我保護意識與行動效率。</p>
-          <div class="intro-block">
-            除了提供事件上報與地圖視覺化功能，也整合案件熱區分析與路線安全規劃，幫助使用者避開危險區域，提升通行安全與預警意識。
-          </div>
+<!-- About Section -->
+<section id="about" class="about section light-background">
+  <div class="container" data-aos="fade-up" data-aos-delay="100">
+    <div class="row gy-5 align-items-start">
+      <!-- 左側介紹內容 -->
+      <div class="col-xl-5 content d-flex flex-column justify-content-start" style="padding-top: 30px;">
+        <h2>守護你的日常安全</h2>
+        <p>本系統致力於建立一個可疑人物或事件回報與案件視覺化平台，結合地圖定位與分析，提升民眾自我保護意識與行動效率。</p>
+        <div class="intro-block" style="background-color: #e6f3fb; border-left: 5px solid #63b3ed; padding: 15px; border-radius: 8px;">
+          除了提供事件上報與地圖視覺化功能，也整合案件熱區分析與路線安全規劃，幫助使用者避開危險區域，提升通行安全與預警意識。
         </div>
+      </div>
 
-        <div class="col-xl-7">
-          <div class="row gy-4 icon-boxes">
+      <!-- 右側 icon-box 區塊 -->
+      <div class="col-xl-7">
+        <div class="row gy-4 icon-boxes">
 
-            <div class="col-md-6" data-aos="fade-up" data-aos-delay="200">
-              <div class="icon-box">
-                <div class="icon"><i class="ri-chat-3-line"></i></div>
-                <h3>聊天室即時通報</h3>
-                <p>提供即時聊天功能，讓使用者回報可疑事件並與其他用戶互動。</p>
-              </div>
+          <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
+            <div class="icon-box">
+              <div class="icon"><i class="ri-chat-3-line"></i></div>
+              <h3>聊天室</h3>
+              <p>提供即時聊天功能，供使用者回報事件與其他用戶互動。</p>
             </div>
-
-            <div class="col-md-6" data-aos="fade-up" data-aos-delay="300">
-              <div class="icon-box">
-                <div class="icon"><i class="ri-community-line"></i></div>
-                <h3>社群參與互助</h3>
-                <p>建立社群機制，促進居民彼此分享可疑訊息與防範資訊。</p>
-              </div>
-            </div>
-
-            <div class="col-md-6" data-aos="fade-up" data-aos-delay="400">
-              <div class="icon-box">
-                <div class="icon"><i class="ri-graduation-cap-line"></i></div>
-                <h3>安全知識學習</h3>
-                <p>透過線上教育資源與案例分享，提升自我保護知識與意識。</p>
-              </div>
-            </div>
-
-            <div class="col-md-6" data-aos="fade-up" data-aos-delay="500">
-              <div class="icon-box">
-                <div class="icon"><i class="ri-survey-line"></i></div>
-                <h3>線上案件通報</h3>
-                <p>快速填寫表單回報案件，讓資料即時進入平台供分析與追蹤。</p>
-              </div>
-            </div>
-
           </div>
-          
 
-</main>
+          <div class="col-md-4" data-aos="fade-up" data-aos-delay="300">
+            <div class="icon-box">
+              <div class="icon"><i class="ri-group-line"></i></div>
+              <h3>社群</h3>
+              <p>建立社群機制，促進居民彼此分享可疑訊息與防範資訊。</p>
+            </div>
+          </div>
 
-</body>
-</html>
+          <div class="col-md-4" data-aos="fade-up" data-aos-delay="400">
+            <div class="icon-box">
+              <div class="icon"><i class="ri-book-2-line"></i></div>
+              <h3>安全知識學習</h3>
+              <p>透過線上教育資源與案例分享，提升自我保護知識與意識。</p>
+            </div>
+          </div>
 
-</div> <!-- End Icon Box -->
+          <div class="col-md-4" data-aos="fade-up" data-aos-delay="500">
+            <div class="icon-box">
+              <div class="icon"><i class="ri-survey-line"></i></div>
+              <h3>線上案件通報</h3>
+              <p>快速填寫表單回報案件，讓資料即時進入平台供分析與追蹤。</p>
+            </div>
+          </div>
 
+          <div class="col-md-4" data-aos="fade-up" data-aos-delay="600">
+            <div class="icon-box">
+              <div class="icon"><i class="ri-map-pin-line"></i></div>
+              <h3>事件地圖</h3>
+              <p>透過地圖標示可疑案件位置，幫助用戶了解周遭熱點區域。</p>
+            </div>
+          </div>
 
+          <div class="col-md-4" data-aos="fade-up" data-aos-delay="600">
+            <div class="icon-box">
+              <div class="icon"><i class="ri-shield-check-line"></i></div>
+              <h3>安全商家</h3>
+              <p>顯示認證安全商家，供緊急時尋求協助或避難。</p>
+            </div>
+          </div>
 
+          <!-- 補滿 3 欄結構，保持對齊 -->
+          <div class="col-md-4 d-none d-md-block"></div>
+
+        </div>
+      </div>
 
     </div>
   </div>
-
 </section><!-- /About Section -->
+
 
 
 <!-- Stats Section -->
