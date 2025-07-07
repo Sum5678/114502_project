@@ -1,0 +1,63 @@
+<!-- templates/review.html -->
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>上傳資料審核頁</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ccc;
+      vertical-align: top;
+    }
+    img {
+      max-width: 200px;
+      max-height: 200px;
+    }
+  </style>
+</head>
+<body>
+  <h1>上傳資料審核</h1>
+  <table>
+    <thead>
+      <tr>
+        <th>顯示名稱</th>
+        <th>分類</th>
+        <th>原因</th>
+        <th>地址</th>
+        <th>圖片</th>
+        <th>上傳時間</th>
+        <th>審核狀態</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for report in reports %}
+      <tr>
+        <td>{{ report.display_name }}</td>
+        <td>{{ report.kind }}</td>
+        <td>{{ report.reason }}</td>
+        <td>{{ report.address }}</td>
+        <td>
+          {% if report.img_url %}
+            <img src="{{ report.img_url }}" alt="圖片" />
+          {% else %}
+            無圖片
+          {% endif %}
+        </td>
+        <td>{{ report.time_created }}</td>
+        <td>{{ report.review_status }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</body>
+</html>

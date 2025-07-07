@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>登出成功</title>
+  <meta http-equiv="refresh" content="3;url={% url 'admin_login' %}">
+  <style>
+    body {
+      background-color: #f0f4ff;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      color: #003366;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .container {
+      background-color: white;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 80, 180, 0.2);
+      text-align: center;
+    }
+
+    h1 {
+      color: #00509e;
+    }
+
+    p {
+      margin-top: 15px;
+      font-size: 1rem;
+    }
+
+    a.button {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 10px 24px;
+      background: #00509e;
+      color: white;
+      border-radius: 6px;
+      text-decoration: none;
+      transition: background 0.3s;
+    }
+
+    a.button:hover {
+      background: #003f7f;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>您已成功登出</h1>
+    <p>系統將在 3 秒後自動返回登入頁面</p>
+    <a href="{% url 'admin_login' %}" class="button">立即回登入頁</a>
+  </div>
+</body>
+</html>
