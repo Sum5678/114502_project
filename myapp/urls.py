@@ -10,7 +10,7 @@ from .views import PemapAllListView, PemapAllUpdateView
 urlpatterns = [
     path('report/', views.report_view, name='report'),#填寫表單
     path('', views.index, name='home'),
-    path('index.html', views.index, name='index'),
+    path('index.html', views.index, name='index'),#主畫面
     path('tables.html', views.tables, name='tables'),
     path('register.html', views.register, name='register'),
     path('password.html', views.password, name='password'),
