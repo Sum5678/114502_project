@@ -77,39 +77,55 @@
     </form>
   </div>
 
-  <script>
-    document.getElementById("businessForm").addEventListener("submit", function(e) {
-      e.preventDefault();
-      const formData = new FormData(e.target);
-      const data = Object.fromEntries(formData.entries());
+<script>
+  document.getElementById("businessForm").addEventListener("submit", function(e) {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData.entries());
 
-      // 合併營業時間
-      data.business_hours = data.bs_time_start + " - " + data.bs_time_end;
-      delete data.bs_time_start;
-      delete data.bs_time_end;
+    // 合併營業時間
+    data.business_hours = data.bs_time_start + " - " + data.bs_time_end;
+    delete data.bs_time_start;
+    delete data.bs_time_end;
 
-      // 加入 st_id 和 created_at
-      data.st_id = "B" + Date.now();
-      data.created_at = new Date().toISOString();
+    // 對應欄位修正
+    data.store_name = data.bs_name;
+    data.phone = data.bs_phone;
+    data.address = data.bs_address;
 
-      // 發送到後端 PHP 處理
-      fetch("upload.php", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(data)
-      })
-      .then(res => res.text())
-      .then(result => {
-        alert(result);
+    // ➤ 主鍵欄位（整數），避免過大用秒級 timestamp
+    data.st_id = Math.floor(Date.now() / 1000);
+
+    // ➤ 必須是已存在的 this_user_profile.id（如 1 or 2）
+    data.poster_id = 1;
+
+    // ➤ MySQL DATETIME 格式
+    const now = new Date();
+    data.created_at = now.toISOString().slice(0, 19).replace("T", " ");  // '2025-06-27 14:52:00'
+
+    // 發送至 Django 後端處理
+    fetch("/api/submit_store/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(data)
+    })
+    .then(res => res.json())
+    .then(result => {
+      if (result.status === "success") {
+        alert("✅ 上傳成功！");
         e.target.reset();
-      })
-      .catch(err => {
-        console.error(err);
-        alert("上傳失敗！");
-      });
+      } else {
+        alert("❌ 上傳失敗：" + result.message);
+        console.error("伺服器錯誤訊息：", result.message);
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      alert("❌ 發生錯誤，請稍後再試");
     });
-  </script>
+  });
+</script>
 </body>
 </html>
