@@ -86,8 +86,8 @@ urlpatterns = [
     path('ai_judge/', views.ai_judge, name='ai_judge'),#ai檢測
     path('admin_login/', views.admin_login, name='admin_login'),
     path('admin_interview/', views.admin_interview, name='admin_interview'),#管理員自介
-    path('admin_logout/', views.admin_logout, name='admin_logout'),
-    path('pemap_judge/', views.pemap_judge, name='pemap_judge'),
+    path('admin_logout/', views.admin_logout, name='admin_logout'),#管理員登入
+    path('pemap_judge/', views.pemap_judge, name='pemap_judge'),#審核事件
     path('pemap_judge_step1/<int:p_id>/', views.pemap_judge_step1, name='pemap_judge_step1'),
 
 

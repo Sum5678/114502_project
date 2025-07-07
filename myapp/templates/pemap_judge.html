@@ -107,7 +107,6 @@
             <th>暱稱</th>
             <th>分類</th>
             <th>理由</th>
-            <th>地址</th>
             <th>經緯度</th>
             <th>上傳時間</th>
             <th>審核狀態</th>
@@ -115,22 +114,24 @@
           </tr>
         </thead>
         <tbody>
-          {% for item in data %}
+        {% for item in data %}
             <tr>
-              <td>{{ item.p_id }}</td>
-              <td>{{ item.display_name }}</td>
-              <td>{{ item.kind }}</td>
-              <td>{{ item.reason|truncatechars:30 }}</td>
-              <td>{{ item.address }}</td>
-              <td>{{ item.latitude }}, {{ item.longitude }}</td>
-              <td>{{ item.time_created }}</td>
-              <td>{{ item.get_review_status_display }}</td>
-              <a href="{% url 'pemap_judge_step1' item.p_id %}" style="color: white; background: #007bff; padding: 6px 12px; border-radius: 6px; text-decoration: none;">進入審核</a>
+            <td>{{ item.p_id }}</td>
+            <td>{{ item.display_name }}</td>
+            <td>{{ item.kind }}</td>
+            <td>{{ item.reason|truncatechars:30 }}</td>
+            <td>{{ item.latitude }}, {{ item.longitude }}</td>
+            <td>{{ item.time_created }}</td>
+            <td>{{ item.get_review_status_display }}</td>
+            <td>
+                <a href="{% url 'pemap_judge_step1' item.p_id %}" style="color: white; background: #007bff; padding: 6px 12px; border-radius: 6px; text-decoration: none; display: inline-block;">進入審核</a>
+            </td>
             </tr>
-          {% empty %}
-            <tr><td colspan="8">目前尚無資料</td></tr>
-          {% endfor %}
+        {% empty %}
+            <tr><td colspan="9">目前尚無資料</td></tr>
+        {% endfor %}
         </tbody>
+
       </table>
     </div>
   </div>
