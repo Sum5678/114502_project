@@ -118,6 +118,52 @@ def education_image(request, pk):
         return HttpResponse(page.image_url, content_type="image/png")
     return HttpResponse(status=404)
 
+
+#最近警局
+from django.shortcuts import render
+from .models import TaiwanRegion, PoliceAddress
+import json
+from django.core.serializers.json import DjangoJSONEncoder
+
+from django.shortcuts import render
+from .models import TaiwanRegion, PoliceAddress
+
+def nearest_police(request):
+    all_regions = {}
+    for region in TaiwanRegion.objects.all():
+        all_regions.setdefault(region.country_city, []).append(region.district_town)
+
+    selected_city = request.GET.get('country_city')
+    selected_district = request.GET.get('district_town')
+    precincts = []
+
+    if selected_city and selected_district:
+        zipcode_entry = TaiwanRegion.objects.filter(
+            country_city=selected_city,
+            district_town=selected_district
+        ).first()
+
+        if zipcode_entry:
+            # 🔽 在這裡加上 debug 印出
+            selected_precincts = list(PoliceAddress.objects.filter(zipcode=zipcode_entry.zipcode).values())
+            print("=== DEBUG Precincts ===")
+            for p in selected_precincts:
+                print(f"{p['precinct_name']}: ({p['POINT_Y']}, {p['POINT_X']})")
+
+            precincts = selected_precincts
+
+    cities = sorted(all_regions.keys())
+
+    return render(request, 'nearest_police.html', {
+        'all_regions_json': all_regions,
+        'cities': cities,
+        'selected_city': selected_city,
+        'selected_district': selected_district,
+        'precincts': precincts
+    })
+
+    
+
 #地圖顯示資料 0528
 @require_GET
 def get_police_by_district(request):
