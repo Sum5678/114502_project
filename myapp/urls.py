@@ -11,8 +11,6 @@ urlpatterns = [
     path('report/', views.report_view, name='report'),
     path('', views.index, name='home'),
     path('index.html', views.index, name='index'),
-    # path('index.html', views.index, name='index')
-    # 對,我也不知道有時換這個反而能跑,有時又不能跑    
     path('tables.html', views.tables, name='tables'),
     path('register.html', views.register, name='register'),
     path('password.html', views.password, name='password'),
@@ -89,6 +87,9 @@ urlpatterns = [
     path('admin_login/', views.admin_login, name='admin_login'),
     path('admin_interview/', views.admin_interview, name='admin_interview'),#管理員自介
     path('admin_logout/', views.admin_logout, name='admin_logout'),
+    path('pemap_judge/', views.pemap_judge, name='pemap_judge'),
+    path('pemap_judge_step1/<int:p_id>/', views.pemap_judge_step1, name='pemap_judge_step1'),
+
 
    
 

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>所有檢舉表單資料</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      color: #003366;
+    }
+
+    .container {
+      display: flex;
+      height: 100vh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 220px;
+      background-color: #00509e;
+      padding: 30px 20px;
+      color: white;
+      flex-shrink: 0;
+    }
+
+    .sidebar h3 {
+      color: #ffffff;
+      font-size: 1.2rem;
+      margin-bottom: 25px;
+      text-align: center;
+    }
+
+    .sidebar a {
+      display: block;
+      color: white;
+      text-decoration: none;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 6px;
+      transition: background 0.2s;
+    }
+
+    .sidebar a:hover {
+      background-color: #0077cc;
+    }
+
+    /* Main content */
+    .main-content {
+      flex: 1;
+      background-color: #f4f8ff;
+      padding: 40px;
+      overflow-x: auto;
+    }
+
+    h1 {
+      color: #00509e;
+      margin-bottom: 30px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      box-shadow: 0 4px 10px rgba(0, 80, 180, 0.1);
+    }
+
+    th, td {
+      border: 1px solid #cce0ff;
+      padding: 10px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #00509e;
+      color: white;
+    }
+
+    tr:nth-child(even) {
+      background-color: #eef4ff;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- 導覽列 -->
+    <div class="sidebar">
+      <h3>管理員選單</h3>
+      <a href="{% url 'admin_interview' %}">自我介紹</a>
+      <a href="{% url 'show_judge_page' %}">審核表單</a>
+      <a href="{% url 'pemap_judge' %}">事件清單審核</a>
+      <a href="{% url 'admin_logout' %}">登出</a>
+    </div>
+
+    <!-- 主內容 -->
+    <div class="main-content">
+      <h1>所有檢舉表單資料</h1>
+
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>暱稱</th>
+            <th>分類</th>
+            <th>理由</th>
+            <th>地址</th>
+            <th>經緯度</th>
+            <th>上傳時間</th>
+            <th>審核狀態</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in data %}
+            <tr>
+              <td>{{ item.p_id }}</td>
+              <td>{{ item.display_name }}</td>
+              <td>{{ item.kind }}</td>
+              <td>{{ item.reason|truncatechars:30 }}</td>
+              <td>{{ item.address }}</td>
+              <td>{{ item.latitude }}, {{ item.longitude }}</td>
+              <td>{{ item.time_created }}</td>
+              <td>{{ item.get_review_status_display }}</td>
+              <a href="{% url 'pemap_judge_step1' item.p_id %}" style="color: white; background: #007bff; padding: 6px 12px; border-radius: 6px; text-decoration: none;">進入審核</a>
+            </tr>
+          {% empty %}
+            <tr><td colspan="8">目前尚無資料</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</body>
+</html>
