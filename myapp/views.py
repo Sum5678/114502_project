@@ -952,6 +952,7 @@ def pemap_judge(request):
     all_data = PemapAll.objects.all().order_by('-time_created')  # 最新的在上
     return render(request, 'pemap_judge.html', {'data': all_data})
 
+
 #--step1
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import PemapAll
