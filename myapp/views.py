@@ -122,47 +122,39 @@ def education_image(request, pk):
 #最近警局
 from django.shortcuts import render
 from .models import TaiwanRegion, PoliceAddress
-import json
-from django.core.serializers.json import DjangoJSONEncoder
+from django.forms.models import model_to_dict
 
-from django.shortcuts import render
-from .models import TaiwanRegion, PoliceAddress
+def nearest_police_view(request):
+    country_city = request.GET.get('country_city')
+    district_town = request.GET.get('district_town')
 
-def nearest_police(request):
-    all_regions = {}
-    for region in TaiwanRegion.objects.all():
-        all_regions.setdefault(region.country_city, []).append(region.district_town)
+    countries = TaiwanRegion.objects.values_list('country_city', flat=True).distinct()
+    districts = []
+    police_data = []
 
-    selected_city = request.GET.get('country_city')
-    selected_district = request.GET.get('district_town')
-    precincts = []
+    if country_city:
+        districts = TaiwanRegion.objects.filter(country_city=country_city).values_list('district_town', flat=True).distinct()
+    if country_city and district_town:
+        zipcodes = TaiwanRegion.objects.filter(
+            country_city=country_city,
+            district_town=district_town
+        ).values_list('zipcode', flat=True)
 
-    if selected_city and selected_district:
-        zipcode_entry = TaiwanRegion.objects.filter(
-            country_city=selected_city,
-            district_town=selected_district
-        ).first()
-
-        if zipcode_entry:
-            # 🔽 在這裡加上 debug 印出
-            selected_precincts = list(PoliceAddress.objects.filter(zipcode=zipcode_entry.zipcode).values())
-            print("=== DEBUG Precincts ===")
-            for p in selected_precincts:
-                print(f"{p['precinct_name']}: ({p['POINT_Y']}, {p['POINT_X']})")
-
-            precincts = selected_precincts
-
-    cities = sorted(all_regions.keys())
+        queryset = PoliceAddress.objects.filter(zipcode__in=zipcodes)
+        police_data = [
+            model_to_dict(obj, fields=["precinct_name", "address", "phone", "POINT_X", "POINT_Y"])
+            for obj in queryset
+        ]
 
     return render(request, 'nearest_police.html', {
-        'all_regions_json': all_regions,
-        'cities': cities,
-        'selected_city': selected_city,
-        'selected_district': selected_district,
-        'precincts': precincts
+        'countries': countries,
+        'districts': districts,
+        'selected_country': country_city,
+        'selected_district': district_town,
+        'police_data': police_data,
+        'google_maps_api_key': 'AIzaSyAUuPZMMJvgVWftmqVyzfX8mKTwMX4kA6o',  # 用你給的
     })
 
-    
 
 #地圖顯示資料 0528
 @require_GET
@@ -994,7 +986,7 @@ def pemap_judge_step1(request, p_id):
 
 import requests
 from django.shortcuts import render
-from .models import YourModel  # 替換成你實際的 model 名稱
+from .models import PemapAll  # 替換成你實際的 model 名稱
 
 def reverse_geocode_osm(lat, lng):
     url = f"https://nominatim.openstreetmap.org/reverse?format=json&lat={lat}&lon={lng}&zoom=18&addressdetails=1"
@@ -1008,7 +1000,7 @@ def reverse_geocode_osm(lat, lng):
     return "無法取得地址"
 
 def review_detail(request, pk):
-    item = YourModel.objects.get(pk=pk)
+    item = PemapAll.objects.get(pk=pk)
     
     # 假設 item.address 是經緯度字串，例如 "25.0330,121.5654"
     try:

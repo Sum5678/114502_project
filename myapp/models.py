@@ -122,22 +122,6 @@ class EducationPage(models.Model):
         return self.title
     
 
-class TaiwanRegion(models.Model):
-    zipcode = models.CharField(max_length=10)
-    country_city = models.CharField(max_length=50)
-    district_town = models.CharField(max_length=50)
-
-class PoliceAddress(models.Model):
-    分局名稱 = models.CharField(max_length=100)
-    郵遞區號 = models.CharField(max_length=10)
-    地址 = models.CharField(max_length=200)
-    電話 = models.CharField(max_length=50)
-    POINT_X = models.FloatField()  # 經度
-    POINT_Y = models.FloatField()  # 緯度
-
-    def __str__(self):
-        return self.分局名稱
-    
 
 from django.db import models
 
