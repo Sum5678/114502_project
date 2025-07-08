@@ -976,3 +976,46 @@ def pemap_judge_step1(request, p_id):
     return render(request, 'pemap_judge_step1.html', {
         'item': form_data
     })
+
+
+#-------------經緯度換地址---------
+# 用google api的
+
+# def reverse_geocode(lat, lng):
+#     api_key = 'AIzaSyAUuPZMMJvgVWftmqVyzfX8mKTwMX4kA6o&callback=initMap'
+#     url = f"https://maps.googleapis.com/maps/api/geocode/json?latlng={lat},{lng}&key={api_key}"
+#     response = requests.get(url)
+#     if response.status_code == 200:
+#         result = response.json()
+#         if result['results']:
+#             return result['results'][0]['formatted_address']
+#     return "無法取得地址"
+# myapp/views.py
+
+import requests
+from django.shortcuts import render
+from .models import YourModel  # 替換成你實際的 model 名稱
+
+def reverse_geocode_osm(lat, lng):
+    url = f"https://nominatim.openstreetmap.org/reverse?format=json&lat={lat}&lon={lng}&zoom=18&addressdetails=1"
+    headers = {
+        "User-Agent": "YourAppName (your@email.com)"
+    }
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        result = response.json()
+        return result.get("display_name", "無法取得地址")
+    return "無法取得地址"
+
+def review_detail(request, pk):
+    item = YourModel.objects.get(pk=pk)
+    
+    # 假設 item.address 是經緯度字串，例如 "25.0330,121.5654"
+    try:
+        lat, lng = map(str.strip, item.address.split(","))
+        item.human_address = reverse_geocode_osm(lat, lng)
+    except Exception:
+        item.human_address = "無法解析經緯度"
+
+    return render(request, 'your_template.html', {'item': item})
+
