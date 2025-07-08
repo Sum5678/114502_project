@@ -6,6 +6,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import path
 from .views import PemapAllListView, PemapAllUpdateView
+from myapp.views import nearest_police_view
 
 urlpatterns = [
     path('report/', views.report_view, name='report'),#填寫表單
@@ -23,7 +24,7 @@ urlpatterns = [
     path('404.html', views.error_404, name='404'),
     path('harassment_prevention/', views.harassment_prevention, name='harassment_prevention'),
     path('education/', views.education_page, name='education_page'),
-    path('nearest-police/', views.nearest_police, name='nearest_police'),
+    path('nearest-police/', nearest_police_view, name='nearest_police'),
     
     path('admin/', admin.site.urls),
     path('admin/region/', views.taiwan_regions_admin, name='taiwan_regions_admin'),
