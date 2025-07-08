@@ -4,7 +4,10 @@ from django.views.decorators.http import require_GET
 from django.http import JsonResponse
 from .forms import AutoDialForm
 from django.views.decorators.csrf import csrf_exempt
-
+from .models import PemapAll
+from .models import StoreAll
+from django.utils import timezone
+import json
 
 
 def report_view(request):
@@ -622,29 +625,36 @@ def show_map(request):
 #--------------------------------01--------------------------------------------------------
 # -------------------------------- submit_report（我要填單功能） --------------------------------
 # myapp/views.py
-from django.views.decorators.csrf import csrf_exempt
-from django.http import JsonResponse
-import json
-from .models import PemapAll
-
-@csrf_exempt  # 暫時關閉 CSRF 驗證，之後可用 token 或前端設置
+@csrf_exempt
 def submit_report(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
 
-            # 從前端資料抓欄位
-            poster_id = data.get('poster_id', 'anonymous')  # 你可以依需求調整
-            display_name = data.get('display_name', '匿名')
-            kind = data.get('kind')
-            reason = data.get('reason')
-            address = data.get('address')
-            latitude = float(data.get('latitude', 0))
-            longitude = float(data.get('longitude', 0))
-            img_url = data.get('img_url', '')
+            # 自動產生 poster_id（例如用目前時間戳 + email）
+            poster_id = int(timezone.now().strftime("%Y%m%d%H%M%S"))
+ 
+            display_name = data.get('display_name', '')
+            kind = data.get('kind', '')
+            reason = data.get('reason', '')
+            address = data.get('address', '')
 
-            # 建立資料庫紀錄
-            report = PemapAll.objects.create(
+            # 分離經緯度
+            latitude = 0
+            longitude = 0
+            if ',' in address:
+                parts = [p.strip() for p in address.split(',')]
+                if len(parts) >= 2:
+                    try:
+                        latitude = float(parts[0])
+                        longitude = float(parts[1])
+                    except ValueError:
+                        pass  # 維持預設 0
+
+            img_url = data.get('img_url', '')  # 這就是 base64
+
+            # 寫入資料表
+            PemapAll.objects.create(
                 poster_id=poster_id,
                 display_name=display_name,
                 kind=kind,
@@ -653,13 +663,49 @@ def submit_report(request):
                 latitude=latitude,
                 longitude=longitude,
                 img_url=img_url,
-                review_status='待處理'
+                time_created=timezone.now(),
+                review_status="待審核"
             )
 
-            return JsonResponse({'status': 'success', 'message': '回報成功'})
+            return JsonResponse({"status": "success"})
+
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)})
+    else:
+        return JsonResponse({"status": "error", "message": "Invalid method"})
+    
+def room(request, room_name):
+    return render(request, 'test_0610chatroom.html', {'room_name': room_name})
+#----------------store---------------------------------------------------------------------
+
+@csrf_exempt
+def submit_store(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+
+            timestamp = int(timezone.now().timestamp())
+
+            store = StoreAll(
+                st_id=timestamp,
+                poster_id=int(data.get('poster_id')),  # 從前端傳入 1 或 2 等已存在的 ID
+                store_name=data.get('store_name') or data.get('bs_name'),
+                address=data.get('address') or data.get('bs_address'),
+                business_hours=data.get('business_hours'),
+                phone=data.get('phone') or data.get('bs_phone'),
+                created_at=data.get('created_at'),
+                reviewed_at=None,
+                review_status="pending"
+            )
+            store.save()
+            return JsonResponse({'status': 'success'})
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)})
-    return JsonResponse({'status': 'error', 'message': '只支援POST'})
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
+
+def business_upload_view(request):
+    return render(request, 'business_upload.html')
+
 
 
 #test_0610chatroom 試寫聊天室
