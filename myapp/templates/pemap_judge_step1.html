@@ -46,12 +46,29 @@
 
   <h1>審核事件 #{{ item.p_id }}</h1>
 
-  <p><strong>暱稱：</strong>{{ item.display_name }}</p>
-  <p><strong>分類：</strong>{{ item.kind }}</p>
-  <p><strong>理由：</strong>{{ item.reason }}</p>
-  <p><strong>經緯度：</strong>{{ item.address }}</p>
+  <div style="display: flex; gap: 20px; align-items: flex-start;">
+    
+    <!-- 地圖區塊 -->
+    <iframe
+      width="400"
+      height="300"
+      frameborder="0"
+      style="border:0; border-radius: 8px;"
+      referrerpolicy="no-referrer-when-downgrade"
+      src="https://www.google.com/maps?q={{ item.address|urlencode }}&output=embed"
+      allowfullscreen>
+    </iframe>
 
-  <form method="post">
+    <!-- 事件資訊區塊 -->
+    <div>
+      <p><strong>暱稱：</strong>{{ item.display_name }}</p>
+      <p><strong>分類：</strong>{{ item.kind }}</p>
+      <p><strong>理由：</strong>{{ item.reason }}</p>
+      <p><strong>經緯度：</strong>{{ item.address }}</p>
+    </div>
+  </div>
+
+  <form method="post" style="margin-top: 20px;">
     {% csrf_token %}
     <label for="review_status">審核狀態</label>
     <select name="review_status" id="review_status">
@@ -65,4 +82,5 @@
   </form>
 
 </body>
+
 </html>
