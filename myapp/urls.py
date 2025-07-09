@@ -6,7 +6,6 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import path
 from .views import PemapAllListView, PemapAllUpdateView
-from myapp.views import nearest_police_view
 
 urlpatterns = [
     path('report/', views.report_view, name='report'),#填寫表單
@@ -24,10 +23,8 @@ urlpatterns = [
     path('404.html', views.error_404, name='404'),
     path('harassment_prevention/', views.harassment_prevention, name='harassment_prevention'),
     path('education/', views.education_page, name='education_page'),
-    path('nearest-police/', nearest_police_view, name='nearest_police'),
-    path('api/submit_report/', views.submit_report, name='submit_report'),
-    path('api/submit_store/', views.submit_store, name='submit_store'),
-    path('business_upload/', views.business_upload_view, name='business_upload'),
+    path('nearest-police/', views.nearest_police, name='nearest_police'),
+    
     path('admin/', admin.site.urls),
     path('admin/region/', views.taiwan_regions_admin, name='taiwan_regions_admin'),
     path('taiwan-regions-admin/', views.taiwan_regions_admin, name='taiwan_regions_admin'),
@@ -63,7 +60,7 @@ urlpatterns = [
     path('safety/', views.safety, name='safety'),
     path('autodial/', views.autodial, name='autodial'),
     path('mymap/', views.mymap, name='mymap'),
-    
+    path('0101login/', views.login_page, name='login'),  
     path('settings/', views.settings, name='settings'),
     path('write/', views.settings, name='write'),
     path('01userlogin/', views.user_login_page, name='userlogin'),
@@ -92,7 +89,7 @@ urlpatterns = [
     path('admin_logout/', views.admin_logout, name='admin_logout'),#管理員登入
     path('pemap_judge/', views.pemap_judge, name='pemap_judge'),#審核事件
     path('pemap_judge_step1/<int:p_id>/', views.pemap_judge_step1, name='pemap_judge_step1'),
-    path('admin_index/', views.admin_index, name='admin_index'),#管理員登入後種種
+    path('admin_index/', views.admin_index, name='admin_index'),
 
 
    
@@ -100,8 +97,11 @@ urlpatterns = [
     path('<str:room_name>/', views.room, name='room'),
 
     # 其他路由
+    #思璇
+     #思璇
+    path('api/submit_report/', views.submit_report, name='submit_report'),
 
-   
+
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 # 原本沒有這些路徑
