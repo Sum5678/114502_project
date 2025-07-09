@@ -89,6 +89,7 @@ urlpatterns = [
     path('admin_logout/', views.admin_logout, name='admin_logout'),#管理員登入
     path('pemap_judge/', views.pemap_judge, name='pemap_judge'),#審核事件
     path('pemap_judge_step1/<int:p_id>/', views.pemap_judge_step1, name='pemap_judge_step1'),
+    path('admin_index/', views.admin_index, name='admin_index'),#管理員登入後種種
 
 
    
