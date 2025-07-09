@@ -898,7 +898,7 @@ def admin_login(request):
                 # 登入成功，寫入 session
                 request.session['admin_id'] = admin.admin_id
                 request.session['admin_name'] = admin.name
-                return redirect('admin_interview')  # 成功跳轉
+                return redirect('admin_index')  # 成功跳轉
             else:
                 return render(request, 'admin_login.html', {'error': '密碼錯誤'})
         except Admins.DoesNotExist:
@@ -981,41 +981,70 @@ def pemap_judge_step1(request, p_id):
 #-------------經緯度換地址---------
 # 用google api的
 
-# def reverse_geocode(lat, lng):
-#     api_key = 'AIzaSyAUuPZMMJvgVWftmqVyzfX8mKTwMX4kA6o&callback=initMap'
-#     url = f"https://maps.googleapis.com/maps/api/geocode/json?latlng={lat},{lng}&key={api_key}"
-#     response = requests.get(url)
+import requests
+from django.shortcuts import render, get_object_or_404
+from .models import PemapAll
+
+# --- Google Maps API 反查 ---
+def reverse_geocode_google(lat, lng):
+    api_key = 'AIzaSyAUuPZMMJvgVWftmqVyzfX8mKTwMX4kA6o'  
+    url = f"https://maps.googleapis.com/maps/api/geocode/json?latlng={lat},{lng}&key={api_key}"
+    try:
+        response = requests.get(url)
+        if response.status_code == 200:
+            result = response.json()
+            if result['results']:
+                return result['results'][0]['formatted_address']
+    except Exception as e:
+        print("Google Maps 反查失敗：", e)
+    return None
+
+# import requests
+# from django.shortcuts import render, get_object_or_404
+# from .models import PemapAll
+
+# def reverse_geocode_osm(lat, lng):
+#     url = f"https://nominatim.openstreetmap.org/reverse?format=json&lat={lat}&lon={lng}&zoom=18&addressdetails=1"
+#     headers = {
+#         "User-Agent": "MYPROJECT (11056001@ntub.edu.tw)"
+#     }
+#     response = requests.get(url, headers=headers)
 #     if response.status_code == 200:
 #         result = response.json()
-#         if result['results']:
-#             return result['results'][0]['formatted_address']
+#         return result.get("display_name", "無法取得地址")
 #     return "無法取得地址"
-# myapp/views.py
 
-import requests
-from django.shortcuts import render
-from .models import YourModel  # 替換成你實際的 model 名稱
+# def review_detail(request, pk):
+#     item = get_object_or_404(PemapAll, pk=pk)
 
-def reverse_geocode_osm(lat, lng):
-    url = f"https://nominatim.openstreetmap.org/reverse?format=json&lat={lat}&lon={lng}&zoom=18&addressdetails=1"
-    headers = {
-        "User-Agent": "YourAppName (your@email.com)"
+#     try:
+#         lat_str, lng_str = map(str.strip, item.address.split(","))
+#         lat = float(lat_str)
+#         lng = float(lng_str)
+#         human_address = reverse_geocode_osm(lat, lng)
+#         print("查詢地址：", human_address)
+#     except Exception as e:
+#         print("錯誤：", e)
+#         human_address = "無法解析經緯度"
+
+#     return render(request, 'your_template.html', {
+#         'item': item,
+#         'human_address': human_address
+#     })
+
+#------登入後的低一夜
+from django.shortcuts import render, redirect
+from django.http import HttpResponse
+
+def admin_index(request):
+    # 如果還沒登入，就導向登入頁
+    if 'admin_id' not in request.session:
+        return redirect('admin_login')
+
+    # 將管理員資訊傳到 HTML
+    context = {
+        'admin_id': request.session.get('admin_id'),
+        'admin_name': request.session.get('admin_name'),
     }
-    response = requests.get(url, headers=headers)
-    if response.status_code == 200:
-        result = response.json()
-        return result.get("display_name", "無法取得地址")
-    return "無法取得地址"
 
-def review_detail(request, pk):
-    item = YourModel.objects.get(pk=pk)
-    
-    # 假設 item.address 是經緯度字串，例如 "25.0330,121.5654"
-    try:
-        lat, lng = map(str.strip, item.address.split(","))
-        item.human_address = reverse_geocode_osm(lat, lng)
-    except Exception:
-        item.human_address = "無法解析經緯度"
-
-    return render(request, 'your_template.html', {'item': item})
-
+    return render(request, 'admin_index.html', context)
