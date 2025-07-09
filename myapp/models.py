@@ -1,6 +1,6 @@
 # from django.db import models
 from django.db import models
-
+from django.utils import timezone
 
 
 # Create your models here.
@@ -122,22 +122,6 @@ class EducationPage(models.Model):
         return self.title
     
 
-class TaiwanRegion(models.Model):
-    zipcode = models.CharField(max_length=10)
-    country_city = models.CharField(max_length=50)
-    district_town = models.CharField(max_length=50)
-
-class PoliceAddress(models.Model):
-    分局名稱 = models.CharField(max_length=100)
-    郵遞區號 = models.CharField(max_length=10)
-    地址 = models.CharField(max_length=200)
-    電話 = models.CharField(max_length=50)
-    POINT_X = models.FloatField()  # 經度
-    POINT_Y = models.FloatField()  # 緯度
-
-    def __str__(self):
-        return self.分局名稱
-    
 
 from django.db import models
 
@@ -163,56 +147,37 @@ class PoliceAddress(models.Model):
     class Meta:
         db_table = 'PoliceAddress'
 # ------------------------- Pemap 回報資料模型（對應 pemap_all 資料表） -------------------------
-# models.py
-from django.db import models
-from django.utils import timezone
-
 class PemapAll(models.Model):
-    # 你的欄位定義
     p_id = models.AutoField(primary_key=True)
-    poster_id = models.CharField(max_length=100)
+    poster_id = models.CharField(max_length=255)  # 自動生成
     display_name = models.CharField(max_length=100)
-    kind = models.CharField(max_length=50)
+    kind = models.CharField(max_length=100)
     reason = models.TextField()
     address = models.CharField(max_length=255)
     latitude = models.FloatField()
     longitude = models.FloatField()
-    img_url = models.URLField()
-    time_created = models.DateTimeField(auto_now_add=True)
+    img_url = models.TextField(blank=True)  # ✅ 改成 TextField 儲存 base64 字串
+    time_created = models.DateTimeField(default=timezone.now)
     time_reviewed = models.DateTimeField(null=True, blank=True)
-    review_status = models.IntegerField(choices=(
-        (0, '未審核'),
-        (1, 'ai審核通過'),
-        (2, 'ai審核未通過,還須人工審核'),
-        (3, '人工審核通過'),
-    ), default=0)
+    review_status = models.CharField(max_length=50, default="待審核")
 
     class Meta:
-        db_table = 'pemap_all'  # 指定資料表名稱
-        # managed = False  # 如果你不想 Django 管理此表（不會自動建立或修改資料表）
+        db_table = 'pemap_all'
 
+#-----------------------------------store----------------------------------------------------------
+class StoreAll(models.Model):
+    st_id = models.CharField(max_length=50, primary_key=True)
+    poster_id = models.CharField(max_length=255, blank=True)
+    store_name = models.CharField(max_length=100)
+    address = models.CharField(max_length=255)
+    business_hours = models.CharField(max_length=50)
+    phone = models.CharField(max_length=20)
+    created_at = models.DateTimeField()
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    review_status = models.CharField(max_length=20, default='pending')  # 審核狀態（預設 pending）
 
-
-# class PemapAll(models.Model):
-#     p_id = models.AutoField(primary_key=True)
-#     poster_id = models.CharField(max_length=100)
-#     display_name = models.CharField(max_length=100)
-#     kind = models.CharField(max_length=50)
-#     reason = models.TextField()
-#     address = models.CharField(max_length=255)
-#     latitude = models.FloatField()
-#     longitude = models.FloatField()
-#     img_url = models.CharField(max_length=255, blank=True, null=True)  # 如果儲存圖片路徑
-#     time_created = models.DateTimeField(auto_now_add=True)
-#     time_reviewed = models.DateTimeField(blank=True, null=True)
-#     review_status = models.CharField(max_length=50, default='待處理')
-
-#     class Meta:
-#         db_table = 'pemap_all'
-
-
-##測試資料能不能放到地圖上
-##暫時使用的是沒審核的pemap_all資料庫
+    class Meta:
+        db_table = 'store_all'  # << 指定實際的 MySQL 資料表名稱
 
 
 

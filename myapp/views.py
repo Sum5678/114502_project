@@ -4,7 +4,10 @@ from django.views.decorators.http import require_GET
 from django.http import JsonResponse
 from .forms import AutoDialForm
 from django.views.decorators.csrf import csrf_exempt
-
+from .models import PemapAll
+from .models import StoreAll
+from django.utils import timezone
+import json
 
 
 def report_view(request):
@@ -122,47 +125,39 @@ def education_image(request, pk):
 #最近警局
 from django.shortcuts import render
 from .models import TaiwanRegion, PoliceAddress
-import json
-from django.core.serializers.json import DjangoJSONEncoder
+from django.forms.models import model_to_dict
 
-from django.shortcuts import render
-from .models import TaiwanRegion, PoliceAddress
+def nearest_police_view(request):
+    country_city = request.GET.get('country_city')
+    district_town = request.GET.get('district_town')
 
-def nearest_police(request):
-    all_regions = {}
-    for region in TaiwanRegion.objects.all():
-        all_regions.setdefault(region.country_city, []).append(region.district_town)
+    countries = TaiwanRegion.objects.values_list('country_city', flat=True).distinct()
+    districts = []
+    police_data = []
 
-    selected_city = request.GET.get('country_city')
-    selected_district = request.GET.get('district_town')
-    precincts = []
+    if country_city:
+        districts = TaiwanRegion.objects.filter(country_city=country_city).values_list('district_town', flat=True).distinct()
+    if country_city and district_town:
+        zipcodes = TaiwanRegion.objects.filter(
+            country_city=country_city,
+            district_town=district_town
+        ).values_list('zipcode', flat=True)
 
-    if selected_city and selected_district:
-        zipcode_entry = TaiwanRegion.objects.filter(
-            country_city=selected_city,
-            district_town=selected_district
-        ).first()
-
-        if zipcode_entry:
-            # 🔽 在這裡加上 debug 印出
-            selected_precincts = list(PoliceAddress.objects.filter(zipcode=zipcode_entry.zipcode).values())
-            print("=== DEBUG Precincts ===")
-            for p in selected_precincts:
-                print(f"{p['precinct_name']}: ({p['POINT_Y']}, {p['POINT_X']})")
-
-            precincts = selected_precincts
-
-    cities = sorted(all_regions.keys())
+        queryset = PoliceAddress.objects.filter(zipcode__in=zipcodes)
+        police_data = [
+            model_to_dict(obj, fields=["precinct_name", "address", "phone", "POINT_X", "POINT_Y"])
+            for obj in queryset
+        ]
 
     return render(request, 'nearest_police.html', {
-        'all_regions_json': all_regions,
-        'cities': cities,
-        'selected_city': selected_city,
-        'selected_district': selected_district,
-        'precincts': precincts
+        'countries': countries,
+        'districts': districts,
+        'selected_country': country_city,
+        'selected_district': district_town,
+        'police_data': police_data,
+        'google_maps_api_key': 'AIzaSyAUuPZMMJvgVWftmqVyzfX8mKTwMX4kA6o',  # 用你給的
     })
 
-    
 
 #地圖顯示資料 0528
 @require_GET
@@ -630,29 +625,36 @@ def show_map(request):
 #--------------------------------01--------------------------------------------------------
 # -------------------------------- submit_report（我要填單功能） --------------------------------
 # myapp/views.py
-from django.views.decorators.csrf import csrf_exempt
-from django.http import JsonResponse
-import json
-from .models import PemapAll
-
-@csrf_exempt  # 暫時關閉 CSRF 驗證，之後可用 token 或前端設置
+@csrf_exempt
 def submit_report(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
 
-            # 從前端資料抓欄位
-            poster_id = data.get('poster_id', 'anonymous')  # 你可以依需求調整
-            display_name = data.get('display_name', '匿名')
-            kind = data.get('kind')
-            reason = data.get('reason')
-            address = data.get('address')
-            latitude = float(data.get('latitude', 0))
-            longitude = float(data.get('longitude', 0))
-            img_url = data.get('img_url', '')
+            # 自動產生 poster_id（例如用目前時間戳 + email）
+            poster_id = int(timezone.now().strftime("%Y%m%d%H%M%S"))
+ 
+            display_name = data.get('display_name', '')
+            kind = data.get('kind', '')
+            reason = data.get('reason', '')
+            address = data.get('address', '')
 
-            # 建立資料庫紀錄
-            report = PemapAll.objects.create(
+            # 分離經緯度
+            latitude = 0
+            longitude = 0
+            if ',' in address:
+                parts = [p.strip() for p in address.split(',')]
+                if len(parts) >= 2:
+                    try:
+                        latitude = float(parts[0])
+                        longitude = float(parts[1])
+                    except ValueError:
+                        pass  # 維持預設 0
+
+            img_url = data.get('img_url', '')  # 這就是 base64
+
+            # 寫入資料表
+            PemapAll.objects.create(
                 poster_id=poster_id,
                 display_name=display_name,
                 kind=kind,
@@ -661,13 +663,49 @@ def submit_report(request):
                 latitude=latitude,
                 longitude=longitude,
                 img_url=img_url,
-                review_status='待處理'
+                time_created=timezone.now(),
+                review_status="待審核"
             )
 
-            return JsonResponse({'status': 'success', 'message': '回報成功'})
+            return JsonResponse({"status": "success"})
+
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)})
+    else:
+        return JsonResponse({"status": "error", "message": "Invalid method"})
+    
+def room(request, room_name):
+    return render(request, 'test_0610chatroom.html', {'room_name': room_name})
+#----------------store---------------------------------------------------------------------
+
+@csrf_exempt
+def submit_store(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+
+            timestamp = int(timezone.now().timestamp())
+
+            store = StoreAll(
+                st_id=timestamp,
+                poster_id=int(data.get('poster_id')),  # 從前端傳入 1 或 2 等已存在的 ID
+                store_name=data.get('store_name') or data.get('bs_name'),
+                address=data.get('address') or data.get('bs_address'),
+                business_hours=data.get('business_hours'),
+                phone=data.get('phone') or data.get('bs_phone'),
+                created_at=data.get('created_at'),
+                reviewed_at=None,
+                review_status="pending"
+            )
+            store.save()
+            return JsonResponse({'status': 'success'})
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)})
-    return JsonResponse({'status': 'error', 'message': '只支援POST'})
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
+
+def business_upload_view(request):
+    return render(request, 'business_upload.html')
+
 
 
 #test_0610chatroom 試寫聊天室
@@ -976,3 +1014,49 @@ def pemap_judge_step1(request, p_id):
     return render(request, 'pemap_judge_step1.html', {
         'item': form_data
     })
+import requests
+from django.shortcuts import render, redirect, get_object_or_404
+from .models import PemapAll
+
+#--------- 使用 Google Maps API 反查地址 ----------
+def reverse_geocode_google(lat, lng):
+    api_key = 'AIzaSyAUuPZMMJvgVWftmqVyzfX8mKTwMX4kA6o'
+    url = f"https://maps.googleapis.com/maps/api/geocode/json?latlng={lat},{lng}&key={api_key}"
+    try:
+        response = requests.get(url)
+        if response.status_code == 200:
+            result = response.json()
+            if result['results']:
+                return result['results'][0]['formatted_address']
+    except Exception as e:
+        print("Google Maps 反查失敗：", e)
+    return "無法取得地址"
+
+#--------- 顯示單筆資料的細節頁面 ----------
+def review_detail(request, pk):
+    item = get_object_or_404(PemapAll, pk=pk)
+
+    try:
+        lat_str, lng_str = map(str.strip, item.address.split(","))
+        lat = float(lat_str)
+        lng = float(lng_str)
+        item.human_address = reverse_geocode_google(lat, lng)
+    except Exception as e:
+        print("經緯度解析失敗：", e)
+        item.human_address = "無法解析經緯度"
+
+    return render(request, 'pemap_judge.html', {
+        'item': item,
+    })
+
+#--------- 管理員登入後首頁 ----------
+def admin_index(request):
+    if 'admin_id' not in request.session:
+        return redirect('admin_login')
+
+    context = {
+        'admin_id': request.session.get('admin_id'),
+        'admin_name': request.session.get('admin_name'),
+    }
+
+    return render(request, 'admin_index.html', context)
