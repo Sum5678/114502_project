@@ -63,7 +63,7 @@ urlpatterns = [
     path('safety/', views.safety, name='safety'),
     path('autodial/', views.autodial, name='autodial'),
     path('mymap/', views.mymap, name='mymap'),
-    path('0101login/', views.login_page, name='login'),  
+    
     path('settings/', views.settings, name='settings'),
     path('write/', views.settings, name='write'),
     path('01userlogin/', views.user_login_page, name='userlogin'),

@@ -84,7 +84,8 @@
                     <td>{{ item.reason|truncatechars:30 }}</td>
                     <td>{{ item.latitude }}, {{ item.longitude }}</td>
                     <td>{{ item.time_created }}</td>
-                    <td>{{ item.get_review_status_display }}</td>
+                    <td>{{ item.review_status }}</td>
+
                     <td>
                       <a href="{% url 'pemap_judge_step1' item.p_id %}" class="btn btn-sm btn-primary">進入審核</a>
                     </td>
