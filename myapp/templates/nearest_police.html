@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <title>查詢最近的派出所</title>
+    <title>最近警局地圖</title>
     <style>
         #map {
             height: 500px;
@@ -12,85 +12,75 @@
     </style>
 </head>
 <body>
-    <h1>查詢最近的派出所</h1>
-
+    <h2>查詢最近警局</h2>
     <form method="get">
-        縣市：
-        <select name="country_city" id="id_country_city">
-            <option value="">請選擇縣市</option>
-            {% for city in cities %}
-                <option value="{{ city }}" {% if city == selected_city %}selected{% endif %}>{{ city }}</option>
+        <label>縣市：</label>
+        <select name="country_city" onchange="this.form.submit()">
+            <option value="">請選擇</option>
+            {% for city in countries %}
+                <option value="{{ city }}" {% if city == selected_country %}selected{% endif %}>{{ city }}</option>
             {% endfor %}
         </select>
 
-        行政區：
-        <select name="district_town" id="id_district_town">
-            {% if selected_city %}
-                {% for district in all_regions_json|dictsort:0 %}
-                    {% if district.0 == selected_city %}
-                        {% for dt in district.1 %}
-                            <option value="{{ dt }}" {% if dt == selected_district %}selected{% endif %}>{{ dt }}</option>
-                        {% endfor %}
-                    {% endif %}
-                {% endfor %}
-            {% endif %}
+        <label>鄉鎮市區：</label>
+        <select name="district_town">
+            <option value="">請選擇</option>
+            {% for district in districts %}
+                <option value="{{ district }}" {% if district == selected_district %}selected{% endif %}>{{ district }}</option>
+            {% endfor %}
         </select>
 
         <button type="submit">確定</button>
     </form>
 
-    <div id="map"></div>
+    {% if police_data %}
+        <div id="map"></div>
+        {{ police_data|json_script:"policeJson" }}
 
-    <script>
-        const regions = {{ all_regions_json|safe }};
-        const citySelect = document.getElementById("id_country_city");
-        const districtSelect = document.getElementById("id_district_town");
+        <script>
+            function initMap() {
+                const policeStations = JSON.parse(document.getElementById('policeJson').textContent);
 
-        citySelect.addEventListener("change", function () {
-            const selected = this.value;
-            const districts = regions[selected] || [];
+                const center = {
+                    lat: parseFloat(policeStations[0].POINT_Y),
+                    lng: parseFloat(policeStations[0].POINT_X)
+                };
 
-            districtSelect.innerHTML = "";
-            districts.forEach(d => {
-                const opt = document.createElement("option");
-                opt.value = d;
-                opt.textContent = d;
-                districtSelect.appendChild(opt);
-            });
-        });
-
-        function initMap() {
-            const map = new google.maps.Map(document.getElementById("map"), {
-                zoom: 13,
-                center: { lat: 23.5, lng: 121 },
-            });
-
-            const precincts = {{ precincts|safe }};
-            precincts.forEach(p => {
-                const marker = new google.maps.Marker({
-                    position: { lat: p.POINT_Y, lng: p.POINT_X },
-                    map: map,
-                    title: p.precinct_name,
+                const map = new google.maps.Map(document.getElementById("map"), {
+                    zoom: 13,
+                    center: center
                 });
 
-                const infowindow = new google.maps.InfoWindow({
-                    content: `<strong>${p.precinct_name}</strong><br>${p.address}<br>${p.phone}`
-                });
+                for (const station of policeStations) {
+                    const marker = new google.maps.Marker({
+                        position: {
+                            lat: parseFloat(station.POINT_Y),
+                            lng: parseFloat(station.POINT_X)
+                        },
+                        map: map,
+                        title: station.precinct_name
+                    });
 
-                marker.addListener("click", () => {
-                    infowindow.open(map, marker);
-                });
-            });
+                    const infoWindow = new google.maps.InfoWindow({
+                        content: `<b>${station.precinct_name}</b><br>${station.address}<br>${station.phone}`
+                    });
 
-            if (precincts.length > 0) {
-                map.setCenter({ lat: precincts[0].POINT_Y, lng: precincts[0].POINT_X });
+                    marker.addListener('click', () => {
+                        infoWindow.open(map, marker);
+                    });
+                }
             }
-        }
-    </script>
+        </script>
 
-    <!-- Google Maps API -->
-    <script async
-        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAUuPZMMJvgVWftmqVyzfX8mKTwMX4kA6o&callback=initMap">
-    </script>
+
+        <script>
+        // 如果 Google Maps 認證失敗會自動呼叫這個函式
+        window.gm_authFailure = function() {
+            alert('❗ Google Maps 載入失敗！\n請檢查您的 API 金鑰是否正確、是否啟用 Maps JavaScript API，或來源是否允許。');
+        };
+        </script>
+
+        <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAUuPZMMJvgVWftmqVyzfX8mKTwMX4kA6o&callback=initMap"></script>
+    {% endif %}
 </body>
 </html>

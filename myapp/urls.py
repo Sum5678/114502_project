@@ -6,6 +6,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import path
 from .views import PemapAllListView, PemapAllUpdateView
+from myapp.views import nearest_police_view
 
 urlpatterns = [
     path('report/', views.report_view, name='report'),#填寫表單
@@ -23,8 +24,10 @@ urlpatterns = [
     path('404.html', views.error_404, name='404'),
     path('harassment_prevention/', views.harassment_prevention, name='harassment_prevention'),
     path('education/', views.education_page, name='education_page'),
-    path('nearest-police/', views.nearest_police, name='nearest_police'),
-    
+    path('nearest-police/', nearest_police_view, name='nearest_police'),
+    path('api/submit_report/', views.submit_report, name='submit_report'),
+    path('api/submit_store/', views.submit_store, name='submit_store'),
+    path('business_upload/', views.business_upload_view, name='business_upload'),
     path('admin/', admin.site.urls),
     path('admin/region/', views.taiwan_regions_admin, name='taiwan_regions_admin'),
     path('taiwan-regions-admin/', views.taiwan_regions_admin, name='taiwan_regions_admin'),
@@ -97,11 +100,8 @@ urlpatterns = [
     path('<str:room_name>/', views.room, name='room'),
 
     # 其他路由
-    #思璇
-     #思璇
-    path('api/submit_report/', views.submit_report, name='submit_report'),
 
-
+   
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 # 原本沒有這些路徑
