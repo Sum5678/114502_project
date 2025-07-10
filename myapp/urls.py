@@ -23,7 +23,7 @@ urlpatterns = [
     path('404.html', views.error_404, name='404'),
     path('harassment_prevention/', views.harassment_prevention, name='harassment_prevention'),
     path('education/', views.education_page, name='education_page'),
-    path('nearest-police/', views.nearest_police, name='nearest_police'),
+    # path('nearest-police/', views.nearest_police, name='nearest_police'),
     
     path('admin/', admin.site.urls),
     path('admin/region/', views.taiwan_regions_admin, name='taiwan_regions_admin'),
