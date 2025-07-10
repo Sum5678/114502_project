@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>管理員註冊</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #f0f8ff;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      width: 90%;
+      max-width: 600px;
+      margin: 30px auto;
+      background-color: #ffffff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    h2 {
+      text-align: center;
+      color: #036;
+      margin-bottom: 20px;
+    }
+
+    form label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+      color: #033e6b;
+    }
+
+    form input, form textarea {
+      width: 100%;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      margin-top: 5px;
+      font-size: 14px;
+    }
+
+    button.submit-btn {
+      margin-top: 20px;
+      width: 100%;
+      padding: 12px;
+      background-color: #3498db;
+      color: white;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    button.submit-btn:hover {
+      background-color: #2c80b4;
+    }
+
+    .message {
+      margin-top: 20px;
+      padding: 10px;
+      background-color: #e0f7da;
+      border: 1px solid #a5d6a7;
+      color: #2e7d32;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .error {
+      background-color: #fce4ec;
+      border: 1px solid #f48fb1;
+      color: #c2185b;
+    }
+
+    .back-button {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .back-button button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #3498db;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .back-button button:hover {
+      background-color: #2c80b4;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>管理員註冊</h2>
+    <form method="post">
+      {% csrf_token %}
+      <label for="name">姓名</label>
+      <input type="text" name="name" id="name" required>
+
+      <label for="password">密碼</label>
+      <input type="password" name="password" id="password">
+
+      <label for="phone">電話</label>
+      <input type="text" name="phone" id="phone">
+
+      <label for="admin_gmail">Email</label>
+      <input type="email" name="admin_gmail" id="admin_gmail" required>
+
+      <label for="bio">簡介</label>
+      <textarea name="bio" id="bio" rows="3"></textarea>
+
+      <button type="submit" class="submit-btn">註冊</button>
+    </form>
+
+    {% if message %}
+      <div class="message{% if '已存在' in message %} error{% endif %}">{{ message }}</div>
+    {% endif %}
+
+    <div class="back-button">
+      <button onclick="location.href='/admin_login/'">返回管理員登入</button>
+    </div>
+  </div>
+</body>
+</html>

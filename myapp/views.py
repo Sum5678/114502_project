@@ -1056,9 +1056,12 @@ def admin_interview(request):
         message = None
 
     return render(request, 'admin_interview.html', {
-        'form': form,
-        'message': message,
+    'form': form,
+    'message': message,
+    'admin_name': admin.name,
+    'admin_id': admin.admin_id,
     })
+
 
 #-------管理員登出-----
 from django.shortcuts import redirect
@@ -1069,20 +1072,68 @@ def admin_logout(request):
 
 
 #---------------事件審核的--------------------------------------------------------------------
-from django.shortcuts import render
-from .models import PemapAll
+# from django.shortcuts import render
+# from .models import PemapAll
+
+# def pemap_judge(request):
+#     all_data = PemapAll.objects.all().order_by('-time_created')  # 最新的在上
+#     return render(request, 'pemap_judge.html', {'data': all_data})
+from django.shortcuts import render, redirect
+from .models import PemapAll, Admins
 
 def pemap_judge(request):
+    admin_id = request.session.get('admin_id')
+    admin_name = request.session.get('admin_name')
+
+    if not admin_id:
+        return redirect('admin_login')  # 未登入導回登入頁
+
     all_data = PemapAll.objects.all().order_by('-time_created')  # 最新的在上
-    return render(request, 'pemap_judge.html', {'data': all_data})
+
+    return render(request, 'pemap_judge.html', {
+        'data': all_data,
+        'admin_id': admin_id,
+        'admin_name': admin_name,
+    })
+
 
 
 #--step1
+# from django.shortcuts import render, get_object_or_404, redirect
+# from .models import PemapAll
+
+# def pemap_judge_step1(request, p_id):
+#     form_data = get_object_or_404(PemapAll, p_id=p_id)
+
+#     if request.method == 'POST':
+#         new_status = request.POST.get('review_status')
+#         if new_status is not None and new_status.isdigit():
+#             form_data.review_status = int(new_status)
+#             form_data.time_reviewed = timezone.now()
+
+#             # 👉 記錄修改人（例如存 log、或印出 log）
+#             admin_name = request.session.get('admin_name', '未知管理員')
+#             print(f"表單 {p_id} 被 {admin_name} 修改狀態為 {new_status}")
+
+#             form_data.save()
+#             return redirect('pemap_judge')  # 完成後回事件清單頁
+
+#     return render(request, 'pemap_judge_step1.html', {
+#         'item': form_data
+#     })
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import PemapAll
+from django.utils import timezone  # ⚠️ 別忘記引入這行！
 
 def pemap_judge_step1(request, p_id):
     form_data = get_object_or_404(PemapAll, p_id=p_id)
+
+    # ✅ 抓出 session 中的管理員資料
+    admin_id = request.session.get('admin_id')
+    admin_name = request.session.get('admin_name', '未知管理員')
+
+    if not admin_id:
+        return redirect('admin_login')  # 尚未登入就導向登入頁
 
     if request.method == 'POST':
         new_status = request.POST.get('review_status')
@@ -1090,16 +1141,20 @@ def pemap_judge_step1(request, p_id):
             form_data.review_status = int(new_status)
             form_data.time_reviewed = timezone.now()
 
-            # 👉 記錄修改人（例如存 log、或印出 log）
-            admin_name = request.session.get('admin_name', '未知管理員')
             print(f"表單 {p_id} 被 {admin_name} 修改狀態為 {new_status}")
 
             form_data.save()
-            return redirect('pemap_judge')  # 完成後回事件清單頁
+            return redirect('pemap_judge')
 
     return render(request, 'pemap_judge_step1.html', {
-        'item': form_data
+        'item': form_data,
+        'admin_id': admin_id,
+        'admin_name': admin_name,
     })
+
+
+
+
 import requests
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import PemapAll
@@ -1146,3 +1201,33 @@ def admin_index(request):
     }
 
     return render(request, 'admin_index.html', context)
+
+#---------------管理員註冊-----------------------
+from django.shortcuts import render
+from .models import Admins  # 根據你的 models 路徑
+from django.db import IntegrityError
+
+def admin_register(request):
+    message = None
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        password = request.POST.get('password')
+        phone = request.POST.get('phone')
+        admin_gmail = request.POST.get('admin_gmail')
+        bio = request.POST.get('bio')
+
+        try:
+            admin = Admins(
+                name=name,
+                password=password,
+                phone=phone,
+                admin_gmail=admin_gmail,
+                bio=bio
+            )
+            admin.save() 
+            message = "註冊成功！"
+
+        except IntegrityError:
+            message = "Email 已存在，請使用其他 Email 註冊。"
+
+    return render(request, 'admin_register.html', {'message': message})
