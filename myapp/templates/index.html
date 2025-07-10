@@ -41,7 +41,7 @@
       <nav id="navmenu" class="navmenu">
         <ul>
           <li><a href="{% url 'home' %}#hero" class="active">主頁</a></li>
-          <li><a href="index.html#about">簡介及功能介紹</a></li>
+          <li><a href="index.html#services">簡介及功能介紹</a></li>
           <li><a href="{% url 'report' %}">填寫表單</a></li>
           <li><a href="index.html#portfolio">Portfolio</a></li>
           <li><a href="index.html#pricing">Pricing</a></li>
@@ -79,15 +79,68 @@
       <img src="{% static 'assets/img/1.png' %}" alt="Hero Image">
     </section>
 
-</section><!-- /Stats Section -->
+    <!-- Stats Section -->
+<section id="stats" class="stats section">
 
-<!-- Services Section -->
-<section id="about" class="about section">
+  <div class="container position-relative" data-aos="fade-up" data-aos-delay="100">
+
+    <div class="row gy-4">
+
+      <div class="col-lg-3 col-md-6">
+        <div class="stats-item text-center w-100 h-100">
+          <span data-purecounter-start="0" data-purecounter-end="1254" data-purecounter-duration="1" class="purecounter"></span>
+          <p>已通報案件數</p>
+        </div>
+      </div>
+
+      <div class="col-lg-3 col-md-6">
+        <div class="stats-item text-center w-100 h-100">
+          <span data-purecounter-start="0" data-purecounter-end="478" data-purecounter-duration="1" class="purecounter"></span>
+          <p>地圖上標記次數</p>
+        </div>
+      </div>
+
+      <div class="col-lg-3 col-md-6">
+        <div class="stats-item text-center w-100 h-100">
+          <span>89%</span>
+          <p>資訊準確率</p>
+        </div>
+      </div>
+
+      <div class="col-lg-3 col-md-6">
+        <div class="stats-item text-center w-100 h-100">
+          <span data-purecounter-start="0" data-purecounter-end="320" data-purecounter-duration="1" class="purecounter"></span>
+          <p>用戶互動次數</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+
+    </div>
+  </div>
+
+      </div>
+
+    </section><!-- /Stats Section -->
+
+    <!-- Services Section -->
+<section id="services" class="services section">
+
+  <!-- Services Section -->
+<section id="services" class="services section">
 
   <!-- Section Title -->
   <div class="container section-title" data-aos="fade-up">
-    <h2>Services</h2>
-    <p>Necessitatibus eius consequatur ex aliquid fuga eum quidem sint consectetur velit</p>
+    <h2>守護你的日常安全</h2>
+    <p>本系統致力於建立一個可疑人物或事件回報與案件視覺化平台，結合地圖定位與分析，提升民眾自我保護意識與行動效率。</p>
+        <div class="intro-block" style="background-color: #e6f3fb; border-left: 5px solid #63b3ed; padding: 15px; border-radius: 8px;">
+          除了提供事件上報與地圖視覺化功能，也整合案件熱區分析與路線安全規劃，幫助使用者避開危險區域，提升通行安全與預警意識。
+        </div>
+      </div>
   </div><!-- End Section Title -->
 
   <div class="container">
@@ -97,9 +150,7 @@
         <div class="service-item d-flex">
           <div class="icon flex-shrink-0"><i class="ri-chat-3-line"></i></div>
           <div>
-            <h4 class="title">
-              <a href="#" class="stretched-link">聊天室</a>
-            </h4>
+            <h4 class="title">聊天室</h4>
             <p class="description">提供即時聊天功能，供使用者回報事件與其他用戶互動。</p>
           </div>
         </div>
@@ -109,9 +160,7 @@
         <div class="service-item d-flex">
           <div class="icon flex-shrink-0"><i class="ri-group-line"></i></div>
           <div>
-            <h4 class="title">
-              <a href="#" class="stretched-link">社群</a>
-            </h4>
+            <h4 class="title">社群</h4>
             <p class="description">建立社群機制，促進居民彼此分享可疑訊息與防範資訊。</p>
           </div>
         </div>
@@ -121,9 +170,7 @@
         <div class="service-item d-flex">
           <div class="icon flex-shrink-0"><i class="ri-book-2-line"></i></div>
           <div>
-            <h4 class="title">
-              <a href="#" class="stretched-link">安全知識學習</a>
-            </h4>
+            <h4 class="title">安全知識學習</h4>
             <p class="description">透過線上教育資源與案例分享，提升自我保護知識與意識。</p>
           </div>
         </div>
@@ -134,7 +181,7 @@
           <div class="icon flex-shrink-0"><i class="ri-survey-line"></i></div>
           <div>
             <h4 class="title">
-              <a href="{% url 'report' %}" class="stretched-link">線上案件通報</a>
+              <a href="{% url 'report' %}" class="stretched-link" style="text-decoration: none; color: inherit;">線上案件通報</a>
             </h4>
             <p class="description">快速填寫表單回報案件，讓資料即時進入平台供分析與追蹤。</p>
           </div>
@@ -146,7 +193,7 @@
           <div class="icon flex-shrink-0"><i class="ri-map-pin-line"></i></div>
           <div>
             <h4 class="title">
-              <a href="{% url 'map' %}" class="stretched-link">事件地圖</a>
+              <a href="{% url 'map' %}" class="stretched-link" style="text-decoration: none; color: inherit;">事件地圖</a>
             </h4>
             <p class="description">透過地圖標示可疑案件位置，幫助用戶了解周遭熱點區域。</p>
           </div>
@@ -157,9 +204,7 @@
         <div class="service-item d-flex">
           <div class="icon flex-shrink-0"><i class="ri-shield-check-line"></i></div>
           <div>
-            <h4 class="title">
-              <a href="#" class="stretched-link">安全商家</a>
-            </h4>
+            <h4 class="title">安全商家</h4>
             <p class="description">顯示認證安全商家，供緊急時尋求協助或避難。</p>
           </div>
         </div>
@@ -168,8 +213,6 @@
     </div>
   </div>
 </section><!-- /Services Section -->
-
-
 
 
 <!-- About Section -->
@@ -191,11 +234,12 @@
 
           <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
             <div class="icon-box">
-              <div class="icon"><i class="ri-chat-3-line"></i></div>
-              <h3>聊天室</h3>
-              <p>提供即時聊天功能，供使用者回報事件與其他用戶互動。</p>
+              <div class="icon"><i class="bi bi-signpost-split"></i></div>
+              <h3>最短安全路徑推薦</h3>
+              <p>根據目前所在位置與案件熱點資料，避開危險區域並提供安全路徑指引。</p>
             </div>
           </div>
+
 
           <div class="col-md-4" data-aos="fade-up" data-aos-delay="300">
             <div class="icon-box">
