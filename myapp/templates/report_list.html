@@ -80,6 +80,12 @@
     .back-button button:hover {
       background-color: #2c80b4;
     }
+
+    img.report-image {
+      max-width: 100px;
+      max-height: 100px;
+      border-radius: 6px;
+    }
   </style>
 </head>
 <body>
@@ -89,17 +95,34 @@
       <thead>
         <tr>
           <th>#</th>
-          <th>姓名</th>
-          <th>Gmail</th>
+          <th>顯示名稱</th>
           <th>類別</th>
-          <th>詳細分類</th>
-          <th>描述</th>
-          <th>地點</th>
-          <th>操作</th>
+          <th>原因</th>
+          <th>地址</th>
+          <th>圖片</th>
+          <th>上傳時間</th>
+          <th>審核狀態</th>
         </tr>
       </thead>
-      <tbody id="reportTableBody">
-        <!-- 資料由 JS 插入 -->
+      <tbody>
+        {% for report in reports %}
+        <tr>
+          <td>{{ report.reverse_id }}</td>
+          <td>{{ report.display_name }}</td>
+          <td>{{ report.kind }}</td>
+          <td>{{ report.reason }}</td>
+          <td>{{ report.address }}</td>
+          <td>
+            {% if report.img_url %}
+              <img src="{{ report.img_url }}" alt="圖片" class="report-image">
+            {% else %}
+              無圖片
+            {% endif %}
+          </td>
+          <td>{{ report.time_created }}</td>
+          <td>{{ report.review_status }}</td>
+        </tr>
+        {% endfor %}
       </tbody>
     </table>
 
@@ -107,33 +130,5 @@
       <button onclick="location.href='profile.html'">返回個人頁面</button>
     </div>
   </div>
-
-  <script>
-    function fetchReports() {
-      const reports = JSON.parse(localStorage.getItem('reports')) || [];
-      const tableBody = document.getElementById("reportTableBody");
-
-      reports.forEach((report, index) => {
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${index + 1}</td>
-          <td>${report.name}</td>
-          <td>${report.email}</td>
-          <td>${report.category}</td>
-          <td>${report.subcategory}</td>
-          <td>${report.description}</td>
-          <td>${report.location}</td>
-          <td><button class="status-btn" onclick="viewStatus(${index})">查看狀態</button></td>
-        `;
-        tableBody.appendChild(row);
-      });
-    }
-
-    function viewStatus(index) {
-      window.location.href = `status.html?reportId=${index}`;
-    }
-
-    fetchReports();
-  </script>
 </body>
 </html>
