@@ -634,19 +634,28 @@ import json
 
 from .models import PemapAll
 
+# def login_required_session(view_func):
+#     @wraps(view_func)
+#     def wrapped_view(request, *args, **kwargs):
+#         user_id = request.session.get('user_id')
+#         print(f"Debug: session user_id = {user_id}")  # 測試用，正式可註解掉
+#         if not user_id:
+#             print("未登入，導向登入頁")
+#             return redirect('userlogin')  # 確認此名稱是你登入頁的url name
+#         return view_func(request, *args, **kwargs)
+#     return wrapped_view
+
 def login_required_session(view_func):
     @wraps(view_func)
     def wrapped_view(request, *args, **kwargs):
-        user_id = request.session.get('user_id')
-        print(f"Debug: session user_id = {user_id}")  # 測試用，正式可註解掉
-        if not user_id:
-            print("未登入，導向登入頁")
-            return redirect('userlogin')  # 確認此名稱是你登入頁的url name
+        if 'user_id' not in request.session:
+            return redirect('userlogin')  # 確認這是你登入頁的 URL name
         return view_func(request, *args, **kwargs)
     return wrapped_view
 
-@csrf_exempt
+
 @login_required_session
+@csrf_exempt
 def submit_report(request):
     if request.method == 'POST':
         try:
