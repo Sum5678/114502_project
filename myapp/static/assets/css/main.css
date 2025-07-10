@@ -2890,3 +2890,59 @@ body, html {
 .mobile-nav-toggle:hover {
   color: #63b3ed !important;
 }
+
+
+
+/* 整塊卡片的超連結樣式 */
+.report-link-box {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  height: 100%;
+}
+
+/* 標題 hover 效果：變色＋底線 */
+.report-link-title {
+  transition: all 0.2s ease-in-out;
+}
+
+.report-link-box:hover .report-link-title {
+  color: #011f3d;
+  text-decoration: underline;
+}
+
+/* icon hover 效果：變亮藍 */
+.report-link-box:hover .icon {
+  background-color: #a7e0ff;
+  transition: background-color 0.2s ease-in-out;
+}
+
+/* icon 點擊效果：變深藍 */
+.report-link-box:active .icon {
+  background-color: #63b3ed;
+  transition: background-color 0.1s ease-in-out;
+}
+
+/* --- 報案卡片標題連結樣式修正 --- */
+a.report-link-title {
+  color: #033e6b !important;
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 15px;
+  text-decoration: none;
+  transition: color 0.2s ease, text-decoration 0.2s ease;
+}
+
+.icon-box:hover a.report-link-title {
+  color: #63b3ed !important;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.icon-box:hover .icon-link {
+  background-color: #a7e0ff;
+}
+
+.icon-box:active .icon-link {
+  background-color: #033e6b;
+}
