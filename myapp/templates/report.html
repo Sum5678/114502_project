@@ -4,11 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>回報可疑人物</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <style>
     body {
       font-family: 'Arial', sans-serif;
-      background-color: #e6f3fb; /* 淺藍背景 */
-      background-image: url('C:/img/ccc.jpg'); /* 建議用相對路徑或線上圖片 */
+      background-color: #e6f3fb;
+      background-image: url('C:/img/ccc.jpg');
       background-size: cover;
       background-position: center;
       margin: 0;
@@ -19,7 +20,7 @@
     }
     .header {
       width: 100%;
-      background: linear-gradient(90deg, #89cffa, #a7e0ff); /* 淺藍漸層 */
+      background: linear-gradient(90deg, #89cffa, #a7e0ff);
       color: #033e6b;
       text-align: center;
       padding: 20px 0;
@@ -117,6 +118,22 @@
       font-size: 14px;
       color: #666;
     }
+    #map {
+      height: 300px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+    #preview {
+      margin-top: 10px;
+      text-align: center;
+    }
+    #preview img {
+      max-width: 100%;
+      max-height: 200px;
+      border-radius: 8px;
+      box-shadow: 0 0 6px rgba(0,0,0,0.2);
+    }
   </style>
 </head>
 <body>
@@ -154,12 +171,13 @@
           <label for="description">請描述可疑行為：</label>
           <textarea id="description" rows="4" required></textarea>
 
-          <label for="location">地點：</label>
-          <input type="text" id="location" required>
-          <button type="button" onclick="getLocation()">使用 GPS</button>
+          <label>在地圖上選擇地點：</label>
+          <div id="map"></div>
+          <input type="text" id="location" required readonly>
 
           <label for="image">上傳圖片：</label>
           <input type="file" id="image" accept="image/*">
+          <div id="preview"></div>
 
           <button type="submit">提交回報</button>
         </form>
@@ -177,20 +195,10 @@
   </div>
   <div class="footer">© 怪怪走開 | 保留所有權利</div>
 
-  <script>
-    function getLocation() {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(function(position) {
-          document.getElementById('location').value =
-            position.coords.latitude + ", " + position.coords.longitude;
-        }, function() {
-          alert("無法獲取位置");
-        });
-      } else {
-        alert("您的瀏覽器不支援 GPS 功能");
-      }
-    }
+  <!-- Leaflet Map -->
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
+  <script>
     const subcategories = {
       "騷擾": ["推銷", "暴露狂", "跟蹤", "言語騷擾", "拍攝他人", "擋路糾纏"],
       "打架": ["肢體衝突", "口角爭執", "幫派鬥毆", "攻擊路人"],
@@ -218,74 +226,87 @@
       }
     });
 
-    document.getElementById("reportForm").addEventListener("submit", function(event) {
+    let marker;
+    const map = L.map('map').setView([23.5, 121], 7);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap'
+    }).addTo(map);
+
+    map.on('click', function (e) {
+      const latlng = e.latlng.lat + "," + e.latlng.lng;
+      document.getElementById('location').value = latlng;
+      if (marker) map.removeLayer(marker);
+      marker = L.marker(e.latlng).addTo(map);
+    });
+
+    document.getElementById("image").addEventListener("change", function () {
+      const file = this.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          document.getElementById("preview").innerHTML = `<img src="${e.target.result}" alt="預覽圖片">`;
+        };
+        reader.readAsDataURL(file);
+      } else {
+        document.getElementById("preview").innerHTML = "";
+      }
+    });
+
+    document.getElementById("reportForm").addEventListener("submit", function (event) {
       event.preventDefault();
 
       const isAnonymous = document.getElementById("anonymous").checked;
       const name = isAnonymous ? "匿名" : document.getElementById("name").value.trim();
       const email = isAnonymous ? "anonymous@gmail.com" : document.getElementById("email").value.trim();
-
       const category = document.getElementById("category").value;
       const subcategory = document.getElementById("subcategory").value;
       const kind = category + " - " + subcategory;
-
       const description = document.getElementById("description").value.trim();
       const locationStr = document.getElementById("location").value.trim();
       const imageFile = document.getElementById("image").files[0];
-
       const statusMessage = document.getElementById("statusMessage");
-      statusMessage.style.backgroundColor = "#def1fc";
-      statusMessage.style.color = "#055d8c";
-      statusMessage.innerText = "處理圖片中...";
 
-      // 如果有選擇圖片，轉 base64
+      statusMessage.innerText = "處理中...";
+
       if (imageFile) {
         const reader = new FileReader();
-        reader.onload = function(e) {
-          const base64Image = e.target.result;  // ✅保留完整 data:image/jpeg;base64,...
-
-          sendDataToServer(base64Image);
+        reader.onload = function (e) {
+          sendData(e.target.result);
         };
         reader.readAsDataURL(imageFile);
       } else {
-        // 沒有圖片就直接送空字串
-        sendDataToServer("");
+        sendData("");
       }
 
-      function sendDataToServer(base64Image) {
-        const formData = {
-          display_name: name,
-          kind: kind,
-          reason: description,
-          address: locationStr,
-          img_url: base64Image
-        };
-
+      function sendData(base64Image) {
         fetch('/api/submit_report/', {
           method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify(formData)
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            display_name: name,
+            kind: kind,
+            reason: description,
+            address: locationStr,
+            img_url: base64Image
+          })
         })
-        .then(response => response.json())
+        .then(res => res.json())
         .then(data => {
-          if(data.status === "success"){
-            statusMessage.innerText = "✅ 表單已成功提交";
-            document.getElementById("reportForm").reset();
-            document.getElementById("subcategory").innerHTML = '<option value="">請先選擇上方分類</option>';
+          if (data.status === "success") {
+            window.location.href = "/report/list/";
           } else {
+            statusMessage.innerText = "❌ 提交失敗：" + data.message;
             statusMessage.style.backgroundColor = "#ffcccc";
             statusMessage.style.color = "#900";
-            statusMessage.innerText = "❌ 提交失敗：" + data.message;
           }
         })
         .catch(() => {
+          statusMessage.innerText = "❌ 發送失敗，請稍後再試";
           statusMessage.style.backgroundColor = "#ffcccc";
           statusMessage.style.color = "#900";
-          statusMessage.innerText = "❌ 網路錯誤，請稍後再試";
         });
       }
     });
-
   </script>
 </body>
 </html>

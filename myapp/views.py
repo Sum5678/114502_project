@@ -676,6 +676,13 @@ def submit_report(request):
     
 def room(request, room_name):
     return render(request, 'test_0610chatroom.html', {'room_name': room_name})
+#report_list_view
+def report_list_view(request):
+    reports = list(PemapAll.objects.all().order_by('-time_created'))
+    # 加入反向編號（從最大值開始）
+    for i, report in enumerate(reports):
+        report.reverse_id = len(reports) - i
+    return render(request, 'report_list.html', {'reports': reports})
 #----------------store---------------------------------------------------------------------
 
 @csrf_exempt
