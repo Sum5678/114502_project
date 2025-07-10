@@ -121,22 +121,31 @@
           </div>
 
           <div class="col-md-4" data-aos="fade-up" data-aos-delay="500">
-            <a href="{% url 'report' %}" style="text-decoration: none; color: inherit;">
-              <div class="icon-box" style="height: 100%;">
-                <div class="icon"><i class="ri-survey-line"></i></div>
-                <h3>線上案件通報</h3>
-                <p>快速填寫表單回報案件，讓資料即時進入平台供分析與追蹤。</p>
+            <div class="icon-box">
+              <div class="icon">
+                <a href="{% url 'report' %}" class="icon-link"><i class="ri-survey-line"></i></a>
               </div>
-            </a>
+              <h3><a href="{% url 'report' %}" class="report-link-title">線上案件通報</a></h3>
+              <p>快速填寫表單回報案件，讓資料即時進入平台供分析與追蹤。</p>
+            </div>
           </div>
 
-          <div class="col-md-4" data-aos="fade-up" data-aos-delay="600">
+      <div class="col-md-4" data-aos="fade-up" data-aos-delay="600">
             <div class="icon-box">
-              <div class="icon"><i class="ri-map-pin-line"></i></div>
-              <h3>事件地圖</h3>
+              <div class="icon">
+                <a href="{% url 'map' %}" class="icon-link nav-link-style">
+                  <i class="ri-map-pin-line"></i>
+                </a>
+              </div>
+              <h3>
+                <a href="{% url 'map' %}" class="report-link-title nav-link-style">
+                  事件地圖
+                </a>
+              </h3>
               <p>透過地圖標示可疑案件位置，幫助用戶了解周遭熱點區域。</p>
             </div>
           </div>
+
 
           <div class="col-md-4" data-aos="fade-up" data-aos-delay="600">
             <div class="icon-box">
