@@ -46,7 +46,7 @@
           <li><a href="index.html#portfolio">Portfolio</a></li>
           <li><a href="index.html#pricing">Pricing</a></li>
           <li><a href="{% url 'map' %}">事件地圖</a></li>
-          <li><a href="blog.html">Blog</a></li>
+          <li><a href="{% url 'harassment_prevention' %}">防騷指南</a></li>
           <li class="dropdown"><a href="#"><span>Dropdown</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
             <ul>
               <li><a href="#">Dropdown 1</a></li>
@@ -120,11 +120,13 @@
           </div>
 
           <div class="col-md-4" data-aos="fade-up" data-aos-delay="500">
-            <div class="icon-box">
-              <div class="icon"><i class="ri-survey-line"></i></div>
-              <h3>線上案件通報</h3>
-              <p>快速填寫表單回報案件，讓資料即時進入平台供分析與追蹤。</p>
-            </div>
+            <a href="{% url 'report' %}" style="text-decoration: none; color: inherit;">
+              <div class="icon-box" style="height: 100%;">
+                <div class="icon"><i class="ri-survey-line"></i></div>
+                <h3>線上案件通報</h3>
+                <p>快速填寫表單回報案件，讓資料即時進入平台供分析與追蹤。</p>
+              </div>
+            </a>
           </div>
 
           <div class="col-md-4" data-aos="fade-up" data-aos-delay="600">
