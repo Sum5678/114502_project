@@ -1,4 +1,499 @@
 <!DOCTYPE html>
+{% load static %}
+<html lang="zh-Hant">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>{% block title %}首頁{% endblock %}</title>
+  <meta content="" name="description">
+  <meta content="" name="keywords">
+
+  <link href="{% static 'assets/img/favicon.png' %}" rel="icon">
+  <link href="{% static 'assets/img/apple-touch-icon.png' %}" rel="apple-touch-icon">
+
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700|Nunito:300,400,600,700,800|Poppins:300,400,500,600,700" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/boxicons/2.1.0/css/boxicons.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css" rel="stylesheet">
+
+  <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/boxicons/css/boxicons.min.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/quill/quill.snow.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/quill/quill.bubble.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/simple-datatables/style.css' %}" rel="stylesheet">
+
+  <link href="{% static 'assets/css/main.css' %}" rel="stylesheet">
+</head>
+
+<body class="index-page">
+  <header id="header" class="header d-flex align-items-center fixed-top">
+    <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
+      <a href="index.html" class="logo d-flex flex-column align-items-start me-auto me-xl-0">
+        <h1 class="sitename">{{ admin_name }} 管理員</h1>
+        <h1 class="sitename">您的管理員id是: {{ admin_id }}</h1>
+        </a>
+      <nav id="navmenu" class="navmenu">
+        <ul>
+          <li><a href="{% url 'admin_index' %}#hero" class="active">管理員主頁</a></li>
+          <li><a href="{% url 'admin_interview' %}">管理員自我介紹</a></li>
+          <li><a href="{% url 'show_judge_page' %}">審核表單</a></li>
+          <li><a href="{% url 'pemap_judge' %}">事件清單審核</a></li>
+          <li><a href="{% url 'admin_logout' %}">登出</a></li>
+        </ul>
+        <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+      </nav>
+      <a class="btn-getstarted" href="{% url 'admin_logout' %}">登出</a>
+    </div>
+  </header>
+
+  <main class="main">
+
+    <!-- Hero Section -->
+    <section class="hero">
+      <img src="{% static 'assets/img/1.png' %}" alt="Hero Image">
+    </section>
+
+    
+
+   <!-- Section -->
+  <section class="container my-5">
+    <h1 class="mb-4">審核事件 #{{ item.p_id }}</h1>
+    <a href="{% url 'pemap_judge' %}" class="btn btn-secondary mb-4">返回事件清單</a>
+
+    <div class="row g-4 align-items-start">
+      <!-- 地圖區塊 -->
+      <div class="col-md-6">
+        <div class="card shadow-sm">
+          <div class="card-body p-2">
+            <iframe
+              class="w-100"
+              height="300"
+              frameborder="0"
+              style="border:0; border-radius: 8px;"
+              referrerpolicy="no-referrer-when-downgrade"
+              src="https://www.google.com/maps?q={{ item.address|urlencode }}&output=embed"
+              allowfullscreen>
+            </iframe>
+          </div>
+        </div>
+      </div>
+
+      <!-- 事件資訊區塊 -->
+      <div class="col-md-6">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title mb-3">事件資訊</h5>
+            <p><strong>暱稱：</strong>{{ item.display_name }}</p>
+            <p><strong>分類：</strong>{{ item.kind }}</p>
+            <p><strong>理由：</strong>{{ item.reason }}</p>
+            <p><strong>經緯度：</strong>{{ item.address }}</p>
+            <p><strong>實際地址：</strong>{{ human_address }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 審核狀態表單 -->
+    <div class="card mt-4 shadow-sm">
+      <div class="card-body">
+        <form method="post" class="d-flex flex-column flex-md-row align-items-center gap-3">
+          {% csrf_token %}
+          <div class="form-group mb-0">
+            <label for="review_status" class="form-label fw-bold">審核狀態</label>
+            <select name="review_status" id="review_status" class="form-select">
+              <option value="0" {% if item.review_status == 0 %}selected{% endif %}>未審核</option>
+              <option value="1" {% if item.review_status == 1 %}selected{% endif %}>AI 審核通過</option>
+              <option value="2" {% if item.review_status == 2 %}selected{% endif %}>AI 審核未通過，需人工審核</option>
+              <option value="3" {% if item.review_status == 3 %}selected{% endif %}>人工審核通過</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary">儲存變更</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+
+    <!-- 其他區塊如 Team / CTA 保持不變（略） -->
+    ...
+  </main>
+
+  <footer id="footer" class="footer position-relative light-background">
+    <div class="container copyright text-center mt-4">
+      <p>© <span>Copyright</span> <strong class="sitename">Append</strong> <span>All Rights Reserved</span></p>
+      <div class="credits">
+        Designed by <a href="https://bootstrapmade.com/">BootstrapMade</a>
+      </div>
+    </div>
+  </footer>
+
+  <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
+  <div id="preloader"></div>
+
+  <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/php-email-form/validate.js' %}"></script>
+  <script src="{% static 'assets/vendor/aos/aos.js' %}"></script>
+  <script src="{% static 'assets/vendor/glightbox/js/glightbox.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/purecounter/purecounter_vanilla.js' %}"></script>
+  <script src="{% static 'assets/vendor/imagesloaded/imagesloaded.pkgd.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/isotope-layout/isotope.pkgd.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/swiper/swiper-bundle.min.js' %}"></script>
+  <script src="{% static 'assets/js/main.js' %}"></script>
+</body>
+</html>
+
+
+
+
+
+
+<!-- <!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>管理員資料編輯</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      min-height: 100vh;
+      background-color: #eef4ff;
+    }
+
+    /* 左側導覽列 */
+    .sidebar {
+      width: 200px;
+      background-color: #00509e;
+      padding: 30px 20px;
+      box-sizing: border-box;
+      color: white;
+    }
+
+    .sidebar h3 {
+      color: #ffffff;
+      font-size: 1.2rem;
+      margin-bottom: 25px;
+      text-align: center;
+    }
+
+    .sidebar a {
+      display: block;
+      color: white;
+      text-decoration: none;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 6px;
+      transition: background 0.2s;
+    }
+
+    .sidebar a:hover {
+      background-color: #0077cc;
+    }
+
+    /* 右側內容 */
+    .main {
+      flex: 1;
+      padding: 40px;
+    }
+
+    .profile-form {
+      background: white;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 80, 180, 0.2);
+      max-width: 600px;
+      margin: auto;
+    }
+
+    .profile-form h2 {
+      text-align: center;
+      color: #00509e;
+      margin-bottom: 20px;
+    }
+
+    .info-item {
+      margin-bottom: 10px;
+    }
+
+    .info-item label {
+      font-weight: bold;
+      display: inline-block;
+      width: 100px;
+      color: #00509e;
+    }
+
+    .info-item span {
+      color: #333;
+    }
+
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+      color: #003366;
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      font-size: 1rem;
+      margin-top: 5px;
+      border: 1px solid #cce0ff;
+      border-radius: 6px;
+      box-sizing: border-box;
+    }
+
+    button {
+      margin-top: 25px;
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(90deg, #00509e, #0077cc);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    .message {
+      margin-top: 15px;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    .success {
+      color: green;
+    }
+
+    .error {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+
+ 
+  <div class="sidebar">
+    <h3>管理員選單</h3>
+    <a href="{% url 'admin_interview' %}">自我介紹</a>
+    <a href="{% url 'show_judge_page' %}">審核表單</a>
+    <a href="{% url 'pemap_judge' %}">事件清單審核</a>
+    <a href="{% url 'admin_logout' %}">登出</a>
+
+  </div>
+
+  右側主內容 
+  <div class="main">
+    <div class="profile-form">
+      <h2>管理員資料編輯</h2>
+
+      {% if message %}
+        <p class="message {% if '成功' in message %}success{% else %}error{% endif %}">
+          {{ message }}
+        </p>
+      {% endif %}
+
+      <div class="info-item">
+        <label>ID：</label><span>{{ form.instance.admin_id }}</span>
+      </div>
+
+      <div class="info-item">
+        <label>Email：</label><span>{{ form.instance.admin_gmail }}</span>
+      </div>
+
+      <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">儲存變更</button>
+      </form>
+    </div>
+  </div>
+</body>
+</html> -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- <!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>所有檢舉表單資料</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      color: #003366;
+    }
+
+    .container {
+      display: flex;
+      height: 100vh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 220px;
+      background-color: #00509e;
+      padding: 30px 20px;
+      color: white;
+      flex-shrink: 0;
+    }
+
+    .sidebar h3 {
+      color: #ffffff;
+      font-size: 1.2rem;
+      margin-bottom: 25px;
+      text-align: center;
+    }
+
+    .sidebar a {
+      display: block;
+      color: white;
+      text-decoration: none;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 6px;
+      transition: background 0.2s;
+    }
+
+    .sidebar a:hover {
+      background-color: #0077cc;
+    }
+
+    /* Main content */
+    .main-content {
+      flex: 1;
+      background-color: #f4f8ff;
+      padding: 40px;
+      overflow-x: auto;
+    }
+
+    h1 {
+      color: #00509e;
+      margin-bottom: 30px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      box-shadow: 0 4px 10px rgba(0, 80, 180, 0.1);
+    }
+
+    th, td {
+      border: 1px solid #cce0ff;
+      padding: 10px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #00509e;
+      color: white;
+    }
+
+    tr:nth-child(even) {
+      background-color: #eef4ff;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+     導覽列 
+    <div class="sidebar">
+      <h3>管理員選單</h3>
+      <a href="{% url 'admin_interview' %}">自我介紹</a>
+      <a href="{% url 'show_judge_page' %}">審核表單</a>
+      <a href="{% url 'pemap_judge' %}">事件清單審核</a>
+      <a href="{% url 'admin_logout' %}">登出</a>
+    </div>
+
+     主內容 
+    <div class="main-content">
+      <h1>所有檢舉表單資料</h1>
+
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>暱稱</th>
+            <th>分類</th>
+            <th>理由</th>
+            <th>經緯度</th>
+            <th>上傳時間</th>
+            <th>審核狀態</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for item in data %}
+            <tr>
+            <td>{{ item.p_id }}</td>
+            <td>{{ item.display_name }}</td>
+            <td>{{ item.kind }}</td>
+            <td>{{ item.reason|truncatechars:30 }}</td>
+            <td>{{ item.latitude }}, {{ item.longitude }}</td>
+            <td>{{ item.time_created }}</td>
+            <td>{{ item.get_review_status_display }}</td>
+            <td>
+                <a href="{% url 'pemap_judge_step1' item.p_id %}" style="color: white; background: #007bff; padding: 6px 12px; border-radius: 6px; text-decoration: none; display: inline-block;">進入審核</a>
+            </td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="9">目前尚無資料</td></tr>
+        {% endfor %}
+        </tbody>
+
+      </table>
+    </div>
+  </div>
+</body>
+</html> -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8">
@@ -48,7 +543,7 @@
 
   <div style="display: flex; gap: 20px; align-items: flex-start;">
     
-    <!-- 地圖區塊 -->
+    地圖區塊 
     <iframe
       width="400"
       height="300"
@@ -59,7 +554,7 @@
       allowfullscreen>
     </iframe>
 
-    <!-- 事件資訊區塊 -->
+   事件資訊區塊 
     <div>
       <p><strong>暱稱：</strong>{{ item.display_name }}</p>
       <p><strong>分類：</strong>{{ item.kind }}</p>
@@ -84,4 +579,4 @@
 
 </body>
 
-</html>
+</html> -->

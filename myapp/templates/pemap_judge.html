@@ -29,9 +29,10 @@
 <body class="index-page">
   <header id="header" class="header d-flex align-items-center fixed-top">
     <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
-      <a href="index.html" class="logo d-flex align-items-center me-auto me-xl-0">
-        <h1 class="sitename">{{ admin_name }} 管理員</h1><span></span>
-      </a>
+      <a href="index.html" class="logo d-flex flex-column align-items-start me-auto me-xl-0">
+        <h1 class="sitename">{{ admin_name }} 管理員</h1>
+        <h1 class="sitename">您的管理員id是: {{ admin_id }}</h1>
+        </a>
       <nav id="navmenu" class="navmenu">
         <ul>
           <li><a href="{% url 'admin_index' %}#hero" class="active">管理員主頁</a></li>
