@@ -342,6 +342,156 @@
       </div>
 
     </section><!-- /Features Section -->
+    <!-- Report Form Section -->
+    <section id="report" class="report section">
+      <div class="container" data-aos="fade-up">
+        <div class="section-title">
+          <h2>我要填單</h2>
+          <p>請回報你在街道上遇到的可疑事件，幫助更多人提高警覺。</p>
+        </div>
+
+        <form id="report-form" enctype="multipart/form-data" method="post">
+          {% csrf_token %}
+          <div class="row gy-3">
+            <!-- 顯示名稱 -->
+            <div class="col-md-6">
+              <label for="display_name" class="form-label">顯示名稱</label>
+              <input type="text" class="form-control" id="display_name" name="display_name" placeholder="可填匿名">
+            </div>
+
+            <!-- Gmail -->
+            <div class="col-md-6">
+              <label for="email" class="form-label">Gmail</label>
+              <input type="email" class="form-control" id="email" name="email" placeholder="yourmail@gmail.com">
+            </div>
+
+            <!-- 事件分類 -->
+            <div class="col-md-6">
+              <label for="kind" class="form-label">事件分類</label>
+              <select class="form-select" id="kind" name="kind" required>
+                <option selected disabled>請選擇</option>
+                <option value="暴露狂">暴露狂</option>
+                <option value="騷擾">騷擾</option>
+                <option value="打架">打架</option>
+                <option value="動物">動物</option>
+                <option value="環境髒亂">環境髒亂</option>
+              </select>
+            </div>
+
+            <!-- 詳細分類 -->
+            <div class="col-md-6">
+              <label for="subkind" class="form-label">詳細分類</label>
+              <select class="form-select" id="subkind" name="subkind" required>
+                <option selected disabled>請先選擇上方分類</option>
+              </select>
+            </div>
+
+            <!-- 地點 + 地圖 -->
+            <div class="col-12">
+              <label for="address" class="form-label">地點</label>
+              <input type="text" class="form-control" id="address" name="address" placeholder="點地圖或手動輸入地址">
+              <input type="hidden" id="latitude" name="latitude">
+              <input type="hidden" id="longitude" name="longitude">
+              <div id="map" style="height: 300px; margin-top: 10px;"></div>
+            </div>
+
+            <!-- 說明 -->
+            <div class="col-12">
+              <label for="reason" class="form-label">說明</label>
+              <textarea class="form-control" id="reason" name="reason" rows="3" placeholder="請描述發生的情況"></textarea>
+            </div>
+
+            <!-- 圖片上傳 -->
+            <div class="col-12">
+              <label for="image" class="form-label">上傳圖片（可選）</label>
+              <input class="form-control" type="file" id="image" name="image" accept="image/*">
+              <img id="preview" style="margin-top: 10px; max-height: 200px; display: none;" />
+            </div>
+
+            <!-- 匿名勾選 -->
+            <div class="col-12">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="anonymous" name="anonymous" checked>
+                <label class="form-check-label" for="anonymous">
+                  匿名提交
+                </label>
+              </div>
+            </div>
+
+            <!-- 送出 -->
+            <div class="col-12 text-center">
+              <button type="submit" class="btn btn-primary">送出回報</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </section>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script>
+    const map = L.map('map').setView([25.033964, 121.564472], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap 貢獻者'
+    }).addTo(map);
+    let marker;
+    map.on('click', function (e) {
+      const lat = e.latlng.lat.toFixed(6);
+      const lng = e.latlng.lng.toFixed(6);
+      document.getElementById('latitude').value = lat;
+      document.getElementById('longitude').value = lng;
+      if (marker) {
+        marker.setLatLng(e.latlng);
+      } else {
+        marker = L.marker(e.latlng).addTo(map);
+      }
+      fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+        .then(response => response.json())
+        .then(data => {
+          document.getElementById('address').value = data.display_name || `${lat}, ${lng}`;
+        });
+    });
+    document.getElementById('image').addEventListener('change', function (event) {
+      const file = event.target.files[0];
+      const preview = document.getElementById('preview');
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          preview.src = e.target.result;
+          preview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      } else {
+        preview.src = '';
+        preview.style.display = 'none';
+      }
+    });
+    const subkindOptions = {
+      "暴露狂": ["裸露上半身", "當街自慰", "偷拍", "其他"],
+      "騷擾": ["言語騷擾", "肢體接觸", "尾隨跟蹤", "偷拍", "其他"],
+      "打架": ["打人", "吵架", "群體鬥毆", "其他"],
+      "動物": ["野狗", "攻擊行為", "走失寵物", "其他"],
+      "環境髒亂": ["堆積垃圾", "污水亂倒", "糞便異味", "其他"]
+    };
+    document.getElementById('kind').addEventListener('change', function () {
+      const kind = this.value;
+      const subkindSelect = document.getElementById('subkind');
+      subkindSelect.innerHTML = "";
+      if (subkindOptions[kind]) {
+        subkindOptions[kind].forEach(sub => {
+          const opt = document.createElement('option');
+          opt.value = sub;
+          opt.textContent = sub;
+          subkindSelect.appendChild(opt);
+        });
+      } else {
+        const opt = document.createElement('option');
+        opt.textContent = "請先選擇上方分類";
+        opt.disabled = true;
+        subkindSelect.appendChild(opt);
+      }
+    });
+    </script>
+
 
     <!-- Portfolio Section -->
     <section id="portfolio" class="portfolio section">
