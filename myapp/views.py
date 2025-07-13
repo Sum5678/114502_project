@@ -407,6 +407,7 @@ from django.contrib import messages
 from .models import UserProfile
 from django.contrib.auth.hashers import make_password, check_password
 
+
 def user_login_page(request):
     if request.method == 'POST':
         # ✅ 登入邏輯
@@ -418,13 +419,13 @@ def user_login_page(request):
                 if check_password(password, user.password):
                     request.session['user_id'] = user.id
                     messages.success(request, "登入成功！")
-                    return redirect('login')  # 這裡是你說的 0101login/ 對應 name='login'
+                    return redirect('login_redirect')  # ✅ 修改這裡
                 else:
                     messages.error(request, "密碼錯誤")
             except UserProfile.DoesNotExist:
                 messages.error(request, "帳號不存在")
 
-        # ✅ 註冊邏輯：註冊後直接登入 + 跳首頁
+        # ✅ 註冊邏輯
         elif 'register' in request.POST:
             email = request.POST['email']
             nickname = request.POST['nickname']
@@ -441,15 +442,71 @@ def user_login_page(request):
                 )
                 request.session['user_id'] = user.id
                 messages.success(request, "註冊成功，已自動登入")
-                return redirect('login')  # 這裡一樣指向 0101login/
-    
+                return redirect('login_redirect')
+
     return render(request, '01_userlogin.html')
 
 
+# def user_login_page(request):
+#     if request.method == 'POST':
+#         # ✅ 登入邏輯
+#         if 'login' in request.POST:
+#             email = request.POST['email']
+#             password = request.POST['password']
+#             try:
+#                 user = UserProfile.objects.get(email=email)
+#                 if check_password(password, user.password):
+#                     request.session['user_id'] = user.id
+#                     messages.success(request, "登入成功！")
+#                     return redirect('login')  # 這裡是你說的 0101login/ 對應 name='login'
+#                 else:
+#                     messages.error(request, "密碼錯誤")
+#             except UserProfile.DoesNotExist:
+#                 messages.error(request, "帳號不存在")
+
+#         # ✅ 註冊邏輯：註冊後直接登入 + 跳首頁
+#         elif 'register' in request.POST:
+#             email = request.POST['email']
+#             nickname = request.POST['nickname']
+#             password = request.POST['password']
+
+#             if UserProfile.objects.filter(email=email).exists():
+#                 messages.error(request, "此帳號已被註冊")
+#             else:
+#                 hashed_pw = make_password(password)
+#                 user = UserProfile.objects.create(
+#                     email=email,
+#                     nickname=nickname,
+#                     password=hashed_pw
+#                 )
+#                 request.session['user_id'] = user.id
+#                 messages.success(request, "註冊成功，已自動登入")
+#                 return redirect('login_redirect')
+    
+#     return render(request, '01_userlogin.html')
+
+
+
+def login_redirect(request):
+    user_id = request.session.get('user_id')
+
+    if not user_id:
+        return redirect('login')  # 沒登入就跳回登入
+
+    try:
+        user = UserProfile.objects.get(id=user_id)
+    except UserProfile.DoesNotExist:
+        return redirect('login')
+
+    # 檢查是否已有進階資料
+    if ThisUserProfile.objects.filter(gmail=user.email).exists():
+        return redirect('index')  # 使用者主頁
+    else:
+        return redirect('this_user_profile')  # 第一次填表
+
 
 ##google登入
-from django.shortcuts import render, redirect
-from social_django.models import UserSocialAuth
+
 
 def profile(request):
     user = request.user
@@ -502,23 +559,43 @@ from .models import ThisUserProfile
 from django.contrib.auth.models import User
  
 
-from django.shortcuts import render, redirect
-from django.contrib.auth.models import User
-from .models import ThisUserProfile
-from social_django.models import UserSocialAuth
+
+# def create_user_profile(request):
+#     user = request.user
+#     social_user = UserSocialAuth.objects.filter(user=user, provider='google-oauth2').first()
+#     if social_user:
+#         gmail = social_user.extra_data.get('email', '')
+#     else:
+#         gmail = ''
+
+
+#     if request.method == 'POST':
+#         # 根據當前登入的使用者資料創建或更新 ThisUserProfile
+#         profile, created = ThisUserProfile.objects.update_or_create(
+#             gmail=gmail,  # 使用 gmail 作為識別
+#             defaults={
+#                 'username': request.POST.get('username'),
+#                 'default_nickname1': request.POST.get('default_nickname1'),
+#                 'default_nickname2': request.POST.get('default_nickname2'),
+#                 'emergency_contact_phone': request.POST.get('emergency_contact_phone'),
+#                 'emergency_contact_gmail': request.POST.get('emergency_contact_gmail'),
+#                 'default_message': request.POST.get('default_message'),
+#                 'self_intro': request.POST.get('self_intro'),
+#             }
+#         )
+
+#         return render(request, 'thank_you.html')
+
+#     return render(request, 'usdata.html', {'gmail': gmail})
+
 def create_user_profile(request):
-    user = request.user
-    social_user = UserSocialAuth.objects.filter(user=user, provider='google-oauth2').first()
-    if social_user:
-        gmail = social_user.extra_data.get('email', '')
-    else:
-        gmail = ''
-
-
     if request.method == 'POST':
-        # 根據當前登入的使用者資料創建或更新 ThisUserProfile
-        profile, created = ThisUserProfile.objects.update_or_create(
-            gmail=gmail,  # 使用 gmail 作為識別
+        gmail = request.session.get('google_email')  # 從登入流程取得
+        username = request.POST['username']
+        ...
+
+        ThisUserProfile.objects.update_or_create(
+            gmail=gmail,
             defaults={
                 'username': request.POST.get('username'),
                 'default_nickname1': request.POST.get('default_nickname1'),
@@ -530,13 +607,9 @@ def create_user_profile(request):
             }
         )
 
-        return render(request, 'thank_you.html')
+        return redirect('user_dashboard')
+    return render(request, 'usdata.html')
 
-    return render(request, 'usdata.html', {'gmail': gmail})
-
-
-from django.shortcuts import render, redirect
-from .models import ThisUserProfile
 
 def update_user_profile(request):
     if request.method == 'POST':
@@ -588,16 +661,19 @@ from .models import ThisUserProfile  # 假設你的使用者資料模型叫這�
 #         'profile': profile
 #     })
 
+def google_login_success(request):
+    gmail = request.session.get('google_email')  # 假設你存在 session 裡
+    if not gmail:
+        return redirect('login')  # 防呆
 
-@login_required
-def login_redirect_view(request):
     try:
-        profile = request.user.this_profile  # 使用 related_name
-        # 如果找到代表用戶已有填寫資料
-        return redirect('user_dashboard')  # 使用者主頁
+        profile = ThisUserProfile.objects.get(gmail=gmail)
+        # 有資料，導向使用者主頁
+        return redirect('user_dashboard')
     except ThisUserProfile.DoesNotExist:
-        # 還沒填寫進階資料，導向表單
-        return redirect('create_user_profile')  # 你填表的 URL 名稱
+        # 沒資料，導向填寫基本資料表單
+        return redirect('create_user_profile')
+
 
 
 

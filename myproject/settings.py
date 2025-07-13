@@ -222,3 +222,4 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 
 
+SOCIAL_AUTH_ASSOCIATE_BY_EMAIL = True  #  使用者登入時自動切換綁定帳號
