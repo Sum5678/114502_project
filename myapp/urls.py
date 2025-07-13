@@ -92,6 +92,9 @@ urlpatterns = [
     path('pemap_judge_step1/<int:p_id>/', views.pemap_judge_step1, name='pemap_judge_step1'),
     path('admin_index/', views.admin_index, name='admin_index'),
     path('admin_register/', views.admin_register, name='admin_register'),
+    
+    path('login/redirect/', views.login_redirect, name='login_redirect'),#使用者登入後有甜過基本資料就不用再填
+
 
 
    
