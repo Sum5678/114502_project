@@ -55,56 +55,65 @@ urlpatterns = [
 
 
     #想的
+    # 一般頁面
     path('announcement/', views.announcement, name='announcement'),
     path('chatroom/', views.chatroom, name='chatroom'),
     path('form/', views.form, name='form'),
     path('safety/', views.safety, name='safety'),
     path('autodial/', views.autodial, name='autodial'),
     path('mymap/', views.mymap, name='mymap'),
-    path('0101login/', views.login_page, name='login'),  
     path('settings/', views.settings, name='settings'),
-    path('write/', views.settings, name='write'),
+    path('write/', views.settings, name='write'),  # 同 settings，可保留或合併
+
+    # 登入/登出相關
+    path('0101login/', views.login_page, name='login'),  # 另一登入頁
     path('01userlogin/', views.user_login_page, name='userlogin'),
-    path('profile/', views.profile, name='profile'),
-    path('userlogin/', views.user_login_page, name='user_login_page'),
-    path('01userlogin/', views.user_login_page),  # 第二條可選路徑，不需 name
+    path('userlogin/', views.user_login_page),  # 可做第二路徑，不一定要name
+    path('userlogout/', views.logout_view, name='userlogout'),  # 命名統一成 userlogout
     path('userlogin_out/', views.logout_view, name='01_userlogin_out'),  # 登出路由
 
-    path('this_user_profile/', views.create_user_profile, name='create_user_profile'),
-    path('this_user_profile', views.create_user_profile, name='create_user_profile'),
-    path("this_user_profile", views.ThisUserProfile, name="this_user_profile"),
-    path('this_user_profile', views.update_user_profile, name='update_user_profile'),
+    # 用戶資料
+    path('this_user_profile/create/', views.create_user_profile, name='create_user_profile'),
+    path('this_user_profile/update/', views.update_user_profile, name='update_user_profile'),
+    path('this_user_profile/', views.this_user_profile_redirect, name='this_user_profile'),
+    path('user_data/', views.user_data_view, name='user_data'),  #   非第一次登入看資料頁
 
+    path('profile/', views.profile, name='profile'),
+
+    # API & 地圖相關
     path('api/incidents/', views.incident_list, name='incident_list'),#地圖顯示測試
     path('api/fake_incidents/', views.fake_incident_lookup, name='fake_incident_lookup'), #地圖顯示測試
     path('lookup/', views.lookup_page, name='lookup_page'),#地圖顯示測試
-    path('fake_incident_lookup/', views.fake_incident_lookup, name='fake_incident_lookup'),#地圖顯示測試
-    path('map0257/', views.show_map, name='show_map'),#地圖顯示測試
-    path('999map/', views.map_view, name='map_view'),#地圖顯示測試again(pemap_all的)
+    path('fake_incident_lookup/', views.fake_incident_lookup, name='fake_incident_lookup'),  # 重複可刪一個
+    path('map0257/', views.show_map, name='show_map'),
+    path('999map/', views.map_view, name='map_view'),
     path('api/reports/', views.reports_json, name='reports_json'),#地圖顯示測試again(pemap_all的)
-    
-    path('admin/pemap/approve/<int:p_id>/<int:stage>/', views.pemap_approve, name='pemap_approve'),  ##處理管理員對pemap資料狀態
-    path('pemap/', PemapAllListView.as_view(), name='pemap_list'),##處理管理員對pemap資料狀態
-    path('pemap/<int:p_id>/edit/', PemapAllUpdateView.as_view(), name='pemap_detail'),##處理管理員對pemap資料狀態
+    path('api/submit_report/', views.submit_report, name='submit_report'),
 
-    
-    path('99judge/', views.show_judge_page, name='show_judge_page'),#ai檢測
-    path('ai_judge/', views.ai_judge, name='ai_judge'),#ai檢測
-    path('admin_login/', views.admin_login, name='admin_login'),
-    path('admin_interview/', views.admin_interview, name='admin_interview'),#管理員自介
-    path('admin_logout/', views.admin_logout, name='admin_logout'),#管理員登入
+    # Pemap 管理員相關
+    path('admin/pemap/approve/<int:p_id>/<int:stage>/', views.pemap_approve, name='pemap_approve'),#處理管理員對pemap資料狀態
+    path('pemap/', PemapAllListView.as_view(), name='pemap_list'),  ##處理管理員對pemap資料狀態
+    path('pemap/<int:p_id>/edit/', PemapAllUpdateView.as_view(), name='pemap_detail'),#處理管理員對pemap資料狀態
     path('pemap_judge/', views.pemap_judge, name='pemap_judge'),#審核事件
     path('pemap_judge_step1/<int:p_id>/', views.pemap_judge_step1, name='pemap_judge_step1'),
+
+    # AI 判斷
+    path('99judge/', views.show_judge_page, name='show_judge_page'),
+    path('ai_judge/', views.ai_judge, name='ai_judge'), #ai檢測
+
+    # 管理員專用頁面
+    path('admin_login/', views.admin_login, name='admin_login'),#管理員登入
+    path('admin_interview/', views.admin_interview, name='admin_interview'),#管理員自介
+    path('admin_logout/', views.admin_logout, name='admin_logout'),
     path('admin_index/', views.admin_index, name='admin_index'),
     path('admin_register/', views.admin_register, name='admin_register'),
-    
-    path('login/redirect/', views.login_redirect, name='login_redirect'),#使用者登入後有甜過基本資料就不用再填
-    path('user_data/', views.user_data_view, name='user_data'),  # 非第一次登入看資料頁
 
+    # 登入後判斷跳轉
+    path('login/redirect/', views.login_redirect, name='login_redirect'),
 
-   
-
+    # 動態聊天室房間（需放最底下，避免路由衝突）
     path('<str:room_name>/', views.room, name='room'),
+
 
     # 其他路由
     #思璇
@@ -115,3 +124,134 @@ urlpatterns = [
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 # 原本沒有這些路徑
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 整理#想的
+#     path('announcement/', views.announcement, name='announcement'),
+#     path('chatroom/', views.chatroom, name='chatroom'),
+#     path('form/', views.form, name='form'),
+#     path('safety/', views.safety, name='safety'),
+#     path('autodial/', views.autodial, name='autodial'),
+#     path('mymap/', views.mymap, name='mymap'),
+#     path('0101login/', views.login_page, name='login'),  
+#     path('settings/', views.settings, name='settings'),
+#     path('write/', views.settings, name='write'),
+#     path('01userlogin/', views.user_login_page, name='userlogin'),
+#     path('profile/', views.profile, name='profile'),
+#     path('userlogin/', views.user_login_page, name='user_login_page'),
+#     path('01userlogin/', views.user_login_page),  # 第二條可選路徑，不需 name
+#     path('userlogin_out/', views.logout_view, name='01_userlogin_out'),  # 登出路由
+
+#     path('this_user_profile/', views.create_user_profile, name='create_user_profile'),
+#     path('this_user_profile', views.create_user_profile, name='create_user_profile'),
+#     path("this_user_profile", views.ThisUserProfile, name="this_user_profile"),
+#     path('this_user_profile', views.update_user_profile, name='update_user_profile'),
+
+#     path('api/incidents/', views.incident_list, name='incident_list'),#地圖顯示測試
+#     path('api/fake_incidents/', views.fake_incident_lookup, name='fake_incident_lookup'), #地圖顯示測試
+#     path('lookup/', views.lookup_page, name='lookup_page'),#地圖顯示測試
+#     path('fake_incident_lookup/', views.fake_incident_lookup, name='fake_incident_lookup'),#地圖顯示測試
+#     path('map0257/', views.show_map, name='show_map'),#地圖顯示測試
+#     path('999map/', views.map_view, name='map_view'),#地圖顯示測試again(pemap_all的)
+#     path('api/reports/', views.reports_json, name='reports_json'),#地圖顯示測試again(pemap_all的)
+    
+#     path('admin/pemap/approve/<int:p_id>/<int:stage>/', views.pemap_approve, name='pemap_approve'),  ##處理管理員對pemap資料狀態
+#     path('pemap/', PemapAllListView.as_view(), name='pemap_list'),##處理管理員對pemap資料狀態
+#     path('pemap/<int:p_id>/edit/', PemapAllUpdateView.as_view(), name='pemap_detail'),##處理管理員對pemap資料狀態
+
+    
+#     path('99judge/', views.show_judge_page, name='show_judge_page'),#ai檢測
+#     path('ai_judge/', views.ai_judge, name='ai_judge'),#ai檢測
+#     path('admin_login/', views.admin_login, name='admin_login'),
+#     path('admin_interview/', views.admin_interview, name='admin_interview'),#管理員自介
+#     path('admin_logout/', views.admin_logout, name='admin_logout'),#管理員登入
+#     path('pemap_judge/', views.pemap_judge, name='pemap_judge'),#審核事件
+#     path('pemap_judge_step1/<int:p_id>/', views.pemap_judge_step1, name='pemap_judge_step1'),
+#     path('admin_index/', views.admin_index, name='admin_index'),
+#     path('admin_register/', views.admin_register, name='admin_register'),
+    
+#     path('login/redirect/', views.login_redirect, name='login_redirect'),#使用者登入後有甜過基本資料就不用再填
+#     path('user_data/', views.user_data_view, name='user_data'),  # 非第一次登入看資料頁
+
+
+   
+
+#     path('<str:room_name>/', views.room, name='room'),
+
+#     # 其他路由
+#     #思璇
+#      #思璇
+#     path('api/submit_report/', views.submit_report, name='submit_report'),

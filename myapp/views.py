@@ -593,7 +593,7 @@ def create_user_profile(request):
     user_id = request.session.get('user_id')
     if not user_id:
         messages.warning(request, "請先登入")
-        return redirect('user_login_page')
+        return redirect('userlogin')
 
     user = get_object_or_404(UserProfile, id=user_id)
 
@@ -697,6 +697,12 @@ def user_data_view(request):
     user = get_object_or_404(UserProfile, id=user_id)
     profile = ThisUserProfile.objects.filter(gmail=user.email).first()
     return render(request, 'user_data.html', {'profile': profile})
+# views.py
+from django.shortcuts import redirect
+
+def this_user_profile_redirect(request):
+    # 你可以判斷條件再決定跳去哪，這裡簡單示範直接跳到 create_user_profile
+    return redirect('create_user_profile')  # 導向 /this_user_profile/create/
 
 
 ##登入後顯示資料
