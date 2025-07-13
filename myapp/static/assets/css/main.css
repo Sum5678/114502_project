@@ -1014,7 +1014,7 @@ section,
   left: 0;
   right: 0;
   height: 2px;
-  background: color-mix(in srgb, var(--default-color), transparent 90%);
+  background: color-mix(in srgb, var(--default-color), transparent 80%);
 }
 
 .services .service-item::after {
@@ -1028,12 +1028,17 @@ section,
   border-right: 5px solid var(--background-color);
 }
 
+/* 圖示區塊樣式整合 */
 .services .service-item .icon {
   width: 48px;
   height: 48px;
   position: relative;
   margin-right: 50px;
   line-height: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
 }
 
 .services .service-item .icon i {
@@ -1044,16 +1049,17 @@ section,
   position: relative;
 }
 
-.services .service-item .icon:before {
-  position: absolute;
+/* 保留一個圓點（使用 after），移除 before */
+.services .service-item .icon::after {
   content: "";
-  height: 30px;
-  width: 30px;
+  position: absolute;
+  width: 40px;
+  height: 40px;
   background: color-mix(in srgb, var(--accent-color), transparent 70%);
-  border-radius: 50px;
-  z-index: 1;
-  bottom: -15px;
-  right: -15px;
+  border-radius: 50%;
+  bottom: -8px;
+  left: -8px;
+  z-index: 0;
   transition: 0.3s;
 }
 
