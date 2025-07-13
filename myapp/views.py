@@ -575,18 +575,29 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from .models import ThisUserProfile  # 假設你的使用者資料模型叫這個
 
-@login_required
-def profile(request):
-    user = request.user
-    try:
-        profile = ThisUserProfile.objects.get(user=user)
-    except ThisUserProfile.DoesNotExist:
-        profile = None
+# @login_required
+# def profile(request):
+#     user = request.user
+#     try:
+#         profile = ThisUserProfile.objects.get(user=user)
+#     except ThisUserProfile.DoesNotExist:
+#         profile = None
 
-    return render(request, 'thank_you.html', {
-        'user': user,
-        'profile': profile
-    })
+#     return render(request, 'thank_you.html', {
+#         'user': user,
+#         'profile': profile
+#     })
+
+
+@login_required
+def login_redirect_view(request):
+    try:
+        profile = request.user.this_profile  # 使用 related_name
+        # 如果找到代表用戶已有填寫資料
+        return redirect('user_dashboard')  # 使用者主頁
+    except ThisUserProfile.DoesNotExist:
+        # 還沒填寫進階資料，導向表單
+        return redirect('create_user_profile')  # 你填表的 URL 名稱
 
 
 
