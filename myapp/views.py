@@ -645,29 +645,24 @@ from .models import PemapAll
 #         return view_func(request, *args, **kwargs)
 #     return wrapped_view
 
-def login_required_session(view_func):
-    @wraps(view_func)
-    def wrapped_view(request, *args, **kwargs):
-        if 'user_id' not in request.session:
-            return redirect('userlogin')  # 確認這是你登入頁的 URL name
-        return view_func(request, *args, **kwargs)
-    return wrapped_view
 
 
-@login_required_session
+
 @csrf_exempt
 def submit_report(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
 
+            # 自動產生 poster_id（例如用目前時間戳 + email）
             poster_id = int(timezone.now().strftime("%Y%m%d%H%M%S"))
-
+ 
             display_name = data.get('display_name', '')
             kind = data.get('kind', '')
             reason = data.get('reason', '')
             address = data.get('address', '')
 
+            # 分離經緯度
             latitude = 0
             longitude = 0
             if ',' in address:
@@ -677,10 +672,11 @@ def submit_report(request):
                         latitude = float(parts[0])
                         longitude = float(parts[1])
                     except ValueError:
-                        pass
+                        pass  # 維持預設 0
 
-            img_url = data.get('img_url', '')
+            img_url = data.get('img_url', '')  # 這就是 base64
 
+            # 寫入資料表
             PemapAll.objects.create(
                 poster_id=poster_id,
                 display_name=display_name,
@@ -700,57 +696,6 @@ def submit_report(request):
             return JsonResponse({"status": "error", "message": str(e)})
     else:
         return JsonResponse({"status": "error", "message": "Invalid method"})
-
-
-
-# @csrf_exempt
-# def submit_report(request):
-#     if request.method == 'POST':
-#         try:
-#             data = json.loads(request.body)
-
-#             # 自動產生 poster_id（例如用目前時間戳 + email）
-#             poster_id = int(timezone.now().strftime("%Y%m%d%H%M%S"))
- 
-#             display_name = data.get('display_name', '')
-#             kind = data.get('kind', '')
-#             reason = data.get('reason', '')
-#             address = data.get('address', '')
-
-#             # 分離經緯度
-#             latitude = 0
-#             longitude = 0
-#             if ',' in address:
-#                 parts = [p.strip() for p in address.split(',')]
-#                 if len(parts) >= 2:
-#                     try:
-#                         latitude = float(parts[0])
-#                         longitude = float(parts[1])
-#                     except ValueError:
-#                         pass  # 維持預設 0
-
-#             img_url = data.get('img_url', '')  # 這就是 base64
-
-#             # 寫入資料表
-#             PemapAll.objects.create(
-#                 poster_id=poster_id,
-#                 display_name=display_name,
-#                 kind=kind,
-#                 reason=reason,
-#                 address=address,
-#                 latitude=latitude,
-#                 longitude=longitude,
-#                 img_url=img_url,
-#                 time_created=timezone.now(),
-#                 review_status="待審核"
-#             )
-
-#             return JsonResponse({"status": "success"})
-
-#         except Exception as e:
-#             return JsonResponse({"status": "error", "message": str(e)})
-#     else:
-#         return JsonResponse({"status": "error", "message": "Invalid method"})
     
 def room(request, room_name):
     return render(request, 'test_0610chatroom.html', {'room_name': room_name})
@@ -761,7 +706,6 @@ def report_list_view(request):
     for i, report in enumerate(reports):
         report.reverse_id = len(reports) - i
     return render(request, 'report_list.html', {'reports': reports})
-
 #----------------store---------------------------------------------------------------------
 
 @csrf_exempt
