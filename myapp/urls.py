@@ -66,10 +66,15 @@ urlpatterns = [
     path('write/', views.settings, name='write'),
     path('01userlogin/', views.user_login_page, name='userlogin'),
     path('profile/', views.profile, name='profile'),
+    path('userlogin/', views.user_login_page, name='user_login_page'),
+    path('01userlogin/', views.user_login_page),  # 第二條可選路徑，不需 name
     path('userlogin_out/', views.logout_view, name='01_userlogin_out'),  # 登出路由
+
+    path('this_user_profile/', views.create_user_profile, name='create_user_profile'),
     path('this_user_profile', views.create_user_profile, name='create_user_profile'),
     path("this_user_profile", views.ThisUserProfile, name="this_user_profile"),
     path('this_user_profile', views.update_user_profile, name='update_user_profile'),
+
     path('api/incidents/', views.incident_list, name='incident_list'),#地圖顯示測試
     path('api/fake_incidents/', views.fake_incident_lookup, name='fake_incident_lookup'), #地圖顯示測試
     path('lookup/', views.lookup_page, name='lookup_page'),#地圖顯示測試
@@ -94,7 +99,7 @@ urlpatterns = [
     path('admin_register/', views.admin_register, name='admin_register'),
     
     path('login/redirect/', views.login_redirect, name='login_redirect'),#使用者登入後有甜過基本資料就不用再填
-
+    path('user_data/', views.user_data_view, name='user_data'),  # 非第一次登入看資料頁
 
 
    

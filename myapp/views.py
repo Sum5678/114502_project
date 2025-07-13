@@ -489,20 +489,21 @@ def user_login_page(request):
 
 def login_redirect(request):
     user_id = request.session.get('user_id')
-
     if not user_id:
-        return redirect('login')  # 沒登入就跳回登入
+        return redirect('user_login_page')  # 沒登入，導回登入
 
     try:
         user = UserProfile.objects.get(id=user_id)
     except UserProfile.DoesNotExist:
-        return redirect('login')
+        return redirect('user_login_page')
 
-    # 檢查是否已有進階資料
-    if ThisUserProfile.objects.filter(gmail=user.email).exists():
-        return redirect('index')  # 使用者主頁
+    # 判斷是否已有資料
+    if ThisUserProfile.objects.filter(gmail__iexact=user.email).exists():
+        return redirect('user_data')  # 有資料導去資料頁
     else:
-        return redirect('this_user_profile')  # 第一次填表
+        return redirect('create_user_profile')  # 無資料導去填寫頁
+
+
 
 
 ##google登入
@@ -553,12 +554,6 @@ def logout_view(request):
 
 
 ####登入後填表的
-from django.shortcuts import render, redirect
-from social_django.models import UserSocialAuth
-from .models import ThisUserProfile
-from django.contrib.auth.models import User
- 
-
 
 # def create_user_profile(request):
 #     user = request.user
@@ -588,27 +583,78 @@ from django.contrib.auth.models import User
 
 #     return render(request, 'usdata.html', {'gmail': gmail})
 
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from .models import ThisUserProfile, UserProfile
+
+from django.shortcuts import get_object_or_404
+
 def create_user_profile(request):
+    user_id = request.session.get('user_id')
+    if not user_id:
+        messages.warning(request, "請先登入")
+        return redirect('user_login_page')
+
+    user = get_object_or_404(UserProfile, id=user_id)
+
     if request.method == 'POST':
-        gmail = request.session.get('google_email')  # 從登入流程取得
-        username = request.POST['username']
-        ...
+        username = request.POST.get('username')
+        gmail = user.email  # 用登入的user email做唯一key
+        default_nickname1 = request.POST.get('default_nickname1', '')
+        default_nickname2 = request.POST.get('default_nickname2', '')
+        emergency_contact_phone = request.POST.get('emergency_contact_phone', '')
+        emergency_contact_gmail = request.POST.get('emergency_contact_gmail', '')
+        default_message = request.POST.get('default_message', '')
+        self_intro = request.POST.get('self_intro', '')
+        user_images = request.FILES.get('profile_image')
 
         ThisUserProfile.objects.update_or_create(
             gmail=gmail,
             defaults={
-                'username': request.POST.get('username'),
-                'default_nickname1': request.POST.get('default_nickname1'),
-                'default_nickname2': request.POST.get('default_nickname2'),
-                'emergency_contact_phone': request.POST.get('emergency_contact_phone'),
-                'emergency_contact_gmail': request.POST.get('emergency_contact_gmail'),
-                'default_message': request.POST.get('default_message'),
-                'self_intro': request.POST.get('self_intro'),
+                'username': username,
+                'default_nickname1': default_nickname1,
+                'default_nickname2': default_nickname2,
+                'emergency_contact_phone': emergency_contact_phone,
+                'emergency_contact_gmail': emergency_contact_gmail,
+                'default_message': default_message,
+                'self_intro': self_intro,
+                'user_images': user_images,
             }
         )
 
-        return redirect('user_dashboard')
-    return render(request, 'usdata.html')
+        messages.success(request, "資料已成功儲存！")
+        return redirect('user_data')
+
+    return render(request, 'usdata.html', {'gmail': user.email})
+
+
+
+
+
+# def create_user_profile(request):
+#     if request.method == 'POST':
+#         gmail = request.session.get('google_email')  # 從登入流程取得
+#         username = request.POST['username']
+#         ...
+#         # 透過 session 拿到 email
+#         user = UserProfile.objects.get(id=user_id)
+#         gmail = user.email  # 🔥 確保 gmail 是對的
+
+#         ThisUserProfile.objects.update_or_create(
+#             gmail=gmail,
+#             defaults={
+#                 'username': request.POST.get('username'),
+#                 'default_nickname1': request.POST.get('default_nickname1'),
+#                 'default_nickname2': request.POST.get('default_nickname2'),
+#                 'emergency_contact_phone': request.POST.get('emergency_contact_phone'),
+#                 'emergency_contact_gmail': request.POST.get('emergency_contact_gmail'),
+#                 'default_message': request.POST.get('default_message'),
+#                 'self_intro': request.POST.get('self_intro'),
+#             }
+#         )
+
+#         return redirect('user_dashboard')
+#     return render(request, 'usdata.html')
 
 
 def update_user_profile(request):
@@ -643,23 +689,60 @@ def update_user_profile(request):
 
     return render(request, 'thank_you.html')
 
+def user_data_view(request):
+    user_id = request.session.get('user_id')
+    if not user_id:
+        return redirect('user_login_page')
+
+    user = get_object_or_404(UserProfile, id=user_id)
+    profile = ThisUserProfile.objects.filter(gmail=user.email).first()
+    return render(request, 'user_data.html', {'profile': profile})
+
+
 ##登入後顯示資料
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
-from .models import ThisUserProfile  # 假設你的使用者資料模型叫這個
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.contrib.auth.hashers import check_password, make_password
+from .models import UserProfile, ThisUserProfile
 
-# @login_required
-# def profile(request):
-#     user = request.user
-#     try:
-#         profile = ThisUserProfile.objects.get(user=user)
-#     except ThisUserProfile.DoesNotExist:
-#         profile = None
+def user_login_page(request):
+    if request.method == 'POST':
+        if 'login' in request.POST:
+            email = request.POST.get('email')
+            password = request.POST.get('password')
+            try:
+                user = UserProfile.objects.get(email=email)
+                if check_password(password, user.password):
+                    request.session['user_id'] = user.id  # 記錄 session
+                    messages.success(request, "登入成功！")
+                    return redirect('login_redirect')  # 登入成功導到判斷頁
+                else:
+                    messages.error(request, "密碼錯誤")
+            except UserProfile.DoesNotExist:
+                messages.error(request, "帳號不存在")
 
-#     return render(request, 'thank_you.html', {
-#         'user': user,
-#         'profile': profile
-#     })
+        elif 'register' in request.POST:
+            email = request.POST.get('email')
+            nickname = request.POST.get('nickname')
+            password = request.POST.get('password')
+
+            if UserProfile.objects.filter(email=email).exists():
+                messages.error(request, "此帳號已被註冊")
+            else:
+                hashed_pw = make_password(password)
+                user = UserProfile.objects.create(
+                    email=email,
+                    nickname=nickname,
+                    password=hashed_pw
+                )
+                request.session['user_id'] = user.id
+                messages.success(request, "註冊成功，已自動登入")
+                return redirect('login_redirect')  # 註冊後同樣導到判斷頁
+
+    return render(request, '01_userlogin.html')
+
+
+
 
 def google_login_success(request):
     gmail = request.session.get('google_email')  # 假設你存在 session 裡

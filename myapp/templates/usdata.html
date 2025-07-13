@@ -63,7 +63,7 @@
 <body>
   <div class="form-container">
     <h1>填寫個人資料</h1>
-    <form action="/this_user_profile" method="POST" enctype="multipart/form-data">
+    <form action="{% url 'create_user_profile' %}" method="POST" enctype="multipart/form-data">
         {% csrf_token %}
 
         {% if user.profile_image %}
