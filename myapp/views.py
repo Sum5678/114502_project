@@ -823,6 +823,74 @@ from .models import PemapAll
 
 
 
+#!!!!!!!!!!!!!!!!!!!!!好像是思璇的要說!!!!!!!!!!!!!!!!!!!
+#
+#
+# @csrf_exempt
+# def submit_report(request):
+#     if request.method == 'POST':
+#         try:
+#             data = json.loads(request.body)
+
+#             # 自動產生 poster_id（例如用目前時間戳 + email）
+#             poster_id = int(timezone.now().strftime("%Y%m%d%H%M%S"))
+ 
+#             display_name = data.get('display_name', '')
+#             kind = data.get('kind', '')
+#             reason = data.get('reason', '')
+#             address = data.get('address', '')
+
+#             # 分離經緯度
+#             latitude = 0
+#             longitude = 0
+#             if ',' in address:
+#                 parts = [p.strip() for p in address.split(',')]
+#                 if len(parts) >= 2:
+#                     try:
+#                         latitude = float(parts[0])
+#                         longitude = float(parts[1])
+#                     except ValueError:
+#                         pass  # 維持預設 0
+
+#             img_url = data.get('img_url', '')  # 這就是 base64
+
+#             # 寫入資料表
+#             PemapAll.objects.create(
+#                 poster_id=poster_id,
+#                 display_name=display_name,
+#                 kind=kind,
+#                 reason=reason,
+#                 address=address,
+#                 latitude=latitude,
+#                 longitude=longitude,
+#                 img_url=img_url,
+#                 time_created=timezone.now(),
+#                 review_status="待審核"
+#             )
+
+#             return JsonResponse({"status": "success"})
+
+#         except Exception as e:
+#             return JsonResponse({"status": "error", "message": str(e)})
+#     else:
+#         return JsonResponse({"status": "error", "message": "Invalid method"})
+    
+def room(request, room_name):
+    return render(request, 'test_0610chatroom.html', {'room_name': room_name})
+#report_list_view
+def report_list_view(request):
+    reports = list(PemapAll.objects.all().order_by('-time_created'))
+    # 加入反向編號（從最大值開始）
+    for i, report in enumerate(reports):
+        report.reverse_id = len(reports) - i
+    return render(request, 'report_list.html', {'reports': reports})
+
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+from django.utils import timezone
+import json
+
+from .models import PemapAll
 
 @csrf_exempt
 def submit_report(request):
@@ -830,15 +898,14 @@ def submit_report(request):
         try:
             data = json.loads(request.body)
 
-            # 自動產生 poster_id（例如用目前時間戳 + email）
+            # 基本資料欄位
             poster_id = int(timezone.now().strftime("%Y%m%d%H%M%S"))
- 
             display_name = data.get('display_name', '')
             kind = data.get('kind', '')
             reason = data.get('reason', '')
             address = data.get('address', '')
 
-            # 分離經緯度
+            # 經緯度解析
             latitude = 0
             longitude = 0
             if ',' in address:
@@ -848,9 +915,42 @@ def submit_report(request):
                         latitude = float(parts[0])
                         longitude = float(parts[1])
                     except ValueError:
-                        pass  # 維持預設 0
+                        pass
 
-            img_url = data.get('img_url', '')  # 這就是 base64
+            img_url = data.get('img_url', '')  # base64
+
+            # ======== AI 初步審核區塊 ========
+            # 模擬送出給 ai_judge 的 JSON 格式
+            description = reason.strip()
+
+            # 敏感詞分類詞庫
+            sensitive_categories = {
+                '仇恨言論': ['仇恨', '恨死', '殺光', '滅絕'],
+                '暴力': ['暴力', '打死', '砍', '攻擊', '虐待'],
+                '歧視': ['歧視', '種族主義', '排擠', '偏見'],
+            }
+
+            case_related_keywords = [
+                '案件', '事件', '警方', '警察', '報警', '報案', '證據',
+                '被跟蹤', '跟蹤', '尾隨', '偷拍', '性騷擾', '偷窺', '侵入',
+                '陌生男子', '紅衣男子', '追蹤', '恐嚇', '求助', '監視'
+            ]
+
+            if not description or len(description) < 10:
+                review_status = '描述內容過短，不足以判斷'
+            else:
+                has_sensitive_word = any(
+                    keyword in description
+                    for keywords in sensitive_categories.values()
+                    for keyword in keywords
+                )
+                is_case_related = any(kw in description for kw in case_related_keywords)
+
+                if has_sensitive_word or not is_case_related:
+                    review_status = '需再由人工審核'
+                else:
+                    review_status = '人工審核通過'
+            # ======== 審核區塊結束 ========
 
             # 寫入資料表
             PemapAll.objects.create(
@@ -863,25 +963,16 @@ def submit_report(request):
                 longitude=longitude,
                 img_url=img_url,
                 time_created=timezone.now(),
-                review_status="待審核"
+                review_status=review_status
             )
 
-            return JsonResponse({"status": "success"})
+            return JsonResponse({"status": "success", "review_status": review_status})
 
         except Exception as e:
             return JsonResponse({"status": "error", "message": str(e)})
     else:
         return JsonResponse({"status": "error", "message": "Invalid method"})
-    
-def room(request, room_name):
-    return render(request, 'test_0610chatroom.html', {'room_name': room_name})
-#report_list_view
-def report_list_view(request):
-    reports = list(PemapAll.objects.all().order_by('-time_created'))
-    # 加入反向編號（從最大值開始）
-    for i, report in enumerate(reports):
-        report.reverse_id = len(reports) - i
-    return render(request, 'report_list.html', {'reports': reports})
+
 #----------------store---------------------------------------------------------------------
 
 @csrf_exempt
