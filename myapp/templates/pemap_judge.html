@@ -73,6 +73,7 @@
                   <th>經緯度</th>
                   <th>上傳時間</th>
                   <th>審核狀態</th>
+                  <th>最近操作管理員id</th>
                   <th>操作</th>
                 </tr>
               </thead>
@@ -86,6 +87,7 @@
                     <td>{{ item.latitude }}, {{ item.longitude }}</td>
                     <td>{{ item.time_created }}</td>
                     <td>{{ item.review_status }}</td>
+                    <td>{{ item.admin_id }}</td>
 
                     <td>
                       <a href="{% url 'pemap_judge_step1' item.p_id %}" class="btn btn-sm btn-primary">進入審核</a>
