@@ -160,6 +160,7 @@ class PemapAll(models.Model):
     time_created = models.DateTimeField(default=timezone.now)
     time_reviewed = models.DateTimeField(null=True, blank=True)
     review_status = models.CharField(max_length=50, default="待審核")
+    admin_id = models.IntegerField()
 
     class Meta:
         db_table = 'pemap_all'
