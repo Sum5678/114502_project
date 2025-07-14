@@ -355,7 +355,7 @@
           <div class="row gy-3">
             <!-- 顯示名稱 -->
             <div class="col-md-6">
-              <label for="display_name" class="form-label">顯示名稱</label>
+              <label for="display_name" class="form-label">姓名</label>
               <input type="text" class="form-control" id="display_name" name="display_name" placeholder="可填匿名">
             </div>
 
@@ -367,10 +367,9 @@
 
             <!-- 事件分類 -->
             <div class="col-md-6">
-              <label for="kind" class="form-label">事件分類</label>
+              <label for="kind" class="form-label">可疑性質</label>
               <select class="form-select" id="kind" name="kind" required>
                 <option selected disabled>請選擇</option>
-                <option value="暴露狂">暴露狂</option>
                 <option value="騷擾">騷擾</option>
                 <option value="打架">打架</option>
                 <option value="動物">動物</option>
@@ -388,8 +387,8 @@
 
             <!-- 地點 + 地圖 -->
             <div class="col-12">
-              <label for="address" class="form-label">地點</label>
-              <input type="text" class="form-control" id="address" name="address" placeholder="點地圖或手動輸入地址">
+              <label for="address" class="form-label">在地圖上選擇地點</label>
+              <input type="text" class="form-control" id="address" name="address" placeholder="請點選地圖" readonly>
               <input type="hidden" id="latitude" name="latitude">
               <input type="hidden" id="longitude" name="longitude">
               <div id="map" style="height: 300px; margin-top: 10px;"></div>
@@ -397,13 +396,13 @@
 
             <!-- 說明 -->
             <div class="col-12">
-              <label for="reason" class="form-label">說明</label>
+              <label for="reason" class="form-label">請描述可疑行為</label>
               <textarea class="form-control" id="reason" name="reason" rows="3" placeholder="請描述發生的情況"></textarea>
             </div>
 
             <!-- 圖片上傳 -->
             <div class="col-12">
-              <label for="image" class="form-label">上傳圖片（可選）</label>
+              <label for="image" class="form-label">上傳圖片</label>
               <input class="form-control" type="file" id="image" name="image" accept="image/*">
               <img id="preview" style="margin-top: 10px; max-height: 200px; display: none;" />
             </div>
@@ -439,16 +438,12 @@
       const lng = e.latlng.lng.toFixed(6);
       document.getElementById('latitude').value = lat;
       document.getElementById('longitude').value = lng;
+      document.getElementById('address').value = `${lat}, ${lng}`;
       if (marker) {
         marker.setLatLng(e.latlng);
       } else {
         marker = L.marker(e.latlng).addTo(map);
       }
-      fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
-        .then(response => response.json())
-        .then(data => {
-          document.getElementById('address').value = data.display_name || `${lat}, ${lng}`;
-        });
     });
     document.getElementById('image').addEventListener('change', function (event) {
       const file = event.target.files[0];
@@ -466,11 +461,10 @@
       }
     });
     const subkindOptions = {
-      "暴露狂": ["裸露上半身", "當街自慰", "偷拍", "其他"],
-      "騷擾": ["言語騷擾", "肢體接觸", "尾隨跟蹤", "偷拍", "其他"],
-      "打架": ["打人", "吵架", "群體鬥毆", "其他"],
-      "動物": ["野狗", "攻擊行為", "走失寵物", "其他"],
-      "環境髒亂": ["堆積垃圾", "污水亂倒", "糞便異味", "其他"]
+      "騷擾": ["推銷", "暴露狂", "跟蹤", "言語騷擾", "拍攝他人", "擋路糾纏", "其他"],
+      "打架": ["肢體衝突", "口角爭執", "幫派鬥毆", "攻擊路人", "其他"],
+      "動物": ["咬人", "無人看管寵物", "攻擊性動物", "受傷動物", "野生動物闖入", "其他"],
+      "環境髒亂": ["公共財物破壞", "可疑物品", "垃圾堆積", "噪音擾人", "惡臭", "噴漆塗鴉", "其他"]
     };
     document.getElementById('kind').addEventListener('change', function () {
       const kind = this.value;
@@ -491,6 +485,7 @@
       }
     });
     </script>
+
 
 
     <!-- Portfolio Section -->
