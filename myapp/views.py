@@ -1445,3 +1445,28 @@ def admin_register(request):
             message = "Email 已存在，請使用其他 Email 註冊。"
 
     return render(request, 'admin_register.html', {'message': message})
+
+
+#--------管理員看自己審核的-------
+
+from django.shortcuts import render, redirect
+from .models import PemapAll
+
+def admin_decide_view(request):
+    # 從 session 抓出登入的管理員 id
+    admin_id = request.session.get('admin_id')
+    admin_name = request.session.get('admin_name', '未知管理員')
+
+    # 如果沒登入，導向登入頁
+    if not admin_id:
+        return redirect('admin_login')
+
+    # 查出這個管理員有改過的資料（已經改過 review_status 的）
+    decided_list = PemapAll.objects.filter(admin_id=admin_id).order_by('-time_reviewed')
+
+    return render(request, 'admin_decide.html', {
+        'admin_id': admin_id,
+        'admin_name': admin_name,
+        'decided_list': decided_list
+    })
+
