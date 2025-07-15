@@ -1352,6 +1352,8 @@ def pemap_judge_step1(request, p_id):
         if new_status is not None and new_status.isdigit():
             form_data.review_status = int(new_status)
             form_data.time_reviewed = timezone.now()
+            form_data.admin_id = admin_id  
+
 
             print(f"表單 {p_id} 被 {admin_name} 修改狀態為 {new_status}")
 
