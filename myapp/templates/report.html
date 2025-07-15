@@ -16,21 +16,41 @@
   <!-- Header -->
   <header id="header" class="header d-flex align-items-center fixed-top">
     <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
-      <a href="{% url 'admin_index' %}" class="logo d-flex flex-column align-items-start me-auto me-xl-0">
-        <h1 class="sitename">{{ admin_name }} 管理員</h1>
-        <h1 class="sitename">您的管理員id是: {{ admin_id }}</h1>
+      <a href="index.html" class="logo d-flex align-items-center me-auto me-xl-0">
+        <h1 class="sitename">怪怪走開，護您安全</h1><span></span>
       </a>
       <nav id="navmenu" class="navmenu">
         <ul>
-          <li><a href="{% url 'admin_index' %}#hero" class="active">管理員主頁</a></li>
-          <li><a href="{% url 'admin_interview' %}">管理員自我介紹</a></li>
-          <li><a href="{% url 'show_judge_page' %}">審核表單</a></li>
-          <li><a href="{% url 'pemap_judge' %}">事件清單審核</a></li>
-          <li><a href="{% url 'admin_logout' %}">登出</a></li>
+          <li><a href="{% url 'home' %}#hero" class="active">主頁</a></li>
+          <li><a href="index.html#services">簡介及功能介紹</a></li>
+          <li><a href="{% url 'report' %}">填寫表單</a></li>
+          <li><a href="index.html#portfolio">Portfolio</a></li>
+          <li><a href="index.html#pricing">Pricing</a></li>
+          <li><a href="{% url 'map' %}">事件地圖</a></li>
+          <li><a href="{% url 'harassment_prevention' %}">防騷指南</a></li>
+          <li class="dropdown"><a href="#"><span>Dropdown</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+            <ul>
+              <li><a href="#">Dropdown 1</a></li>
+              <li class="dropdown"><a href="#"><span>Deep Dropdown</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+                <ul>
+                  <li><a href="#">Deep Dropdown 1</a></li>
+                  <li><a href="#">Deep Dropdown 2</a></li>
+                  <li><a href="#">Deep Dropdown 3</a></li>
+                  <li><a href="#">Deep Dropdown 4</a></li>
+                  <li><a href="#">Deep Dropdown 5</a></li>
+                </ul>
+              </li>
+              <li><a href="#">Dropdown 2</a></li>
+              <li><a href="#">Dropdown 3</a></li>
+              <li><a href="#">Dropdown 4</a></li>
+            </ul>
+          </li>
+          <li><a href="index.html#contact">Contact</a></li>
         </ul>
         <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
       </nav>
-      <a class="btn-getstarted" href="{% url 'admin_logout' %}">登出</a>
+      <!-- <a class="btn-getstarted" href="index.html#about">Get Started</a> -->
+      <a class="btn-getstarted" href="{% url 'userlogin' %}">登入</a>
     </div>
   </header>
 
@@ -206,6 +226,63 @@
       }
     });
   </script>
+  <script>
+  document.getElementById('report-form').addEventListener('submit', function (event) {
+    event.preventDefault(); // 阻止預設表單提交
 
+    const isAnonymous = document.getElementById("anonymous").checked;
+    const name = isAnonymous ? "匿名" : document.getElementById("display_name").value.trim();
+    const email = isAnonymous ? "anonymous@gmail.com" : document.getElementById("email").value.trim();
+    const kind = document.getElementById("kind").value;
+    const subkind = document.getElementById("subkind").value;
+    const reason = document.getElementById("reason").value.trim();
+    const latitude = document.getElementById("latitude").value;
+    const longitude = document.getElementById("longitude").value;
+    const address = document.getElementById("address").value;
+    const imageFile = document.getElementById("image").files[0];
+
+    const kind_combined = kind + " - " + subkind;
+
+    function sendData(base64Image) {
+      fetch("/api/submit_report/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": "{{ csrf_token }}"
+        },
+        body: JSON.stringify({
+          display_name: name,
+          kind: kind_combined,
+          reason: reason,
+          address: address,
+          latitude: latitude,
+          longitude: longitude,
+          img_url: base64Image
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.status === "success") {
+          window.location.href = "/report/list/";
+        } else {
+          alert("❌ 提交失敗：" + data.message);
+        }
+      })
+      .catch(error => {
+        alert("❌ 發送失敗，請稍後再試");
+      });
+    }
+
+    if (imageFile) {
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        sendData(e.target.result);
+      };
+      reader.readAsDataURL(imageFile);
+    } else {
+      sendData("");
+    }
+  });
+  </script>
 </body>
 </html>
