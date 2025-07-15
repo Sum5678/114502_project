@@ -1,134 +1,152 @@
+{% load static %}
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-TW">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>我的回報紀錄</title>
+  <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/aos/aos.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/css/main.css' %}" rel="stylesheet">
   <style>
-    body {
-      font-family: 'Arial', sans-serif;
-      background-color: #f0f8ff;
-      margin: 0;
-      padding: 0;
-    }
-
-    .container {
-      width: 90%;
-      max-width: 1000px;
-      margin: 30px auto;
-      background-color: #ffffff;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    }
-
-    h2 {
-      text-align: center;
-      color: #036;
-      margin-bottom: 20px;
-    }
-
     table {
       width: 100%;
       border-collapse: collapse;
     }
-
     th, td {
       text-align: left;
       padding: 12px;
       border-bottom: 1px solid #ddd;
     }
-
     th {
       background-color: #d6ecf9;
       color: #033e6b;
     }
-
     tr:hover {
       background-color: #f2faff;
     }
-
-    .status-btn {
-      padding: 6px 12px;
-      background-color: #3498db;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 14px;
-    }
-
-    .status-btn:hover {
-      background-color: #2c80b4;
-    }
-
-    .back-button {
-      margin-top: 20px;
-      text-align: center;
-    }
-
-    .back-button button {
-      padding: 10px 20px;
-      font-size: 16px;
-      background-color: #3498db;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-
-    .back-button button:hover {
-      background-color: #2c80b4;
-    }
-
     img.report-image {
       max-width: 100px;
       max-height: 100px;
       border-radius: 6px;
     }
+    .back-button {
+      margin-top: 20px;
+    }
   </style>
 </head>
-<body>
-  <div class="container">
-    <h2>我的回報紀錄</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>顯示名稱</th>
-          <th>類別</th>
-          <th>原因</th>
-          <th>地址</th>
-          <th>圖片</th>
-          <th>上傳時間</th>
-          <th>審核狀態</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for report in reports %}
-        <tr>
-          <td>{{ report.reverse_id }}</td>
-          <td>{{ report.display_name }}</td>
-          <td>{{ report.kind }}</td>
-          <td>{{ report.reason }}</td>
-          <td>{{ report.address }}</td>
-          <td>
-            {% if report.img_url %}
-              <img src="{{ report.img_url }}" alt="圖片" class="report-image">
-            {% else %}
-              無圖片
-            {% endif %}
-          </td>
-          <td>{{ report.time_created }}</td>
-          <td>{{ report.review_status }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
 
-    <div class="back-button">
-      <button onclick="location.href='profile.html'">返回個人頁面</button>
+<body class="index-page">
+
+  <!-- Header -->
+  <header id="header" class="header d-flex align-items-center fixed-top">
+    <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
+      <a href="index.html" class="logo d-flex align-items-center me-auto me-xl-0">
+        <h1 class="sitename">怪怪走開，護您安全</h1><span></span>
+      </a>
+      <nav id="navmenu" class="navmenu">
+        <ul>
+          <li><a href="{% url 'home' %}#hero" class="active">主頁</a></li>
+          <li><a href="index.html#services">簡介及功能介紹</a></li>
+          <li><a href="{% url 'report' %}">填寫表單</a></li>
+          <li><a href="index.html#portfolio">Portfolio</a></li>
+          <li><a href="index.html#pricing">Pricing</a></li>
+          <li><a href="{% url 'map' %}">事件地圖</a></li>
+          <li><a href="{% url 'harassment_prevention' %}">防騷指南</a></li>
+          <li class="dropdown"><a href="#"><span>Dropdown</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+            <ul>
+              <li><a href="#">Dropdown 1</a></li>
+              <li class="dropdown"><a href="#"><span>Deep Dropdown</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+                <ul>
+                  <li><a href="#">Deep Dropdown 1</a></li>
+                  <li><a href="#">Deep Dropdown 2</a></li>
+                  <li><a href="#">Deep Dropdown 3</a></li>
+                  <li><a href="#">Deep Dropdown 4</a></li>
+                  <li><a href="#">Deep Dropdown 5</a></li>
+                </ul>
+              </li>
+              <li><a href="#">Dropdown 2</a></li>
+              <li><a href="#">Dropdown 3</a></li>
+              <li><a href="#">Dropdown 4</a></li>
+            </ul>
+          </li>
+          <li><a href="index.html#contact">Contact</a></li>
+        </ul>
+        <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+      </nav>
+      <!-- <a class="btn-getstarted" href="index.html#about">Get Started</a> -->
+      <a class="btn-getstarted" href="{% url 'userlogin' %}">登入</a>
     </div>
-  </div>
+  </header>
+  <!-- Main -->
+  <main class="main" style="padding-top: 100px;">
+    <section class="section">
+      <div class="container" data-aos="fade-up">
+        <div class="section-title">
+          <h2>我的回報紀錄</h2>
+          <p>以下是你所提交的可疑事件回報。</p>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>顯示名稱</th>
+                <th>類別</th>
+                <th>原因</th>
+                <th>地址</th>
+                <th>圖片</th>
+                <th>上傳時間</th>
+                <th>審核狀態</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for report in reports %}
+              <tr>
+                <td>{{ report.reverse_id }}</td>
+                <td>{{ report.display_name }}</td>
+                <td>{{ report.kind }}</td>
+                <td>{{ report.reason }}</td>
+                <td>{{ report.address }}</td>
+                <td>
+                  {% if report.img_url %}
+                    <img src="{{ report.img_url }}" alt="圖片" class="report-image">
+                  {% else %}
+                    無圖片
+                  {% endif %}
+                </td>
+                <td>{{ report.time_created }}</td>
+                <td>{{ report.review_status }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="text-center back-button">
+          <a href="{% url 'profile' %}" class="btn btn-primary">返回個人頁面</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer id="footer" class="footer position-relative light-background">
+    <div class="container copyright text-center mt-4">
+      <p>© <span>Copyright</span> <strong class="sitename">怪怪走開</strong> <span>All Rights Reserved</span></p>
+      <div class="credits">Designed by <a href="https://bootstrapmade.com/">BootstrapMade</a></div>
+    </div>
+  </footer>
+
+  <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center">
+    <i class="bi bi-arrow-up-short"></i>
+  </a>
+  <div id="preloader"></div>
+
+  <!-- Bootstrap Scripts -->
+  <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/aos/aos.js' %}"></script>
+  <script src="{% static 'assets/js/main.js' %}"></script>
 </body>
 </html>
