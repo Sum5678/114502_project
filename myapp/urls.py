@@ -107,6 +107,8 @@ urlpatterns = [
     path('admin_logout/', views.admin_logout, name='admin_logout'),
     path('admin_index/', views.admin_index, name='admin_index'),
     path('admin_register/', views.admin_register, name='admin_register'),
+    path('admin_reviews/', views.admin_decide_view, name='admin_decide'),#顯示出該管理員審核過的資料
+
 
     # 登入後判斷跳轉
     path('login/redirect/', views.login_redirect, name='login_redirect'),
