@@ -52,6 +52,8 @@
           <li class="dropdown"><a href="#"><span>我的審核紀錄</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
             <ul>
               <li><a href="{% url 'admin_decide' %}">事件審核紀錄</a></li>
+              <li><a href="{% url 'store_decide' %}">商家審核紀錄</a></li>
+
               <li><a href="#">Dropdown 4</a></li>
             </ul> 
           </li>
@@ -74,42 +76,41 @@
 
     <!-- Admin Profile Edit Section -->
     <section class="container my-5">
-    <!-- <h2>您好，{{ admin_name }}（ID：{{ admin_id }}）</h2>
-    <h3 class="mb-4">您審核過的事件列表</h3> -->
-
     {% if decided_list %}
-    <table class="table table-bordered table-hover align-middle text-center">
+      <h2 class="mb-4">{{ admin_name }}（ID：{{ admin_id }}）審核過的商家</h2>
+      <table class="table table-bordered table-hover align-middle text-center">
         <thead class="table-primary">
-        <tr>
-            <th>ID</th>
-            <th>暱稱</th>
-            <th>分類</th>
-            <th>理由</th>
+          <tr>
+            <th>商家 ID</th>
+            <th>名稱</th>
+            <th>地址</th>
+            <th>電話</th>
             <th>審核狀態</th>
             <th>審核時間</th>
             <th>查看</th>
-        </tr>
+          </tr>
         </thead>
         <tbody>
-        {% for item in decided_list %}
-        <tr>
-            <td>{{ item.p_id }}</td>
-            <td>{{ item.display_name }}</td>
-            <td>{{ item.kind }}</td>
-            <td>{{ item.reason|truncatechars:30 }}</td>
-            <td>{{ item.review_status }}</td>
-            <td>{{ item.time_reviewed|date:"Y-m-d H:i" }}</td>
+          {% for store in decided_list %}
+          <tr>
+            <td>{{ store.st_id }}</td>
+            <td>{{ store.store_name }}</td>
+            <td>{{ store.address }}</td>
+            <td>{{ store.phone }}</td>
+            <td>{{ store.review_status }}</td>
+            <td>{{ store.reviewed_at|date:"Y-m-d H:i" }}</td>
             <td>
-            <a href="{% url 'pemap_judge_step1' item.p_id %}" class="btn btn-sm btn-outline-primary">查看</a>
+              <a href="{% url 'store_judge_step1' store.st_id %}" class="btn btn-sm btn-outline-primary">查看</a>
             </td>
-        </tr>
-        {% endfor %}
+          </tr>
+          {% endfor %}
         </tbody>
-    </table>
+      </table>
     {% else %}
-    <p class="text-muted">您目前尚未審核任何事件。</p>
+      <p class="text-muted">您目前尚未審核任何商家。</p>
     {% endif %}
-    </section>
+  </section>
+
 
 
     <!-- 其他區塊如 Team / CTA 保持不變（略） -->

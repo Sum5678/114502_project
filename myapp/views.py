@@ -1310,11 +1310,24 @@ def pemap_judge(request):
 
 
 
+from django.shortcuts import render, redirect
 from .models import StoreAll
 
 def store_judge(request):
-    store_list = StoreAll.objects.all().order_by('-created_at')
-    return render(request, 'store_judge.html', {'store_list': store_list})
+    admin_id = request.session.get('admin_id')
+    admin_name = request.session.get('admin_name')
+
+    if not admin_id:
+        return redirect('admin_login')  # 尚未登入，導向登入頁
+
+    store_list = StoreAll.objects.all().order_by('-created_at')  # 最新在最上面
+
+    return render(request, 'store_judge.html', {
+        'store_list': store_list,
+        'admin_id': admin_id,
+        'admin_name': admin_name,
+    })
+
 
 
 #--step1
@@ -1374,19 +1387,40 @@ def pemap_judge_step1(request, p_id):
     })
 
 
+from django.shortcuts import render, get_object_or_404, redirect
+from django.utils import timezone
+from .models import StoreAll
 
 def store_judge_step1(request, st_id):
     store = get_object_or_404(StoreAll, st_id=st_id)
+
+    # 抓登入管理員資訊
+    admin_id = request.session.get('admin_id')
+    admin_name = request.session.get('admin_name', '未知管理員')
+
+    # 如果尚未登入，導向登入頁
+    if not admin_id:
+        return redirect('admin_login')
 
     if request.method == 'POST':
         new_status = request.POST.get('review_status')
         if new_status:
             store.review_status = new_status
             store.reviewed_at = timezone.now()
-            store.save()
-            return redirect('store_judge')
+            store.admin_id = admin_id
 
-    return render(request, 'store_judge_step1.html', {'store': store})
+            print(f"店家 {st_id} 被 {admin_name} 審核為 {new_status}")
+            store.save()
+            return redirect('store_judge')  # 審核完返回列表頁
+
+    return render(request, 'store_judge_step1.html', {
+        'store': store,
+        'admin_id': admin_id,
+        'admin_name': admin_name,
+    })
+
+
+
 
 
 
@@ -1493,6 +1527,37 @@ def admin_decide_view(request):
         'decided_list': decided_list
     })
     
+
+from .models import StoreAll
+
+def store_decide(request):
+    admin_id = request.session.get('admin_id')
+    admin_name = request.session.get('admin_name')
+
+    if not admin_id:
+        return redirect('admin_login')
+
+    decided_list = StoreAll.objects.filter(
+        review_status__in=['approved', 'rejected'],  # 根據你 review_status 的設定來調整
+        admin_id=admin_id
+    ).order_by('-reviewed_at')
+
+    return render(request, 'admin_decide_st.html', {
+        'decided_list': decided_list,
+        'admin_id': admin_id,
+        'admin_name': admin_name,
+    })
+
+    
+
+
+
+
+
+
+
+
+
 
 from django.shortcuts import render
 
