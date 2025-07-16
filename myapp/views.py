@@ -1469,4 +1469,15 @@ def admin_decide_view(request):
         'admin_name': admin_name,
         'decided_list': decided_list
     })
+    
+
+from django.shortcuts import render
+
+def post_view(request):
+    if request.method == 'POST':
+        title = request.POST.get('title')
+        content = request.POST.get('content')
+        print("收到貼文：", title, content)  # 測試用
+        return render(request, 'post.html', {'success': True})
+    return render(request, 'post.html')
 

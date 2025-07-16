@@ -2952,3 +2952,54 @@ a.report-link-title {
 .icon-box:active .icon-link {
   background-color: #033e6b;
 }
+/*--------------------------------------------------------------
+# Post Discussion Page Style
+--------------------------------------------------------------*/
+#post-discussion {
+  background-color: #ffffff;
+  padding: 60px 0;
+  color: #033e6b;
+}
+
+#post-discussion .section-title h2 {
+  color: #033e6b;
+  font-weight: 700;
+}
+
+#post-discussion .section-title p {
+  color: #033e6b;
+  font-size: 16px;
+}
+
+#post-discussion .form-control,
+#post-discussion .form-select {
+  border-radius: 8px;
+  border: 1px solid #cce6f5;
+  padding: 10px 15px;
+  font-size: 15px;
+  color: #033e6b;
+  background-color: #ffffff;
+}
+
+#post-discussion .form-control:focus {
+  border-color: #89cffa;
+  box-shadow: 0 0 0 0.2rem rgba(137, 207, 250, 0.25);
+}
+
+#post-discussion .form-label {
+  font-weight: 600;
+  color: #033e6b;
+}
+
+#post-discussion .btn-primary {
+  background-color: #033e6b;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 25px;
+  font-weight: 600;
+  transition: background-color 0.3s;
+}
+
+#post-discussion .btn-primary:hover {
+  background-color: #63b3ed;
+}
