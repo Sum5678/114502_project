@@ -49,6 +49,13 @@ urlpatterns = [
     path('mychatroom/', views.mychatroom, name='mychatroom'),
     path('community/', views.community, name='community'),
     path('face_detection/', views.face_detection_view, name='face_detection'), #人臉辨識
+    path('post/', views.post_view, name='post'),  # 交流區發文頁面
+    
+
+
+    
+
+    
     
     
 

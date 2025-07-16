@@ -10,58 +10,114 @@
 # Font & Color Variables
 # Help: https://bootstrapmade.com/color-system/
 --------------------------------------------------------------*/
-/* Fonts */
+/*----------------------------------------
+  字體設定區
+----------------------------------------*/
 :root {
-  --default-font: "Open Sans",  system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-  --heading-font: "Montserrat",  sans-serif;
-  --nav-font: "Poppins",  sans-serif;
-}
+  --default-font: "Open Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"; 
+  /* 預設字型：用於整體網站的大部分文字 */
 
-/* Global Colors - The following color variables are used throughout the website. Updating them here will change the color scheme of the entire website */
-:root {
-  --background-color: #ffffff;
-  --default-color: #033e6b;
-  --heading-color: #033e6b;
-  --accent-color: #63b3ed;
-  --surface-color: #ffffff;
-  --contrast-color: #ffffff;
-  --nav-color: #033e6b;
-  --nav-hover-color: #89cffa;
-  --nav-mobile-background-color: #f0faff;
-  --nav-dropdown-background-color: #f0faff;
-  --nav-dropdown-color: #033e6b;
-  --nav-dropdown-hover-color: #a7e0ff;
+  --heading-font: "Montserrat", sans-serif; 
+  /* 標題字型：用於 h1～h6 或主要標題的部分 */
+
+  --nav-font: "Poppins", sans-serif; 
+  /* 導覽列字型：用於選單項目的字體 */
 }
 
 
-/* Nav Menu Colors - The following color variables are used specifically for the navigation menu. They are separate from the global colors to allow for more customization options */
+/*----------------------------------------
+  全站顏色變數（改這裡可調整整個網站配色）
+----------------------------------------*/
 :root {
-  --nav-color: #033e6b;
-  --nav-hover-color: #89cffa;
-  --nav-mobile-background-color: #f0faff;
-  --nav-dropdown-background-color: #f0faff;
-  --nav-dropdown-color: #033e6b;
-  --nav-dropdown-hover-color: #a7e0ff;
+  --background-color: #ffffff; 
+  /* 網頁背景顏色，通常是整個 <body> 的背景 */
+
+  --default-color: #033e6b; 
+  /* 正文或一般文字的顏色（深藍色） */
+
+  --heading-color: #033e6b; 
+  /* 標題（如 h1～h6）使用的文字顏色 */
+
+  --accent-color: #63b3ed; 
+  /* 強調色／點綴色：用於按鈕、連結 hover 等重點位置 */
+
+  --surface-color: #ffffff; 
+  /* 區塊背景色，例如卡片或區段的內部背景 */
+
+  --contrast-color: #ffffff; 
+  /* 對比色，通常是文字放在深色背景上使用（例如 footer） */
+
+  --nav-color: #033e6b; 
+  /* 導覽列的文字顏色 */
+
+  --nav-hover-color: #89cffa; 
+  /* 導覽列滑鼠 hover 時的文字顏色（亮藍色） */
+
+  --nav-mobile-background-color: #fff9f0; 
+  /* 行動裝置導覽列展開時的背景顏色 */
+
+  --nav-dropdown-background-color: #f0faff; 
+  /* 導覽列下拉選單的背景顏色 */
+
+  --nav-dropdown-color: #033e6b; 
+  /* 下拉選單內文字的顏色 */
+
+  --nav-dropdown-hover-color: #a7e0ff; 
+  /* 下拉選單項目 hover 時的文字或背景色 */
 }
 
-/* Color Presets - These classes override global colors when applied to any section or element, providing reuse of the sam color scheme. */
+
+/*----------------------------------------
+  導覽列專用顏色（為了讓它獨立於其他全域變數）
+----------------------------------------*/
+:root {
+  --nav-color: #033e6b; 
+  /* 導覽列文字顏色 */
+
+  --nav-hover-color: #89cffa; 
+  /* 滑鼠移上導覽列選項的變色效果 */
+
+  --nav-mobile-background-color: #f0faff; 
+  /* 行動裝置展開導覽列時的背景色 */
+
+  --nav-dropdown-background-color: #f0faff; 
+  /* 導覽列中下拉選單背景色 */
+
+  --nav-dropdown-color: #033e6b; 
+  /* 下拉選單中文字顏色 */
+
+  --nav-dropdown-hover-color: #a7e0ff; 
+  /* 下拉選單 hover 時的效果顏色 */
+}
+
+
+/*----------------------------------------
+  區塊色彩主題（可套用在特定 section 上切換風格）
+----------------------------------------*/
 
 .light-background {
-  --background-color: #f9f9f9;
-  --surface-color: #ffffff;
+  --background-color: #f9f9f9; 
+  /* 淺色區塊背景，例如使用這類 class 的 section */
+
+  --surface-color: #ffffff; 
+  /* 淺色背景中的內容卡片區域 */
 }
 
 .dark-background {
-  --background-color: #060606;
-  --default-color: #ffffff;
-  --heading-color: #ffffff;
-  --surface-color: #252525;
-  --contrast-color: #ffffff;
-}
+  --background-color: #060606; 
+  /* 深色主背景，用於黑夜模式或特殊主題區塊 */
 
-/* Smooth scroll */
-:root {
-  scroll-behavior: smooth;
+  --default-color: #ffffff; 
+  /* 深色背景下的文字使用白色 */
+
+  --heading-color: #ffffff; 
+  /* 標題文字也是白色 */
+
+  --surface-color: #252525; 
+  /* 卡片或容器的內部深灰背景 */
+
+  --contrast-color: #ffffff; 
+  /* 深色主題下所有文字的對比顏色 */
 }
 
 /*--------------------------------------------------------------
@@ -92,58 +148,6 @@ h5,
 h6 {
   color: var(--heading-color);
   font-family: var(--heading-font);
-}
-
-/* PHP Email Form Messages
-------------------------------*/
-.php-email-form .error-message {
-  display: none;
-  background: #ff0000;
-  color: #ffffff;
-  text-align: left;
-  padding: 15px;
-  margin-bottom: 24px;
-  font-weight: 600;
-}
-
-.php-email-form .sent-message {
-  display: none;
-  color: #ffffff;
-  background: #ff0905;
-  text-align: center;
-  padding: 15px;
-  margin-bottom: 24px;
-  font-weight: 600;
-}
-
-.php-email-form .loading {
-  display: none;
-  background: var(--surface-color);
-  text-align: center;
-  padding: 15px;
-  margin-bottom: 24px;
-}
-
-.php-email-form .loading:before {
-  content: "";
-  display: inline-block;
-  border-radius: 50%;
-  width: 24px;
-  height: 24px;
-  margin: 0 10px -6px 0;
-  border: 3px solid var(--accent-color);
-  border-top-color: var(--surface-color);
-  animation: php-email-form-loading 1s linear infinite;
-}
-
-@keyframes php-email-form-loading {
-  0% {
-    transform: rotate(0deg);
-  }
-
-  100% {
-    transform: rotate(360deg);
-  }
 }
 
 /*--------------------------------------------------------------
@@ -2951,4 +2955,69 @@ a.report-link-title {
 
 .icon-box:active .icon-link {
   background-color: #033e6b;
+}
+/*--------------------------------------------------------------
+# Post Discussion Page Style
+--------------------------------------------------------------*/
+#post-discussion {
+  background-color: #ffffff;
+  padding: 60px 0;
+  color: #033e6b;
+}
+
+#post-discussion .section-title h2 {
+  color: #033e6b;
+  font-weight: 700;
+}
+
+#post-discussion .section-title p {
+  color: #033e6b;
+  font-size: 16px;
+}
+
+#post-discussion .form-control,
+#post-discussion .form-select {
+  border-radius: 8px;
+  border: 1px solid #cce6f5;
+  padding: 10px 15px;
+  font-size: 15px;
+  color: #033e6b;
+  background-color: #ffffff;
+}
+
+#post-discussion .form-control:focus {
+  border-color: #89cffa;
+  box-shadow: 0 0 0 0.2rem rgba(137, 207, 250, 0.25);
+}
+
+#post-discussion .form-label {
+  font-weight: 600;
+  color: #033e6b;
+}
+
+#post-discussion .btn-primary {
+  background-color: #033e6b;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 25px;
+  font-weight: 600;
+  transition: background-color 0.3s;
+}
+
+#post-discussion .btn-primary:hover {
+  background-color: #63b3ed;
+}
+
+
+/* 強制登入按鈕字體顏色為深藍色，避免白色在白底上消失 */
+.btn-getstarted {
+  color: #033e6b !important;
+}
+
+
+/* 修正導覽列與標題在某些狀態下變白色文字的問題 */
+#header,
+.navmenu a,
+.sitename {
+  color: #033e6b !important;
 }

@@ -43,7 +43,7 @@
           <li><a href="{% url 'home' %}#hero" class="active">主頁</a></li>
           <li><a href="index.html#services">簡介及功能介紹</a></li>
           <li><a href="{% url 'report' %}">填寫表單</a></li>
-          <li><a href="index.html#portfolio">Portfolio</a></li>
+          <li><a href="{% url 'post' %}#hero" class="active">我要發文</a></li>
           <li><a href="index.html#pricing">Pricing</a></li>
           <li><a href="{% url 'map' %}">事件地圖</a></li>
           <li><a href="{% url 'harassment_prevention' %}">防騷指南</a></li>
@@ -69,7 +69,16 @@
         <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
       </nav>
       <!-- <a class="btn-getstarted" href="index.html#about">Get Started</a> -->
-      <a class="btn-getstarted" href="{% url 'userlogin' %}">登入</a>
+      <div class="dropdown">
+  <a class="btn-getstarted dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
+    登入
+  </a>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><a class="dropdown-item" href="{% url 'userlogin' %}">一般使用者登入</a></li>
+    <li><a class="dropdown-item" href="{% url 'admin_login' %}">管理員登入</a></li>
+  </ul>
+</div>
+
     </div>
   </header>
 
