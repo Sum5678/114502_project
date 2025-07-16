@@ -104,6 +104,7 @@ urlpatterns = [
     path('pemap_judge/', views.pemap_judge, name='pemap_judge'),#審核事件
     path('pemap_judge_step1/<int:p_id>/', views.pemap_judge_step1, name='pemap_judge_step1'),
 
+
     # AI 判斷
     path('99judge/', views.show_judge_page, name='show_judge_page'),
     path('ai_judge/', views.ai_judge, name='ai_judge'), #ai檢測
@@ -117,6 +118,8 @@ urlpatterns = [
     path('admin_reviews/', views.admin_decide_view, name='admin_decide'),#顯示出該管理員審核過的資料
     path('store/judge/', views.store_judge, name='store_judge'),
     path('store/judge/<str:st_id>/', views.store_judge_step1, name='store_judge_step1'),
+    path('store_decide/', views.store_decide, name='store_decide'),#顯示出該管理員審核過的資料
+
 
 
 
