@@ -6,25 +6,18 @@
   <title>我要發文｜交流區</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet" />
+  <link href="{% static 'assets/vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/aos/aos.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/glightbox/css/glightbox.min.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/swiper/swiper-bundle.min.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/css/main.css' %}" rel="stylesheet">
   <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      background: #fafafa;
-      padding: 30px 15px;
-      color: #333;
-      overflow-x: hidden;
-      min-height: 100vh;
-      margin: 0;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-    }
     .scale-wrapper {
       transform: scale(0.95);
       transform-origin: top center;
       width: 100%;
       max-width: none;
-      margin: 0;
+      margin: 0 auto;
     }
     .form-container {
       max-width: 100%;
@@ -32,17 +25,6 @@
       padding: 25px 30px;
       border: 1px solid #e0e0e0;
       border-radius: 10px;
-    }
-    h2 {
-      text-align: center;
-      font-weight: 600;
-      color: white;
-      background-color: #3a92d9;
-      padding: 12px 0;
-      margin-bottom: 25px;
-      letter-spacing: 0.03em;
-      user-select: none;
-      border-radius: 8px;
     }
     label {
       display: block;
@@ -103,12 +85,6 @@
     .avatar-preview img:hover {
       border-color: #80bfff;
     }
-    #nickname-label {
-      font-weight: 500;
-      font-size: 17px;
-      color: #666;
-      user-select: none;
-    }
     .color-options {
       display: flex;
       gap: 12px;
@@ -129,94 +105,129 @@
       border-color: #5a9dea;
       box-shadow: 0 0 8px 1px #a8cdfd;
     }
-    .style-select {
-      margin-top: 10px;
-    }
   </style>
 </head>
-<body>
-  <div class="scale-wrapper">
-    <div class="form-container">
-      <h2>我要發文</h2>
-      {% if success %}
-      <div class="alert alert-success text-center" role="alert">
-        貼文已成功送出！
-      </div>
-      {% endif %}
-
-      <form method="post" action="{% url 'post' %}">
-        {% csrf_token %}
-        
-        <label for="nickname">發文名稱（請選擇你的暱稱）</label>
-        <select id="nickname" name="nickname" onchange="updateAvatar()">
-          <option value="匿名">匿名</option>
-          <option value="小明">小明</option>
-          <option value="阿華">阿華</option>
-          <option value="Sunny">Sunny</option>
-        </select>
-
-        <label>選擇背景顏色</label>
-        <div class="color-options" id="colorOptions">
-          <div class="color-swatch" style="background:#f44336" onclick="setBgColor('f44336', this)"></div>
-          <div class="color-swatch" style="background:#2196f3" onclick="setBgColor('2196f3', this)"></div>
-          <div class="color-swatch" style="background:#4caf50" onclick="setBgColor('4caf50', this)"></div>
-          <div class="color-swatch" style="background:#ff9800" onclick="setBgColor('ff9800', this)"></div>
-          <div class="color-swatch" style="background:#9c27b0" onclick="setBgColor('9c27b0', this)"></div>
-        </div>
-        <input type="hidden" name="bgcolor" id="bgcolor" value="2196f3">
-
-        <label>選擇頭像風格</label>
-        <select id="avatarStyle" name="avatar_style" class="style-select" onchange="updateAvatar()">
-          <option value="avataaars">漫畫風</option>
-          <option value="pixel-art">像素風</option>
-          <option value="bottts">機器人風</option>
-          <option value="adventurer">3D風</option>
-        </select>
-
-        <div class="avatar-preview">
-          <img id="avatar" src="" alt="預覽頭像" />
-          <span id="nickname-label">匿名</span>
-        </div>
-
-        <label for="title">文章標題</label>
-        <input type="text" id="title" name="title" placeholder="請輸入標題" required>
-
-        <label for="content">文章內容</label>
-        <textarea id="content" name="content" rows="6" placeholder="請輸入文章內容" required></textarea>
-
-        <button type="submit">送出發文</button>
-      </form>
+<body class="index-page">
+  <header id="header" class="header d-flex align-items-center fixed-top">
+    <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
+      <a href="{% url 'home' %}" class="logo d-flex align-items-center me-auto me-xl-0">
+        <h1 class="sitename">怪怪走開，護您安全</h1><span></span>
+      </a>
+      <nav id="navmenu" class="navmenu">
+        <ul>
+          <li><a href="{% url 'home' %}#hero" class="active">主頁</a></li>
+          <li><a href="{% url 'home' %}#services">簡介及功能介紹</a></li>
+          <li><a href="{% url 'report' %}">填寫表單</a></li>
+          <li><a href="{% url 'home' %}#portfolio">Portfolio</a></li>
+          <li><a href="{% url 'home' %}#pricing">Pricing</a></li>
+          <li><a href="{% url 'map' %}">事件地圖</a></li>
+          <li><a href="{% url 'harassment_prevention' %}">防騷指南</a></li>
+          <li class="dropdown"><a href="#"><span>Dropdown</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+            <ul>
+              <li><a href="#">Dropdown 1</a></li>
+              <li class="dropdown"><a href="#"><span>Deep Dropdown</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+                <ul>
+                  <li><a href="#">Deep Dropdown 1</a></li>
+                  <li><a href="#">Deep Dropdown 2</a></li>
+                  <li><a href="#">Deep Dropdown 3</a></li>
+                  <li><a href="#">Deep Dropdown 4</a></li>
+                  <li><a href="#">Deep Dropdown 5</a></li>
+                </ul>
+              </li>
+              <li><a href="#">Dropdown 2</a></li>
+              <li><a href="#">Dropdown 3</a></li>
+              <li><a href="#">Dropdown 4</a></li>
+            </ul>
+          </li>
+          <li><a href="{% url 'home' %}#contact">Contact</a></li>
+        </ul>
+        <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+      </nav>
+      <a class="btn-getstarted" href="{% url 'userlogin' %}">登入</a>
     </div>
-  </div>
+  </header>
+
+  <main class="main" style="margin-top: 100px">
+    <div class="scale-wrapper">
+      <div class="form-container">
+        <h2 style="text-align:center; font-weight:600; background-color:#3a92d9; padding:12px 0; margin-bottom:25px; color:white; border-radius:8px;">我要發文</h2>
+        {% if success %}
+        <div class="alert alert-success text-center" role="alert">
+          貼文已成功送出！
+        </div>
+        {% endif %}
+        <form method="post" action="{% url 'post' %}">
+          {% csrf_token %}
+          <label for="nickname">發文名稱（請選擇你的暱稱）</label>
+          <select id="nickname" name="nickname" onchange="updateAvatar()">
+            <option value="匿名">匿名</option>
+            <option value="小明">小明</option>
+            <option value="阿華">阿華</option>
+            <option value="Sunny">Sunny</option>
+          </select>
+
+          <label>選擇背景顏色</label>
+          <div class="color-options" id="colorOptions">
+            <div class="color-swatch" style="background:#f44336" onclick="setBgColor('f44336', this)"></div>
+            <div class="color-swatch" style="background:#2196f3" onclick="setBgColor('2196f3', this)"></div>
+            <div class="color-swatch" style="background:#4caf50" onclick="setBgColor('4caf50', this)"></div>
+            <div class="color-swatch" style="background:#ff9800" onclick="setBgColor('ff9800', this)"></div>
+            <div class="color-swatch" style="background:#9c27b0" onclick="setBgColor('9c27b0', this)"></div>
+          </div>
+          <input type="hidden" name="bgcolor" id="bgcolor" value="2196f3">
+
+          <label>選擇頭像風格</label>
+          <select id="avatarStyle" name="avatar_style" class="style-select" onchange="updateAvatar()">
+            <option value="avataaars">漫畫風</option>
+            <option value="pixel-art">像素風</option>
+            <option value="bottts">機器人風</option>
+            <option value="adventurer">3D風</option>
+          </select>
+
+          <div class="avatar-preview">
+            <img id="avatar" src="" alt="預覽頭像" />
+            <span id="nickname-label">匿名</span>
+          </div>
+
+          <label for="title">文章標題</label>
+          <input type="text" id="title" name="title" placeholder="請輸入標題" required>
+
+          <label for="content">文章內容</label>
+          <textarea id="content" name="content" rows="6" placeholder="請輸入文章內容" required></textarea>
+
+          <button type="submit">送出發文</button>
+        </form>
+      </div>
+    </div>
+  </main>
 
   <script>
     let bgColor = "2196f3";
-
     function setBgColor(color, elem) {
       bgColor = color;
       updateAvatar();
       document.getElementById("bgcolor").value = color;
-
       document.querySelectorAll('.color-swatch').forEach(e => e.classList.remove('selected'));
       if (elem) elem.classList.add('selected');
     }
-
     function updateAvatar() {
       const nickname = document.getElementById("nickname").value || "匿名";
       const style = document.getElementById("avatarStyle").value;
       const avatarUrl = `https://api.dicebear.com/7.x/${style}/svg?seed=${encodeURIComponent(nickname)}&backgroundColor=${bgColor}`;
-
       document.getElementById("avatar").src = avatarUrl;
       document.getElementById("nickname-label").innerText = nickname;
     }
-
     window.onload = () => {
       const defaultColorElem = document.querySelector('.color-swatch[style*="2196f3"]');
       if (defaultColorElem) defaultColorElem.classList.add('selected');
       updateAvatar();
     };
   </script>
-
   <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/aos/aos.js' %}"></script>
+  <script src="{% static 'assets/vendor/glightbox/js/glightbox.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/purecounter/purecounter_vanilla.js' %}"></script>
+  <script src="{% static 'assets/vendor/swiper/swiper-bundle.min.js' %}"></script>
+  <script src="{% static 'assets/js/main.js' %}"></script>
 </body>
 </html>
