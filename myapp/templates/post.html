@@ -1,0 +1,61 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>發表貼文</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+  <style>
+    body {
+      background-color: #f0faff;
+      color: #033e6b;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding-top: 60px;
+    }
+    .container {
+      max-width: 700px;
+      margin: auto;
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
+      padding: 30px;
+    }
+    .form-label {
+      font-weight: bold;
+    }
+    .btn-primary {
+      background-color: #63b3ed;
+      border-color: #63b3ed;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2 class="mb-4 text-center">發表貼文</h2>
+
+    {% if success %}
+    <div class="alert alert-success text-center" role="alert">
+      貼文已成功送出！
+    </div>
+    {% endif %}
+
+    <form method="post">
+      {% csrf_token %}
+      <div class="mb-3">
+        <label for="title" class="form-label">標題</label>
+        <input type="text" class="form-control" id="title" name="title" placeholder="請輸入標題" required>
+      </div>
+      <div class="mb-3">
+        <label for="content" class="form-label">內容</label>
+        <textarea class="form-control" id="content" name="content" rows="6" placeholder="請輸入內容" required></textarea>
+      </div>
+      <div class="text-center">
+        <button type="submit" class="btn btn-primary">送出貼文</button>
+      </div>
+    </form>
+  </div>
+
+  <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+</body>
+</html>
