@@ -1310,6 +1310,13 @@ def pemap_judge(request):
 
 
 
+from .models import StoreAll
+
+def store_judge(request):
+    store_list = StoreAll.objects.all().order_by('-created_at')
+    return render(request, 'store_judge.html', {'store_list': store_list})
+
+
 #--step1
 # from django.shortcuts import render, get_object_or_404, redirect
 # from .models import PemapAll
@@ -1365,6 +1372,22 @@ def pemap_judge_step1(request, p_id):
         'admin_id': admin_id,
         'admin_name': admin_name,
     })
+
+
+
+def store_judge_step1(request, st_id):
+    store = get_object_or_404(StoreAll, st_id=st_id)
+
+    if request.method == 'POST':
+        new_status = request.POST.get('review_status')
+        if new_status:
+            store.review_status = new_status
+            store.reviewed_at = timezone.now()
+            store.save()
+            return redirect('store_judge')
+
+    return render(request, 'store_judge_step1.html', {'store': store})
+
 
 
 

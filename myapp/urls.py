@@ -115,6 +115,9 @@ urlpatterns = [
     path('admin_index/', views.admin_index, name='admin_index'),
     path('admin_register/', views.admin_register, name='admin_register'),
     path('admin_reviews/', views.admin_decide_view, name='admin_decide'),#顯示出該管理員審核過的資料
+    path('store/judge/', views.store_judge, name='store_judge'),
+    path('store/judge/<str:st_id>/', views.store_judge_step1, name='store_judge_step1'),
+
 
 
     # 登入後判斷跳轉
