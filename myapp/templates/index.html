@@ -45,7 +45,14 @@
           <li><a href="{% url 'report' %}">填寫表單</a></li>
           <li><a href="{% url 'business_upload' %}">商家填單</a></li>
           <li><a href="{% url 'post' %}#hero">我要發文</a></li>
-          <li><a href="{% url 'map' %}">事件地圖</a></li>
+          
+          <li class="dropdown"><a href="#"><span>地圖</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+            <ul>
+              <li><a href="{% url 'map' %}">事件地圖</a></li>
+
+              <li><a href="#">Dropdown 4</a></li>
+            </ul> 
+          </li>
           <li><a href="{% url 'harassment_prevention' %}">防騷指南</a></li>
           <li class="dropdown"><a href="#"><span>Dropdown</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
             <ul>

@@ -1035,22 +1035,30 @@ def room(request, room_name):
 #     data = list(reports)
 #     return JsonResponse(data, safe=False)
 
-from django.shortcuts import render
-
-def map_view(request):
-    return render(request, '999map.html')
-
-
-
-from django.http import JsonResponse
-from .models import PemapAll  # 改成引用 PemapAll
-
 def reports_json(request):
-    reports = PemapAll.objects.filter(review_status='0').values(
-        'latitude', 'longitude', 'display_name', 'reason', 'time_created'
-    )
-    data = list(reports)
-    return JsonResponse(data, safe=False)
+    data = PemapAll.objects.filter(review_status='3').order_by('-time_reviewed')
+    results = []
+    for item in data:
+        if item.latitude is not None and item.longitude is not None:
+            results.append({
+                'latitude': float(item.latitude),
+                'longitude': float(item.longitude),
+                'display_name': item.display_name,
+                'reason': item.reason,
+                'time_created': item.time_created.strftime('%Y-%m-%d %H:%M:%S')
+            })
+    return JsonResponse(results, safe=False)
+
+
+# from django.http import JsonResponse
+# from .models import PemapAll  # 改成引用 PemapAll
+
+# def reports_json(request):
+#     reports = PemapAll.objects.filter(review_status='0').values(
+#         'latitude', 'longitude', 'display_name', 'reason', 'time_created'
+#     )
+#     data = list(reports)
+#     return JsonResponse(data, safe=False)
 
 
 
@@ -1557,6 +1565,30 @@ def store_decide(request):
     })
 
     
+#-----------使用者 事件地圖-----------
+from django.http import JsonResponse
+from .models import PemapAll
+
+def approved_locations_api(request):
+    approved = PemapAll.objects.filter(review_status='已通過')  # 只取審核通過的
+    data = []
+
+    for item in approved:
+        data.append({
+            'id': item.p_id,
+            'title': item.display_name,
+            'kind': item.kind,
+            'reason': item.reason,
+            'lat': item.latitude,
+            'lng': item.longitude,
+        })
+
+    return JsonResponse(data, safe=False)
+ 
+from django.shortcuts import render
+
+def map_view(request):
+    return render(request, '999map.html')
 
 
 
