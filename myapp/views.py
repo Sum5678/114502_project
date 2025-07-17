@@ -8,6 +8,7 @@ from .models import PemapAll
 from .models import StoreAll
 from django.utils import timezone
 import json
+from datetime import datetime
 
 
 def report_view(request):
@@ -993,7 +994,8 @@ def submit_store(request):
                 phone=data.get('phone') or data.get('bs_phone'),
                 created_at=data.get('created_at'),
                 reviewed_at=None,
-                review_status="pending"
+                review_status="pending",
+                admin_id = 1
             )
             store.save()
             return JsonResponse({'status': 'success'})
@@ -1001,9 +1003,15 @@ def submit_store(request):
             return JsonResponse({'status': 'error', 'message': str(e)})
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
 
-def business_upload_view(request):
+def business_upload(request):
     return render(request, 'business_upload.html')
 
+def business_list_view(request):
+    stores = list(StoreAll.objects.all().order_by('-created_at'))  # 依照 created_at 遞減排序
+    total = len(stores)
+    for i, store in enumerate(stores):
+        store.reverse_id = total - i  # 編號從總數開始往下減
+    return render(request, 'business_list.html', {'stores': stores})
 
 
 #test_0610chatroom 試寫聊天室
