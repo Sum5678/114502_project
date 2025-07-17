@@ -96,6 +96,8 @@ urlpatterns = [
     path('999map/', views.map_view, name='map_view'),
     path('api/reports/', views.reports_json, name='reports_json'),#地圖顯示測試again(pemap_all的)
     path('api/submit_report/', views.submit_report, name='submit_report'),
+    path('api/approved-locations/', views.approved_locations_api, name='approved_locations_api'),#事件地圖
+
 
     # Pemap 管理員相關
     path('admin/pemap/approve/<int:p_id>/<int:stage>/', views.pemap_approve, name='pemap_approve'),#處理管理員對pemap資料狀態
