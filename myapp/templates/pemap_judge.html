@@ -48,7 +48,15 @@
               <li><a href="#">Dropdown 4</a></li>
             </ul> 
           </li>
-          <li><a href="{% url 'admin_decide' %}">我的審核紀錄</a></li>
+          
+          <li class="dropdown"><a href="#"><span>我的審核紀錄</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+            <ul>
+              <li><a href="{% url 'admin_decide' %}">事件審核紀錄</a></li>
+              <li><a href="{% url 'store_decide' %}">商家審核紀錄</a></li>
+
+              <li><a href="#">Dropdown 4</a></li>
+            </ul> 
+          </li>
           <!-- <li><a href="{% url 'admin_logout' %}">登出</a></li> -->
         </ul>
         <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
@@ -56,7 +64,6 @@
       <a class="btn-getstarted" href="{% url 'admin_logout' %}">登出</a>
     </div>
   </header>
-
   <main class="main">
 
     <!-- Hero Section -->
