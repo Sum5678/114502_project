@@ -8,6 +8,7 @@ from .models import PemapAll
 from .models import StoreAll
 from django.utils import timezone
 import json
+from datetime import datetime
 
 
 def report_view(request):
@@ -984,6 +985,10 @@ def submit_store(request):
 
             timestamp = int(timezone.now().timestamp())
 
+            # 把 created_at 字串轉成 datetime 物件
+            created_at_str = data.get('created_at')
+            created_at_dt = datetime.strptime(created_at_str, '%Y-%m-%d %H:%M:%S') if created_at_str else timezone.now()
+
             store = StoreAll(
                 st_id=timestamp,
                 poster_id=int(data.get('poster_id')),  # 從前端傳入 1 或 2 等已存在的 ID
@@ -991,9 +996,10 @@ def submit_store(request):
                 address=data.get('address') or data.get('bs_address'),
                 business_hours=data.get('business_hours'),
                 phone=data.get('phone') or data.get('bs_phone'),
-                created_at=data.get('created_at'),
+                created_at=created_at_dt,
                 reviewed_at=None,
-                review_status="pending"
+                review_status="pending",
+                admin_id = 1
             )
             store.save()
             return JsonResponse({'status': 'success'})
@@ -1001,10 +1007,15 @@ def submit_store(request):
             return JsonResponse({'status': 'error', 'message': str(e)})
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
 
-def business_upload_view(request):
+def business_upload(request):
     return render(request, 'business_upload.html')
 
-
+def business_list_view(request):
+    stores = list(StoreAll.objects.all().order_by('-created_at'))  # 依照 created_at 遞減排序
+    total = len(stores)
+    for i, store in enumerate(stores):
+        store.reverse_id = total - i  # 編號從總數開始往下減
+    return render(request, 'business_list.html', {'stores': stores})
 
 #test_0610chatroom 試寫聊天室
 from django.shortcuts import render
