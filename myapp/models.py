@@ -176,6 +176,7 @@ class StoreAll(models.Model):
     created_at = models.DateTimeField()
     reviewed_at = models.DateTimeField(null=True, blank=True)
     review_status = models.CharField(max_length=20, default='pending')  # 審核狀態（預設 pending）
+    admin_id = models.IntegerField()
 
     class Meta:
         db_table = 'store_all'  # << 指定實際的 MySQL 資料表名稱
