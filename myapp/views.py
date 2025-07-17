@@ -995,7 +995,7 @@ def submit_store(request):
                 created_at=data.get('created_at'),
                 reviewed_at=None,
                 review_status="pending",
-                admin_id = 1
+                admin_id = 9999
             )
             store.save()
             return JsonResponse({'status': 'success'})
