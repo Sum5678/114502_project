@@ -2997,3 +2997,10 @@ a.report-link-title {
 #post-discussion .btn-primary:hover {
   background-color: #63b3ed;
 }
+
+#map {
+    width: 100%;
+    height: 600px;
+    border-radius: 8px;
+  }
+
