@@ -3,7 +3,6 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
-  <title>我要發文｜交流區</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet" />
   <link href="{% static 'assets/vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet">
@@ -23,38 +22,53 @@
       max-width: 100%;
       background: #fff;
       padding: 25px 30px;
-      border: 1px solid #e0e0e0;
+      border: 1px solid #d9e8f4;
       border-radius: 10px;
     }
     label {
       display: block;
       margin-top: 20px;
       font-weight: 500;
-      color: #555;
+      color: #033e6b;
       letter-spacing: 0.02em;
     }
-    select, input, textarea {
+    input, textarea {
       width: 100%;
       padding: 12px 15px;
       margin-top: 8px;
-      border: 1.5px solid #d3d3d3;
+      border: 1.5px solid #c4ddf6;
       font-size: 15px;
-      color: #444;
-      background-color: #fafafa;
+      color: #033e6b;
+      background-color: #ffffff;
       transition: border-color 0.2s ease;
       box-sizing: border-box;
       border-radius: 6px;
     }
-    select:focus, input:focus, textarea:focus {
-      border-color: #80bfff;
-      background-color: #fff;
+    input:focus, textarea:focus {
+      border-color: #63b3ed;
+      background-color: #ffffff;
+      outline: none;
+    }
+    select {
+      width: 100%;
+      padding: 10px;
+      margin-top: 8px;
+      font-size: 15px;
+      color: #033e6b;
+      border: 1.5px solid #c4ddf6;
+      border-radius: 4px;
+      background-color: #ffffff;
+      transition: border-color 0.2s ease;
+    }
+    select:focus {
+      border-color: #63b3ed;
       outline: none;
     }
     button {
       margin-top: 30px;
       padding: 14px 0;
       width: 100%;
-      background-color: #80bfff;
+      background-color: #63b3ed;
       color: #fff;
       border: none;
       font-size: 17px;
@@ -65,7 +79,7 @@
       border-radius: 6px;
     }
     button:hover {
-      background-color: #5a9dea;
+      background-color: #4299e1;
     }
     .avatar-preview {
       display: flex;
@@ -77,13 +91,13 @@
       width: 58px;
       height: 58px;
       border-radius: 50%;
-      border: 2px solid #cfd8dc;
-      background-color: #f0f4f8;
+      border: 2px solid #a7d8ff;
+      background-color: #f0faff;
       object-fit: cover;
       transition: border-color 0.2s ease;
     }
     .avatar-preview img:hover {
-      border-color: #80bfff;
+      border-color: #63b3ed;
     }
     .color-options {
       display: flex;
@@ -95,14 +109,14 @@
       height: 32px;
       border-radius: 50%;
       cursor: pointer;
-      border: 2px solid #d3d3d3;
+      border: 2px solid #cbdff1;
       transition: border-color 0.2s ease;
     }
     .color-swatch:hover {
-      border-color: #80bfff;
+      border-color: #63b3ed;
     }
     .color-swatch.selected {
-      border-color: #5a9dea;
+      border-color: #4299e1;
       box-shadow: 0 0 8px 1px #a8cdfd;
     }
   </style>
@@ -111,18 +125,19 @@
   <header id="header" class="header d-flex align-items-center fixed-top">
     <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
       <a href="{% url 'home' %}" class="logo d-flex align-items-center me-auto me-xl-0">
-        <h1 class="sitename">怪怪走開，護您安全</h1><span></span>
+        <h1 class="sitename" style="color: #033e6b;">怪怪走開，護您安全</h1>
       </a>
       <nav id="navmenu" class="navmenu">
         <ul>
           <li><a href="{% url 'home' %}#hero" class="active">主頁</a></li>
-          <li><a href="{% url 'home' %}#services">簡介及功能介紹</a></li>
-          <li><a href="{% url 'report' %}">填寫表單</a></li>
-          <li><a href="{% url 'home' %}#portfolio">Portfolio</a></li>
-          <li><a href="{% url 'home' %}#pricing">Pricing</a></li>
-          <li><a href="{% url 'map' %}">事件地圖</a></li>
-          <li><a href="{% url 'harassment_prevention' %}">防騷指南</a></li>
-          <li class="dropdown"><a href="#"><span>Dropdown</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+          <li><a href="{% url 'home' %}#services" class="active">簡介及功能介紹</a></li>
+          <li><a href="{% url 'report' %}" class="active">填寫表單</a></li>
+          <li><a href="{% url 'business_upload' %}" class="active">商家填單</a></li>
+          <li><a href="{% url 'home' %}" class="active">Pricing</a></li>
+          <li><a href="{% url 'map' %}" class="active">事件地圖</a></li>
+          <li><a href="{% url 'harassment_prevention' %}" class="active">防騷指南</a></li>
+          <li class="dropdown">
+            <a href="#" class="active"><span>Dropdown</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
             <ul>
               <li><a href="#">Dropdown 1</a></li>
               <li class="dropdown"><a href="#"><span>Deep Dropdown</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
@@ -139,7 +154,7 @@
               <li><a href="#">Dropdown 4</a></li>
             </ul>
           </li>
-          <li><a href="{% url 'home' %}#contact">Contact</a></li>
+          <li><a href="{% url 'home' %}#contact" class="active">Contact</a></li>
         </ul>
         <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
       </nav>
@@ -147,58 +162,65 @@
     </div>
   </header>
 
-  <main class="main" style="margin-top: 100px">
-    <div class="scale-wrapper">
-      <div class="form-container">
-        <h2 style="text-align:center; font-weight:600; background-color:#3a92d9; padding:12px 0; margin-bottom:25px; color:white; border-radius:8px;">我要發文</h2>
-        {% if success %}
-        <div class="alert alert-success text-center" role="alert">
-          貼文已成功送出！
+  <main class="main" style="padding-top: 100px;">
+    <section id="report" class="report section">
+      <div class="container" data-aos="fade-up">
+        <div class="section-title">
+          <h2>我要發文｜交流區</h2>
+          <p>請輸入你想分享的內容。</p>
         </div>
-        {% endif %}
-        <form method="post" action="{% url 'post' %}">
-          {% csrf_token %}
-          <label for="nickname">發文名稱（請選擇你的暱稱）</label>
-          <select id="nickname" name="nickname" onchange="updateAvatar()">
-            <option value="匿名">匿名</option>
-            <option value="小明">小明</option>
-            <option value="阿華">阿華</option>
-            <option value="Sunny">Sunny</option>
-          </select>
+        <div class="scale-wrapper">
+          <div class="form-container">
+            {% if success %}
+            <div class="alert alert-success text-center" role="alert">
+              貼文已成功送出！
+            </div>
+            {% endif %}
+            <form method="post" action="{% url 'post' %}">
+              {% csrf_token %}
+              <label for="nickname">發文名稱（請選擇你的暱稱）</label>
+              <select id="nickname" name="nickname" onchange="updateAvatar()">
+                <option value="匿名">匿名</option>
+                <option value="小明">小明</option>
+                <option value="阿華">阿華</option>
+                <option value="Sunny">Sunny</option>
+              </select>
 
-          <label>選擇背景顏色</label>
-          <div class="color-options" id="colorOptions">
-            <div class="color-swatch" style="background:#f44336" onclick="setBgColor('f44336', this)"></div>
-            <div class="color-swatch" style="background:#2196f3" onclick="setBgColor('2196f3', this)"></div>
-            <div class="color-swatch" style="background:#4caf50" onclick="setBgColor('4caf50', this)"></div>
-            <div class="color-swatch" style="background:#ff9800" onclick="setBgColor('ff9800', this)"></div>
-            <div class="color-swatch" style="background:#9c27b0" onclick="setBgColor('9c27b0', this)"></div>
+              <label>選擇背景顏色</label>
+              <div class="color-options" id="colorOptions">
+                <div class="color-swatch" style="background:#f44336" onclick="setBgColor('f44336', this)"></div>
+                <div class="color-swatch" style="background:#2196f3" onclick="setBgColor('2196f3', this)"></div>
+                <div class="color-swatch" style="background:#4caf50" onclick="setBgColor('4caf50', this)"></div>
+                <div class="color-swatch" style="background:#ff9800" onclick="setBgColor('ff9800', this)"></div>
+                <div class="color-swatch" style="background:#9c27b0" onclick="setBgColor('9c27b0', this)"></div>
+              </div>
+              <input type="hidden" name="bgcolor" id="bgcolor" value="2196f3">
+
+              <label>選擇頭像風格</label>
+              <select id="avatarStyle" name="avatar_style" class="style-select" onchange="updateAvatar()">
+                <option value="avataaars">漫畫風</option>
+                <option value="pixel-art">像素風</option>
+                <option value="bottts">機器人風</option>
+                <option value="adventurer">3D風</option>
+              </select>
+
+              <div class="avatar-preview">
+                <img id="avatar" src="" alt="預覽頭像" />
+                <span id="nickname-label">匿名</span>
+              </div>
+
+              <label for="title">文章標題</label>
+              <input type="text" id="title" name="title" placeholder="請輸入標題" required>
+
+              <label for="content">文章內容</label>
+              <textarea id="content" name="content" rows="6" placeholder="請輸入文章內容" required></textarea>
+
+              <button type="submit">送出發文</button>
+            </form>
           </div>
-          <input type="hidden" name="bgcolor" id="bgcolor" value="2196f3">
-
-          <label>選擇頭像風格</label>
-          <select id="avatarStyle" name="avatar_style" class="style-select" onchange="updateAvatar()">
-            <option value="avataaars">漫畫風</option>
-            <option value="pixel-art">像素風</option>
-            <option value="bottts">機器人風</option>
-            <option value="adventurer">3D風</option>
-          </select>
-
-          <div class="avatar-preview">
-            <img id="avatar" src="" alt="預覽頭像" />
-            <span id="nickname-label">匿名</span>
-          </div>
-
-          <label for="title">文章標題</label>
-          <input type="text" id="title" name="title" placeholder="請輸入標題" required>
-
-          <label for="content">文章內容</label>
-          <textarea id="content" name="content" rows="6" placeholder="請輸入文章內容" required></textarea>
-
-          <button type="submit">送出發文</button>
-        </form>
+        </div>
       </div>
-    </div>
+    </section>
   </main>
 
   <script>
