@@ -132,10 +132,8 @@ urlpatterns = [
 
     # 其他路由
     #思璇
+     #思璇
     path('api/submit_report/', views.submit_report, name='submit_report'),
-    path('api/submit_store/', views.submit_store, name='submit_store'),
-    path('business/upload/', views.business_upload, name='business_upload'),
-    path('business/list/', views.business_list_view, name='business_list'),
 
 
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
