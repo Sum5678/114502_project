@@ -965,7 +965,7 @@ def submit_report(request):
                 img_url=img_url,
                 time_created=timezone.now(),
                 review_status=review_status,
-                admin_id = 1
+                admin_id = 99999
             )
 
             return JsonResponse({"status": "success", "review_status": review_status})
