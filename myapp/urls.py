@@ -104,6 +104,7 @@ urlpatterns = [
     path('pemap_judge/', views.pemap_judge, name='pemap_judge'),#審核事件
     path('pemap_judge_step1/<int:p_id>/', views.pemap_judge_step1, name='pemap_judge_step1'),
 
+
     # AI 判斷
     path('99judge/', views.show_judge_page, name='show_judge_page'),
     path('ai_judge/', views.ai_judge, name='ai_judge'), #ai檢測
@@ -115,6 +116,11 @@ urlpatterns = [
     path('admin_index/', views.admin_index, name='admin_index'),
     path('admin_register/', views.admin_register, name='admin_register'),
     path('admin_reviews/', views.admin_decide_view, name='admin_decide'),#顯示出該管理員審核過的資料
+    path('store/judge/', views.store_judge, name='store_judge'),
+    path('store/judge/<str:st_id>/', views.store_judge_step1, name='store_judge_step1'),
+    path('store_decide/', views.store_decide, name='store_decide'),#顯示出該管理員審核過的資料
+
+
 
 
     # 登入後判斷跳轉
@@ -126,8 +132,10 @@ urlpatterns = [
 
     # 其他路由
     #思璇
-     #思璇
     path('api/submit_report/', views.submit_report, name='submit_report'),
+    path('api/submit_store/', views.submit_store, name='submit_store'),
+    path('business/upload/', views.business_upload, name='business_upload'),
+    path('business/list/', views.business_list_view, name='business_list'),
 
 
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
