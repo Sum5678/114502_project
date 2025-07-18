@@ -1565,7 +1565,7 @@ def store_decide(request):
     })
 
     
-#-----------使用者 事件地圖-----------
+#----------------使用者 事件地圖--------------
 from django.http import JsonResponse
 from .models import PemapAll
 
@@ -1589,6 +1589,31 @@ from django.shortcuts import render
 
 def map_view(request):
     return render(request, '999map.html')
+
+
+
+    
+#-----------使用者 商家地圖-----------
+from .models import StoreAll
+
+def store_data_api(request):
+    approved_stores = StoreAll.objects.filter(review_status='approved')
+    data = [
+        {
+            'st_id': store.st_id,
+            'store_name': store.store_name,
+            'address': store.address,
+            'phone': store.phone,
+            'latitude': store.latitude,
+            'longitude': store.longitude,
+        }
+        for store in approved_stores
+        if hasattr(store, 'latitude') and hasattr(store, 'longitude')  # 如果你有這兩欄
+    ]
+    return JsonResponse(data, safe=False)
+
+def store_map_view(request):
+    return render(request, 'store_map.html')
 
 
 
