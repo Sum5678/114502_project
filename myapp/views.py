@@ -1628,13 +1628,33 @@ def store_map_view(request):
 
 
 
-from django.shortcuts import render
+def post(request):
+    # 擷取所有 this_user_profile 的 nickname 資料
+    profiles = ThisUserProfile.objects.all()
+    nickname_choices = set()
+    for profile in profiles:
+        if profile.default_nickname1:
+            nickname_choices.add(profile.default_nickname1.strip())
+        if profile.default_nickname2:
+            nickname_choices.add(profile.default_nickname2.strip())
+    nickname_list = sorted(nickname_choices)
+    nickname_list.insert(0, "匿名")  # 將匿名選項放最上面
 
-def post_view(request):
     if request.method == 'POST':
+        nickname = request.POST.get('nickname')
         title = request.POST.get('title')
         content = request.POST.get('content')
-        print("收到貼文：", title, content)  # 測試用
-        return render(request, 'post.html', {'success': True})
-    return render(request, 'post.html')
+        bgcolor = request.POST.get('bgcolor')
+        avatar_style = request.POST.get('avatar_style')
+        PostData.objects.create(
+            nickname=nickname,
+            title=title,
+            content=content,
+            bgcolor=bgcolor,
+            avatar_style=avatar_style,
+            created_at=timezone.now()
+        )
+        return render(request, 'post.html', {'success': True, 'nickname_list': nickname_list})
+    return render(request, 'post.html', {'nickname_list': nickname_list})
+
 
