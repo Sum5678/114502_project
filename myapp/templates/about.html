@@ -1,0 +1,137 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>個人資料設定</title>
+  <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/aos/aos.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/css/main.css' %}" rel="stylesheet">
+  <style>
+    .profile-container {
+      max-width: 700px;
+      margin: auto;
+      background: #fff;
+      border-radius: 10px;
+      padding: 30px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      margin-top: 100px;
+    }
+    .profile-image {
+      width: 150px;
+      height: 150px;
+      object-fit: cover;
+      border-radius: 50%;
+      margin-bottom: 20px;
+    }
+    .input-field {
+      width: 100%;
+      margin-top: 10px;
+      margin-bottom: 20px;
+    }
+    .button-container {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+  </style>
+</head>
+<body class="index-page">
+
+<!-- Header -->
+<header id="header" class="header d-flex align-items-center fixed-top">
+  <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
+    <a href="{% url 'home' %}" class="logo d-flex align-items-center me-auto me-xl-0">
+      <h1 class="sitename">怪怪走開，護您安全</h1><span></span>
+    </a>
+    <nav id="navmenu" class="navmenu">
+      <ul>
+        <li><a href="{% url 'home' %}#hero" class="active">主頁</a></li>
+        <li><a href="{% url 'report' %}">填寫表單</a></li>
+        <li><a href="{% url 'business_upload' %}">商家填單</a></li>
+        <li><a href="{% url 'post' %}#hero">我要發文</a></li>
+        <li><a href="{% url 'map' %}">事件地圖</a></li>
+        <li><a href="{% url 'harassment_prevention' %}">防騷指南</a></li>
+      </ul>
+      <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+    </nav>
+    <a class="btn-getstarted" href="{% url 'userlogin' %}">登入</a>
+  </div>
+</header>
+
+<main class="main">
+  <div class="profile-container text-center" data-aos="fade-up">
+    <h2>個人資料設定</h2>
+
+    <label for="upload-image">
+      <img src="https://via.placeholder.com/150" alt="頭像" id="profile-pic" class="profile-image">
+    </label>
+    <input type="file" id="upload-image" class="form-control d-none" accept="image/*" onchange="previewImage(event)">
+
+    <div class="form-group">
+      <label>Google名稱：</label>
+      <input type="text" id="google_name" class="form-control input-field" placeholder="請輸入 Google 名稱">
+    </div>
+
+    <div class="form-group">
+      <label>暱稱：</label>
+      <input type="text" id="nickname" class="form-control input-field" placeholder="請輸入暱稱">
+    </div>
+
+    <div class="form-group">
+      <label>Email：</label>
+      <input type="email" id="email" class="form-control input-field" placeholder="請輸入 Email">
+    </div>
+
+    <div class="form-group">
+      <label>手機號碼：</label>
+      <input type="tel" id="phone" class="form-control input-field" placeholder="請輸入手機號碼">
+    </div>
+
+    <div class="form-group">
+      <label>自我介紹：</label>
+      <textarea id="intro" class="form-control input-field" rows="4" placeholder="請輸入自我介紹"></textarea>
+    </div>
+
+    <div class="form-group">
+      <label>名稱顯示：</label>
+      <select id="show_name_option" class="form-control input-field">
+        <option value="google_name">使用 Google 名稱</option>
+        <option value="nickname">使用暱稱</option>
+      </select>
+    </div>
+
+    <div class="button-container">
+      <button onclick="location.href='{% url 'report_list' %}'" class="btn btn-primary">查看回報紀錄</button>
+      <button onclick="location.href='{% url 'business_list' %}'" class="btn btn-secondary">查看商家申請紀錄</button>
+    </div>
+  </div>
+</main>
+
+<!-- Footer -->
+<footer id="footer" class="footer position-relative light-background">
+  <div class="container copyright text-center mt-4">
+    <p>© Copyright <strong class="sitename">怪怪走開</strong> All Rights Reserved</p>
+  </div>
+</footer>
+
+<a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center">
+  <i class="bi bi-arrow-up-short"></i>
+</a>
+<div id="preloader"></div>
+
+<script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+<script src="{% static 'assets/vendor/aos/aos.js' %}"></script>
+<script src="{% static 'assets/js/main.js' %}"></script>
+<script>
+  function previewImage(event) {
+    const reader = new FileReader();
+    reader.onload = function () {
+      document.getElementById('profile-pic').src = reader.result;
+    };
+    reader.readAsDataURL(event.target.files[0]);
+  }
+</script>
+</body>
+</html>

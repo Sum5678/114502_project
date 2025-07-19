@@ -140,6 +140,8 @@ urlpatterns = [
     path('api/submit_store/', views.submit_store, name='submit_store'),
     path('business/upload/', views.business_upload, name='business_upload'),
     path('business/list/', views.business_list_view, name='business_list'),
+    path('about/', views.about, name='about'),
+
 
 
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
