@@ -50,6 +50,7 @@ urlpatterns = [
     path('community/', views.community, name='community'),
     path('face_detection/', views.face_detection_view, name='face_detection'), #人臉辨識
     path('post/', views.post, name='post'),
+    path('post_display/', views.post_display, name='post_display'),
     
 
 
