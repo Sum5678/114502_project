@@ -41,23 +41,44 @@
 
 <!-- Header -->
 <header id="header" class="header d-flex align-items-center fixed-top">
-  <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
-    <a href="{% url 'home' %}" class="logo d-flex align-items-center me-auto me-xl-0">
-      <h1 class="sitename">怪怪走開，護您安全</h1><span></span>
-    </a>
-    <nav id="navmenu" class="navmenu">
-      <ul>
-        <li><a href="{% url 'home' %}#hero" class="active">主頁</a></li>
-        <li><a href="{% url 'report' %}">填寫表單</a></li>
-        <li><a href="{% url 'business_upload' %}">商家填單</a></li>
-        <li><a href="{% url 'post' %}#hero">我要發文</a></li>
-        <li><a href="{% url 'map' %}">事件地圖</a></li>
-        <li><a href="{% url 'harassment_prevention' %}">防騷指南</a></li>
-      </ul>
-      <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
-    </nav>
-    <a class="btn-getstarted" href="{% url 'userlogin' %}">登入</a>
-  </div>
+    <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
+      <a href="index.html" class="logo d-flex align-items-center me-auto me-xl-0">
+        <h1 class="sitename">怪怪走開，護您安全</h1><span></span>
+      </a>
+      <nav id="navmenu" class="navmenu">
+        <ul>
+          <li><a href="{% url 'home' %}#hero" class="active">主頁</a></li>
+          <li><a href="index.html#services">簡介及功能介紹</a></li>
+          <li><a href="{% url 'report' %}">填寫表單</a></li>
+          <li><a href="{% url 'business_upload' %}">商家填單</a></li>    
+          <li><a href="{% url 'about' %}">個人資料設定</a></li>      
+          <li><a href="{% url 'post' %}#hero" class="active">我要發文</a></li>
+          <li><a href="{% url 'map' %}">事件地圖</a></li>
+          <li><a href="{% url 'harassment_prevention' %}">防騷指南</a></li>
+          <li class="dropdown"><a href="#"><span>Dropdown</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+            <ul>
+              <li><a href="#">Dropdown 1</a></li>
+              <li class="dropdown"><a href="#"><span>Deep Dropdown</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+                <ul>
+                  <li><a href="#">Deep Dropdown 1</a></li>
+                  <li><a href="#">Deep Dropdown 2</a></li>
+                  <li><a href="#">Deep Dropdown 3</a></li>
+                  <li><a href="#">Deep Dropdown 4</a></li>
+                  <li><a href="#">Deep Dropdown 5</a></li>
+                </ul>
+              </li>
+              <li><a href="#">Dropdown 2</a></li>
+              <li><a href="#">Dropdown 3</a></li>
+              <li><a href="#">Dropdown 4</a></li>
+            </ul>
+          </li>
+          <li><a href="index.html#contact">Contact</a></li>
+        </ul>
+        <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+      </nav>
+      <!-- <a class="btn-getstarted" href="index.html#about">Get Started</a> -->
+      <a class="btn-getstarted" href="{% url 'userlogin' %}">登入</a>
+    </div>
 </header>
 
 <main class="main">
@@ -102,8 +123,8 @@
       </select>
     </div>
     <div class="button-container">
-      <button onclick="location.href='{% url 'report_list' %}'" class="btn btn-primary">查看回報紀錄</button>
-      <button onclick="location.href='{% url 'business_list' %}'" class="btn btn-secondary">查看商家申請紀錄</button>
+        <button onclick="location.href='{% url 'report_list' %}'" class="btn btn-primary">查看回報紀錄</button>
+        <button onclick="location.href='{% url 'business_list' %}'" class="btn btn-primary">查看商家申請紀錄</button>
     </div>
   </div>
 </main>
