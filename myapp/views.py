@@ -982,7 +982,9 @@ def submit_report(request):
             return JsonResponse({"status": "error", "message": str(e)})
     else:
         return JsonResponse({"status": "error", "message": "Invalid method"})
-
+#-----------------about---------------------------
+def about(request):
+    return render(request, 'about.html')
 #----------------store---------------------------------------------------------------------
 
 @csrf_exempt
@@ -1022,9 +1024,6 @@ def business_list_view(request):
     return render(request, 'business_list.html', {'stores': stores})
 
 
-#-----------------about---------------------------
-def about(request):
-    return render(request, 'about.html')
 
 #test_0610chatroom 試寫聊天室
 from django.shortcuts import render
