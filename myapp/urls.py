@@ -8,6 +8,12 @@ from django.urls import path
 from .views import PemapAllListView, PemapAllUpdateView
 
 urlpatterns = [
+    #思璇
+    path('api/submit_report/', views.submit_report, name='submit_report'),
+    path('api/submit_store/', views.submit_store, name='submit_store'),
+    path('business/upload/', views.business_upload, name='business_upload'),
+    path('business/list/', views.business_list_view, name='business_list'),
+    path('about/', views.about, name='about'),
     path('report/', views.report_view, name='report'),#填寫表單
     path('report/list/', views.report_list_view, name='report_list'),
     path('', views.index, name='home'),
@@ -136,12 +142,6 @@ urlpatterns = [
 
 
     # 其他路由
-    #思璇
-    path('api/submit_report/', views.submit_report, name='submit_report'),
-    path('api/submit_store/', views.submit_store, name='submit_store'),
-    path('business/upload/', views.business_upload, name='business_upload'),
-    path('business/list/', views.business_list_view, name='business_list'),
-    path('about/', views.about, name='about'),
 
 
 
