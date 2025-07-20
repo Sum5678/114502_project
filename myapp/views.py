@@ -1014,6 +1014,10 @@ def business_list_view(request):
     return render(request, 'business_list.html', {'stores': stores})
 
 
+#-----------------about---------------------------
+def about(request):
+    return render(request, 'about.html')
+
 #test_0610chatroom 試寫聊天室
 from django.shortcuts import render
 
@@ -1623,14 +1627,59 @@ def store_map_view(request):
 
 
 
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from .models import ThisUserProfile
+from datetime import datetime  # ✅ 加入 datetime 模組
 
-from django.shortcuts import render
+# 用來保存所有發文資料（暫時記憶用，不進資料庫）
+ALL_POSTS = []
 
-def post_view(request):
+@login_required
+def post(request):
+    try:
+        user_profile = ThisUserProfile.objects.get(username=request.user.username)
+        nickname_list = []
+        if user_profile.default_nickname1:
+            nickname_list.append(user_profile.default_nickname1)
+        if user_profile.default_nickname2:
+            nickname_list.append(user_profile.default_nickname2)
+    except ThisUserProfile.DoesNotExist:
+        nickname_list = []
+
     if request.method == 'POST':
+        nickname = request.POST.get('nickname')
+        bgcolor = request.POST.get('bgcolor')
+        avatar_style = request.POST.get('avatar_style')
         title = request.POST.get('title')
         content = request.POST.get('content')
-        print("收到貼文：", title, content)  # 測試用
-        return render(request, 'post.html', {'success': True})
-    return render(request, 'post.html')
 
+        avatar_url = f"https://api.dicebear.com/7.x/{avatar_style}/svg?seed={nickname}&backgroundColor={bgcolor}"
+
+        post_data = {
+            'nickname': nickname,
+            'bgcolor': bgcolor,
+            'avatar_style': avatar_style,
+            'title': title,
+            'content': content,
+            'avatar_url': avatar_url,
+            'created_at': datetime.now(),  # ✅ 發文時間
+        }
+
+        # 加到全域貼文列表（記憶體中的模擬儲存）
+        ALL_POSTS.append(post_data)
+
+        # 發文成功後跳轉至展示頁
+        return redirect('post_display')
+
+    return render(request, 'post.html', {
+        'nickname_list': nickname_list,
+        'success': False,
+        'post_data': None,
+    })
+
+# 🔽 展示所有發文的 view
+def post_display(request):
+    return render(request, 'post_display.html', {
+        'posts': ALL_POSTS
+    })

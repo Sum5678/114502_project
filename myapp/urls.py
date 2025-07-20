@@ -49,7 +49,8 @@ urlpatterns = [
     path('mychatroom/', views.mychatroom, name='mychatroom'),
     path('community/', views.community, name='community'),
     path('face_detection/', views.face_detection_view, name='face_detection'), #人臉辨識
-    path('post/', views.post_view, name='post'),  # 交流區發文頁面
+    path('post/', views.post, name='post'),
+    path('post_display/', views.post_display, name='post_display'),
     
 
 
@@ -140,6 +141,8 @@ urlpatterns = [
     path('api/submit_store/', views.submit_store, name='submit_store'),
     path('business/upload/', views.business_upload, name='business_upload'),
     path('business/list/', views.business_list_view, name='business_list'),
+    path('about/', views.about, name='about'),
+
 
 
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
