@@ -1,0 +1,124 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>貼文展示區</title>
+
+  <!-- Icons & Fonts -->
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700|Nunito|Poppins" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/boxicons/2.1.0/css/boxicons.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css" rel="stylesheet">
+
+  <!-- Vendor CSS -->
+  <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/aos/aos.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/glightbox/css/glightbox.min.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/swiper/swiper-bundle.min.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/css/main.css' %}" rel="stylesheet">
+
+  <style>
+    .card {
+      border-left: 8px solid #ccc;
+    }
+    .card .card-body {
+      background: #fff;
+      border-radius: 6px;
+    }
+    .card .card-title {
+      font-weight: 700;
+      color: #033e6b;
+    }
+    .card .card-text {
+      color: #444;
+      font-size: 15px;
+    }
+    .meta {
+      font-size: 13px;
+      color: #888;
+    }
+  </style>
+</head>
+
+<body class="index-page">
+
+  <!-- Header -->
+  <header id="header" class="header d-flex align-items-center fixed-top">
+    <div class="container-fluid d-flex justify-content-between align-items-center">
+      <a href="{% url 'home' %}" class="logo d-flex align-items-center">
+        <h1 class="sitename">怪怪走開，護您安全</h1>
+      </a>
+      <nav id="navmenu" class="navmenu">
+        <ul>
+          <li><a href="{% url 'home' %}#hero">主頁</a></li>
+          <li><a href="index.html#services">簡介及功能介紹</a></li>
+          <li><a href="{% url 'report' %}">填寫表單</a></li>
+          <li><a href="{% url 'business_upload' %}">商家填單</a></li>
+          <li><a href="{% url 'post' %}">我要發文</a></li>
+          <li><a href="{% url 'map' %}">事件地圖</a></li>
+          <li><a href="{% url 'harassment_prevention' %}">防騷指南</a></li>
+        </ul>
+        <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+      </nav>
+      <div class="dropdown">
+        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown" style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">登入</a>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="{% url 'userlogin' %}">一般使用者登入</a></li>
+          <li><a class="dropdown-item" href="{% url 'admin_login' %}">管理員登入</a></li>
+        </ul>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main">
+
+    <!-- Hero Image -->
+    <section class="hero">
+      <img src="{% static 'assets/img/1.png' %}" alt="Hero Image">
+    </section>
+
+    <!-- Post Display Section -->
+    <section class="post-list mt-5" id="post-list-section">
+      <div class="container">
+        <div class="section-title text-center">
+          <h2>貼文展示區</h2>
+          <p>以下是大家的分享</p>
+        </div>
+
+        {% for post in posts %}
+        <div class="card mb-4" style="border-left: 8px solid #{{ post.bgcolor }};">
+          <div class="card-body">
+            <div class="d-flex align-items-center mb-3">
+              <img src="{{ post.avatar_url }}" alt="avatar" class="rounded-circle me-3" style="width: 60px; height: 60px;">
+              <div>
+                <h5 class="card-title mb-0">{{ post.title }}</h5>
+                <div class="meta">{{ post.nickname }} ・ {{ post.created_at|date:"Y/m/d H:i" }}</div>
+              </div>
+            </div>
+            <p class="card-text mt-2">{{ post.content|linebreaksbr }}</p>
+          </div>
+        </div>
+        {% empty %}
+        <p class="text-muted text-center">目前尚無貼文。</p>
+        {% endfor %}
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer text-center mt-5 py-4 bg-light">
+    <p>&copy; 2025 怪怪走開，護您安全｜Append Template</p>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/aos/aos.js' %}"></script>
+  <script src="{% static 'assets/vendor/glightbox/js/glightbox.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/purecounter/purecounter_vanilla.js' %}"></script>
+  <script src="{% static 'assets/vendor/swiper/swiper-bundle.min.js' %}"></script>
+  <script src="{% static 'assets/js/main.js' %}"></script>
+</body>
+</html>
