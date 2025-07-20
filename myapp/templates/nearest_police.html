@@ -75,227 +75,16 @@
         button:hover {
             background-color: #4299e1;
         }
-        #map {
-            height: 500px;
-            width: 100%;
-            margin-top: 20px;
-        }
-    </style>
-</head>
-<body>
-
-<header id="header" class="header d-flex align-items-center fixed-top">
-    <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
-        <a href="{% url 'home' %}" class="logo d-flex align-items-center me-auto me-xl-0">
-            <h1 class="sitename" style="color: #033e6b;">怪怪走開，護您安全</h1>
-        </a>
-        <nav id="navmenu" class="navmenu">
-            <ul>
-                <li><a href="{% url 'home' %}#hero" class="active">主頁</a></li>
-                <li><a href="{% url 'home' %}#services" class="active">簡介及功能介紹</a></li>
-                <li><a href="{% url 'report' %}" class="active">填寫表單</a></li>
-                <li><a href="{% url 'business_upload' %}" class="active">商家填單</a></li>
-                <li><a href="{% url 'home' %}" class="active">Pricing</a></li>
-                <li><a href="{% url 'map' %}" class="active">事件地圖</a></li>
-                <li><a href="{% url 'harassment_prevention' %}" class="active">防騷指南</a></li>
-                <li class="dropdown">
-                    <a href="#" class="active"><span>Dropdown</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
-                    <ul>
-                        <li><a href="#">Dropdown 1</a></li>
-                        <li class="dropdown"><a href="#"><span>Deep Dropdown</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
-                            <ul>
-                                <li><a href="#">Deep Dropdown 1</a></li>
-                                <li><a href="#">Deep Dropdown 2</a></li>
-                                <li><a href="#">Deep Dropdown 3</a></li>
-                                <li><a href="#">Deep Dropdown 4</a></li>
-                                <li><a href="#">Deep Dropdown 5</a></li>
-                            </ul>
-                        </li>
-                        <li><a href="#">Dropdown 2</a></li>
-                        <li><a href="#">Dropdown 3</a></li>
-                        <li><a href="#">Dropdown 4</a></li>
-                    </ul>
-                </li>
-                <li><a href="{% url 'home' %}#contact" class="active">Contact</a></li>
-            </ul>
-            <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
-        </nav>
-        <a class="btn-getstarted" href="{% url 'userlogin' %}">登入</a>
-    </div>
-</header>
-
-<main class="main">
-    <div class="container" data-aos="fade-up">
-        <div class="section-title">
-            <h2>查詢最近警局</h2>
-        </div>
-
-        <form method="get">
-            <select name="country_city" onchange="this.form.submit()">
-                <option value="">請選擇縣市</option>
-                {% for city in countries %}
-                    <option value="{{ city }}" {% if city == selected_country %}selected{% endif %}>{{ city }}</option>
-                {% endfor %}
-            </select>
-
-            <select name="district_town">
-                <option value="">請選擇鄉鎮市區</option>
-                {% for district in districts %}
-                    <option value="{{ district }}" {% if district == selected_district %}selected{% endif %}>{{ district }}</option>
-                {% endfor %}
-            </select>
-
-            <button type="submit">確定</button>
-        </form>
-
-        {% if police_data %}
-            <div id="map"></div>
-            {{ police_data|json_script:"policeJson" }}
-
-            <script>
-                function initMap() {
-                    const policeStations = JSON.parse(document.getElementById('policeJson').textContent);
-
-                    const center = {
-                        lat: parseFloat(policeStations[0].POINT_Y),
-                        lng: parseFloat(policeStations[0].POINT_X)
-                    };
-
-                    const map = new google.maps.Map(document.getElementById("map"), {
-                        zoom: 13,
-                        center: center
-                    });
-
-                    for (const station of policeStations) {
-                        const marker = new google.maps.Marker({
-                            position: {
-                                lat: parseFloat(station.POINT_Y),
-                                lng: parseFloat(station.POINT_X)
-                            },
-                            map: map,
-                            title: station.precinct_name
-                        });
-
-                        const infoWindow = new google.maps.InfoWindow({
-                            content: `<b>${station.precinct_name}</b><br>${station.address}<br>${station.phone}`
-                        });
-
-                        marker.addListener('click', () => {
-                            infoWindow.open(map, marker);
-                        });
-                    }
-                }
-            </script>
-
-            <script>
-                window.gm_authFailure = function() {
-                    alert('❗ Google Maps 載入失敗！\n請檢查您的 API 金鑰是否正確、是否啟用 Maps JavaScript API，或來源是否允許。');
-                };
-            </script>
-
-            <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAUuPZMMJvgVWftmqVyzfX8mKTwMX4kA6o&callback=initMap"></script>
-        {% endif %}
-    </div>
-</main>
-
-<script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
-<script src="{% static 'assets/vendor/aos/aos.js' %}"></script>
-<script src="{% static 'assets/vendor/glightbox/js/glightbox.min.js' %}"></script>
-<script src="{% static 'assets/vendor/purecounter/purecounter_vanilla.js' %}"></script>
-<script src="{% static 'assets/vendor/swiper/swiper-bundle.min.js' %}"></script>
-<script src="{% static 'assets/js/main.js' %}"></script>
-</body>
-</html>
-
-
-<!--
-{% load static %}
-<!DOCTYPE html>
-<html lang="zh-Hant">
-<head>
-    <meta charset="UTF-8">
-    <title>最近警局地圖</title>
-    <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet" />
-    <link href="{% static 'assets/vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet">
-    <link href="{% static 'assets/vendor/aos/aos.css' %}" rel="stylesheet">
-    <link href="{% static 'assets/vendor/glightbox/css/glightbox.min.css' %}" rel="stylesheet">
-    <link href="{% static 'assets/vendor/swiper/swiper-bundle.min.css' %}" rel="stylesheet">
-    <link href="{% static 'assets/css/main.css' %}" rel="stylesheet">
-    <style>
-        body {
-            background-color: #fff;
-            padding-top: 100px;
-            font-family: "Microsoft JhengHei", sans-serif;
-        }
-        .section-title {
-            text-align: center;
-            margin-top: 40px;
-            margin-bottom: 10px;
-        }
-        .section-title h2 {
-            display: inline-block;
-            font-weight: 700;
-            font-size: 28px;
-            color: #033e6b;
-            position: relative;
-            padding: 0 20px;
-        }
-        .section-title h2::before,
-        .section-title h2::after {
-            content: "";
-            position: absolute;
-            top: 50%;
-            width: 60px;
-            height: 2px;
-            background: #0d6efd;
-        }
-        .section-title h2::before {
-            left: -70px;
-        }
-        .section-title h2::after {
-            right: -70px;
-        }
-        form {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-top: 20px;
-            margin-bottom: 20px;
-        }
-        select, button {
-            padding: 8px 12px;
-            border: 1.5px solid #c4ddf6;
-            border-radius: 6px;
-            background-color: #ffffff;
-            color: #033e6b;
-            font-size: 15px;
-            transition: border-color 0.2s ease;
-        }
-        select:focus, button:focus {
-            border-color: #63b3ed;
-            outline: none;
-        }
-        button {
-            background-color: #63b3ed;
-            color: #fff;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-        button:hover {
-            background-color: #4299e1;
-        }
-        #map {
-            height: 500px;
-            width: 100%;
-            margin-top: 20px;
-        }
         .location-button {
             display: flex;
             justify-content: center;
             margin-bottom: 20px;
         }
+        #map {
+            height: 500px;
+            width: 100%;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
@@ -314,24 +103,6 @@
                 <li><a href="{% url 'home' %}" class="active">Pricing</a></li>
                 <li><a href="{% url 'map' %}" class="active">事件地圖</a></li>
                 <li><a href="{% url 'harassment_prevention' %}" class="active">防騷指南</a></li>
-                <li class="dropdown">
-                    <a href="#" class="active"><span>Dropdown</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
-                    <ul>
-                        <li><a href="#">Dropdown 1</a></li>
-                        <li class="dropdown"><a href="#"><span>Deep Dropdown</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
-                            <ul>
-                                <li><a href="#">Deep Dropdown 1</a></li>
-                                <li><a href="#">Deep Dropdown 2</a></li>
-                                <li><a href="#">Deep Dropdown 3</a></li>
-                                <li><a href="#">Deep Dropdown 4</a></li>
-                                <li><a href="#">Deep Dropdown 5</a></li>
-                            </ul>
-                        </li>
-                        <li><a href="#">Dropdown 2</a></li>
-                        <li><a href="#">Dropdown 3</a></li>
-                        <li><a href="#">Dropdown 4</a></li>
-                    </ul>
-                </li>
                 <li><a href="{% url 'home' %}#contact" class="active">Contact</a></li>
             </ul>
             <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
@@ -371,23 +142,21 @@
         {% if police_data %}
             <div id="map"></div>
             {{ police_data|json_script:"policeJson" }}
+            {{ all_police_data|json_script:"allPoliceJson" }}
 
             <script>
                 let map;
 
                 function initMap() {
                     const policeStations = JSON.parse(document.getElementById('policeJson').textContent);
-
                     const center = {
                         lat: parseFloat(policeStations[0].POINT_Y),
                         lng: parseFloat(policeStations[0].POINT_X)
                     };
-
                     map = new google.maps.Map(document.getElementById("map"), {
                         zoom: 13,
                         center: center
                     });
-
                     for (const station of policeStations) {
                         const marker = new google.maps.Marker({
                             position: {
@@ -397,31 +166,37 @@
                             map: map,
                             title: station.precinct_name
                         });
-
                         const infoWindow = new google.maps.InfoWindow({
                             content: `<b>${station.precinct_name}</b><br>${station.address}<br>${station.phone}`
                         });
-
                         marker.addListener('click', () => {
                             infoWindow.open(map, marker);
                         });
                     }
                 }
 
+                function haversineDistance(lat1, lon1, lat2, lon2) {
+                    function toRad(x) { return x * Math.PI / 180; }
+                    const R = 6371;
+                    const dLat = toRad(lat2 - lat1);
+                    const dLon = toRad(lon2 - lon1);
+                    const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+                    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                }
+
                 function useMyLocation() {
                     if (!map) {
-                        alert('請先選擇縣市及鄉鎮區，讓地圖先載入。');
+                        alert('請先選擇縣市及鄉鎮區載入地圖。');
                         return;
                     }
-
+                    const policeStations = JSON.parse(document.getElementById('allPoliceJson').textContent);
                     if (navigator.geolocation) {
                         navigator.geolocation.getCurrentPosition(function(position) {
-                            const userLocation = {
-                                lat: position.coords.latitude,
-                                lng: position.coords.longitude
-                            };
+                            const userLat = position.coords.latitude;
+                            const userLng = position.coords.longitude;
+                            const userLocation = { lat: userLat, lng: userLng };
                             map.setCenter(userLocation);
-                            map.setZoom(15);
+                            map.setZoom(14);
                             new google.maps.Marker({
                                 position: userLocation,
                                 map: map,
@@ -435,22 +210,42 @@
                                     strokeColor: '#ffffff'
                                 }
                             });
+                            let minDistance = Infinity;
+                            let nearestStation = null;
+                            for (const station of policeStations) {
+                                const distance = haversineDistance(userLat, userLng, parseFloat(station.POINT_Y), parseFloat(station.POINT_X));
+                                if (distance < minDistance) {
+                                    minDistance = distance;
+                                    nearestStation = station;
+                                }
+                            }
+                            if (nearestStation) {
+                                const nearestLocation = {
+                                    lat: parseFloat(nearestStation.POINT_Y),
+                                    lng: parseFloat(nearestStation.POINT_X)
+                                };
+                                const marker = new google.maps.Marker({
+                                    position: nearestLocation,
+                                    map: map,
+                                    title: nearestStation.precinct_name
+                                });
+                                const infoWindow = new google.maps.InfoWindow({
+                                    content: `<b>${nearestStation.precinct_name}</b><br>${nearestStation.address}<br>${nearestStation.phone}`
+                                });
+                                marker.addListener('click', () => {
+                                    infoWindow.open(map, marker);
+                                });
+                            }
                         }, function() {
-                            alert("⚠️ 無法取得您的位置，請檢查瀏覽器權限。");
+                            alert("⚠️ 無法取得您的位置");
                         });
                     } else {
-                        alert("⚠️ 您的瀏覽器不支援定位。");
+                        alert("⚠️ 您的瀏覽器不支援定位");
                     }
                 }
             </script>
 
-            <script>
-                window.gm_authFailure = function() {
-                    alert('❗ Google Maps 載入失敗！\n請檢查 API 金鑰設定及 Maps JavaScript API 是否啟用。');
-                };
-            </script>
-
-            <script async defer src="https://maps.googleapis.com/maps/api/js?key=你的API金鑰&callback=initMap"></script>
+            <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAUuPZMMJvgVWftmqVyzfX8mKTwMX4kA6o&callback=initMap"></script>
         {% endif %}
     </div>
 </main>
@@ -463,4 +258,3 @@
 <script src="{% static 'assets/js/main.js' %}"></script>
 </body>
 </html>
--->

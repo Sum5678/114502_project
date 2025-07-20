@@ -138,6 +138,7 @@ def nearest_police_view(request):
 
     if country_city:
         districts = TaiwanRegion.objects.filter(country_city=country_city).values_list('district_town', flat=True).distinct()
+
     if country_city and district_town:
         zipcodes = TaiwanRegion.objects.filter(
             country_city=country_city,
@@ -150,15 +151,22 @@ def nearest_police_view(request):
             for obj in queryset
         ]
 
+    # 新增：給所有警局清單，讓前端「GPS自動找最近」
+    all_police_data = list(
+        PoliceAddress.objects.values(
+            "precinct_name", "address", "phone", "POINT_X", "POINT_Y"
+        )
+    )
+
     return render(request, 'nearest_police.html', {
         'countries': countries,
         'districts': districts,
         'selected_country': country_city,
         'selected_district': district_town,
         'police_data': police_data,
-        'google_maps_api_key': 'AIzaSyAUuPZMMJvgVWftmqVyzfX8mKTwMX4kA6o',  # 用你給的
+        'all_police_data': all_police_data,  # 新增的
+        'google_maps_api_key': 'AIzaSyAUuPZMMJvgVWftmqVyzfX8mKTwMX4kA6o',
     })
-
 
 #地圖顯示資料 0528
 @require_GET
