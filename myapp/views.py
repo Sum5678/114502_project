@@ -128,6 +128,7 @@ from django.shortcuts import render
 from .models import TaiwanRegion, PoliceAddress
 from django.forms.models import model_to_dict
 
+
 def nearest_police_view(request):
     country_city = request.GET.get('country_city')
     district_town = request.GET.get('district_town')
@@ -151,12 +152,11 @@ def nearest_police_view(request):
             for obj in queryset
         ]
 
-    # 新增：給所有警局清單，讓前端「GPS自動找最近」
-    all_police_data = list(
-        PoliceAddress.objects.values(
-            "precinct_name", "address", "phone", "POINT_X", "POINT_Y"
-        )
-    )
+    # 不論有沒有選縣市，都要傳全台所有警局，GPS 按鈕會用到
+    all_police_data = [
+        model_to_dict(obj, fields=["precinct_name", "address", "phone", "POINT_X", "POINT_Y"])
+        for obj in PoliceAddress.objects.all()
+    ]
 
     return render(request, 'nearest_police.html', {
         'countries': countries,
@@ -164,9 +164,10 @@ def nearest_police_view(request):
         'selected_country': country_city,
         'selected_district': district_town,
         'police_data': police_data,
-        'all_police_data': all_police_data,  # 新增的
-        'google_maps_api_key': 'AIzaSyAUuPZMMJvgVWftmqVyzfX8mKTwMX4kA6o',
+        'all_police_data': all_police_data,
+        'google_maps_api_key': '你的APIKEY',  # 換成你的 Key
     })
+
 
 #地圖顯示資料 0528
 @require_GET
