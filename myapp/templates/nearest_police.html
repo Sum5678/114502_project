@@ -10,29 +10,42 @@
         body { padding-top: 100px; font-family: "Microsoft JhengHei", sans-serif; }
         .section-title { text-align: center; margin: 40px 0 10px; }
         .section-title h2 { font-weight: 700; font-size: 28px; color: #033e6b; position: relative; padding: 0 20px; }
-        .section-title h2::before, .section-title h2::after { content: ""; position: absolute; top: 50%; width: 60px; height: 2px; background: #0d6efd; }
-        .section-title h2::before { left: -70px; } .section-title h2::after { right: -70px; }
+        .section-title h2::before, .section-title h2::after {
+            content: ""; position: absolute; top: 50%; width: 60px; height: 2px; background: #0d6efd;
+        }
+        .section-title h2::before { left: -70px; }
+        .section-title h2::after { right: -70px; }
         form { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin: 20px 0; }
-        select, button { padding: 8px 12px; border: 1.5px solid #c4ddf6; border-radius: 6px; background: #fff; color: #033e6b; font-size: 15px; }
+        select, button {
+            padding: 8px 12px; border: 1.5px solid #c4ddf6; border-radius: 6px;
+            background: #fff; color: #033e6b; font-size: 15px;
+        }
         button { background-color: #63b3ed; color: #fff; font-weight: 600; cursor: pointer; }
-        .location-button { display: flex; justify-content: center; margin-bottom: 20px; }
+        .location-button { text-align: center; margin-bottom: 20px; }
+        .location-button button {
+            background-color: #0d6efd; color: #fff; padding: 10px 20px;
+            border-radius: 6px; font-weight: 600; border: none;
+        }
         #map { height: 500px; width: 100%; margin-top: 20px; }
     </style>
 </head>
+
 <body>
-<header id="header" class="header fixed-top">
+
+<header class="header fixed-top">
     <div class="container-fluid d-flex justify-content-between align-items-center">
         <a href="{% url 'home' %}" class="logo"><h1 style="color: #033e6b;">怪怪走開，護您安全</h1></a>
-        <nav id="navmenu" class="navmenu">
-            <ul><li><a href="{% url 'home' %}#hero" class="active">主頁</a></li></ul>
-        </nav>
+        <nav class="navmenu"><ul><li><a href="{% url 'home' %}#hero" class="active">主頁</a></li></ul></nav>
         <a class="btn-getstarted" href="{% url 'userlogin' %}">登入</a>
     </div>
 </header>
 
 <main class="main">
     <div class="container">
-        <div class="section-title"><h2>查詢最近警局</h2></div>
+        <div class="section-title">
+            <h2>查詢最近警局</h2>
+        </div>
+
         <form method="get">
             <select name="country_city" onchange="this.form.submit()">
                 <option value="">請選擇縣市</option>
@@ -40,67 +53,104 @@
                     <option value="{{ city }}" {% if city == selected_country %}selected{% endif %}>{{ city }}</option>
                 {% endfor %}
             </select>
-            <select name="district_town">
+            <select name="district_town" onchange="this.form.submit()">
                 <option value="">請選擇鄉鎮市區</option>
                 {% for district in districts %}
                     <option value="{{ district }}" {% if district == selected_district %}selected{% endif %}>{{ district }}</option>
                 {% endfor %}
             </select>
-            <button type="submit">確定</button>
+            <button type="submit">確定</button><!--好像不用按確認就直接可以顯示-->
         </form>
+
         <div class="location-button">
-            <button type="button" onclick="useMyLocation()">使用我的位置</button>
+            <button type="button" onclick="useMyLocation()">📍 使用我的位置</button>
         </div>
+
         <div id="map"></div>
+
         {{ all_police_data|json_script:"allPoliceJson" }}
         {% if police_data %}
             {{ police_data|json_script:"policeJson" }}
         {% endif %}
-        <script>
-            let map;
-            function initMap() {
-                map = new google.maps.Map(document.getElementById("map"), { zoom: 8, center: { lat: 23.6978, lng: 120.9605 } });
-            }
-            function haversineDistance(lat1, lon1, lat2, lon2) {
-                const toRad = x => x * Math.PI / 180;
-                const R = 6371, dLat = toRad(lat2 - lat1), dLon = toRad(lon2 - lon1);
-                const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
-                return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-            }
-            function useMyLocation() {
-                const policeStations = JSON.parse(document.getElementById('allPoliceJson').textContent);
-                if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition(function(position) {
-                        const userLat = position.coords.latitude;
-                        const userLng = position.coords.longitude;
-                        map.setCenter({ lat: userLat, lng: userLng }); map.setZoom(14);
-                        new google.maps.Marker({
-                            position: { lat: userLat, lng: userLng }, map: map, title: "你的位置",
-                            icon: { path: google.maps.SymbolPath.CIRCLE, scale: 8, fillColor: '#4285F4', fillOpacity: 1, strokeWeight: 2, strokeColor: '#fff' }
-                        });
-                        let minDistance = Infinity, nearestStation = null;
-                        for (const s of policeStations) {
-                            const dist = haversineDistance(userLat, userLng, parseFloat(s.POINT_Y), parseFloat(s.POINT_X));
-                            if (dist < minDistance) { minDistance = dist; nearestStation = s; }
-                        }
-                        if (nearestStation) {
-                            const marker = new google.maps.Marker({
-                                position: { lat: parseFloat(nearestStation.POINT_Y), lng: parseFloat(nearestStation.POINT_X) },
-                                map: map, title: nearestStation.precinct_name
-                            });
-                            const infoWindow = new google.maps.InfoWindow({
-                                content: `<b>${nearestStation.precinct_name}</b><br>${nearestStation.address}<br>${nearestStation.phone}`
-                            });
-                            marker.addListener('click', () => infoWindow.open(map, marker));
-                        }
-                    }, () => { alert("⚠️ 無法取得您的位置"); });
-                } else { alert("⚠️ 您的瀏覽器不支援定位"); }
-            }
-        </script>
-        <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAUuPZMMJvgVWftmqVyzfX8mKTwMX4kA6o&callback=initMap"></script>
     </div>
 </main>
-<script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
-<script src="{% static 'assets/js/main.js' %}"></script>
+
+<script>
+    let map;
+    function initMap() {
+        map = new google.maps.Map(document.getElementById("map"), {
+            zoom: 8, center: { lat: 23.6978, lng: 120.9605 } // 台灣中心
+        });
+        {% if police_data %}
+        const policeStations = JSON.parse(document.getElementById('policeJson').textContent);
+        const center = { lat: parseFloat(policeStations[0].POINT_Y), lng: parseFloat(policeStations[0].POINT_X) };
+        map.setCenter(center);
+        map.setZoom(13);
+        for (const station of policeStations) {
+            const marker = new google.maps.Marker({
+                position: { lat: parseFloat(station.POINT_Y), lng: parseFloat(station.POINT_X) },
+                map: map,
+                title: station.precinct_name
+            });
+            const infoWindow = new google.maps.InfoWindow({
+                content: `<b>${station.precinct_name}</b><br>${station.address}<br>${station.phone}`
+            });
+            marker.addListener('click', () => infoWindow.open(map, marker));
+        }
+        {% endif %}
+    }
+
+    function haversineDistance(lat1, lon1, lat2, lon2) {
+        const toRad = x => x * Math.PI / 180;
+        const R = 6371;
+        const dLat = toRad(lat2 - lat1);
+        const dLon = toRad(lon2 - lon1);
+        const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    function useMyLocation() {
+        const policeStations = JSON.parse(document.getElementById('allPoliceJson').textContent);
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+                const userLat = position.coords.latitude;
+                const userLng = position.coords.longitude;
+                map.setCenter({ lat: userLat, lng: userLng });
+                map.setZoom(14);
+                new google.maps.Marker({
+                    position: { lat: userLat, lng: userLng },
+                    map: map,
+                    title: "你的位置",
+                    icon: { path: google.maps.SymbolPath.CIRCLE, scale: 8, fillColor: '#4285F4', fillOpacity: 1, strokeWeight: 2, strokeColor: '#fff' }
+                });
+
+                let minDistance = Infinity;
+                let nearestStation = null;
+                for (const s of policeStations) {
+                    const dist = haversineDistance(userLat, userLng, parseFloat(s.POINT_Y), parseFloat(s.POINT_X));
+                    if (dist < minDistance) {
+                        minDistance = dist;
+                        nearestStation = s;
+                    }
+                }
+                if (nearestStation) {
+                    const marker = new google.maps.Marker({
+                        position: { lat: parseFloat(nearestStation.POINT_Y), lng: parseFloat(nearestStation.POINT_X) },
+                        map: map,
+                        title: nearestStation.precinct_name
+                    });
+                    const infoWindow = new google.maps.InfoWindow({
+                        content: `<b>${nearestStation.precinct_name}</b><br>${nearestStation.address}<br>${nearestStation.phone}`
+                    });
+                    marker.addListener('click', () => infoWindow.open(map, marker));
+                }
+            });
+        } else {
+            alert("⚠️ 您的瀏覽器不支援定位");
+        }
+    }
+</script>
+
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAUuPZMMJvgVWftmqVyzfX8mKTwMX4kA6o&callback=initMap"></script>
 </body>
 </html>
