@@ -1643,7 +1643,7 @@ from datetime import datetime  # ✅ 加入 datetime 模組
 # 用來保存所有發文資料（暫時記憶用，不進資料庫）
 ALL_POSTS = []
 
-@login_required
+@login_required(login_url='/01userlogin/')  # ✅ 明確指定登入頁面
 def post(request):
     try:
         user_profile = ThisUserProfile.objects.get(username=request.user.username)
@@ -1691,3 +1691,4 @@ def post_display(request):
     return render(request, 'post_display.html', {
         'posts': ALL_POSTS
     })
+
