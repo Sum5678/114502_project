@@ -80,7 +80,7 @@ urlpatterns = [
     path('write/', views.settings, name='write'),  # 同 settings，可保留或合併
 
     # 登入/登出相關
-    path('0101login/', views.login_page, name='login'),  # 另一登入頁
+    # path('0101login/', views.login_page, name='login'),  # 另一登入頁
     path('01userlogin/', views.user_login_page, name='userlogin'),
     path('userlogin/', views.user_login_page),  # 可做第二路徑，不一定要name
     path('userlogout/', views.logout_view, name='userlogout'),  # 命名統一成 userlogout
