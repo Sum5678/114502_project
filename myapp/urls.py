@@ -109,7 +109,8 @@ urlpatterns = [
 
 
     # Pemap 管理員相關
-    path('admin/pemap/approve/<int:p_id>/<int:stage>/', views.pemap_approve, name='pemap_approve'),#處理管理員對pemap資料狀態
+    path('pemap/approve/<int:p_id>/<int:stage>/', views.pemap_approve, name='pemap_approve'),#處理管理員對pemap資料狀態
+    # path('admin/pemap/approve/<int:p_id>/<int:stage>/', views.pemap_approve, name='pemap_approve'),#處理管理員對pemap資料狀態
     path('pemap/', PemapAllListView.as_view(), name='pemap_list'),  ##處理管理員對pemap資料狀態
     path('pemap/<int:p_id>/edit/', PemapAllUpdateView.as_view(), name='pemap_detail'),#處理管理員對pemap資料狀態
     path('pemap_judge/', views.pemap_judge, name='pemap_judge'),#審核事件

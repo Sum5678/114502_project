@@ -153,14 +153,15 @@ class PemapAll(models.Model):
     display_name = models.CharField(max_length=100)
     kind = models.CharField(max_length=100)
     reason = models.TextField()
-    address = models.CharField(max_length=255)
+    address = models.CharField(max_length=255, default="尚未提供") 
     latitude = models.FloatField()
     longitude = models.FloatField()
     img_url = models.TextField(blank=True)  # ✅ 改成 TextField 儲存 base64 字串
     time_created = models.DateTimeField(default=timezone.now)
     time_reviewed = models.DateTimeField(null=True, blank=True)
     review_status = models.CharField(max_length=50, default="待審核")
-    admin_id = models.IntegerField()
+    admin_id = models.IntegerField(default=99999)
+
 
     class Meta:
         db_table = 'pemap_all'
@@ -170,13 +171,16 @@ class StoreAll(models.Model):
     st_id = models.CharField(max_length=50, primary_key=True)
     poster_id = models.CharField(max_length=255, blank=True)
     store_name = models.CharField(max_length=100)
-    address = models.CharField(max_length=255)
+    address = models.CharField(max_length=255, default="尚未提供")
+    latitude = models.FloatField()
+    longitude = models.FloatField()
     business_hours = models.CharField(max_length=50)
     phone = models.CharField(max_length=20)
-    created_at = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
     reviewed_at = models.DateTimeField(null=True, blank=True)
     review_status = models.CharField(max_length=20, default='pending')  # 審核狀態（預設 pending）
-    admin_id = models.IntegerField()
+    admin_id = models.IntegerField(default=99999)
+
 
     class Meta:
         db_table = 'store_all'  # << 指定實際的 MySQL 資料表名稱
