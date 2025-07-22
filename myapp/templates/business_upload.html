@@ -4,6 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <title>商家資料上傳</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
   <link href="{% static 'assets/vendor/aos/aos.css' %}" rel="stylesheet">
@@ -75,30 +76,30 @@
           <input type="text" class="form-control" id="bs_name" name="bs_name" required>
         </div>
 
-        <label>營業時間段一</label>
-        <div class="row">
-          <div class="col">
-            <input type="time" class="form-control" id="bs_time_start1" name="bs_time_start1" required>
+        <label>營業時間（至少一段）</label>
+        <div id="business-hours-group">
+          <div class="row mb-2 business-hour-row">
+            <div class="col">
+              <input type="time" class="form-control time-start" name="bs_time_start" required>
+            </div>
+            <div class="col">
+              <input type="time" class="form-control time-end" name="bs_time_end" required>
+            </div>
           </div>
-          <div class="col">
-            <input type="time" class="form-control" id="bs_time_end1" name="bs_time_end1" required>
+        </div>
+        <button type="button" class="btn btn-secondary btn-sm mt-2" id="add-hour-btn">➕ 新增一段時間</button>
+
+        <div class="mb-3">
+          <label for="map">選擇地址</label>
+          <div id="latlng-display" class="alert alert-info py-2 px-3 mb-2" style="display: none;">
+            已選擇位置：Lat: <span id="lat-val"></span>, Lng: <span id="lng-val"></span>
           </div>
+          <div id="map" style="height: 300px;"></div>
         </div>
 
-        <label class="mt-3">營業時間段二（如無請留空）</label>
-        <div class="row">
-          <div class="col">
-            <input type="time" class="form-control" id="bs_time_start2" name="bs_time_start2">
-          </div>
-          <div class="col">
-            <input type="time" class="form-control" id="bs_time_end2" name="bs_time_end2">
-          </div>
-        </div>
-
-        <div class="mb-3 mt-3">
-          <label for="bs_address">地址</label>
-          <input type="text" class="form-control" id="bs_address" name="bs_address" required>
-        </div>
+        <input type="hidden" id="bs_address" name="bs_address" required>
+        <input type="hidden" id="latitude" name="latitude" required>
+        <input type="hidden" id="longitude" name="longitude" required>
 
         <div class="mb-3">
           <label for="bs_phone">電話</label>
@@ -123,30 +124,106 @@
 <div id="preloader"></div>
 
 <script>
+document.getElementById("add-hour-btn").addEventListener("click", () => {
+  const container = document.getElementById("business-hours-group");
+  const row = document.createElement("div");
+  row.className = "row mb-2 business-hour-row";
+  row.innerHTML = `
+    <div class="col">
+      <input type="time" class="form-control time-start" name="bs_time_start" required>
+    </div>
+    <div class="col">
+      <input type="time" class="form-control time-end" name="bs_time_end" required>
+    </div>
+    <div class="col-auto">
+      <button type="button" class="btn btn-danger remove-hour">刪除</button>
+    </div>
+  `;
+  container.appendChild(row);
+});
+
+document.getElementById("business-hours-group").addEventListener("click", (e) => {
+  if (e.target.classList.contains("remove-hour")) {
+    e.target.closest(".business-hour-row").remove();
+  }
+});
+</script>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script>
+  const map = L.map('map').setView([25.033964, 121.564472], 13);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
+
+  let marker = null;
+
+  map.on('click', function (e) {
+    const { lat, lng } = e.latlng;
+    window.selectedLat = lat.toFixed(6);
+    window.selectedLng = lng.toFixed(6);
+
+    if (marker) {
+      marker.setLatLng([lat, lng]);
+    } else {
+      marker = L.marker([lat, lng]).addTo(map);
+    }
+    // ✅ 更新隱藏欄位
+    document.getElementById("bs_address").value = `Lat: ${lat}, Lng: ${lng}`;
+    document.getElementById("latitude").value = lat.toFixed(6);
+    document.getElementById("longitude").value = lng.toFixed(6);
+
+    // ✅ 顯示在上方區塊
+    document.getElementById("lat-val").textContent = lat.toFixed(6);
+    document.getElementById("lng-val").textContent = lng.toFixed(6);
+    document.getElementById("latlng-display").style.display = "block";
+    });
+</script>
+
+<script>
 document.getElementById("businessForm").addEventListener("submit", function(e) {
   e.preventDefault();
-  const formData = new FormData(e.target);
-  const data = Object.fromEntries(formData.entries());
 
-  // 合併兩段營業時間
-  const part1 = data.bs_time_start1 && data.bs_time_end1 ? `${data.bs_time_start1} - ${data.bs_time_end1}` : "";
-  const part2 = data.bs_time_start2 && data.bs_time_end2 ? `${data.bs_time_start2} - ${data.bs_time_end2}` : "";
-  data.business_hours = part2 ? `${part1} / ${part2}` : part1;
+  // 驗證基本欄位
+  const bsName = document.getElementById("bs_name").value.trim();
+  const bsAddress = document.getElementById("bs_address").value.trim();
+  const bsPhone = document.getElementById("bs_phone").value.trim();
+  if (!bsName || !bsAddress || !bsPhone) {
+    alert("❗ 請填寫所有必填欄位");
+    return;
+  }
 
-  // 清除不必要欄位
-  delete data.bs_time_start1;
-  delete data.bs_time_end1;
-  delete data.bs_time_start2;
-  delete data.bs_time_end2;
+  // 處理多段營業時間
+  const startInputs = document.getElementsByName("bs_time_start");
+  const endInputs = document.getElementsByName("bs_time_end");
 
-  data.store_name = data.bs_name;
-  data.phone = data.bs_phone;
-  data.address = data.bs_address;
-  data.st_id = Math.floor(Date.now() / 1000);
-  data.poster_id = 1;
+  const businessHours = [];
+  for (let i = 0; i < startInputs.length; i++) {
+    const start = startInputs[i].value;
+    const end = endInputs[i].value;
+    if (start && end) {
+      businessHours.push(`${start} - ${end}`);
+    }
+  }
 
-  const now = new Date();
-  data.created_at = now.toISOString().slice(0, 19).replace("T", " ");
+  if (businessHours.length === 0) {
+    alert("❗ 至少需填寫一段營業時間");
+    return;
+  }
+
+  const data = {
+    store_name: bsName,
+    phone: bsPhone,
+    address: bsAddress,
+    latitude: window.selectedLat || null,
+    longitude: window.selectedLng || null,
+    business_hours: businessHours.join(" / "),
+    st_id: Math.floor(Date.now() / 1000),
+    poster_id: 1,
+    created_at: new Date().toISOString().slice(0, 19).replace("T", " ")
+  };
 
   fetch("/api/submit_store/", {
     method: "POST",
@@ -156,10 +233,9 @@ document.getElementById("businessForm").addEventListener("submit", function(e) {
   .then(res => res.json())
   .then(result => {
     if (result.status === "success") {
-    window.location.href = "{% url 'business_list' %}";  // 上傳成功後自動跳轉到列表
+      window.location.href = "{% url 'business_list' %}";
     } else {
       alert("❌ 上傳失敗：" + result.message);
-      console.error("伺服器錯誤訊息：", result.message);
     }
   })
   .catch(err => {
