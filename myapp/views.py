@@ -1001,6 +1001,8 @@ def submit_store(request):
                 poster_id=int(data.get('poster_id')),  # 從前端傳入 1 或 2 等已存在的 ID
                 store_name=data.get('store_name') or data.get('bs_name'),
                 address=data.get('address') or data.get('bs_address'),
+                latitude=data.get('latitude'),
+                longitude=data.get('longitude'),
                 business_hours=data.get('business_hours'),
                 phone=data.get('phone') or data.get('bs_phone'),
                 created_at=data.get('created_at'),
