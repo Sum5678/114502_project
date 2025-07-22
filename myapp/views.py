@@ -169,28 +169,6 @@ def nearest_police_view(request):
     })
 
 
-#地圖顯示資料 0528
-@require_GET
-def get_police_by_district(request):
-    district = request.GET.get('district')
-    if not district:
-        return JsonResponse([], safe=False)
-
-    # 假設 district 是字串，可以直接過濾
-    police_stations = PoliceAddress.objects.filter(district=district)
-
-    data = []
-    for station in police_stations:
-        data.append({
-            'name': station.name,
-            'phone': station.phone,
-            'latitude': station.latitude,
-            'longitude': station.longitude,
-        })
-
-    return JsonResponse(data, safe=False)
-
-
 #縣市後端
 # regions/views.py
 from django.shortcuts import render, redirect, get_object_or_404

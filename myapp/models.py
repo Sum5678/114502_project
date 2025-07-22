@@ -126,7 +126,7 @@ class EducationPage(models.Model):
 from django.db import models
 
 class TaiwanRegion(models.Model):
-    zipcode = models.CharField(max_length=3)
+    zipcode = models.CharField(max_length=5)
     country_city = models.CharField(max_length=50)
     district_town = models.CharField(max_length=50)
 
@@ -135,7 +135,7 @@ class TaiwanRegion(models.Model):
 
 class PoliceAddress(models.Model):
     precinct_name = models.TextField()
-    zipcode = models.CharField(max_length=3)
+    zipcode = models.CharField(max_length=5)
     address = models.TextField()
     phone = models.TextField()
     POINT_X = models.FloatField()  # DOUBLE 對應 FloatField
