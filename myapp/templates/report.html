@@ -71,13 +71,13 @@
             <!-- 顯示名稱 -->
             <div class="col-md-6">
               <label for="display_name" class="form-label">姓名</label>
-              <input type="text" class="form-control" id="display_name" name="display_name" placeholder="可填匿名">
+              <input type="text" class="form-control" id="display_name" name="display_name" placeholder="可填匿名" required>
             </div>
 
             <!-- Gmail -->
             <div class="col-md-6">
               <label for="email" class="form-label">Gmail</label>
-              <input type="email" class="form-control" id="email" name="email" placeholder="yourmail@gmail.com">
+              <input type="email" class="form-control" id="email" name="email" placeholder="yourmail@gmail.com" required>
             </div>
 
             <!-- 事件分類 -->
@@ -103,16 +103,16 @@
             <!-- 地點 + 地圖 -->
             <div class="col-12">
               <label for="address" class="form-label">地點</label>
-              <input type="text" class="form-control" id="address" name="address" placeholder="請點選地圖" readonly>
-              <input type="hidden" id="latitude" name="latitude">
-              <input type="hidden" id="longitude" name="longitude">
+              <input type="text" class="form-control" id="address" name="address" placeholder="請點選地圖" readonly required>
+              <input type="hidden" id="latitude" name="latitude" required>
+              <input type="hidden" id="longitude" name="longitude" required>
               <div id="map" style="height: 300px; margin-top: 10px;"></div>
             </div>
 
             <!-- 說明 -->
             <div class="col-12">
               <label for="reason" class="form-label">說明</label>
-              <textarea class="form-control" id="reason" name="reason" rows="3" placeholder="請描述發生的情況"></textarea>
+              <textarea class="form-control" id="reason" name="reason" rows="3" placeholder="請描述發生的情況" required></textarea>
             </div>
 
             <!-- 圖片上傳 -->
@@ -232,16 +232,41 @@
     event.preventDefault(); // 阻止預設表單提交
 
     const isAnonymous = document.getElementById("anonymous").checked;
-    const name = isAnonymous ? "匿名" : document.getElementById("display_name").value.trim();
-    const email = isAnonymous ? "anonymous@gmail.com" : document.getElementById("email").value.trim();
-    const kind = document.getElementById("kind").value;
-    const subkind = document.getElementById("subkind").value;
-    const reason = document.getElementById("reason").value.trim();
-    const latitude = document.getElementById("latitude").value;
-    const longitude = document.getElementById("longitude").value;
-    const address = document.getElementById("address").value;
+    const nameInput = document.getElementById("display_name");
+    const emailInput = document.getElementById("email");
+    const kindInput = document.getElementById("kind");
+    const subkindInput = document.getElementById("subkind");
+    const reasonInput = document.getElementById("reason");
+    const addressInput = document.getElementById("address");
+    const latInput = document.getElementById("latitude");
+    const lngInput = document.getElementById("longitude");
     const imageFile = document.getElementById("image").files[0];
 
+    const errors = [];
+
+    if (!isAnonymous) {
+      if (!nameInput.value.trim()) errors.push("請填寫姓名");
+      if (!emailInput.value.trim()) errors.push("請填寫 Gmail");
+    }
+
+    if (!kindInput.value || kindInput.value === "請選擇") errors.push("請選擇可疑性質");
+    if (!subkindInput.value || subkindInput.value === "請先選擇上方分類") errors.push("請選擇詳細分類");
+    if (!reasonInput.value.trim()) errors.push("請填寫說明");
+    if (!addressInput.value.trim() || !latInput.value.trim() || !lngInput.value.trim()) errors.push("請點選地圖選擇地點");
+
+    if (errors.length > 0) {
+      alert("❗ 請完成以下欄位：\n\n" + errors.join("\n"));
+      return;
+    }
+
+    const name = isAnonymous ? "匿名" : nameInput.value.trim();
+    const email = isAnonymous ? "anonymous@gmail.com" : emailInput.value.trim();
+    const kind = kindInput.value;
+    const subkind = subkindInput.value;
+    const reason = reasonInput.value.trim();
+    const latitude = latInput.value;
+    const longitude = lngInput.value;
+    const address = addressInput.value;
     const kind_combined = kind + " - " + subkind;
 
     function sendData(base64Image) {
@@ -284,6 +309,6 @@
       sendData("");
     }
   });
-  </script>
+</script>
 </body>
 </html>
