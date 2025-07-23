@@ -31,7 +31,6 @@ class UserProfile(models.Model):
 
 ####登入後填表的
 from django.db import models
-from django.contrib.auth.models import User
 
 
 
@@ -52,7 +51,6 @@ class ThisUserProfile(models.Model):
     def __str__(self):
         return self.username
 
-        return self.username
 
 
 
