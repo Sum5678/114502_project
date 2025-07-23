@@ -147,7 +147,9 @@ class PoliceAddress(models.Model):
     class Meta:
         db_table = 'PoliceAddress'
 # ------------------------- Pemap 回報資料模型（對應 pemap_all 資料表） -------------------------
+from django.contrib.auth.models import User
 class PemapAll(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     p_id = models.AutoField(primary_key=True)
     poster_id = models.CharField(max_length=255)  # 自動生成
     display_name = models.CharField(max_length=100)
@@ -167,7 +169,9 @@ class PemapAll(models.Model):
         db_table = 'pemap_all'
 
 #-----------------------------------store----------------------------------------------------------
+from django.contrib.auth.models import User
 class StoreAll(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     st_id = models.CharField(max_length=50, primary_key=True)
     poster_id = models.CharField(max_length=255, blank=True)
     store_name = models.CharField(max_length=100)
