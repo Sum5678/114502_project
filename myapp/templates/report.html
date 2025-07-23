@@ -15,45 +15,53 @@
 
   <!-- Header -->
   <header id="header" class="header d-flex align-items-center fixed-top">
-    <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
-      <a href="index.html" class="logo d-flex align-items-center me-auto me-xl-0">
-        <h1 class="sitename">怪怪走開，護您安全</h1><span></span>
+    <div class="container-fluid d-flex justify-content-between align-items-center">
+      <a href="{% url 'home' %}" class="logo d-flex align-items-center">
+        <h1 class="sitename">怪怪走開，護您安全</h1>
       </a>
       <nav id="navmenu" class="navmenu">
         <ul>
-          <li><a href="{% url 'home' %}#hero" class="active">主頁</a></li>
-          <li><a href="index.html#services">簡介及功能介紹</a></li>
-          <li><a href="{% url 'report' %}">填寫表單</a></li>
-          <li><a href="{% url 'business_upload' %}">商家填單</a></li>  
-          <li><a href="{% url 'about' %}">個人資料設定</a></li>        
-          <li><a href="{% url 'post' %}#hero" class="active">我要發文</a></li>
+          <li><a href="{% url 'home' %}#hero">主頁</a></li>
+          <li><a href="{% url 'home' %}#services">簡介及功能介紹</a></li>
+          {% if request.user.is_authenticated %}
+            <li><a href="{% url 'report' %}">填寫表單</a></li>
+          {% else %}
+          <!--  ❌ 未登入點擊導向登入提示頁（或跳登入） -->
+            <li><a href="{% url 'userlogin' %}?next={% url 'report' %}">填寫表單</a></li>
+          {% endif %} 
+          <li><a href="{% url 'business_upload' %}">商家填單</a></li>
+          <li><a href="{% url 'about' %}">個人資料設定</a></li>
+          <li><a href="{% url 'post' %}">我要發文</a></li>
           <li><a href="{% url 'map' %}">事件地圖</a></li>
           <li><a href="{% url 'harassment_prevention' %}">防騷指南</a></li>
-          <li class="dropdown"><a href="#"><span>Dropdown</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
-            <ul>
-              <li><a href="#">Dropdown 1</a></li>
-              <li class="dropdown"><a href="#"><span>Deep Dropdown</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
-                <ul>
-                  <li><a href="#">Deep Dropdown 1</a></li>
-                  <li><a href="#">Deep Dropdown 2</a></li>
-                  <li><a href="#">Deep Dropdown 3</a></li>
-                  <li><a href="#">Deep Dropdown 4</a></li>
-                  <li><a href="#">Deep Dropdown 5</a></li>
-                </ul>
-              </li>
-              <li><a href="#">Dropdown 2</a></li>
-              <li><a href="#">Dropdown 3</a></li>
-              <li><a href="#">Dropdown 4</a></li>
-            </ul>
-          </li>
-          <li><a href="index.html#contact">Contact</a></li>
         </ul>
         <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
       </nav>
-      <!-- <a class="btn-getstarted" href="index.html#about">Get Started</a> -->
-      <a class="btn-getstarted" href="{% url 'userlogin' %}">登入</a>
+      {% if request.user.is_authenticated %}
+      <!-- ✅ 登入狀態，顯示帳號 + 登出 -->
+      <div class="dropdown">
+        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown" style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
+          {{ request.user.username }}
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="{% url '01_userlogin_out' %}">登出</a></li>
+        </ul>
+      </div>
+    {% else %}
+      <!-- ❌ 未登入，顯示登入選項 -->
+      <div class="dropdown">
+        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown" style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
+          登入
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="{% url 'userlogin' %}">一般使用者登入</a></li>
+          <li><a class="dropdown-item" href="{% url 'admin_login' %}">管理員登入</a></li>
+        </ul>
+      </div>
+    {% endif %}
     </div>
   </header>
+
 
   <!-- Main Content -->
   <main class="main" style="padding-top: 100px;">
@@ -71,13 +79,13 @@
             <!-- 顯示名稱 -->
             <div class="col-md-6">
               <label for="display_name" class="form-label">姓名</label>
-              <input type="text" class="form-control" id="display_name" name="display_name" placeholder="可填匿名">
+              <input type="text" class="form-control" id="display_name" name="display_name" placeholder="可填匿名" required>
             </div>
 
             <!-- Gmail -->
             <div class="col-md-6">
               <label for="email" class="form-label">Gmail</label>
-              <input type="email" class="form-control" id="email" name="email" placeholder="yourmail@gmail.com">
+              <input type="email" class="form-control" id="email" name="email" placeholder="yourmail@gmail.com" required>
             </div>
 
             <!-- 事件分類 -->
@@ -103,16 +111,16 @@
             <!-- 地點 + 地圖 -->
             <div class="col-12">
               <label for="address" class="form-label">地點</label>
-              <input type="text" class="form-control" id="address" name="address" placeholder="請點選地圖" readonly>
-              <input type="hidden" id="latitude" name="latitude">
-              <input type="hidden" id="longitude" name="longitude">
+              <input type="text" class="form-control" id="address" name="address" placeholder="請點選地圖" readonly required>
+              <input type="hidden" id="latitude" name="latitude" required>
+              <input type="hidden" id="longitude" name="longitude" required>
               <div id="map" style="height: 300px; margin-top: 10px;"></div>
             </div>
 
             <!-- 說明 -->
             <div class="col-12">
               <label for="reason" class="form-label">說明</label>
-              <textarea class="form-control" id="reason" name="reason" rows="3" placeholder="請描述發生的情況"></textarea>
+              <textarea class="form-control" id="reason" name="reason" rows="3" placeholder="請描述發生的情況" required></textarea>
             </div>
 
             <!-- 圖片上傳 -->
@@ -232,16 +240,41 @@
     event.preventDefault(); // 阻止預設表單提交
 
     const isAnonymous = document.getElementById("anonymous").checked;
-    const name = isAnonymous ? "匿名" : document.getElementById("display_name").value.trim();
-    const email = isAnonymous ? "anonymous@gmail.com" : document.getElementById("email").value.trim();
-    const kind = document.getElementById("kind").value;
-    const subkind = document.getElementById("subkind").value;
-    const reason = document.getElementById("reason").value.trim();
-    const latitude = document.getElementById("latitude").value;
-    const longitude = document.getElementById("longitude").value;
-    const address = document.getElementById("address").value;
+    const nameInput = document.getElementById("display_name");
+    const emailInput = document.getElementById("email");
+    const kindInput = document.getElementById("kind");
+    const subkindInput = document.getElementById("subkind");
+    const reasonInput = document.getElementById("reason");
+    const addressInput = document.getElementById("address");
+    const latInput = document.getElementById("latitude");
+    const lngInput = document.getElementById("longitude");
     const imageFile = document.getElementById("image").files[0];
 
+    const errors = [];
+
+    if (!isAnonymous) {
+      if (!nameInput.value.trim()) errors.push("請填寫姓名");
+      if (!emailInput.value.trim()) errors.push("請填寫 Gmail");
+    }
+
+    if (!kindInput.value || kindInput.value === "請選擇") errors.push("請選擇可疑性質");
+    if (!subkindInput.value || subkindInput.value === "請先選擇上方分類") errors.push("請選擇詳細分類");
+    if (!reasonInput.value.trim()) errors.push("請填寫說明");
+    if (!addressInput.value.trim() || !latInput.value.trim() || !lngInput.value.trim()) errors.push("請點選地圖選擇地點");
+
+    if (errors.length > 0) {
+      alert("❗ 請完成以下欄位：\n\n" + errors.join("\n"));
+      return;
+    }
+
+    const name = isAnonymous ? "匿名" : nameInput.value.trim();
+    const email = isAnonymous ? "anonymous@gmail.com" : emailInput.value.trim();
+    const kind = kindInput.value;
+    const subkind = subkindInput.value;
+    const reason = reasonInput.value.trim();
+    const latitude = latInput.value;
+    const longitude = lngInput.value;
+    const address = addressInput.value;
     const kind_combined = kind + " - " + subkind;
 
     function sendData(base64Image) {
@@ -284,6 +317,6 @@
       sendData("");
     }
   });
-  </script>
+</script>
 </body>
 </html>

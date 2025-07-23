@@ -169,28 +169,6 @@ def nearest_police_view(request):
     })
 
 
-#地圖顯示資料 0528
-@require_GET
-def get_police_by_district(request):
-    district = request.GET.get('district')
-    if not district:
-        return JsonResponse([], safe=False)
-
-    # 假設 district 是字串，可以直接過濾
-    police_stations = PoliceAddress.objects.filter(district=district)
-
-    data = []
-    for station in police_stations:
-        data.append({
-            'name': station.name,
-            'phone': station.phone,
-            'latitude': station.latitude,
-            'longitude': station.longitude,
-        })
-
-    return JsonResponse(data, safe=False)
-
-
 #縣市後端
 # regions/views.py
 from django.shortcuts import render, redirect, get_object_or_404
@@ -888,34 +866,45 @@ from .models import PemapAll
 def room(request, room_name):
     return render(request, 'test_0610chatroom.html', {'room_name': room_name})
 #report_list_view
+from django.contrib.auth.decorators import login_required
+@login_required(login_url='/01userlogin/')
 def report_list_view(request):
-    reports = list(PemapAll.objects.all().order_by('-time_created'))
+    user_reports = list(PemapAll.objects.all().order_by('-time_created'))
     # 加入反向編號（從最大值開始）
-    for i, report in enumerate(reports):
-        report.reverse_id = len(reports) - i
-    return render(request, 'report_list.html', {'reports': reports})
+    for i, report in enumerate(user_reports):
+        report.reverse_id = len(user_reports) - i
+    return render(request, 'report_list.html', {'reports': user_reports})
 
+from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
+from django.shortcuts import render
 from django.utils import timezone
 import json
 
 from .models import PemapAll
 
+# ✅ 顯示 report.html 表單頁面（未登入會導到登入頁）
+@login_required(login_url='/01userlogin/')
+def report_view(request):
+    return render(request, 'report.html')
+
+
+# ✅ 接收 POST 資料 API（表單送出時）
+@login_required(login_url='/01userlogin/')
 @csrf_exempt
 def submit_report(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
 
-            # 基本資料欄位
-            poster_id = int(timezone.now().strftime("%Y%m%d%H%M%S"))
+            user = request.user  # ✅ 登入使用者
             display_name = data.get('display_name', '')
             kind = data.get('kind', '')
             reason = data.get('reason', '')
             address = data.get('address', '')
 
-            # 經緯度解析
+            # 經緯度處理
             latitude = 0
             longitude = 0
             if ',' in address:
@@ -927,19 +916,15 @@ def submit_report(request):
                     except ValueError:
                         pass
 
-            img_url = data.get('img_url', '')  # base64
+            img_url = data.get('img_url', '')
 
-            # ======== AI 初步審核區塊 ========
-            # 模擬送出給 ai_judge 的 JSON 格式
+            # ====== AI 初步審核 ======
             description = reason.strip()
-
-            # 敏感詞分類詞庫
             sensitive_categories = {
                 '仇恨言論': ['仇恨', '恨死', '殺光', '滅絕'],
                 '暴力': ['暴力', '打死', '砍', '攻擊', '虐待'],
                 '歧視': ['歧視', '種族主義', '排擠', '偏見'],
             }
-
             case_related_keywords = [
                 '案件', '事件', '警方', '警察', '報警', '報案', '證據',
                 '被跟蹤', '跟蹤', '尾隨', '偷拍', '性騷擾', '偷窺', '侵入',
@@ -960,11 +945,10 @@ def submit_report(request):
                     review_status = '需再由人工審核'
                 else:
                     review_status = '人工審核通過'
-            # ======== 審核區塊結束 ========
+            # =========================
 
-            # 寫入資料表
             PemapAll.objects.create(
-                poster_id=poster_id,
+                user=user,
                 display_name=display_name,
                 kind=kind,
                 reason=reason,
@@ -974,7 +958,7 @@ def submit_report(request):
                 img_url=img_url,
                 time_created=timezone.now(),
                 review_status=review_status,
-                admin_id = 99999
+                admin_id=99999,
             )
 
             return JsonResponse({"status": "success", "review_status": review_status})
@@ -983,11 +967,17 @@ def submit_report(request):
             return JsonResponse({"status": "error", "message": str(e)})
     else:
         return JsonResponse({"status": "error", "message": "Invalid method"})
+
 #-----------------about---------------------------
 def about(request):
     return render(request, 'about.html')
 #----------------store---------------------------------------------------------------------
+from django.contrib.auth.decorators import login_required
+@login_required(login_url='/01userlogin/')
+def business_upload(request):
+    return render(request, 'business_upload.html')
 
+@login_required(login_url='/01userlogin/')
 @csrf_exempt
 def submit_store(request):
     if request.method == 'POST':
@@ -997,6 +987,7 @@ def submit_store(request):
             timestamp = int(timezone.now().timestamp())
 
             store = StoreAll(
+                user=request.user,
                 st_id=timestamp,
                 poster_id=int(data.get('poster_id')),  # 從前端傳入 1 或 2 等已存在的 ID
                 store_name=data.get('store_name') or data.get('bs_name'),
@@ -1016,15 +1007,14 @@ def submit_store(request):
             return JsonResponse({'status': 'error', 'message': str(e)})
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
 
-def business_upload(request):
-    return render(request, 'business_upload.html')
-
+from django.contrib.auth.decorators import login_required
+@login_required(login_url='/01userlogin/')
 def business_list_view(request):
-    stores = list(StoreAll.objects.all().order_by('-created_at'))  # 依照 created_at 遞減排序
-    total = len(stores)
-    for i, store in enumerate(stores):
+    user_stores = list(StoreAll.objects.all().order_by('-created_at'))  # 依照 created_at 遞減排序
+    total = len(user_stores)
+    for i, store in enumerate(user_stores):
         store.reverse_id = total - i  # 編號從總數開始往下減
-    return render(request, 'business_list.html', {'stores': stores})
+    return render(request, 'business_list.html', {'stores': user_stores})
 
 
 
