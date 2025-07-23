@@ -124,7 +124,7 @@ class EducationPage(models.Model):
 from django.db import models
 
 class TaiwanRegion(models.Model):
-    zipcode = models.CharField(max_length=3)
+    zipcode = models.CharField(max_length=5)
     country_city = models.CharField(max_length=50)
     district_town = models.CharField(max_length=50)
 
@@ -133,7 +133,7 @@ class TaiwanRegion(models.Model):
 
 class PoliceAddress(models.Model):
     precinct_name = models.TextField()
-    zipcode = models.CharField(max_length=3)
+    zipcode = models.CharField(max_length=5)
     address = models.TextField()
     phone = models.TextField()
     POINT_X = models.FloatField()  # DOUBLE 對應 FloatField
@@ -145,7 +145,9 @@ class PoliceAddress(models.Model):
     class Meta:
         db_table = 'PoliceAddress'
 # ------------------------- Pemap 回報資料模型（對應 pemap_all 資料表） -------------------------
+from django.contrib.auth.models import User
 class PemapAll(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     p_id = models.AutoField(primary_key=True)
     poster_id = models.CharField(max_length=255)  # 自動生成
     display_name = models.CharField(max_length=100)
@@ -165,7 +167,9 @@ class PemapAll(models.Model):
         db_table = 'pemap_all'
 
 #-----------------------------------store----------------------------------------------------------
+from django.contrib.auth.models import User
 class StoreAll(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     st_id = models.CharField(max_length=50, primary_key=True)
     poster_id = models.CharField(max_length=255, blank=True)
     store_name = models.CharField(max_length=100)
