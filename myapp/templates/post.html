@@ -105,7 +105,6 @@
       </nav>
       <div class="dropdown">
       {% if request.user.is_authenticated %}
-        <!-- ✅ 已登入：顯示帳號名稱與登出選單 -->
         <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown" style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
           {{ request.user.username }}
         </a>
@@ -113,7 +112,6 @@
           <li><a class="dropdown-item" href="{% url '01_userlogin_out' %}">登出</a></li>
         </ul>
       {% else %}
-        <!-- ❌ 未登入：顯示登入選單 -->
         <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown" style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
           登入
         </a>
@@ -123,7 +121,6 @@
         </ul>
       {% endif %}
     </div>
-
   </header>
 
   <main class="main">
@@ -138,10 +135,9 @@
         <h2 class="mb-4">我要發文｜交流區</h2>
         <form method="post" action="{% url 'post' %}">
           {% csrf_token %}
-          <label for="nickname">發文名稱</label>
-          <select id="nickname" name="nickname" onchange="updateAvatar()" required>
-            <option value="testuser" selected>testuser</option>
-          </select>
+
+          <!-- ✅ 隱藏 nickname 欄位，預設為「匿名」 -->
+          <input type="hidden" name="nickname" id="nickname" value="匿名">
 
           <label>選擇背景顏色</label>
           <div class="color-options" id="colorOptions">
@@ -163,7 +159,7 @@
 
           <div class="avatar-preview">
             <img id="avatar" src="" alt="預覽頭像">
-            <span id="nickname-label">testuser</span>
+            <span id="nickname-label">匿名</span>
           </div>
 
           <label for="title">文章標題</label>
@@ -192,7 +188,7 @@
       if (elem) elem.classList.add('selected');
     }
     function updateAvatar() {
-      const nickname = document.getElementById("nickname").value || "匿名";
+      const nickname = "匿名";  // ✅ 強制使用匿名
       const style = document.getElementById("avatarStyle").value;
       const avatarUrl = `https://api.dicebear.com/7.x/${style}/svg?seed=${encodeURIComponent(nickname)}&backgroundColor=${bgColor}`;
       document.getElementById("avatar").src = avatarUrl;

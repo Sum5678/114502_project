@@ -1652,28 +1652,16 @@ def store_map_view(request):
 
 
 
-from django.shortcuts import render, redirect
+from .models import ChatInteraction  # ✅ 不再匯入 ThisUserProfile
+from datetime import datetime
 from django.contrib.auth.decorators import login_required
-from .models import ThisUserProfile
-from datetime import datetime  # ✅ 加入 datetime 模組
+from django.shortcuts import render, redirect
 
-# 用來保存所有發文資料（暫時記憶用，不進資料庫）
-ALL_POSTS = []
-
-@login_required(login_url='/01userlogin/')  # ✅ 明確指定登入頁面
+@login_required(login_url='/01userlogin/')
 def post(request):
-    try:
-        user_profile = ThisUserProfile.objects.get(username=request.user.username)
-        nickname_list = []
-        if user_profile.default_nickname1:
-            nickname_list.append(user_profile.default_nickname1)
-        if user_profile.default_nickname2:
-            nickname_list.append(user_profile.default_nickname2)
-    except ThisUserProfile.DoesNotExist:
-        nickname_list = []
-
     if request.method == 'POST':
-        nickname = request.POST.get('nickname')
+        # ✅ 固定暱稱為 (匿名)
+        nickname = "(匿名)"
         bgcolor = request.POST.get('bgcolor')
         avatar_style = request.POST.get('avatar_style')
         title = request.POST.get('title')
@@ -1681,31 +1669,24 @@ def post(request):
 
         avatar_url = f"https://api.dicebear.com/7.x/{avatar_style}/svg?seed={nickname}&backgroundColor={bgcolor}"
 
-        post_data = {
-            'nickname': nickname,
-            'bgcolor': bgcolor,
-            'avatar_style': avatar_style,
-            'title': title,
-            'content': content,
-            'avatar_url': avatar_url,
-            'created_at': datetime.now(),  # ✅ 發文時間
-        }
+        # ✅ 不用 this_user，改為用 request.user 儲存
+        ChatInteraction.objects.create(
+            user=request.user,  # 你原本 models.ForeignKey 的 user 是對應 Django 使用者
+            nickname=nickname,
+            bgcolor=bgcolor,
+            avatar_style=avatar_style,
+            avatar_url=avatar_url,
+            title=title,
+            message_content=content,
+            created_at=datetime.now()
+        )
 
-        # 加到全域貼文列表（記憶體中的模擬儲存）
-        ALL_POSTS.append(post_data)
+        return redirect('post_display')  # 發文成功轉跳至展示頁
 
-        # 發文成功後跳轉至展示頁
-        return redirect('post_display')
+    return render(request, 'post.html')
 
-    return render(request, 'post.html', {
-        'nickname_list': nickname_list,
-        'success': False,
-        'post_data': None,
-    })
 
-# 🔽 展示所有發文的 view
+# 展示頁保持不變
 def post_display(request):
-    return render(request, 'post_display.html', {
-        'posts': ALL_POSTS
-    })
-
+    posts = ChatInteraction.objects.all().order_by('-created_at')
+    return render(request, 'post_display.html', {'posts': posts})

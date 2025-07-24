@@ -203,3 +203,27 @@ class Admins(models.Model):
     class Meta:
         db_table = 'Admins'
         managed = False  # 不讓 Django 嘗試管理這個資料表
+
+
+from django.contrib.auth.models import User  # ✅ 引入 Django 原生 User
+from django.db import models
+
+class ChatInteraction(models.Model):
+    interaction_id = models.AutoField(primary_key=True)
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        db_column='user_id'  # ✅ 指定欄位名與資料表相符
+    )
+    nickname = models.CharField(max_length=50)
+    bgcolor = models.CharField(max_length=20)
+    avatar_style = models.CharField(max_length=50)
+    avatar_url = models.URLField(max_length=300)
+    title = models.CharField(max_length=200)
+    message_content = models.TextField()
+    created_at = models.DateTimeField()
+
+    class Meta:
+        db_table = 'chat_interaction'  # ✅ 對應資料表名稱
+        managed = False  # ✅ 禁止 Django 自行創建這張表
+
