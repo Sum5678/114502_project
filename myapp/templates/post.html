@@ -104,13 +104,26 @@
         <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
       </nav>
       <div class="dropdown">
-        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown" style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">登入</a>
+      {% if request.user.is_authenticated %}
+        <!-- ✅ 已登入：顯示帳號名稱與登出選單 -->
+        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown" style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
+          {{ request.user.username }}
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="{% url '01_userlogin_out' %}">登出</a></li>
+        </ul>
+      {% else %}
+        <!-- ❌ 未登入：顯示登入選單 -->
+        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown" style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
+          登入
+        </a>
         <ul class="dropdown-menu dropdown-menu-end">
           <li><a class="dropdown-item" href="{% url 'userlogin' %}">一般使用者登入</a></li>
           <li><a class="dropdown-item" href="{% url 'admin_login' %}">管理員登入</a></li>
         </ul>
-      </div>
+      {% endif %}
     </div>
+
   </header>
 
   <main class="main">
