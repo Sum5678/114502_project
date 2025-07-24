@@ -34,6 +34,8 @@ urlpatterns = [
     
     path('admin/', admin.site.urls),
     path('admin/region/', views.taiwan_regions_admin, name='taiwan_regions_admin'),
+
+    #台灣縣市和行政區/最近警局/教育網頁的新增改刪部分
     path('taiwan-regions-admin/', views.taiwan_regions_admin, name='taiwan_regions_admin'),
     path('police-address/', views.police_address_list, name='police_address_list'),
     path('police-address/add/', views.police_address_add, name='police_address_add'),
@@ -44,6 +46,7 @@ urlpatterns = [
     path('education-crud/edit/<int:pk>/', views.education_update, name='education_update'),
     path('education-crud/delete/<int:pk>/', views.education_delete, name='education_delete'),
     path('education-crud/image/<int:pk>/', views.education_image, name='education_image'), 
+
     path('anonymous-chat/', views.anonymous_chat, name='anonymous-chat'),  # anonymous-chat 頁面
     path('index35/', views.index35, name='index35'),  # 新增 index35.html 路由
     path('map/', views.map_view, name='map'),  # 添加 map.html 路由
