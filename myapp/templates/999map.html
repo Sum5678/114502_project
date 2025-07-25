@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 {% load static %}
-<img src="{% static 'assets/img/paw_icon.png' %}" alt="paw">
 
 <html lang="zh-Hant">
 
@@ -152,8 +151,13 @@
                              const marker = new google.maps.Marker({
                                 position: { lat: report.latitude, lng: report.longitude },
                                 map: map,
-                                title: report.display_name,
-                                icon: "{% static 'assets/img/paw_icon.png' %}"
+                                title: report.display_name, 
+                                icon: {
+                                        url: "{% static 'assets/img/paw_icon.png' %}",
+                                        scaledSize: new google.maps.Size(30, 30),  // 你想要的寬、高（像素）
+                                        origin: new google.maps.Point(0, 0),       // 起始點
+                                        anchor: new google.maps.Point(15, 15)      // 圖示錨點 (通常是圖片中心)
+                                    }
                             });
                             const infowindow = new google.maps.InfoWindow({
                                 content: `<strong>${report.display_name}</strong><br>

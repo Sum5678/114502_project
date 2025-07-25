@@ -1666,10 +1666,18 @@ def map_view(request):
 
     
 #-----------使用者 商家地圖-----------
+from django.http import JsonResponse
+from django.shortcuts import render
 from .models import StoreAll
 
+# 頁面：商家地圖顯示頁面
+def store_map_view(request):
+    return render(request, 'store_map.html')
+
+# API：取得審核通過的商家資料
 def store_data_api(request):
     approved_stores = StoreAll.objects.filter(review_status='approved')
+
     data = [
         {
             'st_id': store.st_id,
@@ -1680,12 +1688,32 @@ def store_data_api(request):
             'longitude': store.longitude,
         }
         for store in approved_stores
-        if hasattr(store, 'latitude') and hasattr(store, 'longitude')  # 如果你有這兩欄
+        if store.latitude is not None and store.longitude is not None
     ]
     return JsonResponse(data, safe=False)
 
-def store_map_view(request):
-    return render(request, 'store_map.html')
+
+
+# from .models import StoreAll
+
+# def store_data_api(request):
+#     approved_stores = StoreAll.objects.filter(review_status='approved')
+#     data = [
+#         {
+#             'st_id': store.st_id,
+#             'store_name': store.store_name,
+#             'address': store.address,
+#             'phone': store.phone,
+#             'latitude': store.latitude,
+#             'longitude': store.longitude,
+#         }
+#         for store in approved_stores
+#         if hasattr(store, 'latitude') and hasattr(store, 'longitude')  # 如果你有這兩欄
+#     ]
+#     return JsonResponse(data, safe=False)
+
+# def store_map_view(request):
+#     return render(request, 'store_map.html')
 
 
 
