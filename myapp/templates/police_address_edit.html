@@ -1,15 +1,78 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-Hant">
 <head>
-    <title>{{ action }}警局資料</title>
+    <meta charset="UTF-8">
+    <title>編輯警局資料</title>
+
+    <!-- ✅ Bootstrap 5 -->
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+    >
+
+    <style>
+        .form-label {
+            font-weight: bold;
+        }
+        .button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 6px 12px;
+            text-decoration: none;
+            border-radius: 4px;
+            display: inline-block;
+        }
+        .button:hover {
+            background-color: #45a049;
+        }
+        .cancel-btn {
+            background-color: #6c757d;
+        }
+        .cancel-btn:hover {
+            background-color: #5a6268;
+        }
+    </style>
 </head>
-<body>
-<h1>{{ action }}警局資料</h1>
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">儲存</button>
-</form>
-<a href="{% url 'police_address_list' %}">返回列表</a>
+<body class="bg-light">
+
+<div class="container-sm my-5">
+    <div class="text-center mb-4">
+        <h1>編輯警局資料</h1>
+    </div>
+
+    <form method="post" class="mx-auto" style="max-width: 600px;">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="precinct_name" class="form-label">警局名稱</label>
+            <input type="text" class="form-control" id="precinct_name" name="precinct_name" value="{{ address.precinct_name }}" required>
+        </div>
+        <div class="mb-3">
+            <label for="zipcode" class="form-label">郵遞區號</label>
+            <input type="text" class="form-control" id="zipcode" name="zipcode" value="{{ address.zipcode }}" required>
+        </div>
+        <div class="mb-3">
+            <label for="address" class="form-label">地址</label>
+            <textarea class="form-control" id="address" name="address" rows="2" required>{{ address.address }}</textarea>
+        </div>
+        <div class="mb-3">
+            <label for="phone" class="form-label">電話</label>
+            <input type="text" class="form-control" id="phone" name="phone" value="{{ address.phone }}" required>
+        </div>
+        <div class="mb-3">
+            <label for="POINT_X" class="form-label">經度 (POINT_X)</label>
+            <input type="text" class="form-control" id="POINT_X" name="POINT_X" value="{{ address.POINT_X }}" required>
+        </div>
+        <div class="mb-3">
+            <label for="POINT_Y" class="form-label">緯度 (POINT_Y)</label>
+            <input type="text" class="form-control" id="POINT_Y" name="POINT_Y" value="{{ address.POINT_Y }}" required>
+        </div>
+
+        <div class="text-center">
+            <button type="submit" class="button">儲存變更</button>
+            <a href="{% url 'police_address_list' %}" class="button cancel-btn ms-2">取消</a>
+        </div>
+    </form>
+</div>
+
 </body>
 </html>
