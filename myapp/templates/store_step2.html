@@ -1,0 +1,30 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>撰寫通知信</title>
+  <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+</head>
+<body>
+  <main class="container my-5">
+    <h1 class="mb-4">撰寫通知信</h1>
+
+    <p><strong>Gmail：</strong>{{ store.gmail }}</p>
+
+    <p>您可以透過以下按鈕開啟 Gmail 並撰寫通知信：</p>
+
+    <a
+      class="btn btn-danger mb-3"
+      href="https://mail.google.com/mail/?view=cm&fs=1&to={{ store.gmail|urlencode }}&su=您的店家審核未通過&body=您好，您的店家「{{ store.store_name }}」經審核未通過，原因請聯繫管理員。"
+      target="_blank"
+    >
+      開啟 Gmail 撰寫通知信
+    </a>
+
+    <p class="mt-4">或自行撰寫郵件通知上傳者，謝謝您的審核。</p>
+
+    <a href="{% url 'store_judge' %}" class="btn btn-secondary">返回店家審核清單</a>
+  </main>
+</body>
+</html>
