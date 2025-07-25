@@ -173,25 +173,40 @@ def nearest_police_view(request):
 # regions/views.py
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import TaiwanRegion
-from .region_forms import TaiwanRegionForm
+from .taiwan_regions_forms import TaiwanRegionForm
 
 def taiwan_regions_admin(request):
-    if request.method == 'POST':
-        if 'edit_id' in request.POST and request.POST['edit_id']:
-            region = get_object_or_404(TaiwanRegion, id=request.POST['edit_id'])
-            form = TaiwanRegionForm(request.POST, instance=region)
-        else:
-            form = TaiwanRegionForm(request.POST)
+    regions = TaiwanRegion.objects.all()
+    return render(request, 'taiwan_regions_admin.html', {'regions': regions})
 
+def taiwan_regions_add(request):
+    if request.method == 'POST':
+        form = TaiwanRegionForm(request.POST)
         if form.is_valid():
             form.save()
             return redirect('taiwan_regions_admin')
-    elif 'delete_id' in request.GET:
-        TaiwanRegion.objects.filter(id=request.GET['delete_id']).delete()
+    else:
+        form = TaiwanRegionForm()
+    return render(request, 'taiwan_regions_add.html', {'form': form, 'action': '新增'})
+
+def taiwan_regions_edit(request, id):
+    region = get_object_or_404(TaiwanRegion, pk=id)
+    if request.method == 'POST':
+        form = TaiwanRegionForm(request.POST, instance=region)
+        if form.is_valid():
+            form.save()
+            return redirect('taiwan_regions_admin')
+    else:
+        form = TaiwanRegionForm(instance=region)
+    return render(request, 'taiwan_regions_edit.html', {'form': form, 'action': '編輯'})
+
+def taiwan_regions_delete(request, id):
+    region = get_object_or_404(TaiwanRegion, pk=id)
+    if request.method in ['POST', 'GET']:
+        region.delete()
         return redirect('taiwan_regions_admin')
 
-    data = TaiwanRegion.objects.all().order_by('country_city', 'district_town')
-    return render(request, 'taiwan_regions_admin.html', {'regions': data})
+
 
 #警局地址後端
 from django.shortcuts import render, get_object_or_404, redirect

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8" />
+    <title>{{ action }} 台灣縣市／鄉鎮市區資料</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+        form input {
+            padding: 6px;
+            margin-bottom: 12px;
+            width: 300px;
+            font-size: 1rem;
+        }
+        button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            font-size: 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        a {
+            margin-left: 10px;
+            text-decoration: none;
+            color: #555;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+<h1>{{ action }} 台灣縣市／鄉鎮市區資料</h1>
+
+<form method="post">
+    {% csrf_token %}
+    <!-- 假設你用 Django Form，這裡使用 form 物件 -->
+    {{ form.non_field_errors }}
+    <div>
+        {{ form.zipcode.label_tag }}<br />
+        {{ form.zipcode }}
+        {{ form.zipcode.errors }}
+    </div>
+    <div>
+        {{ form.country_city.label_tag }}<br />
+        {{ form.country_city }}
+        {{ form.country_city.errors }}
+    </div>
+    <div>
+        {{ form.district_town.label_tag }}<br />
+        {{ form.district_town }}
+        {{ form.district_town.errors }}
+    </div>
+
+    <button type="submit">{{ action }}</button>
+    <a href="{% url 'taiwan_regions_admin' %}">取消</a>
+</form>
+
+</body>
+</html>
