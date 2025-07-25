@@ -1,76 +1,159 @@
 <!DOCTYPE html>
+{% load static %}
 <html lang="zh-Hant">
+
 <head>
-    <meta charset="UTF-8" />
-    <title>台灣地區管理系統</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        h1 {
-            margin-bottom: 20px;
-        }
-        table, th, td {
-            border: 1px solid #aaa;
-            border-collapse: collapse;
-            padding: 6px;
-        }
-        th {
-            background-color: #eee;
-        }
-        a.button, button.button {
-            background-color: #4CAF50;
-            color: white;
-            padding: 4px 8px;
-            text-decoration: none;
-            border: none;
-            border-radius: 3px;
-            cursor: pointer;
-        }
-        a.button:hover, button.button:hover {
-            background-color: #45a049;
-        }
-        a.delete, button.delete {
-            background-color: #f44336;
-        }
-        a.delete:hover, button.delete:hover {
-            background-color: #c0392b;
-        }
-    </style>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>{% block title %}台灣地區管理系統{% endblock %}</title>
+  <meta content="" name="description" />
+  <meta content="" name="keywords" />
+
+  <link href="{% static 'assets/img/favicon.png' %}" rel="icon" />
+  <link href="{% static 'assets/img/apple-touch-icon.png' %}" rel="apple-touch-icon" />
+
+  <link
+    href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700|Nunito:300,400,600,700,800|Poppins:300,400,500,600,700"
+    rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/boxicons/2.1.0/css/boxicons.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css" rel="stylesheet" />
+
+  <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet" />
+  <link href="{% static 'assets/vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet" />
+  <link href="{% static 'assets/vendor/boxicons/css/boxicons.min.css' %}" rel="stylesheet" />
+  <link href="{% static 'assets/vendor/quill/quill.snow.css' %}" rel="stylesheet" />
+  <link href="{% static 'assets/vendor/quill/quill.bubble.css' %}" rel="stylesheet" />
+  <link href="{% static 'assets/vendor/simple-datatables/style.css' %}" rel="stylesheet" />
+
+  <link href="{% static 'assets/css/main.css' %}" rel="stylesheet" />
+
+  <style>
+    a.btn-custom,
+    button.btn-custom {
+      background-color: #4caf50;
+      color: white;
+      border-radius: 4px;
+      padding: 6px 12px;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      display: inline-block;
+    }
+
+    a.btn-custom:hover,
+    button.btn-custom:hover {
+      background-color: #45a049;
+      color: white;
+      text-decoration: none;
+    }
+
+    a.btn-delete,
+    button.btn-delete {
+      background-color: #f44336;
+      color: white;
+      border-radius: 4px;
+      padding: 6px 12px;
+      border: none;
+      cursor: pointer;
+      display: inline-block;
+      text-decoration: none;
+    }
+
+    a.btn-delete:hover,
+    button.btn-delete:hover {
+      background-color: #c0392b;
+      color: white;
+      text-decoration: none;
+    }
+  </style>
 </head>
-<body>
 
-<h1>台灣縣市／鄉鎮市區管理</h1>
+<body class="index-page">
+  <header id="header" class="header d-flex align-items-center fixed-top">
+    <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
+      <a href="{% url 'admin_index' %}" class="logo d-flex flex-column align-items-start me-auto me-xl-0">
+        <h1 class="sitename">台灣地區管理系統</h1>
+      </a>
 
-<!-- 新增資料按鈕 -->
-<a href="{% url 'taiwan_regions_add' %}" class="button">新增縣市資料</a>
-<br><br>
+      <nav id="navmenu" class="navmenu">
+        <ul>
+          <li><a href="{% url 'admin_index' %}#hero">管理員主頁</a></li>
+          <li><a href="{% url 'taiwan_regions_admin' %}" class="active">縣市管理</a></li>
+          <li><a href="{% url 'admin_logout' %}">登出</a></li>
+        </ul>
+        <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+      </nav>
+    </div>
+  </header>
 
-<!-- 資料表格 -->
-<table>
-    <tr>
-        <th>ID</th>
-        <th>郵遞區號</th>
-        <th>縣市</th>
-        <th>鄉鎮市區</th>
-        <th>操作</th>
-    </tr>
-    {% for r in regions %}
-    <tr>
-        <td>{{ r.id }}</td>
-        <td>{{ r.zipcode }}</td>
-        <td>{{ r.country_city }}</td>
-        <td>{{ r.district_town }}</td>
-        <td>
-            <a href="{% url 'taiwan_regions_edit' r.id %}" class="button">編輯</a>
-            <a href="{% url 'taiwan_regions_delete' r.id %}" class="button delete" onclick="return confirm('確定刪除？')">刪除</a>
-        </td>
-    </tr>
-    {% empty %}
-    <tr><td colspan="5">目前沒有資料</td></tr>
-    {% endfor %}
-</table>
+  <main class="main" style="padding-top: 100px;">
+    <section class="section light-background">
+      <div class="container" data-aos="fade-up">
+        <div class="main-content bg-white p-4 shadow rounded">
+          <h2 class="mb-4">台灣縣市／鄉鎮市區管理</h2>
 
+          <!-- 新增資料按鈕 -->
+          <a href="{% url 'taiwan_regions_add' %}" class="btn btn-custom mb-3">新增縣市資料</a>
+
+          <!-- 資料表格 -->
+          <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle text-center">
+              <thead class="table-primary">
+                <tr>
+                  <th>ID</th>
+                  <th>郵遞區號</th>
+                  <th>縣市</th>
+                  <th>鄉鎮市區</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for r in regions %}
+                <tr>
+                  <td>{{ r.id }}</td>
+                  <td>{{ r.zipcode }}</td>
+                  <td>{{ r.country_city }}</td>
+                  <td>{{ r.district_town }}</td>
+                  <td>
+                    <a href="{% url 'taiwan_regions_edit' r.id %}" class="btn btn-custom btn-sm">編輯</a>
+                    <a href="{% url 'taiwan_regions_delete' r.id %}" class="btn btn-delete btn-sm" onclick="return confirm('確定刪除？')">刪除</a>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="5">目前沒有資料</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer id="footer" class="footer position-relative light-background">
+    <div class="container copyright text-center mt-4">
+      <p>© <span>Copyright</span> <strong class="sitename">Append</strong> <span>All Rights Reserved</span></p>
+      <div class="credits">
+        Designed by <a href="https://bootstrapmade.com/">BootstrapMade</a>
+      </div>
+    </div>
+  </footer>
+
+  <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i
+      class="bi bi-arrow-up-short"></i></a>
+  <div id="preloader"></div>
+
+  <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/php-email-form/validate.js' %}"></script>
+  <script src="{% static 'assets/vendor/aos/aos.js' %}"></script>
+  <script src="{% static 'assets/vendor/glightbox/js/glightbox.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/purecounter/purecounter_vanilla.js' %}"></script>
+  <script src="{% static 'assets/vendor/imagesloaded/imagesloaded.pkgd.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/isotope-layout/isotope.pkgd.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/swiper/swiper-bundle.min.js' %}"></script>
+  <script src="{% static 'assets/js/main.js' %}"></script>
 </body>
+
 </html>
