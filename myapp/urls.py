@@ -16,6 +16,7 @@ urlpatterns = [
     path('about/', views.about, name='about'),
     path('report/', views.report_view, name='report'),#填寫表單
     path('report/list/', views.report_list_view, name='report_list'),
+
     path('', views.index, name='home'),
     path('index.html', views.index, name='index'),#主畫面
     path('tables.html', views.tables, name='tables'),
@@ -28,14 +29,14 @@ urlpatterns = [
     path('500.html', views.error_500, name='500'),
     path('401.html', views.error_401, name='401'),
     path('404.html', views.error_404, name='404'),
-    path('harassment_prevention/', views.harassment_prevention, name='harassment_prevention'),
-    path('education/', views.education_page, name='education_page'),
-    path('nearest-police/', views.nearest_police_view, name='nearest_police'),
     
     path('admin/', admin.site.urls),
     path('admin/region/', views.taiwan_regions_admin, name='taiwan_regions_admin'),
 
-    #台灣縣市和行政區/最近警局/教育網頁的新增改刪部分
+    #台灣縣市和行政區/最近警局/教育網頁的部分
+    path('harassment_prevention/', views.harassment_prevention, name='harassment_prevention'),
+    path('education/', views.education_page, name='education_page'),
+    path('nearest-police/', views.nearest_police_view, name='nearest_police'),
     path('taiwan-regions-admin/', views.taiwan_regions_admin, name='taiwan_regions_admin'),
     path('police-address/', views.police_address_list, name='police_address_list'),
     path('police-address/add/', views.police_address_add, name='police_address_add'),
