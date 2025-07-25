@@ -217,15 +217,37 @@ def police_address_list(request):
     addresses = PoliceAddress.objects.all().order_by('precinct_name')
     return render(request, 'police_address_admin.html', {'addresses': addresses})
 
+from django.shortcuts import render, redirect
+from .models import PoliceAddress
+from django.urls import reverse
+from django.contrib import messages
+
 def police_address_add(request):
     if request.method == 'POST':
-        form = PoliceAddressForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('police_address_list')
-    else:
-        form = PoliceAddressForm()
-    return render(request, 'police_address_edit.html', {'form': form, 'action': '新增'})
+        precinct_name = request.POST.get('precinct_name')
+        zipcode = request.POST.get('zipcode')
+        address = request.POST.get('address')
+        phone = request.POST.get('phone')
+        point_x = request.POST.get('POINT_X')
+        point_y = request.POST.get('POINT_Y')
+
+        # 資料驗證可視需求加強
+        if precinct_name and zipcode and address and phone and point_x and point_y:
+            PoliceAddress.objects.create(
+                precinct_name=precinct_name,
+                zipcode=zipcode,
+                address=address,
+                phone=phone,
+                POINT_X=point_x,
+                POINT_Y=point_y
+            )
+            messages.success(request, "成功新增警局資料！")
+            return redirect('police_address_list')  # 替換為你列表頁的網址名稱
+        else:
+            messages.error(request, "所有欄位皆為必填，請確認填寫完整。")
+
+    return render(request, 'police_address_add.html')
+
 
 def police_address_edit(request, pk):
     address = get_object_or_404(PoliceAddress, pk=pk)
