@@ -1,5 +1,7 @@
 <!DOCTYPE html>
 {% load static %}
+<img src="{% static 'assets/img/paw_icon.png' %}" alt="paw">
+
 <html lang="zh-Hant">
 
 <head>
@@ -10,8 +12,12 @@
   <meta content="" name="keywords">
 
   <!-- Favicons -->
-  <link href="{% static 'assets/img/favicon.png' %}" rel="icon">
-  <link href="{% static 'assets/img/apple-touch-icon.png' %}" rel="apple-touch-icon">
+    
+    <link href="{% static 'assets/img/paw_icon.png' %}" rel="icon" type="image/png">
+    <link href="{% static 'assets/img/paw_icon.png' %}" rel="apple-touch-icon">
+
+  <!-- <link href="{% static 'assets/img/favicon.png' %}" rel="icon">
+  <link href="{% static 'assets/img/apple-touch-icon.png' %}" rel="apple-touch-icon"> -->
 
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700|Nunito:300,400,600,700,800|Poppins:300,400,500,600,700" rel="stylesheet">
@@ -125,6 +131,7 @@
     </section>
 
     <script>
+
         function initMap() {
             console.log("initMap called");
             const center = { lat: 25.055, lng: 121.576 };
@@ -142,10 +149,11 @@
                     console.log("取得報告資料:", data);
                     data.forEach(report => {
                         if (typeof report.latitude === 'number' && typeof report.longitude === 'number') {
-                            const marker = new google.maps.Marker({
+                             const marker = new google.maps.Marker({
                                 position: { lat: report.latitude, lng: report.longitude },
                                 map: map,
-                                title: report.display_name
+                                title: report.display_name,
+                                icon: "{% static 'assets/img/paw_icon.png' %}"
                             });
                             const infowindow = new google.maps.InfoWindow({
                                 content: `<strong>${report.display_name}</strong><br>
@@ -182,6 +190,10 @@
         Designed by <a href="https://bootstrapmade.com/">BootstrapMade</a>
       </div>
     </div>
+    <div class="credits">
+    Icon by <a href="https://www.flaticon.com/free-icons/paw" title="paw icons">Freepik - Flaticon</a>
+    </div>
+
   </footer>
 
   <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
