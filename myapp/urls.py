@@ -31,7 +31,7 @@ urlpatterns = [
     path('404.html', views.error_404, name='404'),
     
     path('admin/', admin.site.urls),
-    path('admin/region/', views.taiwan_regions_admin, name='taiwan_regions_admin'),
+    
 
     #台灣縣市和行政區/最近警局/教育網頁的部分
     path('harassment_prevention/', views.harassment_prevention, name='harassment_prevention'),
@@ -42,7 +42,7 @@ urlpatterns = [
     path('taiwan-regions/edit/<int:id>/', views.taiwan_regions_edit, name='taiwan_regions_edit'),
     path('taiwan-regions/delete/<int:id>/', views.taiwan_regions_delete, name='taiwan_regions_delete'),
     path('police-address/', views.police_address_list, name='police_address_list'),
-   path('police_address/add/', views.police_address_add, name='police_address_add'),
+    path('police_address/add/', views.police_address_add, name='police_address_add'),
     path('police-address/edit/<str:pk>/', views.police_address_edit, name='police_address_edit'),
     path('police-address/delete/<str:pk>/', views.police_address_delete, name='police_address_delete'),
     path('education-crud/', views.education_list, name='education_list'),

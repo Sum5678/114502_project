@@ -57,6 +57,15 @@
               <li><a href="#">Dropdown 4</a></li>
             </ul> 
           </li>
+          <!-- ✅ 新增的下拉式選單 -->
+          <li class="dropdown"><a href="#"><span>管理工具</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+            <ul>
+              <li><a href="{% url 'education_list' %}">使用者管理</a></li>
+              <li><a href="{% url 'taiwan_regions_admin' %}">系統設定</a></li>
+              <li><a href="#">其他工具</a></li>
+            </ul>
+          </li>
+        </ul>
           <!-- <li><a href="{% url 'admin_logout' %}">登出</a></li> -->
         </ul>
         <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
