@@ -119,27 +119,77 @@
     <script>
         let map;
 
+
         function initMap() {
-            map = new google.maps.Map(document.getElementById("map"), {
-                center: { lat: 25.0330, lng: 121.5654 },  // 台北市中心
+            console.log("initMap called");
+            const map = new google.maps.Map(document.getElementById("map"), {
+                center: { lat: 25.0330, lng: 121.5654 },
                 zoom: 12,
             });
 
-            fetch('/api/approved_stores/')
-                .then(response => response.json())
+            fetch('/api/stores/')
+                .then(response => {
+                    if (!response.ok) throw new Error("API 請求失敗");
+                    return response.json();
+                })
                 .then(data => {
+                    console.log("取得商家資料：", data);
                     data.forEach(store => {
-                        new google.maps.Marker({
-                            position: {
-                                lat: parseFloat(store.latitude),
-                                lng: parseFloat(store.longitude)
-                            },
-                            map,
-                            title: store.store_name
-                        });
+                        const lat = parseFloat(store.latitude);
+                        const lng = parseFloat(store.longitude);
+
+                        if (!isNaN(lat) && !isNaN(lng)) {
+                            const marker = new google.maps.Marker({
+                                position: { lat, lng },
+                                map,
+                                title: store.store_name,
+                                icon: {
+                                        url: "{% static 'assets/img/shop_icon.png' %}",
+                                        scaledSize: new google.maps.Size(30, 30),  // 你想要的寬、高（像素）
+                                        origin: new google.maps.Point(0, 0),       // 起始點
+                                        anchor: new google.maps.Point(15, 15)      // 圖示錨點 (通常是圖片中心)
+                                    }
+                            });
+
+                            const infoWindow = new google.maps.InfoWindow({
+                                content: `<strong>${store.store_name}</strong><br>地址: ${store.address}<br>電話: ${store.phone}`
+                            });
+
+                            marker.addListener('click', () => {
+                                infoWindow.open(map, marker);
+                            });
+                        } else {
+                            console.warn("無效的經緯度：", store.latitude, store.longitude);
+                        }
                     });
+                })
+                .catch(err => {
+                    console.error("抓取商家資料錯誤：", err);
                 });
         }
+
+
+        // function initMap() {
+        //     map = new google.maps.Map(document.getElementById("map"), {
+        //         center: { lat: 25.0330, lng: 121.5654 },  // 台北市中心
+        //         zoom: 12,
+        //     });
+
+        //     fetch('/api/approved_stores/')
+        //         .then(response => response.json())
+        //         .then(data => {
+        //             data.forEach(store => {
+        //                 new google.maps.Marker({
+        //                     position: {
+        //                         lat: parseFloat(store.latitude),
+        //                         lng: parseFloat(store.longitude)
+        //                     },
+        //                     map,
+        //                     title: store.store_name
+        //                 });
+        //             });
+        //         });
+        // }
     </script>
 
     <script async defer
@@ -157,6 +207,11 @@
       <div class="credits">
         Designed by <a href="https://bootstrapmade.com/">BootstrapMade</a>
       </div>
+
+      <div class="credits">
+      Icon by <a href="https://www.flaticon.com/free-icons/paw" title="paw icons">Freepik - Flaticon</a>
+      </div>
+
     </div>
   </footer>
 
