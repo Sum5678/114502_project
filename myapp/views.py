@@ -165,7 +165,7 @@ def nearest_police_view(request):
         'selected_district': district_town,
         'police_data': police_data,
         'all_police_data': all_police_data,
-        'google_maps_api_key': '你的APIKEY',  # 換成你的 Key
+        'google_maps_api_key': 'AIzaSyAUuPZMMJvgVWftmqVyzfX8mKTwMX4kA6o',  # 換成你的 Key
     })
 
 
@@ -251,14 +251,20 @@ def police_address_add(request):
 
 def police_address_edit(request, pk):
     address = get_object_or_404(PoliceAddress, pk=pk)
+
     if request.method == 'POST':
-        form = PoliceAddressForm(request.POST, instance=address)
-        if form.is_valid():
-            form.save()
-            return redirect('police_address_list')
-    else:
-        form = PoliceAddressForm(instance=address)
-    return render(request, 'police_address_edit.html', {'form': form, 'action': '編輯'})
+        address.precinct_name = request.POST.get('precinct_name')
+        address.zipcode = request.POST.get('zipcode')
+        address.address = request.POST.get('address')
+        address.phone = request.POST.get('phone')
+        address.POINT_X = request.POST.get('POINT_X')
+        address.POINT_Y = request.POST.get('POINT_Y')
+
+        address.save()
+        messages.success(request, "資料已成功更新！")
+        return redirect('police_address_list')
+
+    return render(request, 'police_address_edit.html', {'address': address})
 
 def police_address_delete(request, pk):
     address = get_object_or_404(PoliceAddress, pk=pk)
