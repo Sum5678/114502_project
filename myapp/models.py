@@ -131,6 +131,18 @@ class TaiwanRegion(models.Model):
     class Meta:
         db_table = 'taiwan_regions'
 
+
+from django.db import models
+
+class Region(models.Model):
+    zipcode = models.CharField(max_length=10)
+    country_city = models.CharField(max_length=50)
+    district_town = models.CharField(max_length=50)
+
+    def __str__(self):
+        return f"{self.country_city} {self.district_town} ({self.zipcode})"
+
+
 class PoliceAddress(models.Model):
     precinct_name = models.TextField()
     zipcode = models.CharField(max_length=5)

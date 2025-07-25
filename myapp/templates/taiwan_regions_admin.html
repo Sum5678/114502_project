@@ -3,95 +3,74 @@
 <head>
     <meta charset="UTF-8" />
     <title>台灣地區管理系統</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-</head>
-<body class="container py-4">
-    <h2 class="mb-4">台灣縣市／鄉鎮市區管理</h2>
-
-    <!-- 新增/編輯表單 -->
-    <form method="post" class="row g-2 mb-4">
-        {% csrf_token %}
-        <input type="hidden" name="edit_id" id="edit_id" />
-        <div class="col-md-2">
-            <input
-                type="text"
-                class="form-control"
-                name="zipcode"
-                placeholder="郵遞區號"
-                required
-                id="form_zipcode"
-            />
-        </div>
-        <div class="col-md-3">
-            <input
-                type="text"
-                class="form-control"
-                name="country_city"
-                placeholder="縣市"
-                required
-                id="form_country_city"
-            />
-        </div>
-        <div class="col-md-3">
-            <input
-                type="text"
-                class="form-control"
-                name="district_town"
-                placeholder="鄉鎮市區"
-                required
-                id="form_district_town"
-            />
-        </div>
-        <div class="col-md-2">
-            <button type="submit" class="btn btn-success">新增 / 更新</button>
-        </div>
-    </form>
-
-    <!-- 資料表 -->
-    <table class="table table-bordered">
-        <thead class="table-light">
-            <tr>
-                <th>ID</th>
-                <th>郵遞區號</th>
-                <th>縣市</th>
-                <th>鄉鎮市區</th>
-                <th>操作</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for r in regions %}
-            <tr>
-                <td>{{ r.id }}</td>
-                <td>{{ r.zipcode }}</td>
-                <td>{{ r.country_city }}</td>
-                <td>{{ r.district_town }}</td>
-                <td>
-                    <button
-                        class="btn btn-sm btn-primary"
-                        onclick="editRow('{{ r.id }}', '{{ r.zipcode }}', '{{ r.country_city }}', '{{ r.district_town }}')"
-                    >
-                        編輯
-                    </button>
-                    <a
-                        class="btn btn-sm btn-danger"
-                        href="?delete_id={{ r.id }}"
-                        onclick="return confirm('確定刪除？')"
-                        >刪除</a
-                    >
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-
-    <script>
-        function editRow(id, zipcode, city, town) {
-            document.getElementById('edit_id').value = id;
-            document.getElementById('form_zipcode').value = zipcode;
-            document.getElementById('form_country_city').value = city;
-            document.getElementById('form_district_town').value = town;
-            window.scrollTo(0, 0);
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
         }
-    </script>
+        h1 {
+            margin-bottom: 20px;
+        }
+        table, th, td {
+            border: 1px solid #aaa;
+            border-collapse: collapse;
+            padding: 6px;
+        }
+        th {
+            background-color: #eee;
+        }
+        a.button, button.button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 4px 8px;
+            text-decoration: none;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        a.button:hover, button.button:hover {
+            background-color: #45a049;
+        }
+        a.delete, button.delete {
+            background-color: #f44336;
+        }
+        a.delete:hover, button.delete:hover {
+            background-color: #c0392b;
+        }
+    </style>
+</head>
+<body>
+
+<h1>台灣縣市／鄉鎮市區管理</h1>
+
+<!-- 新增資料按鈕 -->
+<a href="{% url 'taiwan_regions_add' %}" class="button">新增縣市資料</a>
+<br><br>
+
+<!-- 資料表格 -->
+<table>
+    <tr>
+        <th>ID</th>
+        <th>郵遞區號</th>
+        <th>縣市</th>
+        <th>鄉鎮市區</th>
+        <th>操作</th>
+    </tr>
+    {% for r in regions %}
+    <tr>
+        <td>{{ r.id }}</td>
+        <td>{{ r.zipcode }}</td>
+        <td>{{ r.country_city }}</td>
+        <td>{{ r.district_town }}</td>
+        <td>
+            <a href="{% url 'taiwan_regions_edit' r.id %}" class="button">編輯</a>
+            <a href="{% url 'taiwan_regions_delete' r.id %}" class="button delete" onclick="return confirm('確定刪除？')">刪除</a>
+        </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="5">目前沒有資料</td></tr>
+    {% endfor %}
+</table>
+
 </body>
 </html>
