@@ -1485,6 +1485,31 @@ def store_judge_step1(request, st_id):
 
 
 #--商家表單拒絕後--
+# from django.shortcuts import render, get_object_or_404, redirect
+# from .models import StoreAll
+
+# def store_judge_view(request, st_id):
+#     store = get_object_or_404(StoreAll, st_id=st_id)
+
+#     if request.method == 'POST':
+#         review_status = request.POST.get('review_status')
+#         store.review_status = review_status
+#         store.save()
+
+#         if review_status == 'rejected':
+#             return redirect('store_step2', st_id=store.st_id)  # 導向 step2
+
+#         return redirect('store_judge')  # 若非拒絕就回清單
+
+#     return render(request, 'store_judge_step1.html', {'store': store})
+
+
+# def store_step2_view(request, st_id):
+#     store = get_object_or_404(StoreAll, st_id=st_id)
+#     return render(request, 'store_step2.html', {'store': store})
+# views.py
+
+#--商家表單拒絕後--
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import StoreAll
 
@@ -1497,9 +1522,9 @@ def store_judge_view(request, st_id):
         store.save()
 
         if review_status == 'rejected':
-            return redirect('store_step2', st_id=store.st_id)  # 導向 step2
+            return redirect('store_step2', st_id=store.st_id)
 
-        return redirect('store_judge')  # 若非拒絕就回清單
+        return redirect('store_judge')
 
     return render(request, 'store_judge_step1.html', {'store': store})
 
@@ -1507,6 +1532,7 @@ def store_judge_view(request, st_id):
 def store_step2_view(request, st_id):
     store = get_object_or_404(StoreAll, st_id=st_id)
     return render(request, 'store_step2.html', {'store': store})
+
 
 
 
