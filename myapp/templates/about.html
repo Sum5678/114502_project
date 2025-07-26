@@ -87,49 +87,53 @@
 </header>
 
 <main class="main">
-  <div class="profile-container text-center" data-aos="fade-up">
+  <div class="profile-container text-center position-relative" data-aos="fade-up">
+    <!-- 右上角按鈕 -->
+    <button id="toggle-edit" class="btn btn-outline-primary position-absolute" style="top: 20px; right: 20px;">修改</button>
+
     <h2>個人資料設定</h2>
 
     <label for="upload-image">
       <img src="https://via.placeholder.com/150" alt="頭像" id="profile-pic" class="profile-image">
     </label>
-    <input type="file" id="upload-image" class="form-control d-none" accept="image/*" onchange="previewImage(event)">
+    <input type="file" id="upload-image" class="form-control d-none" accept="image/*" onchange="previewImage(event)" disabled>
 
     <div class="form-group">
       <label>Google名稱：</label>
-      <input type="text" id="google_name" class="form-control input-field" placeholder="請輸入 Google 名稱">
+      <input type="text" id="google_name" class="form-control input-field" placeholder="請輸入 Google 名稱" disabled>
     </div>
 
     <div class="form-group">
       <label>暱稱：</label>
-      <input type="text" id="nickname" class="form-control input-field" placeholder="請輸入暱稱">
+      <input type="text" id="nickname" class="form-control input-field" placeholder="請輸入暱稱" disabled>
     </div>
 
     <div class="form-group">
       <label>Email：</label>
-      <input type="email" id="email" class="form-control input-field" placeholder="請輸入 Email">
+      <input type="email" id="email" class="form-control input-field" placeholder="請輸入 Email" disabled>
     </div>
 
     <div class="form-group">
       <label>手機號碼：</label>
-      <input type="tel" id="phone" class="form-control input-field" placeholder="請輸入手機號碼">
+      <input type="tel" id="phone" class="form-control input-field" placeholder="請輸入手機號碼" disabled>
     </div>
 
     <div class="form-group">
       <label>自我介紹：</label>
-      <textarea id="intro" class="form-control input-field" rows="4" placeholder="請輸入自我介紹"></textarea>
+      <textarea id="intro" class="form-control input-field" rows="4" placeholder="請輸入自我介紹" disabled></textarea>
     </div>
 
     <div class="form-group">
       <label>名稱顯示：</label>
-      <select id="show_name_option" class="form-control input-field">
+      <select id="show_name_option" class="form-control input-field" disabled>
         <option value="google_name">使用 Google 名稱</option>
         <option value="nickname">使用暱稱</option>
       </select>
     </div>
+
     <div class="button-container">
-        <button onclick="location.href='{% url 'report_list' %}'" class="btn btn-primary">查看回報紀錄</button>
-        <button onclick="location.href='{% url 'business_list' %}'" class="btn btn-primary">查看商家申請紀錄</button>
+      <button onclick="location.href='{% url 'report_list' %}'" class="btn btn-primary">查看回報紀錄</button>
+      <button onclick="location.href='{% url 'business_list' %}'" class="btn btn-primary">查看商家申請紀錄</button>
     </div>
   </div>
 </main>
@@ -157,6 +161,26 @@
     };
     reader.readAsDataURL(event.target.files[0]);
   }
+</script>
+<script>
+  function previewImage(event) {
+    const reader = new FileReader();
+    reader.onload = function () {
+      document.getElementById('profile-pic').src = reader.result;
+    };
+    reader.readAsDataURL(event.target.files[0]);
+  }
+
+  // 編輯切換邏輯
+  const toggleBtn = document.getElementById('toggle-edit');
+  const fields = document.querySelectorAll('#google_name, #nickname, #email, #phone, #intro, #show_name_option, #upload-image');
+  let editing = false;
+
+  toggleBtn.addEventListener('click', () => {
+    editing = !editing;
+    fields.forEach(field => field.disabled = !editing);
+    toggleBtn.textContent = editing ? '確認' : '修改';
+  });
 </script>
 </body>
 </html>
