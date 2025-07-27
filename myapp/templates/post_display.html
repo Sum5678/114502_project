@@ -109,7 +109,7 @@
                 <div class="meta">{{ post.nickname }} ・ {{ post.created_at|date:"Y/m/d H:i" }}</div>
               </div>
             </div>
-            <p class="card-text mt-2">{{ post.content|linebreaksbr }}</p>
+            <p class="card-text mt-2">{{ post.message_content|linebreaksbr }}</p>
           </div>
         </div>
         {% empty %}
