@@ -177,7 +177,6 @@ class PemapAll(models.Model):
 
     class Meta:
         db_table = 'pemap_all'
-
 #-----------------------------------store----------------------------------------------------------
 from django.contrib.auth.models import User
 class StoreAll(models.Model):
