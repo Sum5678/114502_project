@@ -1014,22 +1014,27 @@ def submit_report(request):
 #-----------------about---------------------------
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
-from social_django.models import UserSocialAuth
 
 @login_required
 def about(request):
+    # 模擬一個假的 profile 資料（假裝是從資料表來的）
     user = request.user
-    google_account = None
-    try:
-        google_account = UserSocialAuth.objects.get(user=user, provider='google-oauth2')
-    except UserSocialAuth.DoesNotExist:
-        google_account = None
+    google_data = request.session.get('google_data', {})  # 如果你用 Google OAuth 可以放這裡
 
-    extra_data = google_account.extra_data if google_account else {}
+    # 用 dict 模擬 model 物件屬性
+    profile = {
+        'google_name': google_data.get('name', user.username),
+        'nickname': '未設定',
+        'email': user.email,
+        'phone': '',
+        'intro': '',
+        'show_name_option': 1,
+        'avatar_url': google_data.get('picture', None),
+    }
 
     return render(request, 'about.html', {
         'user': user,
-        'google_data': extra_data,
+        'profile': profile,
     })
 #----------------store---------------------------------------------------------------------
 from django.contrib.auth.decorators import login_required
