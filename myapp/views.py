@@ -1015,7 +1015,11 @@ def submit_report(request):
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
-@login_required
+@login_required(login_url='/01userlogin/')
+def business_upload(request):
+    return render(request, 'about.html')
+
+@login_required(login_url='/01userlogin/')
 def about(request):
     # 模擬一個假的 profile 資料（假裝是從資料表來的）
     user = request.user
