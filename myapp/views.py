@@ -1012,8 +1012,25 @@ def submit_report(request):
         return JsonResponse({"status": "error", "message": "Invalid method"})
 
 #-----------------about---------------------------
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+from social_django.models import UserSocialAuth
+
+@login_required
 def about(request):
-    return render(request, 'about.html')
+    user = request.user
+    google_account = None
+    try:
+        google_account = UserSocialAuth.objects.get(user=user, provider='google-oauth2')
+    except UserSocialAuth.DoesNotExist:
+        google_account = None
+
+    extra_data = google_account.extra_data if google_account else {}
+
+    return render(request, 'about.html', {
+        'user': user,
+        'google_data': extra_data,
+    })
 #----------------store---------------------------------------------------------------------
 from django.contrib.auth.decorators import login_required
 @login_required(login_url='/01userlogin/')
