@@ -934,18 +934,21 @@ def report_view(request):
 
 
 # ✅ 接收 POST 資料 API（表單送出時）
-@login_required(login_url='/01userlogin/')
+# @login_required(login_url='/01userlogin/')
 @csrf_exempt
+@login_required(login_url='/01userlogin/')
 def submit_report(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
 
-            user = request.user  # ✅ 登入使用者
+            user = request.user
             display_name = data.get('display_name', '')
             kind = data.get('kind', '')
             reason = data.get('reason', '')
             address = data.get('address', '')
+            poster_gmail = data.get("poster_gmail", "").strip()
+            is_anonymous = data.get("anonymous", False)
 
             # 經緯度處理
             latitude = 0
@@ -961,7 +964,7 @@ def submit_report(request):
 
             img_url = data.get('img_url', '')
 
-            # ====== AI 初步審核 ======
+            # === AI 初步審核 ===
             description = reason.strip()
             sensitive_categories = {
                 '仇恨言論': ['仇恨', '恨死', '殺光', '滅絕'],
@@ -988,7 +991,10 @@ def submit_report(request):
                     review_status = '需再由人工審核'
                 else:
                     review_status = '人工審核通過'
-            # =========================
+
+            # 匿名 Gmail 處理
+            if is_anonymous:
+                poster_gmail = "anonymous@gmail.com"
 
             PemapAll.objects.create(
                 user=user,
@@ -1002,15 +1008,91 @@ def submit_report(request):
                 time_created=timezone.now(),
                 review_status=review_status,
                 admin_id=99999,
-                poster_gmail=data.get("poster_gmail"),
+                poster_gmail=poster_gmail,
             )
 
             return JsonResponse({"status": "success", "review_status": review_status})
-
         except Exception as e:
             return JsonResponse({"status": "error", "message": str(e)})
-    else:
-        return JsonResponse({"status": "error", "message": "Invalid method"})
+    return JsonResponse({"status": "error", "message": "Invalid method"})
+
+# @csrf_exempt
+# def submit_report(request):
+#     if request.method == 'POST':
+#         try:
+#             data = json.loads(request.body)
+
+#             user = request.user  # ✅ 登入使用者
+#             display_name = data.get('display_name', '')
+#             kind = data.get('kind', '')
+#             reason = data.get('reason', '')
+#             address = data.get('address', '')
+
+#             # 經緯度處理
+#             latitude = 0
+#             longitude = 0
+#             if ',' in address:
+#                 parts = [p.strip() for p in address.split(',')]
+#                 if len(parts) >= 2:
+#                     try:
+#                         latitude = float(parts[0])
+#                         longitude = float(parts[1])
+#                     except ValueError:
+#                         pass
+
+#             img_url = data.get('img_url', '')
+
+#             # ====== AI 初步審核 ======
+#             description = reason.strip()
+#             sensitive_categories = {
+#                 '仇恨言論': ['仇恨', '恨死', '殺光', '滅絕'],
+#                 '暴力': ['暴力', '打死', '砍', '攻擊', '虐待'],
+#                 '歧視': ['歧視', '種族主義', '排擠', '偏見'],
+#             }
+#             case_related_keywords = [
+#                 '案件', '事件', '警方', '警察', '報警', '報案', '證據',
+#                 '被跟蹤', '跟蹤', '尾隨', '偷拍', '性騷擾', '偷窺', '侵入',
+#                 '陌生男子', '紅衣男子', '追蹤', '恐嚇', '求助', '監視'
+#             ]
+
+#             if not description or len(description) < 10:
+#                 review_status = '描述內容過短，不足以判斷'
+#             else:
+#                 has_sensitive_word = any(
+#                     keyword in description
+#                     for keywords in sensitive_categories.values()
+#                     for keyword in keywords
+#                 )
+#                 is_case_related = any(kw in description for kw in case_related_keywords)
+
+#                 if has_sensitive_word or not is_case_related:
+#                     review_status = '需再由人工審核'
+#                 else:
+#                     review_status = '人工審核通過'
+                    
+#             # =========================
+
+#             PemapAll.objects.create(
+#                 user=user,
+#                 display_name=display_name,
+#                 kind=kind,
+#                 reason=reason,
+#                 address=address,
+#                 latitude=latitude,
+#                 longitude=longitude,
+#                 img_url=img_url,
+#                 time_created=timezone.now(),
+#                 review_status=review_status,
+#                 admin_id=99999,
+#                 poster_gmail=data.get("poster_gmail"),
+#             )
+
+#             return JsonResponse({"status": "success", "review_status": review_status})
+
+#         except Exception as e:
+#             return JsonResponse({"status": "error", "message": str(e)})
+#     else:
+#         return JsonResponse({"status": "error", "message": "Invalid method"})
 
 #-----------------about---------------------------
 from django.contrib.auth.decorators import login_required

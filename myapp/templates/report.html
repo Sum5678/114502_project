@@ -5,6 +5,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>回報可疑事件</title>
+
+  <!-- CSS -->
   <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
   <link href="{% static 'assets/vendor/aos/aos.css' %}" rel="stylesheet">
   <link href="{% static 'assets/css/main.css' %}" rel="stylesheet">
@@ -19,16 +21,18 @@
       <a href="{% url 'home' %}" class="logo d-flex align-items-center">
         <h1 class="sitename">怪怪走開，護您安全</h1>
       </a>
+
       <nav id="navmenu" class="navmenu">
         <ul>
           <li><a href="{% url 'home' %}#hero">主頁</a></li>
           <li><a href="{% url 'home' %}#services">簡介及功能介紹</a></li>
+
           {% if request.user.is_authenticated %}
             <li><a href="{% url 'report' %}">填寫表單</a></li>
           {% else %}
-          <!--  ❌ 未登入點擊導向登入提示頁（或跳登入） -->
             <li><a href="{% url 'userlogin' %}?next={% url 'report' %}">填寫表單</a></li>
-          {% endif %} 
+          {% endif %}
+
           <li><a href="{% url 'business_upload' %}">商家填單</a></li>
           <li><a href="{% url 'about' %}">個人資料設定</a></li>
           <li><a href="{% url 'post' %}">我要發文</a></li>
@@ -37,37 +41,38 @@
         </ul>
         <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
       </nav>
+
+      <!-- 使用者登入狀態顯示 -->
       {% if request.user.is_authenticated %}
-      <!-- ✅ 登入狀態，顯示帳號 + 登出 -->
-      <div class="dropdown">
-        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown" style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
-          {{ request.user.username }}
-        </a>
-        <ul class="dropdown-menu dropdown-menu-end">
-          <li><a class="dropdown-item" href="{% url '01_userlogin_out' %}">登出</a></li>
-        </ul>
-      </div>
-    {% else %}
-      <!-- ❌ 未登入，顯示登入選項 -->
-      <div class="dropdown">
-        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown" style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
-          登入
-        </a>
-        <ul class="dropdown-menu dropdown-menu-end">
-          <li><a class="dropdown-item" href="{% url 'userlogin' %}">一般使用者登入</a></li>
-          <li><a class="dropdown-item" href="{% url 'admin_login' %}">管理員登入</a></li>
-        </ul>
-      </div>
-    {% endif %}
+        <div class="dropdown">
+          <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown" 
+             style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
+            {{ request.user.username }}
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="{% url '01_userlogin_out' %}">登出</a></li>
+          </ul>
+        </div>
+      {% else %}
+        <div class="dropdown">
+          <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown" 
+             style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
+            登入
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="{% url 'userlogin' %}">一般使用者登入</a></li>
+            <li><a class="dropdown-item" href="{% url 'admin_login' %}">管理員登入</a></li>
+          </ul>
+        </div>
+      {% endif %}
     </div>
   </header>
 
-
   <!-- Main Content -->
   <main class="main" style="padding-top: 100px;">
-    <!-- Report Form Section -->
     <section id="report" class="report section">
       <div class="container" data-aos="fade-up">
+
         <div class="section-title">
           <h2>我要填單</h2>
           <p>請回報你在街道上遇到的可疑事件，幫助更多人提高警覺。</p>
@@ -76,7 +81,8 @@
         <form id="report-form" enctype="multipart/form-data" method="post">
           {% csrf_token %}
           <div class="row gy-3">
-            <!-- 顯示名稱 -->
+
+            <!-- 姓名 -->
             <div class="col-md-6">
               <label for="display_name" class="form-label">姓名</label>
               <input type="text" class="form-control" id="display_name" name="display_name" placeholder="可填匿名" required>
@@ -85,7 +91,7 @@
             <!-- Gmail -->
             <div class="col-md-6">
               <label for="email" class="form-label">Gmail</label>
-              <input type="email" class="form-control" id="email" name="email" placeholder="yourmail@gmail.com" required>
+              <input type="email" class="form-control" id="email" name="poster_gmail" placeholder="yourmail@gmail.com" required>
             </div>
 
             <!-- 事件分類 -->
@@ -108,7 +114,7 @@
               </select>
             </div>
 
-            <!-- 地點 + 地圖 -->
+            <!-- 地點與地圖 -->
             <div class="col-12">
               <label for="address" class="form-label">地點</label>
               <input type="text" class="form-control" id="address" name="address" placeholder="請點選地圖" readonly required>
@@ -130,7 +136,7 @@
               <img id="preview" style="margin-top: 10px; max-height: 200px; display: none;" />
             </div>
 
-            <!-- 匿名勾選 -->
+            <!-- 匿名提交勾選 -->
             <div class="col-12">
               <div class="form-check">
                 <input class="form-check-input" type="checkbox" id="anonymous" name="anonymous" checked>
@@ -138,7 +144,362 @@
               </div>
             </div>
 
-            <!-- 送出 -->
+            <!-- 送出按鈕 -->
+            <div class="col-12 text-center">
+              <button type="submit" class="btn btn-primary">送出回報</button>
+            </div>
+
+          </div>
+        </form>
+
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer id="footer" class="footer position-relative light-background">
+    <div class="container text-center mt-4">
+      <p>© Copyright <strong class="sitename">怪怪走開</strong> All Rights Reserved</p>
+      <div class="credits">Designed by <a href="https://bootstrapmade.com/">BootstrapMade</a></div>
+    </div>
+  </footer>
+
+  <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center">
+    <i class="bi bi-arrow-up-short"></i>
+  </a>
+
+  <div id="preloader"></div>
+
+  <!-- JS Libraries -->
+  <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+  <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/php-email-form/validate.js' %}"></script>
+  <script src="{% static 'assets/vendor/aos/aos.js' %}"></script>
+  <script src="{% static 'assets/vendor/glightbox/js/glightbox.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/purecounter/purecounter_vanilla.js' %}"></script>
+  <script src="{% static 'assets/vendor/imagesloaded/imagesloaded.pkgd.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/isotope-layout/isotope.pkgd.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/swiper/swiper-bundle.min.js' %}"></script>
+  <script src="{% static 'assets/js/main.js' %}"></script>
+
+  <!-- 自訂功能 JS -->
+  <script>
+    // Leaflet 地圖初始化
+    const map = L.map('map').setView([25.033964, 121.564472], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap 貢獻者'
+    }).addTo(map);
+
+    let marker;
+    map.on('click', function (e) {
+      const lat = e.latlng.lat.toFixed(6);
+      const lng = e.latlng.lng.toFixed(6);
+      document.getElementById('latitude').value = lat;
+      document.getElementById('longitude').value = lng;
+      document.getElementById('address').value = `${lat}, ${lng}`;
+      if (marker) {
+        marker.setLatLng(e.latlng);
+      } else {
+        marker = L.marker(e.latlng).addTo(map);
+      }
+    });
+
+    // 圖片預覽功能
+    document.getElementById('image').addEventListener('change', function (event) {
+      const file = event.target.files[0];
+      const preview = document.getElementById('preview');
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          preview.src = e.target.result;
+          preview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      } else {
+        preview.src = '';
+        preview.style.display = 'none';
+      }
+    });
+
+    // 詳細分類動態更新
+    const subkindOptions = {
+      "騷擾": ["推銷", "暴露狂", "跟蹤", "言語騷擾", "拍攝他人", "擋路糾纏", "其他"],
+      "打架": ["肢體衝突", "口角爭執", "幫派鬥毆", "攻擊路人", "其他"],
+      "動物": ["咬人", "無人看管寵物", "攻擊性動物", "受傷動物", "野生動物闖入", "其他"],
+      "環境髒亂": ["公共財物破壞", "可疑物品", "垃圾堆積", "噪音擾人", "惡臭", "噴漆塗鴉", "其他"]
+    };
+
+    document.getElementById('kind').addEventListener('change', function () {
+      const kind = this.value;
+      const subkindSelect = document.getElementById('subkind');
+      subkindSelect.innerHTML = "";
+      if (subkindOptions[kind]) {
+        subkindOptions[kind].forEach(sub => {
+          const opt = document.createElement('option');
+          opt.value = sub;
+          opt.textContent = sub;
+          subkindSelect.appendChild(opt);
+        });
+      } else {
+        const opt = document.createElement('option');
+        opt.textContent = "請先選擇上方分類";
+        opt.disabled = true;
+        subkindSelect.appendChild(opt);
+      }
+    });
+
+    // 表單送出處理
+    document.getElementById('report-form').addEventListener('submit', function (event) {
+      event.preventDefault(); // 阻止預設表單提交
+
+      const isAnonymous = document.getElementById("anonymous").checked;
+      const nameInput = document.getElementById("display_name");
+      const emailInput = document.getElementById("email");
+      const kindInput = document.getElementById("kind");
+      const subkindInput = document.getElementById("subkind");
+      const reasonInput = document.getElementById("reason");
+      const addressInput = document.getElementById("address");
+      const latInput = document.getElementById("latitude");
+      const lngInput = document.getElementById("longitude");
+      const imageFile = document.getElementById("image").files[0];
+
+      const errors = [];
+
+      // 表單驗證
+      if (!isAnonymous) {
+        if (!nameInput.value.trim()) errors.push("請填寫姓名");
+        if (!emailInput.value.trim()) errors.push("請填寫 Gmail");
+      }
+      if (!kindInput.value || kindInput.value === "請選擇") errors.push("請選擇可疑性質");
+      if (!subkindInput.value || subkindInput.value === "請先選擇上方分類") errors.push("請選擇詳細分類");
+      if (!reasonInput.value.trim()) errors.push("請填寫說明");
+      if (!addressInput.value.trim() || !latInput.value.trim() || !lngInput.value.trim()) errors.push("請點選地圖選擇地點");
+
+      if (errors.length > 0) {
+        alert("❗ 請完成以下欄位：\n\n" + errors.join("\n"));
+        return;
+      }
+
+      const name = isAnonymous ? "匿名" : nameInput.value.trim();
+      const email = emailInput.value.trim();
+      const kind = kindInput.value;
+      const subkind = subkindInput.value;
+      const reason = reasonInput.value.trim();
+      const latitude = latInput.value;
+      const longitude = lngInput.value;
+      const address = addressInput.value;
+      const kind_combined = kind + " - " + subkind;
+
+      // 傳送資料的函式
+      function sendData(base64Image) {
+        fetch("/api/submit_report/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": "{{ csrf_token }}"
+          },
+          body: JSON.stringify({
+            display_name: name,
+            kind: kind_combined,
+            reason: reason,
+            address: address,
+            latitude: latitude,
+            longitude: longitude,
+            img_url: base64Image,
+            poster_gmail: email,
+            anonymous: isAnonymous
+          })
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.status === "success") {
+            window.location.href = "/report/list/";
+          } else {
+            alert("❌ 提交失敗：" + data.message);
+          }
+        })
+        .catch(error => {
+          alert("❌ 發送失敗，請稍後再試");
+        });
+      }
+
+      // 圖片轉 base64 後送出
+      if (imageFile) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          sendData(e.target.result);
+        };
+        reader.readAsDataURL(imageFile);
+      } else {
+        sendData("");
+      }
+    });
+  </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- {% load static %}
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>回報可疑事件</title>
+  <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/aos/aos.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/css/main.css' %}" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+</head>
+
+<body class="index-page">
+
+   Header  
+  <header id="header" class="header d-flex align-items-center fixed-top">
+    <div class="container-fluid d-flex justify-content-between align-items-center">
+      <a href="{% url 'home' %}" class="logo d-flex align-items-center">
+        <h1 class="sitename">怪怪走開，護您安全</h1>
+      </a>
+      <nav id="navmenu" class="navmenu">
+        <ul>
+          <li><a href="{% url 'home' %}#hero">主頁</a></li>
+          <li><a href="{% url 'home' %}#services">簡介及功能介紹</a></li>
+          {% if request.user.is_authenticated %}
+            <li><a href="{% url 'report' %}">填寫表單</a></li>
+          {% else %} 
+            <li><a href="{% url 'userlogin' %}?next={% url 'report' %}">填寫表單</a></li>
+          {% endif %} 
+          <li><a href="{% url 'business_upload' %}">商家填單</a></li>
+          <li><a href="{% url 'about' %}">個人資料設定</a></li>
+          <li><a href="{% url 'post' %}">我要發文</a></li>
+          <li><a href="{% url 'map' %}">事件地圖</a></li>
+          <li><a href="{% url 'harassment_prevention' %}">防騷指南</a></li>
+        </ul>
+        <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+      </nav>
+      {% if request.user.is_authenticated %}
+       ✅ 登入狀態，顯示帳號 + 登出  
+      <div class="dropdown">
+        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown" style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
+          {{ request.user.username }}
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="{% url '01_userlogin_out' %}">登出</a></li>
+        </ul>
+      </div>
+    {% else %}
+      未登入，顯示登入選項  
+      <div class="dropdown">
+        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown" style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
+          登入
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="{% url 'userlogin' %}">一般使用者登入</a></li>
+          <li><a class="dropdown-item" href="{% url 'admin_login' %}">管理員登入</a></li>
+        </ul>
+      </div>
+    {% endif %}
+    </div>
+  </header>
+
+
+   Main Content  
+  <main class="main" style="padding-top: 100px;">
+     Report Form Section  
+    <section id="report" class="report section">
+      <div class="container" data-aos="fade-up">
+        <div class="section-title">
+          <h2>我要填單</h2>
+          <p>請回報你在街道上遇到的可疑事件，幫助更多人提高警覺。</p>
+        </div>
+
+        <form id="report-form" enctype="multipart/form-data" method="post">
+          {% csrf_token %}
+          <div class="row gy-3">
+             顯示名稱 
+            <div class="col-md-6">
+              <label for="display_name" class="form-label">姓名</label>
+              <input type="text" class="form-control" id="display_name" name="display_name" placeholder="可填匿名" required>
+            </div>
+
+           Gmail 
+            <div class="col-md-6">
+              <label for="email" class="form-label">Gmail</label>
+              <input type="email" class="form-control" id="email" name="poster_gmail" placeholder="yourmail@gmail.com" required>
+               <input type="email" class="form-control" id="email" name="email" placeholder="yourmail@gmail.com" required>  
+            </div>
+
+             事件分類
+            <div class="col-md-6">
+              <label for="kind" class="form-label">可疑性質</label>
+              <select class="form-select" id="kind" name="kind" required>
+                <option selected disabled>請選擇</option>
+                <option value="騷擾">騷擾</option>
+                <option value="打架">打架</option>
+                <option value="動物">動物</option>
+                <option value="環境髒亂">環境髒亂</option>
+              </select>
+            </div>
+
+             詳細分類
+            <div class="col-md-6">
+              <label for="subkind" class="form-label">詳細分類</label>
+              <select class="form-select" id="subkind" name="subkind" required>
+                <option selected disabled>請先選擇上方分類</option>
+              </select>
+            </div>
+
+             地點 + 地圖 
+            <div class="col-12">
+              <label for="address" class="form-label">地點</label>
+              <input type="text" class="form-control" id="address" name="address" placeholder="請點選地圖" readonly required>
+              <input type="hidden" id="latitude" name="latitude" required>
+              <input type="hidden" id="longitude" name="longitude" required>
+              <div id="map" style="height: 300px; margin-top: 10px;"></div>
+            </div>
+
+             說明 
+            <div class="col-12">
+              <label for="reason" class="form-label">說明</label>
+              <textarea class="form-control" id="reason" name="reason" rows="3" placeholder="請描述發生的情況" required></textarea>
+            </div>
+
+             圖片上傳 
+            <div class="col-12">
+              <label for="image" class="form-label">上傳圖片（可選）</label>
+              <input class="form-control" type="file" id="image" name="image" accept="image/*">
+              <img id="preview" style="margin-top: 10px; max-height: 200px; display: none;" />
+            </div>
+
+             匿名勾選 
+            <div class="col-12">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="anonymous" name="anonymous" checked>
+                <label class="form-check-label" for="anonymous">匿名提交</label>
+              </div>
+            </div>
+
+             送出 
             <div class="col-12 text-center">
               <button type="submit" class="btn btn-primary">送出回報</button>
             </div>
@@ -148,7 +509,7 @@
     </section>
   </main>
 
-  <!-- Footer -->
+   Footer 
   <footer id="footer" class="footer position-relative light-background">
     <div class="container copyright text-center mt-4">
       <p>© Copyright <strong class="sitename">怪怪走開</strong> All Rights Reserved</p>
@@ -161,7 +522,7 @@
   </a>
   <div id="preloader"></div>
 
-  <!-- Leaflet + Template Scripts -->
+ Leaflet + Template Scripts 
   <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
   <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
   <script src="{% static 'assets/vendor/php-email-form/validate.js' %}"></script>
@@ -173,7 +534,7 @@
   <script src="{% static 'assets/vendor/swiper/swiper-bundle.min.js' %}"></script>
   <script src="{% static 'assets/js/main.js' %}"></script>
 
-  <!-- Custom Script -->
+  Custom Script 
   <script>
     const map = L.map('map').setView([25.033964, 121.564472], 13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -249,6 +610,7 @@
     const latInput = document.getElementById("latitude");
     const lngInput = document.getElementById("longitude");
     const imageFile = document.getElementById("image").files[0];
+    
 
     const errors = [];
 
@@ -268,7 +630,8 @@
     }
 
     const name = isAnonymous ? "匿名" : nameInput.value.trim();
-    const email = isAnonymous ? "anonymous@gmail.com" : emailInput.value.trim();
+    // const email = isAnonymous ? "anonymous@gmail.com" : emailInput.value.trim();
+    const email = emailInput.value.trim();  // 保留使用者輸入的 Gmail
     const kind = kindInput.value;
     const subkind = subkindInput.value;
     const reason = reasonInput.value.trim();
@@ -292,7 +655,8 @@
           latitude: latitude,
           longitude: longitude,
           img_url: base64Image,
-          poster_gmail: email 
+          poster_gmail: email,
+          anonymous: isAnonymous
         })
       })
       .then(response => response.json())
@@ -320,4 +684,4 @@
   });
 </script>
 </body>
-</html>
+</html> -->
