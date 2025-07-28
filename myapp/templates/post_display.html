@@ -160,7 +160,10 @@
               <div class="meta">{{ post.nickname }} ・ {{ post.created_at|date:"Y/m/d H:i" }}</div>
             </div>
           </div>
-          <p class="card-text mt-2">{{ post.message_content|linebreaksbr }}</p>
+          <p class="card-text mt-2 message-content" data-full="{{ post.message_content|escape }}">
+            {{ post.message_content|truncatechars:100 }}
+            {% if post.message_content|length > 100 %}<span class="ellipsis">...</span> <a href="#" class="toggle-more">查看更多</a>{% endif %}
+          </p>
         </div>
       </div>
       {% empty %}
@@ -186,5 +189,28 @@
 <script src="{% static 'assets/vendor/purecounter/purecounter_vanilla.js' %}"></script>
 <script src="{% static 'assets/vendor/swiper/swiper-bundle.min.js' %}"></script>
 <script src="{% static 'assets/js/main.js' %}"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const toggleLinks = document.querySelectorAll('.toggle-more');
+
+    toggleLinks.forEach(link => {
+      link.addEventListener('click', function (e) {
+        e.preventDefault();
+        const p = this.closest('.message-content');
+        const fullText = p.dataset.full;
+        const ellipsis = p.querySelector('.ellipsis');
+
+        if (this.textContent === '查看更多') {
+          p.innerHTML = fullText + ' <a href="#" class="toggle-more">關閉詳情</a>';
+        } else {
+          const truncated = fullText.slice(0, 100);
+          p.innerHTML = truncated + '<span class="ellipsis">...</span> <a href="#" class="toggle-more">查看更多</a>';
+        }
+
+        p.querySelector('.toggle-more').addEventListener('click', arguments.callee);
+      });
+    });
+  });
+</script>
 </body>
 </html>
