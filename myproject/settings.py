@@ -230,5 +230,5 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_USE_TLS = True
 EMAIL_PORT = 587
-EMAIL_HOST_USER = 'heaven.salt016@gmail.com'               # 你的 Gmail 地址
-EMAIL_HOST_PASSWORD = 'enigwdevdufxgpds'  # 你的「應用程式密碼」，空格去掉
+EMAIL_HOST_USER = 'pabeng54@gmail.com'               # 你的 Gmail 地址
+EMAIL_HOST_PASSWORD = 'owjwkrwqeerfweow'  # 你的「應用程式密碼」，空格去掉
