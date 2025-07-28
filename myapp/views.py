@@ -1002,6 +1002,7 @@ def submit_report(request):
                 time_created=timezone.now(),
                 review_status=review_status,
                 admin_id=99999,
+                poster_gmail=data.get("poster_gmail"),
             )
 
             return JsonResponse({"status": "success", "review_status": review_status})
@@ -1042,7 +1043,8 @@ def submit_store(request):
                 created_at=data.get('created_at'),
                 reviewed_at=None,
                 review_status="pending",
-                admin_id = 9999
+                admin_id = 9999,
+                poster_gmail=data.get("poster_gmail"),
             )
             store.save()
             return JsonResponse({'status': 'success'})
