@@ -128,6 +128,7 @@
               <option value="1" {% if item.review_status == 1 %}selected{% endif %}>AI 審核通過</option>
               <option value="2" {% if item.review_status == 2 %}selected{% endif %}>AI 審核未通過，需人工審核</option>
               <option value="3" {% if item.review_status == 3 %}selected{% endif %}>人工審核通過</option>
+              <option value="4" {% if item.review_status == 4 %}selected{% endif %}>人工審核未通過</option>
             </select>
           </div>
           <button type="submit" class="btn btn-primary">儲存變更</button>

@@ -1526,31 +1526,36 @@ def store_judge(request):
 #     return render(request, 'pemap_judge_step1.html', {
 #         'item': form_data
 #     })
-from django.shortcuts import render, get_object_or_404, redirect
-from .models import PemapAll
-from django.utils import timezone  # ⚠️ 別忘記引入這行！
+
+
+
+from django.urls import reverse
 
 def pemap_judge_step1(request, p_id):
     form_data = get_object_or_404(PemapAll, p_id=p_id)
 
-    # ✅ 抓出 session 中的管理員資料
     admin_id = request.session.get('admin_id')
     admin_name = request.session.get('admin_name', '未知管理員')
 
     if not admin_id:
-        return redirect('admin_login')  # 尚未登入就導向登入頁
+        return redirect('admin_login')
 
     if request.method == 'POST':
         new_status = request.POST.get('review_status')
         if new_status is not None and new_status.isdigit():
-            form_data.review_status = int(new_status)
+            new_status_int = int(new_status)
+            form_data.review_status = new_status_int
             form_data.time_reviewed = timezone.now()
             form_data.admin_id = admin_id  
 
-
-            print(f"表單 {p_id} 被 {admin_name} 修改狀態為 {new_status}")
+            print(f"表單 {p_id} 被 {admin_name} 修改狀態為 {new_status_int}")
 
             form_data.save()
+
+            if new_status_int == 4:  # 人工審核未通過
+                url = reverse('admin_send_email') + f'?p_id={p_id}'
+                return redirect(url)
+
             return redirect('pemap_judge')
 
     return render(request, 'pemap_judge_step1.html', {
@@ -1558,6 +1563,39 @@ def pemap_judge_step1(request, p_id):
         'admin_id': admin_id,
         'admin_name': admin_name,
     })
+
+# from django.shortcuts import render, get_object_or_404, redirect
+# from .models import PemapAll
+# from django.utils import timezone  # ⚠️ 別忘記引入這行！
+
+# def pemap_judge_step1(request, p_id):
+#     form_data = get_object_or_404(PemapAll, p_id=p_id)
+
+#     # ✅ 抓出 session 中的管理員資料
+#     admin_id = request.session.get('admin_id')
+#     admin_name = request.session.get('admin_name', '未知管理員')
+
+#     if not admin_id:
+#         return redirect('admin_login')  # 尚未登入就導向登入頁
+
+#     if request.method == 'POST':
+#         new_status = request.POST.get('review_status')
+#         if new_status is not None and new_status.isdigit():
+#             form_data.review_status = int(new_status)
+#             form_data.time_reviewed = timezone.now()
+#             form_data.admin_id = admin_id  
+
+
+#             print(f"表單 {p_id} 被 {admin_name} 修改狀態為 {new_status}")
+
+#             form_data.save()
+#             return redirect('pemap_judge')
+
+#     return render(request, 'pemap_judge_step1.html', {
+#         'item': form_data,
+#         'admin_id': admin_id,
+#         'admin_name': admin_name,
+#     })
 
 
 from django.shortcuts import render, get_object_or_404, redirect
@@ -1897,3 +1935,32 @@ def post(request):
 def post_display(request):
     posts = ChatInteraction.objects.all().order_by('-created_at')
     return render(request, 'post_display.html', {'posts': posts})
+
+
+#------------事件表單拒絕後傳送-------
+from django.core.mail import send_mail
+from django.http import HttpResponse
+
+@login_required
+def admin_send_email(request):
+    p_id = request.GET.get('p_id')
+    item = PemapAll.objects.filter(p_id=p_id).first()
+    if not item:
+        return HttpResponse("找不到該筆資料", status=404)
+
+    if request.method == 'POST':
+        to_email = item.poster_gmail
+        subject = request.POST.get('subject', '關於您的報告審核結果')
+        message = request.POST.get('message', '')
+
+        # 寄信 (請先設定好 Django EMAIL 設定)
+        try:
+            send_mail(subject, message, '你的發信地址@example.com', [to_email])
+            return HttpResponse("郵件已寄出")
+        except Exception as e:
+            return HttpResponse(f"寄信失敗: {str(e)}")
+
+    return render(request, 'admin_send_email.html', {
+        'item': item,
+        'to_email': item.poster_gmail,
+    })
