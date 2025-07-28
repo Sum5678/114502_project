@@ -65,16 +65,32 @@
         </ul>
         <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
       </nav>
-      <!-- <a class="btn-getstarted" href="index.html#about">Get Started</a> -->
+      
+      <!-- ✅ 登入狀態 dropdown 按鈕 -->
+    {% if request.user.is_authenticated %}
       <div class="dropdown">
-  <a class="btn-getstarted dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
-    登入
-  </a>
-  <ul class="dropdown-menu dropdown-menu-end">
-    <li><a class="dropdown-item" href="{% url 'userlogin' %}">一般使用者登入</a></li>
-    <li><a class="dropdown-item" href="{% url 'admin_login' %}">管理員登入</a></li>
-  </ul>
-</div>
+        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown"
+           style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
+          {{ request.user.username }}
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="{% url '01_userlogin_out' %}">登出</a></li>
+        </ul>
+      </div>
+    {% else %}
+      <div class="dropdown">
+        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown"
+           style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
+          登入
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="{% url 'userlogin' %}">一般使用者登入</a></li>
+          <li><a class="dropdown-item" href="{% url 'admin_login' %}">管理員登入</a></li>
+        </ul>
+      </div>
+    {% endif %}
+  </div>
+</header>
 
     </div>
   </header>
