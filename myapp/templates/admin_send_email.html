@@ -1,0 +1,16 @@
+<form method="post">
+  {% csrf_token %}
+  <div>
+    <label>收件人</label>
+    <input type="email" name="to_email" value="{{ to_email }}" readonly>
+  </div>
+  <div>
+    <label>主旨</label>
+    <input type="text" name="subject" value="您的報告審核未通過通知">
+  </div>
+  <div>
+    <label>內容</label>
+    <textarea name="message" rows="6">您好，您的報告經過審核後未通過...</textarea>
+  </div>
+  <button type="submit">寄送郵件</button>
+</form>
