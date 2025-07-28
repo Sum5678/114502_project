@@ -39,97 +39,102 @@
 </head>
 <body class="index-page">
 
-<!-- Header -->
 <header id="header" class="header d-flex align-items-center fixed-top">
-    <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
-      <a href="index.html" class="logo d-flex align-items-center me-auto me-xl-0">
-        <h1 class="sitename">怪怪走開，護您安全</h1><span></span>
+    <div class="container-fluid d-flex justify-content-between align-items-center">
+      <a href="{% url 'home' %}" class="logo d-flex align-items-center">
+        <h1 class="sitename">怪怪走開，護您安全</h1>
       </a>
       <nav id="navmenu" class="navmenu">
         <ul>
-          <li><a href="{% url 'home' %}#hero" class="active">主頁</a></li>
-          <li><a href="index.html#services">簡介及功能介紹</a></li>
+          <li><a href="{% url 'home' %}#hero">主頁</a></li>
+          <li><a href="{% url 'home' %}#services">簡介及功能介紹</a></li>
           <li><a href="{% url 'report' %}">填寫表單</a></li>
-          <li><a href="{% url 'business_upload' %}">商家填單</a></li>    
-          <li><a href="{% url 'about' %}">個人資料設定</a></li>      
-          <li><a href="{% url 'post' %}#hero" class="active">我要發文</a></li>
-          <li class="dropdown"><a href="#"><span>地圖</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
-            <ul>
-              <li><a href="{% url 'map' %}">事件地圖</a></li>
-              <li><a href="{% url 'store_map' %}">商家地圖</a></li>
-            </ul> 
-          </li>
+          <li><a href="{% url 'business_upload' %}">商家填單</a></li>
+          {% if request.user.is_authenticated %}
+          <li><a href="{% url 'about' %}">個人資料設定</a></li>
+          {% else %}
+            <li><a href="{% url 'userlogin' %}?next={% url 'about' %}">個人資料設定</a></li>
+          {% endif %} 
+          <li><a href="{% url 'post' %}">我要發文</a></li>
+          <li><a href="{% url 'map' %}">事件地圖</a></li>
           <li><a href="{% url 'harassment_prevention' %}">防騷指南</a></li>
-          <li class="dropdown"><a href="#"><span>Dropdown</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
-            <ul>
-              <li><a href="#">Dropdown 1</a></li>
-              <li class="dropdown"><a href="#"><span>Deep Dropdown</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
-                <ul>
-                  <li><a href="#">Deep Dropdown 1</a></li>
-                  <li><a href="#">Deep Dropdown 2</a></li>
-                  <li><a href="#">Deep Dropdown 3</a></li>
-                  <li><a href="#">Deep Dropdown 4</a></li>
-                  <li><a href="#">Deep Dropdown 5</a></li>
-                </ul>
-              </li>
-              <li><a href="#">Dropdown 2</a></li>
-              <li><a href="#">Dropdown 3</a></li>
-              <li><a href="#">Dropdown 4</a></li>
-            </ul>
-          </li>
-          <li><a href="index.html#contact">Contact</a></li>
         </ul>
         <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
       </nav>
-      <!-- <a class="btn-getstarted" href="index.html#about">Get Started</a> -->
-      <a class="btn-getstarted" href="{% url 'userlogin' %}">登入</a>
+      {% if request.user.is_authenticated %}
+      <!-- ✅ 登入狀態，顯示帳號 + 登出 -->
+      <div class="dropdown">
+        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown" style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
+          {{ request.user.username }}
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="{% url '01_userlogin_out' %}">登出</a></li>
+        </ul>
+      </div>
+    {% else %}
+      <!-- ❌ 未登入，顯示登入選項 -->
+      <div class="dropdown">
+        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown" style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
+          登入
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="{% url 'userlogin' %}">一般使用者登入</a></li>
+          <li><a class="dropdown-item" href="{% url 'admin_login' %}">管理員登入</a></li>
+        </ul>
+      </div>
+    {% endif %}
     </div>
 </header>
 
 <main class="main">
-  <div class="profile-container text-center" data-aos="fade-up">
+  <div class="profile-container text-center position-relative" data-aos="fade-up">
+    <!-- 右上角按鈕 -->
+    <button id="toggle-edit" class="btn btn-outline-primary position-absolute" style="top: 20px; right: 20px;">修改</button>
+
     <h2>個人資料設定</h2>
 
     <label for="upload-image">
       <img src="https://via.placeholder.com/150" alt="頭像" id="profile-pic" class="profile-image">
     </label>
-    <input type="file" id="upload-image" class="form-control d-none" accept="image/*" onchange="previewImage(event)">
+    <input type="file" id="upload-image" class="form-control d-none" accept="image/*" onchange="previewImage(event)" disabled>
 
     <div class="form-group">
       <label>Google名稱：</label>
-      <input type="text" id="google_name" class="form-control input-field" placeholder="請輸入 Google 名稱">
+      <input type="text" id="google_name" class="form-control input-field" value="{{ profile.google_name }}" disabled>
     </div>
 
     <div class="form-group">
       <label>暱稱：</label>
-      <input type="text" id="nickname" class="form-control input-field" placeholder="請輸入暱稱">
+      <input type="text" id="nickname" class="form-control input-field" value="{{ profile.nickname }}" disabled>
     </div>
 
     <div class="form-group">
       <label>Email：</label>
-      <input type="email" id="email" class="form-control input-field" placeholder="請輸入 Email">
+      <input type="email" id="email" class="form-control input-field" value="{{ profile.email }}" disabled>
     </div>
 
     <div class="form-group">
       <label>手機號碼：</label>
-      <input type="tel" id="phone" class="form-control input-field" placeholder="請輸入手機號碼">
+      <input type="tel" id="phone" class="form-control input-field" value="{{ profile.phone }}" disabled>
     </div>
 
     <div class="form-group">
       <label>自我介紹：</label>
-      <textarea id="intro" class="form-control input-field" rows="4" placeholder="請輸入自我介紹"></textarea>
+      <textarea id="intro" class="form-control input-field" rows="4" disabled>{{ profile.intro }}</textarea>
     </div>
 
     <div class="form-group">
       <label>名稱顯示：</label>
-      <select id="show_name_option" class="form-control input-field">
-        <option value="google_name">使用 Google 名稱</option>
-        <option value="nickname">使用暱稱</option>
+      <select id="show_name_option" class="form-control input-field" disabled>
+        <option value="1" {% if profile.show_name_option == 1 %}selected{% endif %}>帳號（Email）</option>
+        <option value="2" {% if profile.show_name_option == 2 %}selected{% endif %}>暱稱</option>
+        <option value="3" {% if profile.show_name_option == 3 %}selected{% endif %}>匿名</option>
       </select>
     </div>
+
     <div class="button-container">
-        <button onclick="location.href='{% url 'report_list' %}'" class="btn btn-primary">查看回報紀錄</button>
-        <button onclick="location.href='{% url 'business_list' %}'" class="btn btn-primary">查看商家申請紀錄</button>
+      <button onclick="location.href='{% url 'report_list' %}'" class="btn btn-primary">查看回報紀錄</button>
+      <button onclick="location.href='{% url 'business_list' %}'" class="btn btn-primary">查看商家申請紀錄</button>
     </div>
   </div>
 </main>
@@ -157,6 +162,26 @@
     };
     reader.readAsDataURL(event.target.files[0]);
   }
+</script>
+<script>
+  function previewImage(event) {
+    const reader = new FileReader();
+    reader.onload = function () {
+      document.getElementById('profile-pic').src = reader.result;
+    };
+    reader.readAsDataURL(event.target.files[0]);
+  }
+
+  // 編輯切換邏輯
+  const toggleBtn = document.getElementById('toggle-edit');
+  const fields = document.querySelectorAll('#google_name, #nickname, #email, #phone, #intro, #show_name_option, #upload-image');
+  let editing = false;
+
+  toggleBtn.addEventListener('click', () => {
+    editing = !editing;
+    fields.forEach(field => field.disabled = !editing);
+    toggleBtn.textContent = editing ? '確認' : '修改';
+  });
 </script>
 </body>
 </html>
