@@ -239,7 +239,14 @@
                     const marker = new google.maps.Marker({
                         position: { lat: parseFloat(nearestStation.POINT_Y), lng: parseFloat(nearestStation.POINT_X) },
                         map: map,
-                        title: nearestStation.precinct_name
+                        title: nearestStation.precinct_name,
+                        //用戶最近警局的圖示
+                         icon: {
+                            url: "{% static 'assets/img/police.png' %}",
+                            scaledSize: new google.maps.Size(40, 40),
+                            origin: new google.maps.Point(0, 0),
+                            anchor: new google.maps.Point(20, 20)
+                        }
                     });
                     const infoWindow = new google.maps.InfoWindow({
                         content: `<b>${nearestStation.precinct_name}</b><br>${nearestStation.address}<br>${nearestStation.phone}`
