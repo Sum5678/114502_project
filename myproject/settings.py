@@ -223,3 +223,12 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 
 SOCIAL_AUTH_ASSOCIATE_BY_EMAIL = True  #  使用者登入時自動切換綁定帳號
+
+
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_USE_TLS = True
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'heaven.salt016@gmail.com'               # 你的 Gmail 地址
+EMAIL_HOST_PASSWORD = 'enigwdevdufxgpds'  # 你的「應用程式密碼」，空格去掉
