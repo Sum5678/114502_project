@@ -2,8 +2,8 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>我要發文｜交流區</title>
 
   <!-- Favicons -->
@@ -21,12 +21,50 @@
   <link href="{% static 'assets/css/main.css' %}" rel="stylesheet">
 
   <style>
+    body {
+      background-color: #fff;
+      padding-top: 100px;
+      font-family: "Microsoft JhengHei", sans-serif;
+    }
     .form-container {
       background: #fff;
       padding: 25px 30px;
       border: 1px solid #d9e8f4;
       border-radius: 10px;
       margin-top: 40px;
+    }
+    .section-title {
+      text-align: center;
+      margin-top: 20px;
+      margin-bottom: 30px;
+    }
+    .section-title h2 {
+      display: inline-block;
+      position: relative;
+      font-weight: 700;
+      font-size: 28px;
+      color: #033e6b;
+      padding: 0 20px;
+    }
+    .section-title h2::before,
+    .section-title h2::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      width: 60px;
+      height: 2px;
+      background: #0d6efd;
+    }
+    .section-title h2::before {
+      left: -70px;
+    }
+    .section-title h2::after {
+      right: -70px;
+    }
+    .section-title p {
+      margin-top: 10px;
+      font-size: 16px;
+      color: #555;
     }
     label {
       margin-top: 20px;
@@ -84,124 +122,125 @@
     }
   </style>
 </head>
+<body>
 
-<body class="index-page">
-  <header id="header" class="header d-flex align-items-center fixed-top">
-    <div class="container-fluid d-flex justify-content-between align-items-center">
-      <a href="{% url 'home' %}" class="logo d-flex align-items-center">
-        <h1 class="sitename">怪怪走開，護您安全</h1>
-      </a>
-      <nav id="navmenu" class="navmenu">
-        <ul>
-          <li><a href="{% url 'home' %}#hero">主頁</a></li>
-          <li><a href="{% url 'home' %}#services">簡介及功能介紹</a></li>
-          <li><a href="{% url 'report' %}">填寫表單</a></li>
-          <li><a href="{% url 'business_upload' %}">商家填單</a></li>
-          <li><a href="{% url 'post' %}">我要發文</a></li>
-          <li><a href="{% url 'map' %}">事件地圖</a></li>
-          <li><a href="{% url 'harassment_prevention' %}">防騷指南</a></li>
-        </ul>
-        <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
-      </nav>
+<header id="header" class="header d-flex align-items-center fixed-top">
+  <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
+    <a href="{% url 'home' %}" class="logo d-flex align-items-center me-auto me-xl-0">
+      <h1 class="sitename" style="color: #033e6b;">怪怪走開，護您安全</h1>
+    </a>
+    <nav id="navmenu" class="navmenu">
+      <ul>
+        <li><a href="{% url 'home' %}#hero" class="active">主頁</a></li>
+        <li><a href="{% url 'home' %}#services" class="active">簡介及功能介紹</a></li>
+        <li><a href="{% url 'report' %}" class="active">填寫表單</a></li>
+        <li><a href="{% url 'business_upload' %}" class="active">商家填單</a></li>
+        <li><a href="{% url 'post_display' %}" class="active">貼文總覽</a></li>
+        <li><a href="{% url 'map' %}" class="active">事件地圖</a></li>
+        <li><a href="{% url 'harassment_prevention' %}" class="active">防騷指南</a></li>
+      </ul>
+      <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+    </nav>
+    <!-- 使用者登入狀態顯示 -->
+    {% if request.user.is_authenticated %}
       <div class="dropdown">
-      {% if request.user.is_authenticated %}
-        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown" style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
+        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown" 
+           style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
           {{ request.user.username }}
         </a>
         <ul class="dropdown-menu dropdown-menu-end">
           <li><a class="dropdown-item" href="{% url '01_userlogin_out' %}">登出</a></li>
         </ul>
-      {% else %}
-        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown" style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
+      </div>
+    {% else %}
+      <div class="dropdown">
+        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown" 
+           style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
           登入
         </a>
         <ul class="dropdown-menu dropdown-menu-end">
           <li><a class="dropdown-item" href="{% url 'userlogin' %}">一般使用者登入</a></li>
           <li><a class="dropdown-item" href="{% url 'admin_login' %}">管理員登入</a></li>
         </ul>
-      {% endif %}
-    </div>
-  </header>
-
-  <main class="main">
-    <!-- Hero 區塊 -->
-    <section class="hero">
-      <img src="{% static 'assets/img/1.png' %}" alt="Hero Image">
-    </section>
-
-    <!-- 發文表單區塊 -->
-    <section class="container">
-      <div class="form-container">
-        <h2 class="mb-4">我要發文｜交流區</h2>
-        <form method="post" action="{% url 'post' %}">
-          {% csrf_token %}
-
-          <!-- ✅ 隱藏 nickname 欄位，預設為「匿名」 -->
-          <input type="hidden" name="nickname" id="nickname" value="匿名">
-
-          <label>選擇背景顏色</label>
-          <div class="color-options" id="colorOptions">
-            <div class="color-swatch" style="background:#f44336" onclick="setBgColor('f44336', this)"></div>
-            <div class="color-swatch" style="background:#2196f3" onclick="setBgColor('2196f3', this)"></div>
-            <div class="color-swatch" style="background:#4caf50" onclick="setBgColor('4caf50', this)"></div>
-            <div class="color-swatch" style="background:#ff9800" onclick="setBgColor('ff9800', this)"></div>
-            <div class="color-swatch" style="background:#9c27b0" onclick="setBgColor('9c27b0', this)"></div>
-          </div>
-          <input type="hidden" name="bgcolor" id="bgcolor" value="2196f3">
-
-          <label>選擇頭像風格</label>
-          <select id="avatarStyle" name="avatar_style" onchange="updateAvatar()">
-            <option value="avataaars">漫畫風</option>
-            <option value="pixel-art">像素風</option>
-            <option value="bottts">機器人風</option>
-            <option value="adventurer">3D風</option>
-          </select>
-
-          <div class="avatar-preview">
-            <img id="avatar" src="" alt="預覽頭像">
-            <span id="nickname-label">匿名</span>
-          </div>
-
-          <label for="title">文章標題</label>
-          <input type="text" id="title" name="title" placeholder="請輸入標題" required>
-
-          <label for="content">文章內容</label>
-          <textarea id="content" name="content" rows="6" placeholder="請輸入文章內容" required></textarea>
-
-          <button type="submit">送出發文</button>
-        </form>
       </div>
-    </section>
-  </main>
+    {% endif %}
+  </div>
+</header>
 
-  <footer class="footer text-center mt-5 py-4 bg-light">
-    <p>&copy; 2025 怪怪走開，護您安全｜Append Template</p>
-  </footer>
+<main class="main">
+  <section class="container">
+    <div class="section-title">
+      <h2>我要發文｜交流區</h2>
+      <p>請分享你在街道上遇到的觀察與心情，幫助更多人提高警覺。</p>
+    </div>
 
-  <script>
-    let bgColor = "2196f3";
-    function setBgColor(color, elem) {
-      bgColor = color;
-      updateAvatar();
-      document.getElementById("bgcolor").value = color;
-      document.querySelectorAll('.color-swatch').forEach(e => e.classList.remove('selected'));
-      if (elem) elem.classList.add('selected');
-    }
-    function updateAvatar() {
-      const nickname = "匿名";  // ✅ 強制使用匿名
-      const style = document.getElementById("avatarStyle").value;
-      const avatarUrl = `https://api.dicebear.com/7.x/${style}/svg?seed=${encodeURIComponent(nickname)}&backgroundColor=${bgColor}`;
-      document.getElementById("avatar").src = avatarUrl;
-      document.getElementById("nickname-label").innerText = nickname;
-    }
-    window.onload = () => {
-      const defaultColorElem = document.querySelector('.color-swatch[style*="2196f3"]');
-      if (defaultColorElem) defaultColorElem.classList.add('selected');
-      updateAvatar();
-    };
-  </script>
+    <div class="form-container">
+      <form method="post" action="{% url 'post' %}">
+        {% csrf_token %}
+        <input type="hidden" name="nickname" value="匿名">
+        <label>選擇背景顏色</label>
+        <div class="color-options" id="colorOptions">
+          <div class="color-swatch" style="background:#f44336" onclick="setBgColor('f44336', this)"></div>
+          <div class="color-swatch" style="background:#2196f3" onclick="setBgColor('2196f3', this)"></div>
+          <div class="color-swatch" style="background:#4caf50" onclick="setBgColor('4caf50', this)"></div>
+          <div class="color-swatch" style="background:#ff9800" onclick="setBgColor('ff9800', this)"></div>
+          <div class="color-swatch" style="background:#9c27b0" onclick="setBgColor('9c27b0', this)"></div>
+        </div>
+        <input type="hidden" name="bgcolor" id="bgcolor" value="2196f3">
 
-  <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
-  <script src="{% static 'assets/js/main.js' %}"></script>
+        <label>選擇頭像風格</label>
+        <select id="avatarStyle" name="avatar_style" onchange="updateAvatar()">
+          <option value="avataaars">漫畫風</option>
+          <option value="pixel-art">像素風</option>
+          <option value="bottts">機器人風</option>
+          <option value="adventurer">3D風</option>
+        </select>
+
+        <div class="avatar-preview">
+          <img id="avatar" src="" alt="預覽頭像">
+          <span id="nickname-label">匿名</span>
+        </div>
+
+        <label for="title">文章標題</label>
+        <input type="text" id="title" name="title" placeholder="請輸入標題" required>
+
+        <label for="content">文章內容</label>
+        <textarea id="content" name="content" rows="6" placeholder="請輸入文章內容" required></textarea>
+
+        <button type="submit">送出發文</button>
+      </form>
+    </div>
+  </section>
+</main>
+
+<footer class="footer text-center mt-5 py-4 bg-light">
+  <p>&copy; 2025 怪怪走開，護您安全｜Append Template</p>
+</footer>
+
+<script>
+  let bgColor = "2196f3";
+  function setBgColor(color, elem) {
+    bgColor = color;
+    updateAvatar();
+    document.getElementById("bgcolor").value = color;
+    document.querySelectorAll('.color-swatch').forEach(e => e.classList.remove('selected'));
+    if (elem) elem.classList.add('selected');
+  }
+  function updateAvatar() {
+    const nickname = "匿名";
+    const style = document.getElementById("avatarStyle").value;
+    const avatarUrl = `https://api.dicebear.com/7.x/${style}/svg?seed=${encodeURIComponent(nickname)}&backgroundColor=${bgColor}`;
+    document.getElementById("avatar").src = avatarUrl;
+    document.getElementById("nickname-label").innerText = nickname;
+  }
+  window.onload = () => {
+    const defaultColorElem = document.querySelector('.color-swatch[style*="2196f3"]');
+    if (defaultColorElem) defaultColorElem.classList.add('selected');
+    updateAvatar();
+  };
+</script>
+
+<script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+<script src="{% static 'assets/js/main.js' %}"></script>
 </body>
 </html>
