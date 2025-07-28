@@ -1013,8 +1013,34 @@ def submit_report(request):
         return JsonResponse({"status": "error", "message": "Invalid method"})
 
 #-----------------about---------------------------
-def about(request):
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+
+@login_required(login_url='/01userlogin/')
+def business_upload(request):
     return render(request, 'about.html')
+
+@login_required(login_url='/01userlogin/')
+def about(request):
+    # 模擬一個假的 profile 資料（假裝是從資料表來的）
+    user = request.user
+    google_data = request.session.get('google_data', {})  # 如果你用 Google OAuth 可以放這裡
+
+    # 用 dict 模擬 model 物件屬性
+    profile = {
+        'google_name': google_data.get('name', user.username),
+        'nickname': '未設定',
+        'email': user.email,
+        'phone': '',
+        'intro': '',
+        'show_name_option': 1,
+        'avatar_url': google_data.get('picture', None),
+    }
+
+    return render(request, 'about.html', {
+        'user': user,
+        'profile': profile,
+    })
 #----------------store---------------------------------------------------------------------
 from django.contrib.auth.decorators import login_required
 @login_required(login_url='/01userlogin/')
