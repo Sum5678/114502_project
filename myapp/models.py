@@ -173,6 +173,8 @@ class PemapAll(models.Model):
     time_reviewed = models.DateTimeField(null=True, blank=True)
     review_status = models.CharField(max_length=50, default="待審核")
     admin_id = models.IntegerField(default=99999)
+    poster_gmail = models.EmailField(max_length=255, null=True, blank=True)
+
 
 
     class Meta:
@@ -194,6 +196,8 @@ class StoreAll(models.Model):
     reviewed_at = models.DateTimeField(null=True, blank=True)
     review_status = models.CharField(max_length=20, default='pending')  # 審核狀態（預設 pending）
     admin_id = models.IntegerField(default=99999)
+    poster_gmail = models.EmailField(max_length=255, null=True, blank=True)
+
 
 
     class Meta:

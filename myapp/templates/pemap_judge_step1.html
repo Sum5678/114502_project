@@ -103,6 +103,7 @@
           <div class="card-body">
             <h5 class="card-title mb-3">事件資訊</h5>
             <p><strong>暱稱：</strong>{{ item.display_name }}</p>
+            <p><strong>投稿者 Email：</strong>{{ item.poster_gmail|default:"未提供" }}</p>
             <p><strong>分類：</strong>{{ item.kind }}</p>
             <p><strong>理由：</strong>{{ item.reason }}</p>
             <p><strong>經緯度：</strong>{{ item.address }}</p>
@@ -110,6 +111,9 @@
           </div>
         </div>
       </div>
+
+
+
     </div>
 
     <!-- 審核狀態表單 -->
