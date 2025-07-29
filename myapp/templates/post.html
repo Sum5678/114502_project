@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>我要發文｜交流區</title>
+  <title>我要發文　|　交流區</title>
 
   <!-- Favicons -->
   <link href="{% static 'assets/img/favicon.png' %}" rel="icon">
@@ -55,12 +55,9 @@
       height: 2px;
       background: #0d6efd;
     }
-    .section-title h2::before {
-      left: -70px;
-    }
-    .section-title h2::after {
-      right: -70px;
-    }
+    .section-title h2::before { left: -70px; }
+    .section-title h2::after { right: -70px; }
+
     .section-title p {
       margin-top: 10px;
       font-size: 16px;
@@ -165,8 +162,7 @@
     </nav>
     {% if request.user.is_authenticated %}
       <div class="dropdown">
-        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown" 
-           style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
+        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown" style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
           {{ request.user.username }}
         </a>
         <ul class="dropdown-menu dropdown-menu-end">
@@ -175,8 +171,7 @@
       </div>
     {% else %}
       <div class="dropdown">
-        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown" 
-           style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
+        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown" style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
           登入
         </a>
         <ul class="dropdown-menu dropdown-menu-end">
@@ -201,7 +196,7 @@
         <input type="hidden" name="nickname" value="匿名">
 
         <label>選擇背景顏色</label>
-        <div class="color-options" id="colorOptions">
+        <div class="color-options">
           <div class="color-swatch" style="background:#f44336" onclick="setBgColor('f44336', this)"></div>
           <div class="color-swatch" style="background:#2196f3" onclick="setBgColor('2196f3', this)"></div>
           <div class="color-swatch" style="background:#4caf50" onclick="setBgColor('4caf50', this)"></div>
@@ -224,14 +219,14 @@
         </div>
 
         <label for="title">文章標題</label>
-        <input type="text" id="title" name="title" maxlength="50" placeholder="請輸入標題" required>
+        <input type="text" id="title" name="title" placeholder="請輸入標題" required>
         <div class="char-counter" id="titleCounter">(0/50 字)</div>
 
         <label for="content">文章內容</label>
-        <textarea id="content" name="content" rows="6" maxlength="300" placeholder="請輸入文章內容" required></textarea>
+        <textarea id="content" name="content" rows="6" placeholder="請輸入文章內容" required></textarea>
         <div class="char-counter" id="contentCounter">(0/300 字)</div>
 
-        <button id="submitBtn" type="submit" disabled>送出發文</button>
+        <button id="submitBtn" type="submit">送出發文</button>
       </form>
 
       <div id="successMessage">✅ 發文成功！將自動跳轉至貼文總覽…</div>
@@ -262,21 +257,20 @@
     document.getElementById("nickname-label").innerText = nickname;
   }
 
-  function updateCounterAndButton(inputId, counterId, max) {
-    const input = document.getElementById(inputId);
-    const counter = document.getElementById(counterId);
+  function validateForm() {
+    const title = document.getElementById("title").value;
+    const content = document.getElementById("content").value;
     const button = document.getElementById("submitBtn");
+    const tooLong = title.length > 50 || content.length > 300;
+    button.disabled = tooLong;
+  }
 
-    const validate = () => {
-      const title = document.getElementById("title").value.trim();
-      const content = document.getElementById("content").value.trim();
-      const isValid = title.length > 0 && title.length <= 50 && content.length > 0 && content.length <= 300;
-      button.disabled = !isValid;
-    };
-
+  function updateCharCount(id, counterId, max) {
+    const input = document.getElementById(id);
+    const counter = document.getElementById(counterId);
     input.addEventListener("input", () => {
       counter.textContent = `(${input.value.length}/${max} 字)`;
-      validate();
+      validateForm();
     });
   }
 
@@ -284,20 +278,16 @@
     const defaultColorElem = document.querySelector('.color-swatch[style*="2196f3"]');
     if (defaultColorElem) defaultColorElem.classList.add('selected');
     updateAvatar();
-    updateCounterAndButton("title", "titleCounter", 50);
-    updateCounterAndButton("content", "contentCounter", 300);
+    updateCharCount("title", "titleCounter", 50);
+    updateCharCount("content", "contentCounter", 300);
   };
 
   document.getElementById("postForm").addEventListener("submit", function (e) {
     e.preventDefault();
     const msg = document.getElementById("successMessage");
     msg.style.display = "block";
-    setTimeout(() => {
-      msg.style.opacity = 1;
-    }, 50);
-    setTimeout(() => {
-      this.submit();
-    }, 1500);
+    setTimeout(() => { msg.style.opacity = 1; }, 50);
+    setTimeout(() => { this.submit(); }, 1500);
   });
 </script>
 
