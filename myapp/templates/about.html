@@ -94,7 +94,7 @@
     <h2>個人資料設定</h2>
 
     <label for="upload-image">
-      <img src="https://via.placeholder.com/150" alt="頭像" id="profile-pic" class="profile-image">
+      <img src="{{ profile.avatar_url }}" alt="頭像" id="profile-pic" class="profile-image">
     </label>
     <input type="file" id="upload-image" class="form-control d-none" accept="image/*" onchange="previewImage(event)" disabled>
 
