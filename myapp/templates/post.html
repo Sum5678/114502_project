@@ -120,6 +120,19 @@
       border-color: #4299e1;
       box-shadow: 0 0 8px 1px #a8cdfd;
     }
+    #successMessage {
+      font-size: 18px;
+      background-color: #d1f7d6;
+      border: 1px solid #8ee2a6;
+      border-radius: 8px;
+      padding: 14px;
+      color: #155724;
+      display: none;
+      opacity: 0;
+      transition: opacity 0.8s;
+      text-align: center;
+      margin-top: 20px;
+    }
   </style>
 </head>
 <body>
@@ -132,16 +145,15 @@
     <nav id="navmenu" class="navmenu">
       <ul>
         <li><a href="{% url 'home' %}#hero" class="active">主頁</a></li>
-        <li><a href="{% url 'home' %}#services" class="active">簡介及功能介紹</a></li>
-        <li><a href="{% url 'report' %}" class="active">填寫表單</a></li>
-        <li><a href="{% url 'business_upload' %}" class="active">商家填單</a></li>
-        <li><a href="{% url 'post_display' %}" class="active">貼文總覽</a></li>
-        <li><a href="{% url 'map' %}" class="active">事件地圖</a></li>
-        <li><a href="{% url 'harassment_prevention' %}" class="active">防騷指南</a></li>
+        <li><a href="{% url 'home' %}#services">簡介及功能介紹</a></li>
+        <li><a href="{% url 'report' %}">填寫表單</a></li>
+        <li><a href="{% url 'business_upload' %}">商家填單</a></li>
+        <li><a href="{% url 'post_display' %}">貼文總覽</a></li>
+        <li><a href="{% url 'map' %}">事件地圖</a></li>
+        <li><a href="{% url 'harassment_prevention' %}">防騷指南</a></li>
       </ul>
       <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
     </nav>
-    <!-- 使用者登入狀態顯示 -->
     {% if request.user.is_authenticated %}
       <div class="dropdown">
         <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown" 
@@ -175,7 +187,7 @@
     </div>
 
     <div class="form-container">
-      <form method="post" action="{% url 'post' %}">
+      <form id="postForm" method="post" action="{% url 'post' %}">
         {% csrf_token %}
         <input type="hidden" name="nickname" value="匿名">
         <label>選擇背景顏色</label>
@@ -209,6 +221,9 @@
 
         <button type="submit">送出發文</button>
       </form>
+
+      <!-- ✅ 成功提示訊息 -->
+      <div id="successMessage">✅ 發文成功！將自動跳轉至貼文總覽…</div>
     </div>
   </section>
 </main>
@@ -238,6 +253,19 @@
     if (defaultColorElem) defaultColorElem.classList.add('selected');
     updateAvatar();
   };
+
+  // ✅ 攔截送出並顯示提示
+  document.getElementById("postForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    const msg = document.getElementById("successMessage");
+    msg.style.display = "block";
+    setTimeout(() => {
+      msg.style.opacity = 1;
+    }, 50);
+    setTimeout(() => {
+      this.submit(); // ✅ 送出表單
+    }, 1500);
+  });
 </script>
 
 <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
