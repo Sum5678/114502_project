@@ -80,6 +80,12 @@
       font-size: 15px;
       background-color: #fff;
     }
+    .char-counter {
+      font-size: 13px;
+      text-align: right;
+      color: #888;
+      margin-top: 4px;
+    }
     button {
       margin-top: 30px;
       width: 100%;
@@ -190,6 +196,7 @@
       <form id="postForm" method="post" action="{% url 'post' %}">
         {% csrf_token %}
         <input type="hidden" name="nickname" value="匿名">
+
         <label>選擇背景顏色</label>
         <div class="color-options" id="colorOptions">
           <div class="color-swatch" style="background:#f44336" onclick="setBgColor('f44336', this)"></div>
@@ -214,15 +221,16 @@
         </div>
 
         <label for="title">文章標題</label>
-        <input type="text" id="title" name="title" placeholder="請輸入標題" required>
+        <input type="text" id="title" name="title" maxlength="50" placeholder="請輸入標題" required>
+        <div class="char-counter" id="titleCounter">(0/50 字)</div>
 
         <label for="content">文章內容</label>
-        <textarea id="content" name="content" rows="6" placeholder="請輸入文章內容" required></textarea>
+        <textarea id="content" name="content" rows="6" maxlength="300" placeholder="請輸入文章內容" required></textarea>
+        <div class="char-counter" id="contentCounter">(0/300 字)</div>
 
         <button type="submit">送出發文</button>
       </form>
 
-      <!-- ✅ 成功提示訊息 -->
       <div id="successMessage">✅ 發文成功！將自動跳轉至貼文總覽…</div>
     </div>
   </section>
@@ -252,9 +260,19 @@
     const defaultColorElem = document.querySelector('.color-swatch[style*="2196f3"]');
     if (defaultColorElem) defaultColorElem.classList.add('selected');
     updateAvatar();
+    updateCounter("title", "titleCounter", 50);
+    updateCounter("content", "contentCounter", 300);
   };
 
-  // ✅ 攔截送出並顯示提示
+  function updateCounter(inputId, counterId, max) {
+    const input = document.getElementById(inputId);
+    const counter = document.getElementById(counterId);
+    counter.textContent = `(${input.value.length}/${max} 字)`;
+    input.addEventListener("input", () => {
+      counter.textContent = `(${input.value.length}/${max} 字)`;
+    });
+  }
+
   document.getElementById("postForm").addEventListener("submit", function (e) {
     e.preventDefault();
     const msg = document.getElementById("successMessage");
@@ -263,7 +281,7 @@
       msg.style.opacity = 1;
     }, 50);
     setTimeout(() => {
-      this.submit(); // ✅ 送出表單
+      this.submit();
     }, 1500);
   });
 </script>

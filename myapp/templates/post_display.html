@@ -24,78 +24,31 @@
   <link href="{% static 'assets/css/main.css' %}" rel="stylesheet">
 
   <style>
-    .section-title {
-      text-align: center;
-      margin-top: 60px;
-      margin-bottom: 30px;
-    }
+    .section-title { text-align: center; margin-top: 60px; margin-bottom: 30px; }
     .section-title h2 {
-      display: inline-block;
-      position: relative;
-      font-weight: 700;
-      font-size: 28px;
-      color: #033e6b;
-      padding: 0 20px;
+      display: inline-block; position: relative; font-weight: 700;
+      font-size: 28px; color: #033e6b; padding: 0 20px;
     }
-    .section-title h2::before,
-    .section-title h2::after {
-      content: "";
-      position: absolute;
-      top: 50%;
-      width: 60px;
-      height: 2px;
-      background: #0d6efd;
+    .section-title h2::before, .section-title h2::after {
+      content: ""; position: absolute; top: 50%; width: 60px; height: 2px; background: #0d6efd;
     }
-    .section-title h2::before {
-      left: -70px;
-    }
-    .section-title h2::after {
-      right: -70px;
-    }
-    .section-title p {
-      margin-top: 10px;
-      font-size: 16px;
-      color: #555;
-    }
-    .card {
-      border-left: 8px solid #ccc;
-    }
-    .card .card-body {
-      background: #fff;
-      border-radius: 6px;
-    }
-    .card .card-title {
-      font-weight: 700;
-      color: #033e6b;
-    }
-    .card .card-text {
-      color: #444;
-      font-size: 15px;
-    }
-    .meta {
-      font-size: 13px;
-      color: #888;
-    }
+    .section-title h2::before { left: -70px; }
+    .section-title h2::after { right: -70px; }
+    .section-title p { margin-top: 10px; font-size: 16px; color: #555; }
+    .card { border-left: 8px solid #ccc; }
+    .card .card-body { background: #fff; border-radius: 6px; }
+    .card .card-title { font-weight: 700; color: #033e6b; }
+    .card .card-text { color: #444; font-size: 15px; }
+    .meta { font-size: 13px; color: #888; }
     .btn-floating-post {
-      position: fixed;
-      bottom: 40px;
-      right: 40px;
-      width: 60px;
-      height: 60px;
-      background-color: #0d6efd;
-      color: white;
-      border-radius: 50%;
-      font-size: 30px;
-      text-align: center;
-      line-height: 60px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-      z-index: 999;
+      position: fixed; bottom: 40px; right: 40px;
+      width: 60px; height: 60px; background-color: #0d6efd;
+      color: white; border-radius: 50%; font-size: 30px;
+      text-align: center; line-height: 60px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2); z-index: 999;
       transition: background-color 0.3s;
     }
-    .btn-floating-post:hover {
-      background-color: #0b5ed7;
-      text-decoration: none;
-    }
+    .btn-floating-post:hover { background-color: #0b5ed7; text-decoration: none; }
   </style>
 </head>
 <body class="index-page">
@@ -118,26 +71,26 @@
       <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
     </nav>
     {% if request.user.is_authenticated %}
-      <div class="dropdown">
-        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown" 
-           style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
-          {{ request.user.username }}
-        </a>
-        <ul class="dropdown-menu dropdown-menu-end">
-          <li><a class="dropdown-item" href="{% url '01_userlogin_out' %}">登出</a></li>
-        </ul>
-      </div>
+    <div class="dropdown">
+      <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown"
+         style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
+        {{ request.user.username }}
+      </a>
+      <ul class="dropdown-menu dropdown-menu-end">
+        <li><a class="dropdown-item" href="{% url '01_userlogin_out' %}">登出</a></li>
+      </ul>
+    </div>
     {% else %}
-      <div class="dropdown">
-        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown" 
-           style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
-          登入
-        </a>
-        <ul class="dropdown-menu dropdown-menu-end">
-          <li><a class="dropdown-item" href="{% url 'userlogin' %}">一般使用者登入</a></li>
-          <li><a class="dropdown-item" href="{% url 'admin_login' %}">管理員登入</a></li>
-        </ul>
-      </div>
+    <div class="dropdown">
+      <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown"
+         style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
+        登入
+      </a>
+      <ul class="dropdown-menu dropdown-menu-end">
+        <li><a class="dropdown-item" href="{% url 'userlogin' %}">一般使用者登入</a></li>
+        <li><a class="dropdown-item" href="{% url 'admin_login' %}">管理員登入</a></li>
+      </ul>
+    </div>
     {% endif %}
   </div>
 </header>
@@ -160,9 +113,11 @@
               <div class="meta">{{ post.nickname }} ・ {{ post.created_at|date:"Y/m/d H:i" }}</div>
             </div>
           </div>
-          <p class="card-text mt-2 message-content" data-full="{{ post.message_content|escape }}">
+          <p class="card-text mt-2 message-content" data-full="{{ post.message_content|escapejs }}">
             {{ post.message_content|truncatechars:100 }}
-            {% if post.message_content|length > 100 %}<span class="ellipsis">...</span> <a href="#" class="toggle-more">查看更多</a>{% endif %}
+            {% if post.message_content|length > 100 %}
+              <span class="ellipsis">...</span> <a href="#" class="toggle-more">查看更多</a>
+            {% endif %}
           </p>
         </div>
       </div>
@@ -191,23 +146,37 @@
 <script src="{% static 'assets/js/main.js' %}"></script>
 <script>
   document.addEventListener('DOMContentLoaded', function () {
-    const toggleLinks = document.querySelectorAll('.toggle-more');
-
-    toggleLinks.forEach(link => {
+    document.querySelectorAll('.toggle-more').forEach(link => {
       link.addEventListener('click', function (e) {
         e.preventDefault();
         const p = this.closest('.message-content');
         const fullText = p.dataset.full;
-        const ellipsis = p.querySelector('.ellipsis');
+        const truncated = fullText.slice(0, 100);
 
         if (this.textContent === '查看更多') {
-          p.innerHTML = fullText + ' <a href="#" class="toggle-more">關閉詳情</a>';
+          p.innerHTML = '';
+          p.textContent = fullText;
+          const closeLink = document.createElement('a');
+          closeLink.href = "#";
+          closeLink.textContent = " 關閉詳情";
+          closeLink.classList.add('toggle-more');
+          p.appendChild(closeLink);
+          closeLink.addEventListener('click', arguments.callee);
         } else {
-          const truncated = fullText.slice(0, 100);
-          p.innerHTML = truncated + '<span class="ellipsis">...</span> <a href="#" class="toggle-more">查看更多</a>';
+          p.innerHTML = '';
+          p.textContent = truncated;
+          const dots = document.createElement('span');
+          dots.classList.add('ellipsis');
+          dots.textContent = '...';
+          const moreLink = document.createElement('a');
+          moreLink.href = "#";
+          moreLink.textContent = " 查看更多";
+          moreLink.classList.add('toggle-more');
+          p.appendChild(dots);
+          p.appendChild(document.createTextNode(' '));
+          p.appendChild(moreLink);
+          moreLink.addEventListener('click', arguments.callee);
         }
-
-        p.querySelector('.toggle-more').addEventListener('click', arguments.callee);
       });
     });
   });
