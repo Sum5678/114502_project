@@ -96,6 +96,10 @@
       border: none;
       border-radius: 6px;
     }
+    button:disabled {
+      background-color: #b5d9f6;
+      cursor: not-allowed;
+    }
     .avatar-preview {
       display: flex;
       align-items: center;
@@ -142,7 +146,6 @@
   </style>
 </head>
 <body>
-
 <header id="header" class="header d-flex align-items-center fixed-top">
   <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
     <a href="{% url 'home' %}" class="logo d-flex align-items-center me-auto me-xl-0">
@@ -228,7 +231,7 @@
         <textarea id="content" name="content" rows="6" maxlength="300" placeholder="請輸入文章內容" required></textarea>
         <div class="char-counter" id="contentCounter">(0/300 字)</div>
 
-        <button type="submit">送出發文</button>
+        <button id="submitBtn" type="submit" disabled>送出發文</button>
       </form>
 
       <div id="successMessage">✅ 發文成功！將自動跳轉至貼文總覽…</div>
@@ -242,6 +245,7 @@
 
 <script>
   let bgColor = "2196f3";
+
   function setBgColor(color, elem) {
     bgColor = color;
     updateAvatar();
@@ -249,6 +253,7 @@
     document.querySelectorAll('.color-swatch').forEach(e => e.classList.remove('selected'));
     if (elem) elem.classList.add('selected');
   }
+
   function updateAvatar() {
     const nickname = "匿名";
     const style = document.getElementById("avatarStyle").value;
@@ -256,22 +261,32 @@
     document.getElementById("avatar").src = avatarUrl;
     document.getElementById("nickname-label").innerText = nickname;
   }
+
+  function updateCounterAndButton(inputId, counterId, max) {
+    const input = document.getElementById(inputId);
+    const counter = document.getElementById(counterId);
+    const button = document.getElementById("submitBtn");
+
+    const validate = () => {
+      const title = document.getElementById("title").value.trim();
+      const content = document.getElementById("content").value.trim();
+      const isValid = title.length > 0 && title.length <= 50 && content.length > 0 && content.length <= 300;
+      button.disabled = !isValid;
+    };
+
+    input.addEventListener("input", () => {
+      counter.textContent = `(${input.value.length}/${max} 字)`;
+      validate();
+    });
+  }
+
   window.onload = () => {
     const defaultColorElem = document.querySelector('.color-swatch[style*="2196f3"]');
     if (defaultColorElem) defaultColorElem.classList.add('selected');
     updateAvatar();
-    updateCounter("title", "titleCounter", 50);
-    updateCounter("content", "contentCounter", 300);
+    updateCounterAndButton("title", "titleCounter", 50);
+    updateCounterAndButton("content", "contentCounter", 300);
   };
-
-  function updateCounter(inputId, counterId, max) {
-    const input = document.getElementById(inputId);
-    const counter = document.getElementById(counterId);
-    counter.textContent = `(${input.value.length}/${max} 字)`;
-    input.addEventListener("input", () => {
-      counter.textContent = `(${input.value.length}/${max} 字)`;
-    });
-  }
 
   document.getElementById("postForm").addEventListener("submit", function (e) {
     e.preventDefault();
