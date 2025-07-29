@@ -1,9 +1,17 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-    <meta charset="UTF-8" />
-    <title>{{ action }} 台灣縣市／鄉鎮市區資料</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <meta charset="UTF-8" />
+  <title>{{ action }} 台灣縣市／鄉鎮市區資料</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+  <style>
+    /* 限制表單最大寬度並置中輸入框 */
+    form .form-control {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+  </style>
 </head>
 <body class="container py-4">
 
@@ -18,6 +26,7 @@
       </div>
       <div class="modal-body" style="white-space: pre-wrap;">
         由於部分地區（如新竹市、嘉義市）的多個行政區共用相同郵遞區號（如新竹市東區、北區、香山區皆為 300，嘉義市東區、西區皆為600），為確保查詢功能的正確性，本系統採用延伸編碼方式（如 300-1、300-2、300-3、600-1、600-2）區分各行政區。
+
         管理者在新增、編輯或刪除資料時，請務必確認：
 
         區域名稱與延伸郵遞區號的對應正確無誤
@@ -30,32 +39,36 @@
   </div>
 </div>
 
-<!-- 主要內容區塊，初始隱藏 -->
+<!-- 主要內容區塊 -->
 <div id="main-content" class="d-flex justify-content-center align-items-center min-vh-100 flex-column" style="display:none;">
-<h1>{{ action }} 台灣縣市／鄉鎮市區資料</h1>
+  <h1 class="text-center mb-4">{{ action }} 台灣縣市／鄉鎮市區資料</h1>
 
-<form method="post" class="w-50">
+  <form method="post" class="w-100" style="max-width: 600px;">
     {% csrf_token %}
     {{ form.non_field_errors }}
+
     <div class="mb-3">
-        {{ form.zipcode.label_tag }}
-        {{ form.zipcode }}
-        {{ form.zipcode.errors }}
+      {{ form.zipcode.label_tag }}
+      {{ form.zipcode }}
+      {{ form.zipcode.errors }}
     </div>
     <div class="mb-3">
-        {{ form.country_city.label_tag }}
-        {{ form.country_city }}
-        {{ form.country_city.errors }}
+      {{ form.country_city.label_tag }}
+      {{ form.country_city }}
+      {{ form.country_city.errors }}
     </div>
     <div class="mb-3">
-        {{ form.district_town.label_tag }}
-        {{ form.district_town }}
-        {{ form.district_town.errors }}
+      {{ form.district_town.label_tag }}
+      {{ form.district_town }}
+      {{ form.district_town.errors }}
     </div>
 
-    <button type="submit" class="btn btn-success">{{ action }}</button>
-    <a href="{% url 'taiwan_regions_admin' %}" class="btn btn-secondary ms-2">取消</a>
-</form>
+    <!-- 置中的按鈕 -->
+    <div class="text-center mt-4">
+      <button type="submit" class="btn btn-success">{{ action }}</button>
+      <a href="{% url 'taiwan_regions_admin' %}" class="btn btn-secondary ms-2">取消</a>
+    </div>
+  </form>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -64,12 +77,10 @@
     var alertModal = new bootstrap.Modal(document.getElementById('alertModal'));
     alertModal.show();
 
-    // 關閉彈跳框後顯示主要內容
     document.getElementById('alertModal').addEventListener('hidden.bs.modal', function () {
       document.getElementById('main-content').style.display = 'flex';
     });
   });
 </script>
-
 </body>
 </html>
