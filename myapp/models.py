@@ -222,6 +222,7 @@ class Admins(models.Model):
 
 from django.contrib.auth.models import User  # ✅ 引入 Django 原生 User
 from django.db import models
+from django.core.validators import MaxLengthValidator  # ✅ 加入字數限制驗證器
 
 class ChatInteraction(models.Model):
     interaction_id = models.AutoField(primary_key=True)
@@ -234,11 +235,14 @@ class ChatInteraction(models.Model):
     bgcolor = models.CharField(max_length=20)
     avatar_style = models.CharField(max_length=50)
     avatar_url = models.URLField(max_length=300)
-    title = models.CharField(max_length=200)
-    message_content = models.TextField()
+    title = models.CharField(max_length=50) 
+    message_content = models.CharField(max_length=300)
+ 
     created_at = models.DateTimeField()
 
     class Meta:
         db_table = 'chat_interaction'  # ✅ 對應資料表名稱
         managed = False  # ✅ 禁止 Django 自行創建這張表
+
+
 
