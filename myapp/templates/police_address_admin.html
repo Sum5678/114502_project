@@ -46,9 +46,24 @@
       margin-right: 6px;      /* ✅ 讓按鈕之間有空隙 */
     }
 
+    a.button,
+    a.button.delete {
+        background-color: #4CAF50;
+        color: white;
+        padding: 6px 12px;
+        text-decoration: none;
+        border-radius: 4px;
+        display: inline-block;
+        text-align: center;
+        vertical-align: middle;
+        line-height: 1.5;
+        font-size: 14px;
+        white-space: nowrap;
+        }
+
+
     a.button.delete {
         background-color: #f44336;
-        margin-right: 0;         /* ✅ 最後一個按鈕不需要空隙 */
         }
 
     a.button:hover {
@@ -62,9 +77,14 @@
     a.delete:hover {
       background-color: #c0392b;
     }
+    .precinct_name-cell {
+      max-width: 250px;
+      word-break: break-word;
+      white-space: normal;
+    }
 
     .zipcode-cell {
-      max-width: 250px;
+      max-width: 400px;
       word-break: break-word;
       white-space: normal;
     }
@@ -73,7 +93,13 @@
       word-break: break-word;
       white-space: normal;
     }
-    
+    .action-buttons {
+        
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+        align-items: center;
+    }
   </style>
 </head>
 
@@ -137,28 +163,30 @@
         <table class="table table-bordered table-striped mx-auto" style="max-width: 1000px;">
           <thead>
             <tr>
-              <th>警局名稱</th>
-              <th>郵遞區號</th>
-              <th>地址</th>
-              <th>電話</th>
-              <th>經度 (POINT_X)</th>
-              <th>緯度 (POINT_Y)</th>
-              <th>動作</th>
+              <th class="text-center">警局名稱</th>
+              <th class="text-center">郵遞區號</th>
+              <th class="text-center">地址</th>
+              <th class="text-center">電話</th>
+              <th class="text-center">經度 (POINT_X)</th>
+              <th class="text-center">緯度 (POINT_Y)</th>
+              <th class="text-center">動作</th>
             </tr>
           </thead>
           <tbody>
             {% for addr in addresses %}
             <tr>
-              <td>{{ addr.precinct_name }}</td>
+              <td class="precinct_name-cell">{{ addr.precinct_name }}</td>
               <td class="zipcode-cell">{{ addr.zipcode }}</td>
               <td class="address-cell">{{ addr.address }}</td>
               <td>{{ addr.phone }}</td>
               <td>{{ addr.POINT_X }}</td>
               <td>{{ addr.POINT_Y }}</td>
               <td>
-                <a href="{% url 'police_address_edit' addr.pk %}" class="button me-1">編輯</a>
-                <a href="{% url 'police_address_delete' addr.pk %}" class="button delete">刪除</a>
-              </td>
+                <div class="action-buttons">
+                    <a href="{% url 'police_address_edit' addr.pk %}" class="button">編輯</a>
+                    <a href="{% url 'police_address_delete' addr.pk %}" class="button delete">刪除</a>
+                </div>
+                </td>
 
             </tr>
             {% empty %}
