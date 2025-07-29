@@ -1,21 +1,74 @@
 <!DOCTYPE html>
+{% load static %}
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
   <title>{{ action }} 台灣縣市／鄉鎮市區資料</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Bootstrap + 樣式 -->
+  <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet" />
+  <link href="{% static 'assets/vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet" />
+  <link href="{% static 'assets/vendor/aos/aos.css' %}" rel="stylesheet" />
+  <link href="{% static 'assets/vendor/boxicons/css/boxicons.min.css' %}" rel="stylesheet" />
+  <link href="{% static 'assets/css/main.css' %}" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans&family=Poppins&display=swap" rel="stylesheet">
 
   <style>
-    /* 限制表單最大寬度並置中輸入框 */
     form .form-control {
       max-width: 600px;
       margin: 0 auto;
     }
   </style>
 </head>
-<body class="container py-4">
 
-<!-- 彈跳提醒框 Modal -->
+<body class="index-page">
+
+<!-- ✅ 導覽列 -->
+<header id="header" class="header d-flex align-items-center fixed-top">
+  <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
+    <a href="{% url 'admin_index' %}" class="logo d-flex flex-column align-items-start me-auto me-xl-0">
+      <h1 class="sitename">台灣地區管理系統</h1>
+    </a>
+
+    <nav id="navmenu" class="navmenu">
+      <ul>
+        <li><a href="{% url 'admin_index' %}">管理員主頁</a></li>
+        <li><a href="{% url 'admin_interview' %}">管理員自我介紹</a></li>
+        <li><a href="{% url 'show_judge_page' %}">審核表單</a></li>
+        <li class="dropdown"><a href="#"><span>清單審核</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+          <ul>
+            <li><a href="{% url 'pemap_judge' %}">事件清單審核</a></li>
+            <li><a href="{% url 'store_judge' %}">商家清單審核</a></li>
+          </ul>
+        </li>
+        <li class="dropdown"><a href="#"><span>我的審核紀錄</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+          <ul>
+            <li><a href="{% url 'admin_decide' %}">事件審核紀錄</a></li>
+            <li><a href="{% url 'store_decide' %}">商家審核紀錄</a></li>
+          </ul>
+        </li>
+        <li class="dropdown"><a href="#"><span>管理工具</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+          <ul>
+            <li><a href="{% url 'education_list' %}">教育網頁管理</a></li>
+            <li><a href="{% url 'taiwan_regions_admin' %}">台灣縣市管理</a></li>
+            <li><a href="{% url 'police_address_list' %}">最近警局管理</a></li>
+          </ul>
+        </li>
+      </ul>
+      <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+    </nav>
+
+    <a class="btn-getstarted" href="{% url 'admin_logout' %}">登出</a>
+  </div>
+</header>
+
+  <!-- Hero 圖片 -->
+  <section class="hero">
+    <img src="{% static 'assets/img/1.png' %}" alt="Hero Image">
+  </section>
+
+<!-- ✅ 彈跳提醒框 -->
 <div class="modal fade" id="alertModal" tabindex="-1" aria-labelledby="alertModalLabel" aria-hidden="true"
      data-bs-backdrop="static" data-bs-keyboard="false">
   <div class="modal-dialog modal-dialog-centered">
@@ -29,49 +82,51 @@
 
         管理者在新增、編輯或刪除資料時，請務必確認：
 
-        區域名稱與延伸郵遞區號的對應正確無誤
-
-        不可誤刪或誤改相同郵遞區號但不同區域的資料
-
-        請在編輯時特別注意！
+        ● 區域名稱與延伸郵遞區號的對應正確無誤  
+        ● 不可誤刪或誤改相同郵遞區號但不同區域的資料  
+        ● 請在編輯時特別注意！
       </div>
     </div>
   </div>
 </div>
 
-<!-- 主要內容區塊 -->
-<div id="main-content" class="d-flex justify-content-center align-items-center min-vh-100 flex-column" style="display:none;">
-  <h1 class="text-center mb-4">{{ action }} 台灣縣市／鄉鎮市區資料</h1>
+<!-- ✅ 表單區 -->
+<main class="main" style="padding-top: 100px;">
+  <div class="container d-flex justify-content-center align-items-center min-vh-100 flex-column" id="main-content" style="display:none;" data-aos="fade-up">
+    <h1 class="text-center mb-4">{{ action }} 台灣縣市／鄉鎮市區資料</h1>
 
-  <form method="post" class="w-100" style="max-width: 600px;">
-    {% csrf_token %}
-    {{ form.non_field_errors }}
+    <form method="post" class="w-100" style="max-width: 600px;">
+      {% csrf_token %}
+      {{ form.non_field_errors }}
 
-    <div class="mb-3">
-      {{ form.zipcode.label_tag }}
-      {{ form.zipcode }}
-      {{ form.zipcode.errors }}
-    </div>
-    <div class="mb-3">
-      {{ form.country_city.label_tag }}
-      {{ form.country_city }}
-      {{ form.country_city.errors }}
-    </div>
-    <div class="mb-3">
-      {{ form.district_town.label_tag }}
-      {{ form.district_town }}
-      {{ form.district_town.errors }}
-    </div>
+      <div class="mb-3">
+        {{ form.zipcode.label_tag }}
+        {{ form.zipcode }}
+        {{ form.zipcode.errors }}
+      </div>
+      <div class="mb-3">
+        {{ form.country_city.label_tag }}
+        {{ form.country_city }}
+        {{ form.country_city.errors }}
+      </div>
+      <div class="mb-3">
+        {{ form.district_town.label_tag }}
+        {{ form.district_town }}
+        {{ form.district_town.errors }}
+      </div>
 
-    <!-- 置中的按鈕 -->
-    <div class="text-center mt-4">
-      <button type="submit" class="btn btn-success">{{ action }}</button>
-      <a href="{% url 'taiwan_regions_admin' %}" class="btn btn-secondary ms-2">取消</a>
-    </div>
-  </form>
-</div>
+      <div class="text-center mt-4">
+        <button type="submit" class="btn btn-success">{{ action }}</button>
+        <a href="{% url 'taiwan_regions_admin' %}" class="btn btn-secondary ms-2">取消</a>
+      </div>
+    </form>
+  </div>
+</main>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- ✅ JS -->
+<script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+<script src="{% static 'assets/vendor/aos/aos.js' %}"></script>
+<script src="{% static 'assets/js/main.js' %}"></script>
 <script>
   document.addEventListener('DOMContentLoaded', function () {
     var alertModal = new bootstrap.Modal(document.getElementById('alertModal'));
@@ -82,5 +137,6 @@
     });
   });
 </script>
+
 </body>
 </html>
