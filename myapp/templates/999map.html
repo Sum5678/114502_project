@@ -115,7 +115,26 @@
     <!-- Report List Section -->
     <section id="injury-map">
         <header>
-            <h1>動物受傷報告地圖</h1>
+            <!-- <h1>動物受傷報告地圖</h1> -->
+
+            <div class="container my-3">
+                <label for="kindFilter" class="form-label">篩選事件分類：</label>
+                <select id="kindFilter" class="form-select" style="max-width: 300px;">
+                    <option value="全部">全部</option>
+                    <option value="騷擾">騷擾</option>
+                    <option value="打架">打架</option>
+                    <option value="動物">動物</option>
+                    <option value="環境髒亂">環境髒亂</option>
+                </select>
+            
+            <label for="subkindFilter" class="form-label">細分類：</label>
+            <select id="subkindFilter" class="form-select" style="max-width: 300px;">
+                <option value="">請先選擇事件分類</option>
+            </select>
+            </div>
+
+
+        
         </header>
 
         <main>
@@ -130,52 +149,138 @@
     </section>
 
     <script>
+        // 📌 定義分類與細分類
+        const subkindOptions = {
+            "騷擾": ["推銷", "暴露狂", "跟蹤", "言語騷擾", "拍攝他人", "擋路糾纏", "其他"],
+            "打架": ["肢體衝突", "口角爭執", "幫派鬥毆", "攻擊路人", "其他"],
+            "動物": ["咬人", "無人看管寵物", "攻擊性動物", "受傷動物", "野生動物闖入", "其他"],
+            "環境髒亂": ["公共財物破壞", "可疑物品", "垃圾堆積", "噪音擾人", "惡臭", "噴漆塗鴉", "其他"]
+        };
 
+        // 📌 全域變數
+        let map;
+        let allMarkers = [];
+
+        // 📌 初始化地圖
         function initMap() {
-            console.log("initMap called");
-            const center = { lat: 25.055, lng: 121.576 };
-            const map = new google.maps.Map(document.getElementById("map"), {
-                zoom: 13,
-                center: center
+            map = new google.maps.Map(document.getElementById("map"), {
+            center: { lat: 25.033964, lng: 121.562321 },
+            zoom: 14,
             });
 
-            fetch("{% url 'reports_json' %}")
-                .then(response => {
-                    if (!response.ok) throw new Error("Network response was not ok");
-                    return response.json();
-                })
-                .then(data => {
-                    console.log("取得報告資料:", data);
-                    data.forEach(report => {
-                        if (typeof report.latitude === 'number' && typeof report.longitude === 'number') {
-                             const marker = new google.maps.Marker({
-                                position: { lat: report.latitude, lng: report.longitude },
-                                map: map,
-                                title: report.display_name, 
-                                icon: {
-                                        url: "{% static 'assets/img/paw_icon.png' %}",
-                                        scaledSize: new google.maps.Size(30, 30),  // 你想要的寬、高（像素）
-                                        origin: new google.maps.Point(0, 0),       // 起始點
-                                        anchor: new google.maps.Point(15, 15)      // 圖示錨點 (通常是圖片中心)
-                                    }
-                            });
-                            const infowindow = new google.maps.InfoWindow({
-                                content: `<strong>${report.display_name}</strong><br>
-                                          原因: ${report.reason}<br>
-                                          時間: ${report.time_created}`
-                            });
-                            marker.addListener('click', () => {
-                                infowindow.open(map, marker);
-                            });
-                        } else {
-                            console.warn("經緯度格式錯誤:", report);
-                        }
-                    });
-                })
-                .catch(error => {
-                    console.error("fetch 錯誤:", error);
-                });
+            renderMarkers("全部", "", map);
+            updateSubkindOptions("全部");
         }
+
+        // 📌 渲染標記
+        function renderMarkers(kind, subkind, map) {
+            // 清除現有標記
+            for (let marker of allMarkers) {
+            marker.setMap(null);
+            }
+            allMarkers = [];
+
+            const reports = JSON.parse(document.getElementById("reportData").textContent);
+
+            for (let report of reports) {
+            if (
+                (kind === "全部" || report.kind === kind) &&
+                (!subkind || report.subkind === subkind)
+            ) {
+                const marker = new google.maps.Marker({
+                position: { lat: report.latitude, lng: report.longitude },
+                map: map,
+                title: report.title,
+                });
+                allMarkers.push(marker);
+            }
+            }
+        }
+
+        // 📌 更新細分類選項
+        function updateSubkindOptions(selectedKind) {
+            const subkindSelect = document.getElementById("subkindFilter");
+            subkindSelect.innerHTML = "";
+
+            const defaultOption = document.createElement("option");
+            defaultOption.value = "";
+            defaultOption.text = "請選擇細分類";
+            subkindSelect.add(defaultOption);
+
+            if (selectedKind in subkindOptions) {
+            for (let subkind of subkindOptions[selectedKind]) {
+                const option = document.createElement("option");
+                option.value = subkind;
+                option.text = subkind;
+                subkindSelect.add(option);
+            }
+            }
+        }
+
+        // 📌 綁定分類篩選事件
+        document.getElementById("kindFilter").addEventListener("change", function () {
+            const selectedKind = this.value;
+            updateSubkindOptions(selectedKind);
+            renderMarkers(selectedKind, "", map);
+        });
+
+        // 📌 綁定細分類篩選事件
+        document.getElementById("subkindFilter").addEventListener("change", function () {
+            const selectedKind = document.getElementById("kindFilter").value;
+            const selectedSubkind = this.value;
+            renderMarkers(selectedKind, selectedSubkind, map);
+        });
+
+
+
+
+
+
+        // function initMap() {
+        //     console.log("initMap called");
+        //     const center = { lat: 25.055, lng: 121.576 };
+        //     const map = new google.maps.Map(document.getElementById("map"), {
+        //         zoom: 13,
+        //         center: center
+        //     });
+
+        //     fetch("{% url 'reports_json' %}")
+        //         .then(response => {
+        //             if (!response.ok) throw new Error("Network response was not ok");
+        //             return response.json();
+        //         })
+        //         .then(data => {
+        //             console.log("取得報告資料:", data);
+        //             data.forEach(report => {
+        //                 if (typeof report.latitude === 'number' && typeof report.longitude === 'number') {
+        //                      const marker = new google.maps.Marker({
+        //                         position: { lat: report.latitude, lng: report.longitude },
+        //                         map: map,
+        //                         title: report.display_name, 
+        //                         icon: {
+        //                                 url: "{% static 'assets/img/paw_icon.png' %}",
+        //                                 scaledSize: new google.maps.Size(30, 30),  // 你想要的寬、高（像素）
+        //                                 origin: new google.maps.Point(0, 0),       // 起始點
+        //                                 anchor: new google.maps.Point(15, 15)      // 圖示錨點 (通常是圖片中心)
+        //                             }
+        //                     });
+        //                     const infowindow = new google.maps.InfoWindow({
+        //                         content: `<strong>${report.display_name}</strong><br>
+        //                                   原因: ${report.reason}<br>
+        //                                   時間: ${report.time_created}`
+        //                     });
+        //                     marker.addListener('click', () => {
+        //                         infowindow.open(map, marker);
+        //                     });
+        //                 } else {
+        //                     console.warn("經緯度格式錯誤:", report);
+        //                 }
+        //             });
+        //         })
+        //         .catch(error => {
+        //             console.error("fetch 錯誤:", error);
+        //         });
+        // }
     </script>
 
     <script async defer
