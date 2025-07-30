@@ -1104,19 +1104,20 @@ def business_upload(request):
 
 @login_required(login_url='/01userlogin/')
 def about(request):
-    # 模擬一個假的 profile 資料（假裝是從資料表來的）
     user = request.user
-    google_data = request.session.get('google_data', {})  # 如果你用 Google OAuth 可以放這裡
+    extra_data = {}
+    google_login = user.social_auth.filter(provider='google-oauth2').first()
+    if google_login:
+        extra_data = google_login.extra_data
 
-    # 用 dict 模擬 model 物件屬性
     profile = {
-        'google_name': google_data.get('name', user.username),
-        'nickname': '未設定',
-        'email': user.email,
+        'google_name': extra_data.get('name', user.username),
+        'nickname': '',
+        'email': extra_data.get('email', user.email),
         'phone': '',
         'intro': '',
         'show_name_option': 1,
-        'avatar_url': google_data.get('picture', None),
+        'avatar_url': extra_data.get('picture', None),
     }
 
     return render(request, 'about.html', {
