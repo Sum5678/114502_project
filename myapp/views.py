@@ -1912,7 +1912,7 @@ def store_data_api(request):
 #     return render(request, 'store_map.html')
 
 
-
+#------------交流區貼文的部分-------
 
 from .models import ChatInteraction
 from django.utils import timezone  # 建議使用 timezone
@@ -1959,7 +1959,9 @@ def post(request):
 
     return render(request, 'post.html')
 
-
+def post_display(request):
+    posts = ChatInteraction.objects.all().order_by('-created_at')
+    return render(request, 'post_display.html', {'posts': posts})
 
 
 
@@ -2014,10 +2016,6 @@ def post(request):
 
 
 # ✅ 展示頁保持不變（但顯示時可用 |safe，前提是內容已淨化）
-def post_display(request):
-    posts = ChatInteraction.objects.all().order_by('-created_at')
-    return render(request, 'post_display.html', {'posts': posts})
-
 
 
 #------------事件表單拒絕後傳送-------
