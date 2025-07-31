@@ -27,13 +27,22 @@
 
   <style>
 
+  h3.form-title {
+  margin-top: 10px; /* 將表單包起來的框和標題的間距*/
+  }
+
   form .form-control {
-  width: 100%;
-  max-width: 600px;
-  padding: 6px;
-  font-size: 1rem;
-  margin-bottom: 12px;
-}
+    width: 100%;
+    max-width: 600px;
+    padding: 6px;
+    font-size: 1rem;
+    margin-bottom: 12px;
+  }
+
+    .main-content {
+    max-width: 500px;  /*將表單包起來的那個框的寬度*/
+    margin: 0 auto;
+    }
 
   button {
     background-color: #4CAF50;
@@ -133,7 +142,7 @@
     <section class="section light-background" style="padding-top: 100px;">
       <div class="container" id="main-content" style="display:none;" data-aos="fade-up">
         <div class="main-content bg-white p-4 shadow rounded">
-          <h3 class="mb-4 text-center">{{ action }} 台灣縣市／鄉鎮市區資料</h3>
+          <h3 class="form-title text-center">{{ action }} 台灣縣市／鄉鎮市區資料</h3>
 
           <form method="post" class="mx-auto" style="max-width: 350px;">
             
