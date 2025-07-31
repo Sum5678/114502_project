@@ -1095,12 +1095,9 @@ def submit_report(request):
 #         return JsonResponse({"status": "error", "message": "Invalid method"})
 
 #-----------------about---------------------------
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
-
-@login_required(login_url='/01userlogin/')
-def business_upload(request):
-    return render(request, 'about.html')
+from django.shortcuts import render, redirect
+from .models import ThisUserProfile
+from django.contrib.auth.models import User
 
 @login_required(login_url='/01userlogin/')
 def about(request):
@@ -1110,12 +1107,36 @@ def about(request):
     if google_login:
         extra_data = google_login.extra_data
 
+    if request.method == 'POST':
+        nickname = request.POST.get('nickname', '')
+        email = request.POST.get('email', '')
+        phone = request.POST.get('phone', '')
+        intro = request.POST.get('intro', '')
+        show_name_option = request.POST.get('show_name_option', '1')
+        image_file = request.FILES.get('upload-image', None)
+
+        profile, created = ThisUserProfile.objects.get_or_create(gmail=email)
+        profile.gmail = email
+        profile.default_nickname1 = nickname
+        profile.default_nickname2 = nickname
+        profile.emergency_contact_phone = phone
+        profile.emergency_contact_gmail = email
+        profile.default_message = ''
+        profile.self_intro = intro
+        profile.status_color = '#63b3ed'
+        if image_file:
+            profile.user_images = image_file
+        profile.save()
+
+        return redirect('about')
+
+    db_profile = ThisUserProfile.objects.filter(gmail=user.email).first()
     profile = {
         'google_name': extra_data.get('name', user.username),
-        'nickname': '',
-        'email': extra_data.get('email', user.email),
-        'phone': '',
-        'intro': '',
+        'nickname': db_profile.default_nickname1 if db_profile else '',
+        'email': db_profile.gmail if db_profile else extra_data.get('email', user.email),
+        'phone': db_profile.emergency_contact_phone if db_profile else '',
+        'intro': db_profile.self_intro if db_profile else '',
         'show_name_option': 1,
         'avatar_url': extra_data.get('picture', None),
     }
