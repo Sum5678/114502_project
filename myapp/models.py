@@ -32,8 +32,6 @@ class UserProfile(models.Model):
 ####登入後填表的
 from django.db import models
 
-
-
 class ThisUserProfile(models.Model):
     username = models.CharField(max_length=100)
     gmail = models.EmailField()
@@ -44,12 +42,15 @@ class ThisUserProfile(models.Model):
     default_message = models.TextField(blank=True)
     self_intro = models.TextField(blank=True)
     user_images = models.ImageField(upload_to='user_images/', blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    status_color = models.CharField(max_length=20, default='#63b3ed')
 
     class Meta:
         db_table = 'this_user_profile'
 
     def __str__(self):
         return self.username
+
 
 
 
