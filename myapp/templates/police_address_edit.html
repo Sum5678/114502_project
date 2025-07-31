@@ -1,14 +1,18 @@
 <!DOCTYPE html>
+{% load static %}
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8" />
     <title>編輯警局資料</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <!-- ✅ Bootstrap 5 -->
-    <link
-        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-        rel="stylesheet"
-    />
+    <!-- Bootstrap + 樣式 -->
+    <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet" />
+    <link href="{% static 'assets/vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet" />
+    <link href="{% static 'assets/vendor/aos/aos.css' %}" rel="stylesheet" />
+    <link href="{% static 'assets/vendor/boxicons/css/boxicons.min.css' %}" rel="stylesheet" />
+    <link href="{% static 'assets/css/main.css' %}" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans&family=Poppins&display=swap" rel="stylesheet">
 
     <style>
         .form-label {
@@ -33,6 +37,56 @@
         }
     </style>
 </head>
+
+
+<body class="index-page">
+
+<!-- ✅ 導覽列 -->
+<header id="header" class="header d-flex align-items-center fixed-top">
+  <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
+    <a href="{% url 'admin_index' %}" class="logo d-flex flex-column align-items-start me-auto me-xl-0">
+      <h1 class="sitename">台灣地區管理系統</h1>
+    </a>
+
+    <nav id="navmenu" class="navmenu">
+      <ul>
+        <li><a href="{% url 'admin_index' %}">管理員主頁</a></li>
+        <li><a href="{% url 'admin_interview' %}">管理員自我介紹</a></li>
+        <li><a href="{% url 'show_judge_page' %}">審核表單</a></li>
+        <li class="dropdown"><a href="#"><span>清單審核</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+          <ul>
+            <li><a href="{% url 'pemap_judge' %}">事件清單審核</a></li>
+            <li><a href="{% url 'store_judge' %}">商家清單審核</a></li>
+          </ul>
+        </li>
+        <li class="dropdown"><a href="#"><span>我的審核紀錄</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+          <ul>
+            <li><a href="{% url 'admin_decide' %}">事件審核紀錄</a></li>
+            <li><a href="{% url 'store_decide' %}">商家審核紀錄</a></li>
+          </ul>
+        </li>
+        <li class="dropdown"><a href="#"><span>管理工具</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+          <ul>
+            <li><a href="{% url 'education_list' %}">教育網頁管理</a></li>
+            <li><a href="{% url 'taiwan_regions_admin' %}">台灣縣市管理</a></li>
+            <li><a href="{% url 'police_address_list' %}">最近警局管理</a></li>
+          </ul>
+        </li>
+      </ul>
+      <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+    </nav>
+
+    <a class="btn-getstarted" href="{% url 'admin_logout' %}">登出</a>
+  </div>
+</header>
+
+
+  <!-- Hero 圖片 -->
+  <section class="hero">
+    <img src="{% static 'assets/img/1.png' %}" alt="Hero Image">
+  </section>
+
+
 <body class="bg-light">
 
 <!-- 新增的彈跳提醒框 Modal -->
