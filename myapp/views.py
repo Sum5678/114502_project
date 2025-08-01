@@ -1098,6 +1098,9 @@ def submit_report(request):
 from django.shortcuts import render, redirect
 from .models import ThisUserProfile
 from django.contrib.auth.models import User
+import json
+from django.http import JsonResponse
+import base64
 
 @login_required(login_url='/01userlogin/')
 def about(request):
@@ -1108,16 +1111,20 @@ def about(request):
         extra_data = google_login.extra_data
 
     if request.method == 'POST':
-        nickname = request.POST.get('nickname', '')
-        email = request.POST.get('email', '')
-        phone = request.POST.get('phone', '')
-        intro = request.POST.get('intro', '')
-        show_name_option = request.POST.get('show_name_option', '1')
-        image_file = request.FILES.get('upload-image', None)
+        data = json.loads(request.body)
 
-        profile, created = ThisUserProfile.objects.get_or_create(gmail=email)
+        nickname = data.get('nickname', '')
+        email = data.get('email', '')
+        phone = data.get('phone', '')
+        intro = data.get('intro', '')
+        show_name_option = data.get('show_name_option', '1')
+        base64_image = data.get('base64_image', '')
+
+        # 以登入使用者的 email 找 profile (不以前端送的 email 找)
+        profile, created = ThisUserProfile.objects.get_or_create(gmail=user.email)
+
         profile.username = extra_data.get('name', user.username)
-        profile.gmail = email
+        profile.gmail = email  # 可以更新 gmail 欄位
         profile.default_nickname1 = nickname
         profile.default_nickname2 = nickname
         profile.emergency_contact_phone = phone
@@ -1125,12 +1132,15 @@ def about(request):
         profile.default_message = ''
         profile.self_intro = intro
         profile.status_color = '#63b3ed'
-        if image_file:
-            profile.user_images = image_file
+
+        if base64_image:
+            profile.user_images = base64_image  # 存成 base64 字串
+
         profile.save()
 
-        return redirect('about')
+        return JsonResponse({'redirect_url': '/about/'})
 
+    # GET 方法顯示畫面
     db_profile = ThisUserProfile.objects.filter(gmail=user.email).first()
     profile = {
         'google_name': extra_data.get('name', user.username),
@@ -1138,8 +1148,8 @@ def about(request):
         'email': db_profile.gmail if db_profile else extra_data.get('email', user.email),
         'phone': db_profile.emergency_contact_phone if db_profile else '',
         'intro': db_profile.self_intro if db_profile else '',
-        'show_name_option': 1,
-        'avatar_url': extra_data.get('picture', None),
+        'show_name_option': int(db_profile.status_color) if db_profile and db_profile.status_color.isdigit() else 1,
+        'avatar_url': db_profile.user_images or extra_data.get('picture', None),
     }
 
     return render(request, 'about.html', {
