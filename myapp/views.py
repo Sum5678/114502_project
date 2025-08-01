@@ -1116,6 +1116,7 @@ def about(request):
         image_file = request.FILES.get('upload-image', None)
 
         profile, created = ThisUserProfile.objects.get_or_create(gmail=email)
+        profile.username = extra_data.get('name', user.username)
         profile.gmail = email
         profile.default_nickname1 = nickname
         profile.default_nickname2 = nickname
