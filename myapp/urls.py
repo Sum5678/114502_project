@@ -113,7 +113,7 @@ urlpatterns = [
     path('api/approved-locations/', views.approved_locations_api, name='approved_locations_api'),#事件地圖
     path('store_map/', views.store_map_view, name='store_map'),#商家地圖
     path('api/stores/', views.store_data_api, name='store_data_api'),#商家地圖
-    
+    path('api/reports_with_subkind/', views.reports_with_subkind_json, name='reports_with_subkind_json'),
 
 
     # Pemap 管理員相關
