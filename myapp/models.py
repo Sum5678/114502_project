@@ -41,7 +41,7 @@ class ThisUserProfile(models.Model):
     emergency_contact_gmail = models.EmailField(blank=True)
     default_message = models.TextField(blank=True)
     self_intro = models.TextField(blank=True)
-    user_images = models.ImageField(upload_to='user_images/', blank=True, null=True)
+    user_images = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     status_color = models.CharField(max_length=20, default='#63b3ed')
 
