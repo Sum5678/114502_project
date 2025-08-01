@@ -1852,12 +1852,35 @@ def approved_locations_api(request):
         })
 
     return JsonResponse(data, safe=False)
- 
+
+
+
+
+# def map_view(request):
+#     return render(request, '999map.html')
+import json
 from django.shortcuts import render
+from datetime import datetime, date
+from .models import PemapWithSubkind  # 或你的模型名稱
+
+def datetime_handler(obj):
+    if isinstance(obj, (datetime, date)):
+        return obj.isoformat()
+    raise TypeError("Type not serializable")
 
 def map_view(request):
-    return render(request, '999map.html')
+    # 取出你需要的欄位，調整欄位名稱和模型
+    reports = PemapWithSubkind.objects.values(
+        "display_name", "kind", "subkind", "latitude", "longitude", "address", "img_url", "time_created"
+    )
+    reports_list = list(reports)
 
+    # 將包含 datetime 的 list 用 json.dumps 並轉成 ISO 格式字串
+    reports_json = json.dumps(reports_list, default=datetime_handler, ensure_ascii=False)
+
+    return render(request, "999map.html", {
+        "reports_json": reports_json
+    })
 
 
     
@@ -2045,3 +2068,23 @@ def admin_send_email(request):
         'item': item,
         'to_email': item.poster_gmail,
     })
+
+
+
+# views.py
+from rest_framework import viewsets
+from .models import PemapWithSubkind
+from .serializers import PemapWithSubkindSerializer
+
+class PemapWithSubkindViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = PemapWithSubkind.objects.all()
+    serializer_class = PemapWithSubkindSerializer
+
+
+from django.http import JsonResponse
+from .models import PemapWithSubkind
+
+def reports_with_subkind_json(request):
+    # 從資料庫取得所有帶有 kind / subkind 的事件
+    data = list(PemapWithSubkind.objects.values())
+    return JsonResponse(data, safe=False)

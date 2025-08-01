@@ -245,5 +245,19 @@ class ChatInteraction(models.Model):
         db_table = 'chat_interaction'  # ✅ 對應資料表名稱
         managed = False  # ✅ 禁止 Django 自行創建這張表
 
+#----------view的
+class PemapWithSubkind(models.Model):
+    p_id = models.AutoField(primary_key=True)
+    display_name = models.CharField(max_length=100)
+    kind = models.CharField(max_length=100)
+    subkind = models.CharField(max_length=100)
+    latitude = models.FloatField()
+    longitude = models.FloatField()
+    address = models.CharField(max_length=255)
+    img_url = models.TextField(blank=True)
+    time_created = models.DateTimeField()
 
+    class Meta:
+        managed = False  # 不由 Django 管理這個資料表
+        db_table = 'pemap_with_subkind'  # 要跟你的 VIEW 名稱一致
 
