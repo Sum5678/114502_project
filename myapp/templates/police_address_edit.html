@@ -4,152 +4,198 @@
 
 <head>
   <meta charset="UTF-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
   <title>編輯警局資料</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Bootstrap + 樣式 -->
+  <link href="{% static 'assets/img/favicon.png' %}" rel="icon" />
+  <link href="{% static 'assets/img/apple-touch-icon.png' %}" rel="apple-touch-icon" />
+
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700|Nunito:300,400,600,700,800|Poppins:300,400,500,600,700" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/boxicons/2.1.0/css/boxicons.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css" rel="stylesheet" />
+
   <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet" />
   <link href="{% static 'assets/vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet" />
-  <link href="{% static 'assets/vendor/aos/aos.css' %}" rel="stylesheet" />
   <link href="{% static 'assets/vendor/boxicons/css/boxicons.min.css' %}" rel="stylesheet" />
+  <link href="{% static 'assets/vendor/quill/quill.snow.css' %}" rel="stylesheet" />
+  <link href="{% static 'assets/vendor/quill/quill.bubble.css' %}" rel="stylesheet" />
+  <link href="{% static 'assets/vendor/simple-datatables/style.css' %}" rel="stylesheet" />
   <link href="{% static 'assets/css/main.css' %}" rel="stylesheet" />
-  <link href="https://fonts.googleapis.com/css2?family=Open+Sans&family=Poppins&display=swap" rel="stylesheet">
 
   <style>
-    .form-label {
-      font-weight: bold;
+    h3.form-title {
+      margin-top: 10px;
     }
 
     form .form-control {
+      width: 100%;
       max-width: 600px;
+      padding: 6px;
+      font-size: 1rem;
+      margin-bottom: 12px;
+    }
+
+    .main-content {
+      max-width: 750px;
       margin: 0 auto;
+      background-color: white;
+      padding: 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    button {
+      background-color: #4CAF50;
+      border: none;
+      color: white;
+      padding: 8px 16px;
+      font-size: 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    a.cancel-btn {
+      margin-left: 10px;
+      text-decoration: none;
+      background-color: #6c757d;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 4px;
+    }
+
+    a.cancel-btn:hover {
+      background-color: #5a6268;
     }
   </style>
 </head>
 
 <body class="index-page">
+  <!-- 導覽列 -->
+  <header id="header" class="header d-flex align-items-center fixed-top">
+    <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
+      <a href="{% url 'admin_index' %}" class="logo d-flex flex-column align-items-start me-auto me-xl-0">
+        <h1 class="sitename">台灣地區管理系統</h1>
+      </a>
 
-<!-- ✅ 導覽列 -->
-<header id="header" class="header d-flex align-items-center fixed-top">
-  <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
-    <a href="{% url 'admin_index' %}" class="logo d-flex flex-column align-items-start me-auto me-xl-0">
-      <h1 class="sitename">台灣地區管理系統</h1>
-    </a>
+      <nav id="navmenu" class="navmenu">
+        <ul>
+          <li><a href="{% url 'admin_index' %}">管理員主頁</a></li>
+          <li><a href="{% url 'admin_interview' %}">管理員自我介紹</a></li>
+          <li><a href="{% url 'show_judge_page' %}">審核表單</a></li>
+          <li class="dropdown"><a href="#"><span>清單審核</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+            <ul>
+              <li><a href="{% url 'pemap_judge' %}">事件清單審核</a></li>
+              <li><a href="{% url 'store_judge' %}">商家清單審核</a></li>
+            </ul>
+          </li>
+          <li class="dropdown"><a href="#"><span>我的審核紀錄</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+            <ul>
+              <li><a href="{% url 'admin_decide' %}">事件審核紀錄</a></li>
+              <li><a href="{% url 'store_decide' %}">商家審核紀錄</a></li>
+            </ul>
+          </li>
+          <li class="dropdown"><a href="#"><span>管理工具</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+            <ul>
+              <li><a href="{% url 'education_list' %}">教育網頁管理</a></li>
+              <li><a href="{% url 'taiwan_regions_admin' %}">台灣縣市管理</a></li>
+              <li><a href="{% url 'police_address_list' %}">最近警局管理</a></li>
+            </ul>
+          </li>
+        </ul>
+        <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+      </nav>
 
-    <nav id="navmenu" class="navmenu">
-      <ul>
-        <li><a href="{% url 'admin_index' %}">管理員主頁</a></li>
-        <li><a href="{% url 'admin_interview' %}">管理員自我介紹</a></li>
-        <li><a href="{% url 'show_judge_page' %}">審核表單</a></li>
-        <li class="dropdown"><a href="#"><span>清單審核</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
-          <ul>
-            <li><a href="{% url 'pemap_judge' %}">事件清單審核</a></li>
-            <li><a href="{% url 'store_judge' %}">商家清單審核</a></li>
-          </ul>
-        </li>
-        <li class="dropdown"><a href="#"><span>我的審核紀錄</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
-          <ul>
-            <li><a href="{% url 'admin_decide' %}">事件審核紀錄</a></li>
-            <li><a href="{% url 'store_decide' %}">商家審核紀錄</a></li>
-          </ul>
-        </li>
-        <li class="dropdown"><a href="#"><span>管理工具</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
-          <ul>
-            <li><a href="{% url 'education_list' %}">教育網頁管理</a></li>
-            <li><a href="{% url 'taiwan_regions_admin' %}">台灣縣市管理</a></li>
-            <li><a href="{% url 'police_address_list' %}">最近警局管理</a></li>
-          </ul>
-        </li>
-      </ul>
-      <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
-    </nav>
+      <a class="btn-getstarted" href="{% url 'admin_logout' %}">登出</a>
+    </div>
+  </header>
 
-    <a class="btn-getstarted" href="{% url 'admin_logout' %}">登出</a>
-  </div>
-</header>
+  <!-- Hero 圖 -->
+  <section class="hero">
+    <img src="{% static 'assets/img/1.png' %}" alt="Hero Image">
+  </section>
 
-<!-- ✅ Hero 圖片 -->
-<section class="hero">
-  <img src="{% static 'assets/img/1.png' %}" alt="Hero Image">
-</section>
+  <!-- 彈跳提醒 -->
+  <div class="modal fade" id="alertModal" tabindex="-1" aria-labelledby="alertModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="alertModalLabel">重要提醒</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
+        </div>
+        <div class="modal-body" style="white-space: pre-wrap;">
+          由於部分地區（如新竹市、嘉義市）的多個行政區共用相同郵遞區號（如新竹市東區、北區、香山區皆為 300，嘉義市東區、西區皆為600），為確保查詢功能的正確性，本系統採用延伸編碼方式（如 300-1、300-2、300-3、600-1、600-2）區分各行政區。
 
-<!-- ✅ 彈跳提醒框 Modal -->
-<div class="modal fade" id="alertModal" tabindex="-1" aria-labelledby="alertModalLabel" aria-hidden="true"
-     data-bs-backdrop="static" data-bs-keyboard="false">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="alertModalLabel">重要提醒</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
-      </div>
-      <div class="modal-body" style="white-space: pre-wrap;">
-        由於部分地區（如新竹市、嘉義市）的多個行政區共用相同郵遞區號（如新竹市東區、北區、香山區皆為 300，嘉義市東區、西區皆為600），為確保查詢功能的正確性，本系統採用延伸編碼方式（如 300-1、300-2、300-3、600-1、600-2）區分各行政區。
-
-        管理者在新增、編輯或刪除資料時，請務必確認：
-
-        ● 區域名稱與延伸郵遞區號的對應正確無誤  
-        ● 不可誤刪或誤改相同郵遞區號但不同區域的資料  
-        ● 請在編輯時特別注意！
+          管理者在新增、編輯或刪除資料時，請務必確認：
+          ● 區域名稱與延伸郵遞區號的對應正確無誤  
+          ● 不可誤刪或誤改相同郵遞區號但不同區域的資料  
+          ● 請在編輯時特別注意！
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- ✅ 表單主區塊 -->
-<main class="main" style="padding-top: 100px;">
-  <div class="container d-flex justify-content-center align-items-center flex-column min-vh-100" id="main-content" style="display:none;" data-aos="fade-up">
-    <h1 class="text-center mb-4">編輯警局資料</h1>
+  <!-- 表單內容 -->
+  <main class="main" style="padding-top: 100px;">
+    <section class="section light-background">
+      <div class="container" id="main-content" style="display:none;" data-aos="fade-up">
+        <div class="main-content bg-white p-4 shadow rounded">
+          <h3 class="form-title text-center">編輯警局資料</h3>
 
-    <form method="post" class="w-100" style="max-width: 600px;">
-      {% csrf_token %}
-      <div class="mb-3">
-        <label for="precinct_name" class="form-label">警局名稱</label>
-        <input type="text" class="form-control" id="precinct_name" name="precinct_name" value="{{ address.precinct_name }}" required />
+          <form method="post" class="mx-auto" style="max-width: 600px;">
+            {% csrf_token %}
+            <div>
+              <label for="precinct_name" class="form-label">警局名稱</label>
+              <input type="text" class="form-control" id="precinct_name" name="precinct_name" value="{{ address.precinct_name }}" required />
+            </div>
+            <div>
+              <label for="zipcode" class="form-label">郵遞區號</label>
+              <input type="text" class="form-control" id="zipcode" name="zipcode" value="{{ address.zipcode }}" required />
+            </div>
+            <div>
+              <label for="address" class="form-label">地址</label>
+              <textarea class="form-control" id="address" name="address" rows="2" required>{{ address.address }}</textarea>
+            </div>
+            <div>
+              <label for="phone" class="form-label">電話</label>
+              <input type="text" class="form-control" id="phone" name="phone" value="{{ address.phone }}" required />
+            </div>
+            <div>
+              <label for="POINT_X" class="form-label">經度 (POINT_X)</label>
+              <input type="text" class="form-control" id="POINT_X" name="POINT_X" value="{{ address.POINT_X }}" required />
+            </div>
+            <div>
+              <label for="POINT_Y" class="form-label">緯度 (POINT_Y)</label>
+              <input type="text" class="form-control" id="POINT_Y" name="POINT_Y" value="{{ address.POINT_Y }}" required />
+            </div>
+            <div class="text-center mt-3">
+              <button type="submit">儲存變更</button>
+              <a href="{% url 'police_address_list' %}" class="cancel-btn">取消</a>
+            </div>
+          </form>
+        </div>
       </div>
-      <div class="mb-3">
-        <label for="zipcode" class="form-label">郵遞區號</label>
-        <input type="text" class="form-control" id="zipcode" name="zipcode" value="{{ address.zipcode }}" required />
-      </div>
-      <div class="mb-3">
-        <label for="address" class="form-label">地址</label>
-        <textarea class="form-control" id="address" name="address" rows="2" required>{{ address.address }}</textarea>
-      </div>
-      <div class="mb-3">
-        <label for="phone" class="form-label">電話</label>
-        <input type="text" class="form-control" id="phone" name="phone" value="{{ address.phone }}" required />
-      </div>
-      <div class="mb-3">
-        <label for="POINT_X" class="form-label">經度 (POINT_X)</label>
-        <input type="text" class="form-control" id="POINT_X" name="POINT_X" value="{{ address.POINT_X }}" required />
-      </div>
-      <div class="mb-3">
-        <label for="POINT_Y" class="form-label">緯度 (POINT_Y)</label>
-        <input type="text" class="form-control" id="POINT_Y" name="POINT_Y" value="{{ address.POINT_Y }}" required />
-      </div>
+    </section>
+  </main>
 
-      <div class="text-center mt-4">
-        <button type="submit" class="btn btn-success">儲存變更</button>
-        <a href="{% url 'police_address_list' %}" class="btn btn-secondary ms-2">取消</a>
-      </div>
-    </form>
-  </div>
-</main>
+  <!-- JS -->
+  <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/aos/aos.js' %}"></script>
+  <script src="{% static 'assets/js/main.js' %}"></script>
 
-<!-- ✅ JS -->
-<script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
-<script src="{% static 'assets/vendor/aos/aos.js' %}"></script>
-<script src="{% static 'assets/js/main.js' %}"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var alertModal = new bootstrap.Modal(document.getElementById('alertModal'));
+      alertModal.show();
 
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    var alertModal = new bootstrap.Modal(document.getElementById('alertModal'));
-    alertModal.show();
-
-    document.getElementById('alertModal').addEventListener('hidden.bs.modal', function () {
-      document.getElementById('main-content').style.display = 'flex';
+      document.getElementById('alertModal').addEventListener('hidden.bs.modal', function () {
+        document.getElementById('main-content').style.display = 'block';
+      });
     });
-  });
-</script>
-
+  </script>
 </body>
+
 </html>
