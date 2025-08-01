@@ -88,10 +88,8 @@
 
 <main class="main">
   <div class="profile-container text-center position-relative" data-aos="fade-up">
-    <form method="post" enctype="multipart/form-data">
-      {% csrf_token %}
-      <button type="button" id="toggle-edit" class="btn btn-outline-primary position-absolute" style="top: 20px; right: 20px;">修改</button>
-      <button type="submit" id="save-btn" class="btn btn-success position-absolute d-none" style="top: 20px; right: 20px;">確認</button>
+    <!-- 右上角按鈕 -->
+    <button id="toggle-edit" class="btn btn-outline-primary position-absolute" style="top: 20px; right: 20px;">修改</button>
 
       <h2>個人資料設定</h2>
 
@@ -99,6 +97,7 @@
         <img src="{{ profile.avatar_url }}" alt="頭像" id="profile-pic" class="profile-image">
       </label>
       <input type="file" id="upload-image" name="upload-image" class="form-control d-none" accept="image/*" onchange="previewImage(event)" disabled>
+      <input type="hidden" id="base64-image" name="base64-image">
 
       <div class="form-group">
         <label>Google名稱：</label>
@@ -158,26 +157,92 @@
 <script src="{% static 'assets/js/main.js' %}"></script>
 
 <script>
-  function previewImage(event) {
-    const reader = new FileReader();
-    reader.onload = function () {
-      document.getElementById('profile-pic').src = reader.result;
-    };
-    reader.readAsDataURL(event.target.files[0]);
-  }
-
+  // 取得按鈕和欄位
   const toggleBtn = document.getElementById('toggle-edit');
-  const saveBtn = document.getElementById('save-btn');
   const fields = document.querySelectorAll('#google_name, #nickname, #email, #phone, #intro, #show_name_option, #upload-image');
   let editing = false;
 
-  toggleBtn.addEventListener('click', () => {
-    editing = true;
-    fields.forEach(field => field.disabled = false);
-    toggleBtn.classList.add('d-none');
-    saveBtn.classList.remove('d-none');
-  });
-</script>
+  // 取得 csrf token (從 cookie)
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
 
+  // 監聽按鈕事件
+  toggleBtn.addEventListener('click', () => {
+    if (!editing) {
+      // 進入編輯狀態
+      editing = true;
+      fields.forEach(f => f.disabled = false);
+      toggleBtn.textContent = '確認';
+    } else {
+      // 送出資料
+      toggleBtn.disabled = true; // 禁用按鈕避免重複點
+
+      const formData = {
+        nickname: document.getElementById('nickname').value,
+        email: document.getElementById('email').value,
+        phone: document.getElementById('phone').value,
+        intro: document.getElementById('intro').value,
+        show_name_option: document.getElementById('show_name_option').value,
+        base64_image: document.getElementById('base64-image').value,
+      };
+
+      fetch("{% url 'about' %}", {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': getCookie('csrftoken'),
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.redirect_url) {
+          // 成功跳轉
+          window.location.href = data.redirect_url;
+        } else {
+          // 失敗或沒有跳轉，恢復編輯狀態
+          alert(data.message || '更新失敗');
+          toggleBtn.disabled = false;
+          editing = false;
+          fields.forEach(f => f.disabled = true);
+          toggleBtn.textContent = '修改';
+        }
+      })
+      .catch(error => {
+        console.error('送出錯誤:', error);
+        alert('送出失敗，請稍後再試');
+        toggleBtn.disabled = false;
+        editing = false;
+        fields.forEach(f => f.disabled = true);
+        toggleBtn.textContent = '修改';
+      });
+    }
+  });
+
+  // 圖片預覽功能，並把 base64 存到隱藏欄位
+  function previewImage(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      document.getElementById('profile-pic').src = e.target.result;
+      document.getElementById('base64-image').value = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+</script>
 </body>
 </html>
