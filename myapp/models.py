@@ -236,14 +236,16 @@ class ChatInteraction(models.Model):
     bgcolor = models.CharField(max_length=20)
     avatar_style = models.CharField(max_length=50)
     avatar_url = models.URLField(max_length=300)
-    title = models.CharField(max_length=50) 
+    title = models.CharField(max_length=50)
     message_content = models.CharField(max_length=300)
- 
-    created_at = models.DateTimeField()
+
+    # ✅ 不用 auto_now_add，讓 MySQL 自動填入時間
+    created_at = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         db_table = 'chat_interaction'  # ✅ 對應資料表名稱
-        managed = False  # ✅ 禁止 Django 自行創建這張表
+        managed = False  # ✅ 禁止 Django 自行創建或修改這張表
+
 
 #----------view的
 class PemapWithSubkind(models.Model):
