@@ -1,78 +1,158 @@
-{% load static %}
 <!DOCTYPE html>
-<html lang="zh-TW">
+{% load static %}
+<html lang="zh-Hant">
+
 <head>
-    <meta charset="UTF-8">
-    <title>教育資源管理介面</title>
-    <style>
-        body {
-            font-family: "Microsoft JhengHei", sans-serif;
-            background-color: #f0f8ff;
-            padding: 5px;
-            text-align: center;
-        }
-        h1 {
-            color: #333;
-            margin-bottom: 20px;
-        }
-        .button-container {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 20px;
-        }
-        .img-button {
-            width: 260px;
-            height: 240px;
-            background-size: cover;
-            background-position: center;
-            border-radius: 15px;
-            border: none;
-            position: relative;
-        }
-        .card {
-            position: relative;
-        }
-        .card .actions {
-            margin-top: 8px;
-        }
-        .actions a {
-            margin: 0 5px;
-            color: #007BFF;
-            text-decoration: none;
-        }
-        .actions a:hover {
-            text-decoration: underline;
-        }
-        .create-btn {
-            margin: 20px;
-            display: inline-block;
-            padding: 10px 15px;
-            background-color: #007BFF;
-            color: white;
-            text-decoration: none;
-            border-radius: 8px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>教育資源管理</title>
+
+  <link href="{% static 'assets/img/favicon.png' %}" rel="icon" />
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700|Nunito:300,400,600,700,800|Poppins:300,400,500,600,700" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/boxicons/2.1.0/css/boxicons.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css" rel="stylesheet" />
+
+  <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet" />
+  <link href="{% static 'assets/vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet" />
+  <link href="{% static 'assets/vendor/aos/aos.css' %}" rel="stylesheet" />
+  <link href="{% static 'assets/css/main.css' %}" rel="stylesheet" />
+
+  <style>
+    a.btn-custom,
+    button.btn-custom {
+      background-color: #4caf50;
+      color: white;
+      border-radius: 4px;
+      padding: 6px 12px;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      display: inline-block;
+    }
+
+    a.btn-custom:hover,
+    button.btn-custom:hover {
+      background-color: #45a049;
+      color: white;
+      text-decoration: none;
+    }
+
+    a.btn-delete,
+    button.btn-delete {
+      background-color: #f44336;
+      color: white;
+      border-radius: 4px;
+      padding: 6px 12px;
+      border: none;
+      cursor: pointer;
+      display: inline-block;
+      text-decoration: none;
+    }
+
+    a.btn-delete:hover,
+    button.btn-delete:hover {
+      background-color: #c0392b;
+      color: white;
+      text-decoration: none;
+    }
+
+    .img-button {
+      width: 260px;
+      height: 240px;
+      background-size: cover;
+      background-position: center;
+      border-radius: 15px;
+      border: none;
+    }
+  </style>
 </head>
-<body>
-    <h1>教育資源管理介面</h1>
-    <a href="{% url 'education_create' %}" class="create-btn">➕ 新增資源</a>
-    <div class="button-container">
-        {% for page in pages %}
-        <div class="card">
-            <a href="{{ page.url }}" target="_blank">
-                <div class="img-button"
-                     style="background-image: url('{% url 'education_image' page.id %}');">
-                </div>
-            </a>
-            <p>{{ page.title }}</p>
-            <div class="actions">
-                <a href="{% url 'education_update' page.id %}">✏️ 編輯</a>
-                <a href="{% url 'education_delete' page.id %}">🗑 刪除</a>
-            </div>
-        </div>
-        {% endfor %}
+
+<body class="index-page">
+  <!-- 導覽列 -->
+  <header id="header" class="header d-flex align-items-center fixed-top">
+    <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
+      <a href="#" class="logo d-flex flex-column align-items-start me-auto me-xl-0">
+        <h1 class="sitename">台灣地區管理系統</h1>
+      </a>
+
+      <nav id="navmenu" class="navmenu">
+        <ul>
+          <li><a href="{% url 'admin_index' %}">管理員主頁</a></li>
+          <li><a href="{% url 'admin_interview' %}">管理員自我介紹</a></li>
+          <li><a href="{% url 'show_judge_page' %}">審核表單</a></li>
+
+          <li class="dropdown"><a href="#"><span>清單審核</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+            <ul>
+              <li><a href="{% url 'pemap_judge' %}">事件清單審核</a></li>
+              <li><a href="{% url 'store_judge' %}">商家清單審核</a></li>
+              <li><a href="#">其他清單</a></li>
+            </ul>
+          </li>
+
+          <li class="dropdown"><a href="#"><span>我的審核紀錄</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+            <ul>
+              <li><a href="{% url 'admin_decide' %}">事件審核紀錄</a></li>
+              <li><a href="{% url 'store_decide' %}">商家審核紀錄</a></li>
+              <li><a href="#">其他紀錄</a></li>
+            </ul>
+          </li>
+
+          <li class="dropdown"><a href="#"><span>管理工具</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+            <ul>
+              <li><a href="{% url 'education_list' %}" class="active">教育網頁管理</a></li>
+              <li><a href="{% url 'taiwan_regions_admin' %}">台灣縣市管理</a></li>
+              <li><a href="{% url 'police_address_list' %}">最近警局管理</a></li>
+              <li><a href="#">其他工具</a></li>
+            </ul>
+          </li>
+        </ul>
+        <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+      </nav>
+
+      <a class="btn-getstarted" href="{% url 'admin_logout' %}">登出</a>
     </div>
+  </header>
+    <section class="hero">
+      <img src="{% static 'assets/img/1.png' %}" alt="Hero Image">
+    </section>
+  <!-- 主內容 -->
+  <main class="main" style="padding-top: 100px;">
+    <section class="section light-background">
+      <div class="container" data-aos="fade-up">
+        <div class="main-content bg-white p-4 shadow rounded mx-auto" style="max-width: 960px;">
+          <h2 class="mb-4 text-center text-md-start">防身相關知識資料管理介面</h2>
+          <a href="{% url 'education_create' %}" class="btn btn-custom mb-3">新增防身相關知識資料</a>
+
+          <div class="d-flex flex-wrap justify-content-center gap-4">
+            {% for page in pages %}
+            <div class="card border-0 text-center" style="width: 260px;">
+              <a href="{{ page.url }}" target="_blank">
+                <div class="img-button" style="background-image: url('{% url 'education_image' page.id %}');"></div>
+              </a>
+              <p class="mt-2 fw-semibold">{{ page.title }}</p>
+              <div class="actions">
+                <a href="{% url 'education_update' page.id %}" class="btn btn-custom btn-sm">編輯</a>
+                <a href="{% url 'education_delete' page.id %}" class="btn btn-delete btn-sm" onclick="return confirm('確定刪除這個資源？')">刪除</a>
+              </div>
+            </div>
+            {% empty %}
+            <p>目前沒有任何資源</p>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="text-center py-3 bg-white border-top">
+    <div class="container">
+      <small>© 2025 台灣地區管理系統. All rights reserved.</small>
+    </div>
+  </footer>
+
+  <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/aos/aos.js' %}"></script>
+  <script src="{% static 'assets/js/main.js' %}"></script>
 </body>
+
 </html>
