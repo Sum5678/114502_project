@@ -104,10 +104,16 @@
         <input type="text" id="google_name" class="form-control input-field" value="{{ profile.google_name }}" disabled>
       </div>
 
-      <div class="form-group">
-        <label>暱稱：</label>
-        <input type="text" id="nickname" name="nickname" class="form-control input-field" value="{{ profile.nickname }}" disabled>
-      </div>
+      
+    <div class="form-group">
+        <label for="nickname1">預設暱稱 1：</label>
+        <input type="text" id="nickname1" name="default_nickname1" class="form-control input-field" value="{{ profile.nickname1 }}" disabled>
+    </div>
+    <div class="form-group">
+        <label for="nickname2">預設暱稱 2：</label>
+        <input type="text" id="nickname2" name="default_nickname2" class="form-control input-field" value="{{ profile.nickname2 }}" disabled>
+    </div>
+        
 
       <div class="form-group">
         <label>Email：</label>
@@ -122,6 +128,11 @@
       <div class="form-group">
         <label>自我介紹：</label>
         <textarea id="intro" name="intro" class="form-control input-field" rows="4" disabled>{{ profile.intro }}</textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="default_message">預設訊息：</label>
+        <textarea id="default_message" name="default_message" class="form-control input-field" rows="3" disabled>{{ profile.default_message }}</textarea>
       </div>
 
       <div class="form-group">
@@ -157,9 +168,11 @@
 <script src="{% static 'assets/js/main.js' %}"></script>
 
 <script>
-  // 取得按鈕和欄位
+  // 編輯開關
   const toggleBtn = document.getElementById('toggle-edit');
-  const fields = document.querySelectorAll('#google_name, #nickname, #email, #phone, #intro, #show_name_option, #upload-image');
+  const fields = document.querySelectorAll(
+    '#google_name, #nickname1, #nickname2, #email, #phone, #intro, #show_name_option, #upload-image, #default_message'
+  );
   let editing = false;
 
   // 取得 csrf token (從 cookie)
@@ -178,24 +191,26 @@
     return cookieValue;
   }
 
-  // 監聽按鈕事件
+  // 切換編輯與送出
   toggleBtn.addEventListener('click', () => {
     if (!editing) {
-      // 進入編輯狀態
+      // 開啟編輯
       editing = true;
       fields.forEach(f => f.disabled = false);
       toggleBtn.textContent = '確認';
     } else {
       // 送出資料
-      toggleBtn.disabled = true; // 禁用按鈕避免重複點
+      toggleBtn.disabled = true;
 
       const formData = {
-        nickname: document.getElementById('nickname').value,
+        nickname1: document.getElementById('nickname1').value,
+        nickname2: document.getElementById('nickname2').value,
         email: document.getElementById('email').value,
         phone: document.getElementById('phone').value,
         intro: document.getElementById('intro').value,
         show_name_option: document.getElementById('show_name_option').value,
         base64_image: document.getElementById('base64-image').value,
+        default_message: document.getElementById('default_message').value,
       };
 
       fetch("{% url 'about' %}", {
@@ -209,10 +224,8 @@
       .then(response => response.json())
       .then(data => {
         if (data.redirect_url) {
-          // 成功跳轉
           window.location.href = data.redirect_url;
         } else {
-          // 失敗或沒有跳轉，恢復編輯狀態
           alert(data.message || '更新失敗');
           toggleBtn.disabled = false;
           editing = false;
@@ -231,7 +244,7 @@
     }
   });
 
-  // 圖片預覽功能，並把 base64 存到隱藏欄位
+  // 頭像預覽 + base64
   function previewImage(event) {
     const file = event.target.files[0];
     if (!file) return;

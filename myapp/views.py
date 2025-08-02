@@ -1113,10 +1113,12 @@ def about(request):
     if request.method == 'POST':
         data = json.loads(request.body)
 
-        nickname = data.get('nickname', '')
+        nickname1 = data.get('nickname1', '')
+        nickname2 = data.get('nickname2', '')
         email = data.get('email', '')
         phone = data.get('phone', '')
         intro = data.get('intro', '')
+        default_message = data.get('default_message', '')
         show_name_option = data.get('show_name_option', '1')
         base64_image = data.get('base64_image', '')
 
@@ -1125,11 +1127,11 @@ def about(request):
 
         profile.username = extra_data.get('name', user.username)
         profile.gmail = email  # 可以更新 gmail 欄位
-        profile.default_nickname1 = nickname
-        profile.default_nickname2 = nickname
+        profile.default_nickname1 = nickname1
+        profile.default_nickname2 = nickname2
         profile.emergency_contact_phone = phone
         profile.emergency_contact_gmail = email
-        profile.default_message = ''
+        profile.default_message = default_message
         profile.self_intro = intro
         profile.status_color = '#63b3ed'
 
@@ -1144,7 +1146,9 @@ def about(request):
     db_profile = ThisUserProfile.objects.filter(gmail=user.email).first()
     profile = {
         'google_name': extra_data.get('name', user.username),
-        'nickname': db_profile.default_nickname1 if db_profile else '',
+        'nickname1': db_profile.default_nickname1 if db_profile else '',
+        'nickname2': db_profile.default_nickname2 if db_profile else '',
+        'default_message': db_profile.default_message if db_profile else '',
         'email': db_profile.gmail if db_profile else extra_data.get('email', user.email),
         'phone': db_profile.emergency_contact_phone if db_profile else '',
         'intro': db_profile.self_intro if db_profile else '',
