@@ -109,10 +109,13 @@
         <label for="nickname1">預設暱稱 1：</label>
         <input type="text" id="nickname1" name="default_nickname1" class="form-control input-field" value="{{ profile.nickname1 }}" disabled>
     </div>
+    <div class="char-counter text-end text-muted small" id="nickname1Counter">(0/100 字)</div>
+
     <div class="form-group">
         <label for="nickname2">預設暱稱 2：</label>
         <input type="text" id="nickname2" name="default_nickname2" class="form-control input-field" value="{{ profile.nickname2 }}" disabled>
     </div>
+    <div class="char-counter text-end text-muted small" id="nickname2Counter">(0/100 字)</div>
         
 
       <div class="form-group">
@@ -129,11 +132,13 @@
         <label>自我介紹：</label>
         <textarea id="intro" name="intro" class="form-control input-field" rows="4" disabled>{{ profile.intro }}</textarea>
       </div>
+      <div class="char-counter text-end text-muted small" id="introCounter">(0/300 字)</div>
 
       <div class="form-group">
-        <label for="default_message">預設訊息：</label>
+        <label for="default_message">預設求救訊息：</label>
         <textarea id="default_message" name="default_message" class="form-control input-field" rows="3" disabled>{{ profile.default_message }}</textarea>
       </div>
+      <div class="char-counter text-end text-muted small" id="defaultMessageCounter">(0/300 字)</div>
 
       <div class="form-group">
         <label>名稱顯示：</label>
@@ -256,6 +261,29 @@
     };
     reader.readAsDataURL(file);
   }
+</script>
+<script>
+  function setupCharLimit(inputId, counterId, maxChars) {
+    const input = document.getElementById(inputId);
+    const counter = document.getElementById(counterId);
+
+    function updateCounter() {
+      const length = input.value.length;
+      if (length > maxChars) {
+        input.value = input.value.substring(0, maxChars);
+      }
+      counter.textContent = `(${input.value.length}/${maxChars} 字)`;
+    }
+
+    input.addEventListener('input', updateCounter);
+    updateCounter(); // 初始化
+  }
+
+  // 啟用字數限制
+  setupCharLimit('nickname1', 'nickname1Counter', 100);
+  setupCharLimit('nickname2', 'nickname2Counter', 100);
+  setupCharLimit('intro', 'introCounter', 300);
+  setupCharLimit('default_message', 'defaultMessageCounter', 300);
 </script>
 </body>
 </html>
