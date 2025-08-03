@@ -83,8 +83,8 @@ urlpatterns = [
     path('safety/', views.safety, name='safety'),
     path('autodial/', views.autodial, name='autodial'),
     path('mymap/', views.mymap, name='mymap'),
-    path('settings/', views.settings, name='settings'),
-    path('write/', views.settings, name='write'),  # 同 settings，可保留或合併
+    #path('settings/', views.settings, name='settings'),
+    #path('write/', views.settings, name='write'),  # 同 settings，可保留或合併
 
     # 登入/登出相關
     # path('0101login/', views.login_page, name='login'),  # 另一登入頁
@@ -159,6 +159,7 @@ urlpatterns = [
 
 
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
 
 # 原本沒有這些路徑
 

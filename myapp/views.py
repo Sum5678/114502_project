@@ -935,8 +935,27 @@ def report_view(request):
 
 # ✅ 接收 POST 資料 API（表單送出時）
 # @login_required(login_url='/01userlogin/')
-@csrf_exempt
+import base64
+import numpy as np
+import uuid
+from django.utils import timezone
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.decorators import login_required
+from django.conf import settings
+import cv2
+import os
+import json
+
+from myapp.models import PemapAll  # 確保你有引入模型
+
+# 載入人臉辨識模型
+face_cascade = cv2.CascadeClassifier(
+    os.path.join(settings.BASE_DIR, 'myapp/static/haarcascade_frontalface_default.xml')
+)
+
 @login_required(login_url='/01userlogin/')
+@csrf_exempt
 def submit_report(request):
     if request.method == 'POST':
         try:
@@ -950,28 +969,70 @@ def submit_report(request):
             poster_gmail = data.get("poster_gmail", "").strip()
             is_anonymous = data.get("anonymous", False)
 
-            # 經緯度處理
-            latitude = 0
-            longitude = 0
+            # 處理經緯度
+            latitude, longitude = 0, 0
             if ',' in address:
-                parts = [p.strip() for p in address.split(',')]
-                if len(parts) >= 2:
-                    try:
+                try:
+                    parts = [p.strip() for p in address.split(',')]
+                    if len(parts) >= 2:
                         latitude = float(parts[0])
                         longitude = float(parts[1])
-                    except ValueError:
-                        pass
+                except ValueError:
+                    pass
 
-            img_url = data.get('img_url', '')
+            # ========= ✅ 圖片處理區塊 =========
+            img_url = ""
+            base64_img_str = data.get('img_url', '')
 
-            # === AI 初步審核 ===
+            if base64_img_str.startswith("data:image"):
+                header, base64_str = base64_img_str.split(",", 1)
+                img_data = base64.b64decode(base64_str)
+
+                # 將圖片轉為 OpenCV 格式
+                nparr = np.frombuffer(img_data, np.uint8)
+                img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+                # 轉灰階並偵測人臉
+                gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+                faces = face_cascade.detectMultiScale(gray, 1.1, 5)
+
+                # 對每張人臉上馬賽克
+                for (x, y, w, h) in faces:
+                    face_roi = img[y:y + h, x:x + w]
+                    small = cv2.resize(face_roi, (10, 10), interpolation=cv2.INTER_LINEAR)
+                    mosaic = cv2.resize(small, (w, h), interpolation=cv2.INTER_NEAREST)
+                    img[y:y + h, x:x + w] = mosaic
+
+                # 產生唯一檔名
+                filename = f"img_{uuid.uuid4().hex}.jpg"
+                media_dir = os.path.join(settings.MEDIA_ROOT, "processed_images")
+                os.makedirs(media_dir, exist_ok=True)
+                processed_img_path = os.path.join(media_dir, filename)
+
+                # 儲存處理後圖片
+                cv2.imwrite(processed_img_path, img)
+
+                # 再次轉成 base64 編碼（這是處理後的圖片）
+                _, img_encoded = cv2.imencode('.jpg', img)
+                img_base64_bytes = base64.b64encode(img_encoded.tobytes()).decode('utf-8')
+
+                # 儲存 base64 字串為文字檔
+                base64_txt_path = os.path.join(media_dir, f"{filename}.base64.txt")
+                with open(base64_txt_path, "w", encoding="utf-8") as f:
+                    f.write(img_base64_bytes)
+
+                # 儲存在 DB 裡的圖片網址
+                img_url = f"data:image/jpeg;base64,{img_base64_bytes}"
+            # ========= ✅ 圖片處理結束 =========
+
+            # ========== AI 初步審核 ==========
             description = reason.strip()
             sensitive_categories = {
                 '仇恨言論': ['仇恨', '恨死', '殺光', '滅絕'],
                 '暴力': ['暴力', '打死', '砍', '攻擊', '虐待'],
                 '歧視': ['歧視', '種族主義', '排擠', '偏見'],
             }
-            case_related_keywords = [
+            case_keywords = [
                 '案件', '事件', '警方', '警察', '報警', '報案', '證據',
                 '被跟蹤', '跟蹤', '尾隨', '偷拍', '性騷擾', '偷窺', '侵入',
                 '陌生男子', '紅衣男子', '追蹤', '恐嚇', '求助', '監視'
@@ -985,17 +1046,14 @@ def submit_report(request):
                     for keywords in sensitive_categories.values()
                     for keyword in keywords
                 )
-                is_case_related = any(kw in description for kw in case_related_keywords)
+                is_case_related = any(kw in description for kw in case_keywords)
 
-                if has_sensitive_word or not is_case_related:
-                    review_status = '需再由人工審核'
-                else:
-                    review_status = '人工審核通過'
+                review_status = '需再由人工審核' if has_sensitive_word or not is_case_related else '人工審核通過'
 
-            # 匿名 Gmail 處理
             if is_anonymous:
                 poster_gmail = "anonymous@gmail.com"
 
+            # 存入資料庫
             PemapAll.objects.create(
                 user=user,
                 display_name=display_name,
@@ -1012,8 +1070,10 @@ def submit_report(request):
             )
 
             return JsonResponse({"status": "success", "review_status": review_status})
+
         except Exception as e:
             return JsonResponse({"status": "error", "message": str(e)})
+
     return JsonResponse({"status": "error", "message": "Invalid method"})
 
 # @csrf_exempt
