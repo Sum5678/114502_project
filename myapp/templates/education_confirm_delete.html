@@ -1,15 +1,107 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+{% load static %}
+<html lang="zh-Hant">
 <head>
-    <meta charset="UTF-8">
-    <title>刪除確認</title>
+  <meta charset="UTF-8">
+  <title>刪除確認</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet" />
+  <link href="{% static 'assets/vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet" />
+  <link href="{% static 'assets/vendor/aos/aos.css' %}" rel="stylesheet" />
+  <link href="{% static 'assets/css/main.css' %}" rel="stylesheet" />
+
+  <style>
+    .form-container {
+      max-width: 600px;
+      margin: 100px auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+
+    .btn-custom {
+      background-color: #d9534f;
+      color: white;
+      border-radius: 4px;
+      padding: 6px 12px;
+      border: none;
+      cursor: pointer;
+    }
+
+    .btn-custom:hover {
+      background-color: #c9302c;
+    }
+  </style>
 </head>
-<body>
-    <h2>你確定要刪除「{{ page.title }}」嗎？</h2>
-    <form method="POST">
-        {% csrf_token %}
-        <button type="submit">🗑 確認刪除</button>
-        <a href="{% url 'education_list' %}">取消</a>
-    </form>
+<body class="index-page">
+  <!-- 導覽列 -->
+  <header id="header" class="header d-flex align-items-center fixed-top">
+    <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
+      <a href="#" class="logo d-flex flex-column align-items-start me-auto me-xl-0">
+        <h1 class="sitename">台灣地區管理系統</h1>
+      </a>
+
+      <nav id="navmenu" class="navmenu">
+        <ul>
+          <li><a href="{% url 'admin_index' %}">管理員主頁</a></li>
+          <li><a href="{% url 'admin_interview' %}">管理員自我介紹</a></li>
+          <li><a href="{% url 'show_judge_page' %}">審核表單</a></li>
+          <li class="dropdown"><a href="#"><span>清單審核</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+            <ul>
+              <li><a href="{% url 'pemap_judge' %}">事件清單審核</a></li>
+              <li><a href="{% url 'store_judge' %}">商家清單審核</a></li>
+              <li><a href="#">其他清單</a></li>
+            </ul>
+          </li>
+          <li class="dropdown"><a href="#"><span>我的審核紀錄</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+            <ul>
+              <li><a href="{% url 'admin_decide' %}">事件審核紀錄</a></li>
+              <li><a href="{% url 'store_decide' %}">商家審核紀錄</a></li>
+              <li><a href="#">其他紀錄</a></li>
+            </ul>
+          </li>
+          <li class="dropdown"><a href="#"><span>管理工具</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+            <ul>
+              <li><a href="{% url 'education_list' %}" class="active">教育網頁管理</a></li>
+              <li><a href="{% url 'taiwan_regions_admin' %}">台灣縣市管理</a></li>
+              <li><a href="{% url 'police_address_list' %}">最近警局管理</a></li>
+              <li><a href="#">其他工具</a></li>
+            </ul>
+          </li>
+        </ul>
+        <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+      </nav>
+
+      <a class="btn-getstarted" href="{% url 'admin_logout' %}">登出</a>
+    </div>
+  </header>
+
+  <!-- 主內容 -->
+  <main class="main" style="padding-top: 120px;">
+    <div class="container">
+      <div class="form-container">
+        <h2 class="mb-4">刪除確認</h2>
+        <p class="mb-4">你確定要刪除「<strong>{{ page.title }}</strong>」嗎？</p>
+        <form method="POST">
+          {% csrf_token %}
+          <button type="submit" class="btn-custom me-2">🗑 確認刪除</button>
+          <a href="{% url 'education_list' %}" class="btn btn-secondary">取消</a>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <!-- 頁腳 -->
+  <footer class="text-center py-3 bg-white border-top mt-5">
+    <div class="container">
+      <small>© 2025 台灣地區管理系統. All rights reserved.</small>
+    </div>
+  </footer>
+
+  <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/aos/aos.js' %}"></script>
+  <script src="{% static 'assets/js/main.js' %}"></script>
 </body>
 </html>
