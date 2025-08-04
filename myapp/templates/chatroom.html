@@ -160,12 +160,418 @@
       <h4 class="section-title">區域分類</h4>
       <select id="areaSelect" class="form-select mb-3">
         <option value="all">全部區域</option>
-        <option value="信義區">信義區</option>
-        <option value="內湖區">內湖區</option>
-        <option value="松山區">松山區</option>
-        <option value="大安區">大安區</option>
-        <option value="中山區">中山區</option>
-      </select>
+        <optgroup label="台北市">
+            <option value="中正區">中正區</option>
+            <option value="大同區">大同區</option>
+            <option value="中山區">中山區</option>
+            <option value="松山區">松山區</option>
+            <option value="大安區">大安區</option>
+            <option value="萬華區">萬華區</option>
+            <option value="信義區">信義區</option>
+            <option value="士林區">士林區</option>
+            <option value="北投區">北投區</option>
+            <option value="內湖區">內湖區</option>
+            <option value="南港區">南港區</option>
+            <option value="文山區">文山區</option>
+        </optgroup>
+        <optgroup label="新北市">
+            <option value="板橋區">板橋區</option>
+            <option value="三重區">三重區</option>
+            <option value="中和區">中和區</option>
+            <option value="永和區">永和區</option>
+            <option value="新莊區">新莊區</option>
+            <option value="新店區">新店區</option>
+            <option value="樹林區">樹林區</option>
+            <option value="鶯歌區">鶯歌區</option>
+            <option value="三峽區">三峽區</option>
+            <option value="淡水區">淡水區</option>
+            <option value="汐止區">汐止區</option>
+            <option value="瑞芳區">瑞芳區</option>
+            <option value="土城區">土城區</option>
+            <option value="蘆洲區">蘆洲區</option>
+            <option value="五股區">五股區</option>
+            <option value="泰山區">泰山區</option>
+            <option value="林口區">林口區</option>
+            <option value="深坑區">深坑區</option>
+            <option value="石碇區">石碇區</option>
+            <option value="坪林區">坪林區</option>
+            <option value="三芝區">三芝區</option>
+            <option value="石門區">石門區</option>
+            <option value="八里區">八里區</option>
+            <option value="平溪區">平溪區</option>
+            <option value="雙溪區">雙溪區</option>
+            <option value="貢寮區">貢寮區</option>
+            <option value="金山區">金山區</option>
+            <option value="萬里區">萬里區</option>
+            <option value="烏來區">烏來區</option>
+        </optgroup>
+        <optgroup label="桃園市">
+            <option value="桃園區">桃園區</option>
+            <option value="中壢區">中壢區</option>
+            <option value="平鎮區">平鎮區</option>
+            <option value="八德區">八德區</option>
+            <option value="楊梅區">楊梅區</option>
+            <option value="蘆竹區">蘆竹區</option>
+            <option value="龜山區">龜山區</option>
+            <option value="龍潭區">龍潭區</option>
+            <option value="大溪區">大溪區</option>
+            <option value="大園區">大園區</option>
+            <option value="觀音區">觀音區</option>
+            <option value="新屋區">新屋區</option>
+            <option value="復興區">復興區</option>
+        </optgroup>
+        <optgroup label="台中市">
+            <option value="中區">中區</option>
+            <option value="東區">東區</option>
+            <option value="南區">南區</option>
+            <option value="西區">西區</option>
+            <option value="北區">北區</option>
+            <option value="北屯區">北屯區</option>
+            <option value="西屯區">西屯區</option>
+            <option value="南屯區">南屯區</option>
+            <option value="太平區">太平區</option>
+            <option value="大里區">大里區</option>
+            <option value="霧峰區">霧峰區</option>
+            <option value="烏日區">烏日區</option>
+            <option value="豐原區">豐原區</option>
+            <option value="后里區">后里區</option>
+            <option value="石岡區">石岡區</option>
+            <option value="東勢區">東勢區</option>
+            <option value="新社區">新社區</option>
+            <option value="潭子區">潭子區</option>
+            <option value="大雅區">大雅區</option>
+            <option value="神岡區">神岡區</option>
+            <option value="大肚區">大肚區</option>
+            <option value="沙鹿區">沙鹿區</option>
+            <option value="龍井區">龍井區</option>
+            <option value="梧棲區">梧棲區</option>
+            <option value="清水區">清水區</option>
+            <option value="大甲區">大甲區</option>
+            <option value="外埔區">外埔區</option>
+            <option value="大安區">大安區</option>
+        </optgroup>
+
+        <optgroup label="台南市">
+            <option value="中西區">中西區</option>
+            <option value="東區">東區</option>
+            <option value="南區">南區</option>
+            <option value="北區">北區</option>
+            <option value="安平區">安平區</option>
+            <option value="安南區">安南區</option>
+            <option value="永康區">永康區</option>
+            <option value="歸仁區">歸仁區</option>
+            <option value="新化區">新化區</option>
+            <option value="左鎮區">左鎮區</option>
+            <option value="玉井區">玉井區</option>
+            <option value="楠西區">楠西區</option>
+            <option value="南化區">南化區</option>
+            <option value="仁德區">仁德區</option>
+            <option value="關廟區">關廟區</option>
+            <option value="龍崎區">龍崎區</option>
+            <option value="官田區">官田區</option>
+            <option value="麻豆區">麻豆區</option>
+            <option value="佳里區">佳里區</option>
+            <option value="西港區">西港區</option>
+            <option value="七股區">七股區</option>
+            <option value="將軍區">將軍區</option>
+            <option value="學甲區">學甲區</option>
+            <option value="北門區">北門區</option>
+            <option value="新營區">新營區</option>
+            <option value="後壁區">後壁區</option>
+            <option value="白河區">白河區</option>
+            <option value="東山區">東山區</option>
+            <option value="六甲區">六甲區</option>
+            <option value="下營區">下營區</option>
+            <option value="柳營區">柳營區</option>
+            <option value="鹽水區">鹽水區</option>
+            <option value="善化區">善化區</option>
+            <option value="大內區">大內區</option>
+            <option value="山上區">山上區</option>
+            <option value="新市區">新市區</option>
+            <option value="安定區">安定區</option>
+        </optgroup>
+
+        <optgroup label="高雄市">
+            <option value="楠梓區">楠梓區</option>
+            <option value="左營區">左營區</option>
+            <option value="鼓山區">鼓山區</option>
+            <option value="三民區">三民區</option>
+            <option value="鹽埕區">鹽埕區</option>
+            <option value="前金區">前金區</option>
+            <option value="新興區">新興區</option>
+            <option value="苓雅區">苓雅區</option>
+            <option value="前鎮區">前鎮區</option>
+            <option value="小港區">小港區</option>
+            <option value="旗津區">旗津區</option>
+            <option value="鳳山區">鳳山區</option>
+            <option value="大寮區">大寮區</option>
+            <option value="鳥松區">鳥松區</option>
+            <option value="林園區">林園區</option>
+            <option value="仁武區">仁武區</option>
+            <option value="大社區">大社區</option>
+            <option value="岡山區">岡山區</option>
+            <option value="路竹區">路竹區</option>
+            <option value="橋頭區">橋頭區</option>
+            <option value="梓官區">梓官區</option>
+            <option value="彌陀區">彌陀區</option>
+            <option value="永安區">永安區</option>
+            <option value="燕巢區">燕巢區</option>
+            <option value="田寮區">田寮區</option>
+            <option value="阿蓮區">阿蓮區</option>
+            <option value="茄萣區">茄萣區</option>
+            <option value="湖內區">湖內區</option>
+            <option value="旗山區">旗山區</option>
+            <option value="美濃區">美濃區</option>
+            <option value="內門區">內門區</option>
+            <option value="杉林區">杉林區</option>
+            <option value="甲仙區">甲仙區</option>
+            <option value="六龜區">六龜區</option>
+            <option value="茂林區">茂林區</option>
+            <option value="桃源區">桃源區</option>
+            <option value="那瑪夏區">那瑪夏區</option>
+        </optgroup>
+        <optgroup label="基隆市">
+            <option value="仁愛區">仁愛區</option>
+            <option value="信義區">信義區</option>
+            <option value="中正區">中正區</option>
+            <option value="中山區">中山區</option>
+            <option value="安樂區">安樂區</option>
+            <option value="暖暖區">暖暖區</option>
+            <option value="七堵區">七堵區</option>
+        </optgroup>
+
+        <optgroup label="新竹市">
+            <option value="東區">東區</option>
+            <option value="北區">北區</option>
+            <option value="香山區">香山區</option>
+        </optgroup>
+
+        <optgroup label="嘉義市">
+            <option value="東區">東區</option>
+            <option value="西區">西區</option>
+        </optgroup>
+
+        <optgroup label="宜蘭縣">
+            <option value="宜蘭市">宜蘭市</option>
+            <option value="羅東鎮">羅東鎮</option>
+            <option value="蘇澳鎮">蘇澳鎮</option>
+            <option value="頭城鎮">頭城鎮</option>
+            <option value="礁溪鄉">礁溪鄉</option>
+            <option value="壯圍鄉">壯圍鄉</option>
+            <option value="員山鄉">員山鄉</option>
+            <option value="冬山鄉">冬山鄉</option>
+            <option value="五結鄉">五結鄉</option>
+            <option value="三星鄉">三星鄉</option>
+            <option value="大同鄉">大同鄉</option>
+            <option value="南澳鄉">南澳鄉</option>
+        </optgroup>
+
+        <optgroup label="新竹縣">
+            <option value="竹北市">竹北市</option>
+            <option value="竹東鎮">竹東鎮</option>
+            <option value="新埔鎮">新埔鎮</option>
+            <option value="關西鎮">關西鎮</option>
+            <option value="湖口鄉">湖口鄉</option>
+            <option value="新豐鄉">新豐鄉</option>
+            <option value="芎林鄉">芎林鄉</option>
+            <option value="橫山鄉">橫山鄉</option>
+            <option value="北埔鄉">北埔鄉</option>
+            <option value="寶山鄉">寶山鄉</option>
+            <option value="峨眉鄉">峨眉鄉</option>
+            <option value="尖石鄉">尖石鄉</option>
+            <option value="五峰鄉">五峰鄉</option>
+        </optgroup>
+        <optgroup label="苗栗縣">
+            <option value="竹南鎮">竹南鎮</option>
+            <option value="頭份市">頭份市</option>
+            <option value="三灣鄉">三灣鄉</option>
+            <option value="南庄鄉">南庄鄉</option>
+            <option value="獅潭鄉">獅潭鄉</option>
+            <option value="後龍鎮">後龍鎮</option>
+            <option value="通霄鎮">通霄鎮</option>
+            <option value="苑裡鎮">苑裡鎮</option>
+            <option value="苗栗市">苗栗市</option>
+            <option value="造橋鄉">造橋鄉</option>
+            <option value="頭屋鄉">頭屋鄉</option>
+            <option value="公館鄉">公館鄉</option>
+            <option value="大湖鄉">大湖鄉</option>
+            <option value="泰安鄉">泰安鄉</option>
+            <option value="銅鑼鄉">銅鑼鄉</option>
+            <option value="三義鄉">三義鄉</option>
+            <option value="西湖鄉">西湖鄉</option>
+            <option value="卓蘭鎮">卓蘭鎮</option>
+        </optgroup>
+
+        <optgroup label="彰化縣">
+            <option value="彰化市">彰化市</option>
+            <option value="芬園鄉">芬園鄉</option>
+            <option value="花壇鄉">花壇鄉</option>
+            <option value="秀水鄉">秀水鄉</option>
+            <option value="鹿港鎮">鹿港鎮</option>
+            <option value="福興鄉">福興鄉</option>
+            <option value="線西鄉">線西鄉</option>
+            <option value="和美鎮">和美鎮</option>
+            <option value="伸港鄉">伸港鄉</option>
+            <option value="員林市">員林市</option>
+            <option value="社頭鄉">社頭鄉</option>
+            <option value="永靖鄉">永靖鄉</option>
+            <option value="埔心鄉">埔心鄉</option>
+            <option value="溪湖鎮">溪湖鎮</option>
+            <option value="大村鄉">大村鄉</option>
+            <option value="埔鹽鄉">埔鹽鄉</option>
+            <option value="田中鎮">田中鎮</option>
+            <option value="北斗鎮">北斗鎮</option>
+            <option value="田尾鄉">田尾鄉</option>
+            <option value="埤頭鄉">埤頭鄉</option>
+            <option value="溪州鄉">溪州鄉</option>
+            <option value="竹塘鄉">竹塘鄉</option>
+            <option value="二林鎮">二林鎮</option>
+            <option value="大城鄉">大城鄉</option>
+            <option value="芳苑鄉">芳苑鄉</option>
+            <option value="二水鄉">二水鄉</option>
+        </optgroup>
+        <optgroup label="南投縣">
+            <option value="南投市">南投市</option>
+            <option value="中寮鄉">中寮鄉</option>
+            <option value="草屯鎮">草屯鎮</option>
+            <option value="國姓鄉">國姓鄉</option>
+            <option value="埔里鎮">埔里鎮</option>
+            <option value="仁愛鄉">仁愛鄉</option>
+            <option value="名間鄉">名間鄉</option>
+            <option value="集集鎮">集集鎮</option>
+            <option value="水里鄉">水里鄉</option>
+            <option value="魚池鄉">魚池鄉</option>
+            <option value="竹山鎮">竹山鎮</option>
+            <option value="鹿谷鄉">鹿谷鄉</option>
+        </optgroup>
+
+        <optgroup label="雲林縣">
+            <option value="斗南鎮">斗南鎮</option>
+            <option value="大埤鄉">大埤鄉</option>
+            <option value="虎尾鎮">虎尾鎮</option>
+            <option value="土庫鎮">土庫鎮</option>
+            <option value="褒忠鄉">褒忠鄉</option>
+            <option value="東勢鄉">東勢鄉</option>
+            <option value="臺西鄉">臺西鄉</option>
+            <option value="崙背鄉">崙背鄉</option>
+            <option value="麥寮鄉">麥寮鄉</option>
+            <option value="斗六市">斗六市</option>
+            <option value="林內鄉">林內鄉</option>
+            <option value="古坑鄉">古坑鄉</option>
+            <option value="莿桐鄉">莿桐鄉</option>
+            <option value="西螺鎮">西螺鎮</option>
+            <option value="二崙鄉">二崙鄉</option>
+            <option value="北港鎮">北港鎮</option>
+            <option value="水林鄉">水林鄉</option>
+            <option value="口湖鄉">口湖鄉</option>
+            <option value="四湖鄉">四湖鄉</option>
+            <option value="元長鄉">元長鄉</option>
+        </optgroup>
+        <optgroup label="嘉義縣">
+            <option value="番路鄉">番路鄉</option>
+            <option value="梅山鄉">梅山鄉</option>
+            <option value="竹崎鄉">竹崎鄉</option>
+            <option value="阿里山鄉">阿里山鄉</option>
+            <option value="中埔鄉">中埔鄉</option>
+            <option value="大埔鄉">大埔鄉</option>
+            <option value="水上鄉">水上鄉</option>
+            <option value="鹿草鄉">鹿草鄉</option>
+            <option value="太保市">太保市</option>
+            <option value="朴子市">朴子市</option>
+            <option value="東石鄉">東石鄉</option>
+            <option value="六腳鄉">六腳鄉</option>
+            <option value="新港鄉">新港鄉</option>
+            <option value="民雄鄉">民雄鄉</option>
+            <option value="布袋鎮">布袋鎮</option>
+        </optgroup>
+
+        <optgroup label="屏東縣">
+            <option value="屏東市">屏東市</option>
+            <option value="三地門鄉">三地門鄉</option>
+            <option value="霧台鄉">霧台鄉</option>
+            <option value="瑪家鄉">瑪家鄉</option>
+            <option value="九如鄉">九如鄉</option>
+            <option value="里港鄉">里港鄉</option>
+            <option value="高樹鄉">高樹鄉</option>
+            <option value="鹽埔鄉">鹽埔鄉</option>
+            <option value="長治鄉">長治鄉</option>
+            <option value="麟洛鄉">麟洛鄉</option>
+            <option value="竹田鄉">竹田鄉</option>
+            <option value="內埔鄉">內埔鄉</option>
+            <option value="萬丹鄉">萬丹鄉</option>
+            <option value="潮州鎮">潮州鎮</option>
+            <option value="泰武鄉">泰武鄉</option>
+            <option value="來義鄉">來義鄉</option>
+            <option value="萬巒鄉">萬巒鄉</option>
+            <option value="崁頂鄉">崁頂鄉</option>
+            <option value="新埤鄉">新埤鄉</option>
+            <option value="南州鄉">南州鄉</option>
+            <option value="林邊鄉">林邊鄉</option>
+            <option value="東港鎮">東港鎮</option>
+            <option value="琉球鄉">琉球鄉</option>
+            <option value="佳冬鄉">佳冬鄉</option>
+            <option value="新園鄉">新園鄉</option>
+            <option value="枋寮鄉">枋寮鄉</option>
+            <option value="枋山鄉">枋山鄉</option>
+            <option value="春日鄉">春日鄉</option>
+            <option value="獅子鄉">獅子鄉</option>
+            <option value="車城鄉">車城鄉</option>
+            <option value="牡丹鄉">牡丹鄉</option>
+            <option value="恆春鎮">恆春鎮</option>
+            <option value="滿州鄉">滿州鄉</option>
+        </optgroup>
+        <optgroup label="花蓮縣">
+            <option value="花蓮市">花蓮市</option>
+            <option value="新城鄉">新城鄉</option>
+            <option value="秀林鄉">秀林鄉</option>
+            <option value="吉安鄉">吉安鄉</option>
+            <option value="壽豐鄉">壽豐鄉</option>
+            <option value="鳳林鎮">鳳林鎮</option>
+            <option value="光復鄉">光復鄉</option>
+            <option value="豐濱鄉">豐濱鄉</option>
+            <option value="瑞穗鄉">瑞穗鄉</option>
+            <option value="萬榮鄉">萬榮鄉</option>
+            <option value="玉里鎮">玉里鎮</option>
+            <option value="卓溪鄉">卓溪鄉</option>
+            <option value="富里鄉">富里鄉</option>
+        </optgroup>
+
+        <optgroup label="台東縣">
+            <option value="台東市">台東市</option>
+            <option value="綠島鄉">綠島鄉</option>
+            <option value="蘭嶼鄉">蘭嶼鄉</option>
+            <option value="延平鄉">延平鄉</option>
+            <option value="卑南鄉">卑南鄉</option>
+            <option value="鹿野鄉">鹿野鄉</option>
+            <option value="關山鎮">關山鎮</option>
+            <option value="海端鄉">海端鄉</option>
+            <option value="池上鄉">池上鄉</option>
+            <option value="東河鄉">東河鄉</option>
+            <option value="成功鎮">成功鎮</option>
+            <option value="長濱鄉">長濱鄉</option>
+            <option value="太麻里鄉">太麻里鄉</option>
+            <option value="金峰鄉">金峰鄉</option>
+            <option value="大武鄉">大武鄉</option>
+            <option value="達仁鄉">達仁鄉</option>
+        </optgroup>
+
+        <optgroup label="金門縣">
+            <option value="金沙鎮">金沙鎮</option>
+            <option value="金湖鎮">金湖鎮</option>
+            <option value="金寧鄉">金寧鄉</option>
+            <option value="金城鎮">金城鎮</option>
+            <option value="烈嶼鄉">烈嶼鄉</option>
+            <option value="烏坵鄉">烏坵鄉</option>
+        </optgroup>
+
+        <optgroup label="連江縣">
+            <option value="南竿鄉">南竿鄉</option>
+            <option value="北竿鄉">北竿鄉</option>
+            <option value="莒光鄉">莒光鄉</option>
+            <option value="東引鄉">東引鄉</option>
+        </optgroup>                
+        </select>
+
 
       <div class="sidebar-section" id="popularList">
         <h5>🔥 熱門聊天室</h5>
@@ -214,11 +620,117 @@
 
   // 模擬聊天室資料，區域分類屬性area
   const chatrooms = [
-    { id: 1, name: '信義區聊天室A', lat: 25.034, lng: 121.562, area: '信義區', active: 92, messages: [] },
-    { id: 2, name: '內湖區聊天室B', lat: 25.078, lng: 121.580, area: '內湖區', active: 73, messages: [] },
-    { id: 3, name: '松山區聊天室C', lat: 25.052, lng: 121.559, area: '松山區', active: 85, messages: [] },
-    { id: 4, name: '大安區聊天室D', lat: 25.033, lng: 121.545, area: '大安區', active: 110, messages: [] },
-    { id: 5, name: '中山區聊天室E', lat: 25.067, lng: 121.520, area: '中山區', active: 60, messages: [] }
+   // 台北市
+  { id: 1, name: '信義區聊天室A', lat: 25.0335, lng: 121.5651, area: '信義區', active: 92, messages: [] },
+  { id: 2, name: '內湖區聊天室B', lat: 25.0790, lng: 121.5750, area: '內湖區', active: 73, messages: [] },
+  { id: 3, name: '松山區聊天室C', lat: 25.0500, lng: 121.5620, area: '松山區', active: 85, messages: [] },
+  { id: 4, name: '大安區聊天室D', lat: 25.0327, lng: 121.5431, area: '大安區', active: 110, messages: [] },
+  { id: 5, name: '中山區聊天室E', lat: 25.0682, lng: 121.5208, area: '中山區', active: 60, messages: [] },
+
+  // 新北市
+  { id: 6, name: '板橋區聊天室F', lat: 25.0123, lng: 121.4628, area: '板橋區', active: 70, messages: [] },
+  { id: 7, name: '三重區聊天室G', lat: 25.0643, lng: 121.4887, area: '三重區', active: 55, messages: [] },
+  { id: 8, name: '中和區聊天室H', lat: 24.9933, lng: 121.4951, area: '中和區', active: 65, messages: [] },
+  { id: 9, name: '永和區聊天室I', lat: 25.0158, lng: 121.5164, area: '永和區', active: 50, messages: [] },
+  { id: 10, name: '新莊區聊天室J', lat: 25.0335, lng: 121.4522, area: '新莊區', active: 40, messages: [] },
+
+  // 桃園市
+  { id: 11, name: '桃園區聊天室K', lat: 24.9936, lng: 121.3014, area: '桃園區', active: 90, messages: [] },
+  { id: 12, name: '中壢區聊天室L', lat: 24.9539, lng: 121.2259, area: '中壢區', active: 80, messages: [] },
+  { id: 13, name: '平鎮區聊天室M', lat: 24.9450, lng: 121.2065, area: '平鎮區', active: 75, messages: [] },
+
+  // 台中市
+{ id: 14, name: '西區聊天室N', lat: 24.1477, lng: 120.6736, area: '西區', active: 85, messages: [] },
+{ id: 15, name: '北屯區聊天室O', lat: 24.1825, lng: 120.6819, area: '北屯區', active: 70, messages: [] },
+{ id: 16, name: '南區聊天室P', lat: 24.1216, lng: 120.6425, area: '南區', active: 60, messages: [] },
+{ id: 17, name: '豐原區聊天室Q', lat: 24.2567, lng: 120.7112, area: '豐原區', active: 50, messages: [] },
+{ id: 18, name: '大里區聊天室R', lat: 24.1094, lng: 120.6786, area: '大里區', active: 40, messages: [] },
+
+// 台南市
+{ id: 19, name: '中西區聊天室S', lat: 22.9945, lng: 120.2024, area: '中西區', active: 90, messages: [] },
+{ id: 20, name: '安平區聊天室T', lat: 22.9931, lng: 120.1615, area: '安平區', active: 65, messages: [] },
+{ id: 21, name: '永康區聊天室U', lat: 23.0047, lng: 120.2277, area: '永康區', active: 70, messages: [] },
+{ id: 22, name: '北區聊天室V', lat: 23.0128, lng: 120.2099, area: '北區', active: 55, messages: [] },
+{ id: 23, name: '新營區聊天室W', lat: 23.3111, lng: 120.3089, area: '新營區', active: 40, messages: [] },
+
+// 高雄市
+{ id: 24, name: '左營區聊天室X', lat: 22.6820, lng: 120.3014, area: '左營區', active: 80, messages: [] },
+{ id: 25, name: '苓雅區聊天室Y', lat: 22.6267, lng: 120.3036, area: '苓雅區', active: 75, messages: [] },
+{ id: 26, name: '鼓山區聊天室Z', lat: 22.6455, lng: 120.2826, area: '鼓山區', active: 60, messages: [] },
+{ id: 27, name: '三民區聊天室AA', lat: 22.6446, lng: 120.3180, area: '三民區', active: 55, messages: [] },
+{ id: 28, name: '前鎮區聊天室BB', lat: 22.5948, lng: 120.3133, area: '前鎮區', active: 45, messages: []},
+
+// 苗栗縣
+{ id: 29, name: '苗栗市聊天室CC', lat: 24.5645, lng: 120.8202, area: '苗栗市', active: 50, messages: [] },
+{ id: 30, name: '竹南鎮聊天室DD', lat: 24.7006, lng: 120.8785, area: '竹南鎮', active: 40, messages: [] },
+{ id: 31, name: '頭份市聊天室EE', lat: 24.6915, lng: 120.8999, area: '頭份市', active: 35, messages: [] },
+{ id: 32, name: '三灣鄉聊天室FF', lat: 24.6208, lng: 120.9161, area: '三灣鄉', active: 20, messages: [] },
+{ id: 33, name: '南庄鄉聊天室GG', lat: 24.5632, lng: 121.0969, area: '南庄鄉', active: 15, messages: [] },
+
+// 彰化縣
+{ id: 34, name: '彰化市聊天室HH', lat: 24.0752, lng: 120.5410, area: '彰化市', active: 55, messages: [] },
+{ id: 35, name: '員林市聊天室II', lat: 23.9575, lng: 120.5723, area: '員林市', active: 45, messages: [] },
+{ id: 36, name: '和美鎮聊天室JJ', lat: 24.0573, lng: 120.5231, area: '和美鎮', active: 40, messages: [] },
+{ id: 37, name: '溪湖鎮聊天室KK', lat: 23.9677, lng: 120.4842, area: '溪湖鎮', active: 30, messages: [] },
+{ id: 38, name: '鹿港鎮聊天室LL', lat: 24.0593, lng: 120.4359, area: '鹿港鎮', active: 35, messages: [] },
+
+// 南投縣
+{ id: 39, name: '南投市聊天室MM', lat: 23.9085, lng: 120.6854, area: '南投市', active: 45, messages: [] },
+{ id: 40, name: '草屯鎮聊天室NN', lat: 24.0806, lng: 120.6841, area: '草屯鎮', active: 35, messages: [] },
+{ id: 41, name: '埔里鎮聊天室OO', lat: 23.9676, lng: 120.9680, area: '埔里鎮', active: 30, messages: [] },
+{ id: 42, name: '竹山鎮聊天室PP', lat: 23.7571, lng: 120.6912, area: '竹山鎮', active: 25, messages: [] },
+{ id: 43, name: '名間鄉聊天室QQ', lat: 23.8863, lng: 120.6975, area: '名間鄉', active: 20, messages: [] },
+
+// 雲林縣
+{ id: 44, name: '斗六市聊天室RR', lat: 23.7113, lng: 120.5421, area: '斗六市', active: 50, messages: [] },
+{ id: 45, name: '虎尾鎮聊天室SS', lat: 23.7092, lng: 120.4356, area: '虎尾鎮', active: 40, messages: [] },
+{ id: 46, name: '西螺鎮聊天室TT', lat: 23.7508, lng: 120.4659, area: '西螺鎮', active: 30, messages: [] },
+{ id: 47, name: '土庫鎮聊天室UU', lat: 23.6781, lng: 120.3639, area: '土庫鎮', active: 25, messages: [] },
+{ id: 48, name: '莿桐鄉聊天室VV', lat: 23.7202, lng: 120.4602, area: '莿桐鄉', active: 20, messages: [] },
+
+// 嘉義縣
+{ id: 49, name: '太保市聊天室WW', lat: 23.4590, lng: 120.2627, area: '太保市', active: 45, messages: [] },
+{ id: 50, name: '朴子市聊天室XX', lat: 23.4606, lng: 120.2347, area: '朴子市', active: 35, messages: [] },
+{ id: 51, name: '布袋鎮聊天室YY', lat: 23.3201, lng: 120.1820, area: '布袋鎮', active: 30, messages: [] },
+{ id: 52, name: '民雄鄉聊天室ZZ', lat: 23.5275, lng: 120.4367, area: '民雄鄉', active: 25, messages: [] },
+{ id: 53, name: '大林鎮聊天室AAA', lat: 23.5450, lng: 120.4333, area: '大林鎮', active: 20, messages: [] },
+
+// 屏東縣
+{ id: 54, name: '屏東市聊天室BBB', lat: 22.6767, lng: 120.4813, area: '屏東市', active: 60, messages: [] },
+{ id: 55, name: '潮州鎮聊天室CCC', lat: 22.5554, lng: 120.5495, area: '潮州鎮', active: 45, messages: [] },
+{ id: 56, name: '東港鎮聊天室DDD', lat: 22.4489, lng: 120.4689, area: '東港鎮', active: 35, messages: [] },
+{ id: 57, name: '恆春鎮聊天室EEE', lat: 21.9609, lng: 120.7442, area: '恆春鎮', active: 30, messages: [] },
+{ id: 58, name: '竹田鄉聊天室FFF', lat: 22.5356, lng: 120.5997, area: '竹田鄉', active: 25, messages: [] },
+// 花蓮縣
+{ id: 59, name: '花蓮市聊天室GGG', lat: 23.9761, lng: 121.6044, area: '花蓮市', active: 40, messages: [] },
+{ id: 60, name: '吉安鄉聊天室HHH', lat: 23.9523, lng: 121.5816, area: '吉安鄉', active: 30, messages: [] },
+{ id: 61, name: '壽豐鄉聊天室III', lat: 23.8408, lng: 121.4534, area: '壽豐鄉', active: 25, messages: [] },
+{ id: 62, name: '鳳林鎮聊天室JJJ', lat: 23.7007, lng: 121.4673, area: '鳳林鎮', active: 20, messages: [] },
+
+// 台東縣
+{ id: 63, name: '台東市聊天室KKK', lat: 22.7583, lng: 121.1449, area: '台東市', active: 45, messages: [] },
+{ id: 64, name: '成功鎮聊天室LLL', lat: 23.0947, lng: 121.3893, area: '成功鎮', active: 30, messages: [] },
+{ id: 65, name: '關山鎮聊天室MMM', lat: 23.0386, lng: 121.1516, area: '關山鎮', active: 25, messages: [] },
+{ id: 66, name: '長濱鄉聊天室NNN', lat: 23.4296, lng: 121.5327, area: '長濱鄉', active: 20, messages: [] },
+
+// 澎湖縣
+{ id: 67, name: '馬公市聊天室OOO', lat: 23.5678, lng: 119.5792, area: '馬公市', active: 35, messages: [] },
+{ id: 68, name: '湖西鄉聊天室PPP', lat: 23.6184, lng: 119.5779, area: '湖西鄉', active: 25, messages: [] },
+{ id: 69, name: '白沙鄉聊天室QQQ', lat: 23.6677, lng: 119.5515, area: '白沙鄉', active: 20, messages: [] },
+{ id: 70, name: '西嶼鄉聊天室RRR', lat: 23.6129, lng: 119.4678, area: '西嶼鄉', active: 15, messages: [] },
+
+// 金門縣
+{ id: 71, name: '金沙鎮聊天室SSS', lat: 24.4532, lng: 118.3186, area: '金沙鎮', active: 20, messages: [] },
+{ id: 72, name: '金湖鎮聊天室TTT', lat: 24.4337, lng: 118.3270, area: '金湖鎮', active: 25, messages: [] },
+{ id: 73, name: '金寧鄉聊天室UUU', lat: 24.4219, lng: 118.3218, area: '金寧鄉', active: 18, messages: [] },
+{ id: 74, name: '烈嶼鄉聊天室VVV', lat: 24.3972, lng: 118.2709, area: '烈嶼鄉', active: 15, messages: [] },
+{ id: 75, name: '烏坵鄉聊天室WWW', lat: 24.9922, lng: 119.4519, area: '烏坵鄉', active: 10, messages: [] },
+
+// 連江縣
+{ id: 76, name: '南竿鄉聊天室XXX', lat: 26.1542, lng: 119.9423, area: '南竿鄉', active: 12, messages: [] },
+{ id: 77, name: '北竿鄉聊天室YYY', lat: 26.2128, lng: 120.0281, area: '北竿鄉', active: 10, messages: [] },
+{ id: 78, name: '莒光鄉聊天室ZZZ', lat: 25.9685, lng: 119.9258, area: '莒光鄉', active: 8, messages: [] },
+{ id: 79, name: '東引鄉聊天室AAA', lat: 26.4041, lng: 120.4785, area: '東引鄉', active: 5, messages: [] },
   ];
 
   let userChatroomIds = new Set();
