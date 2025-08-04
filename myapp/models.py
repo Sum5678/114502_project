@@ -238,6 +238,8 @@ class ChatInteraction(models.Model):
     avatar_url = models.URLField(max_length=300)
     title = models.CharField(max_length=50)
     message_content = models.CharField(max_length=300)
+    
+    like_heart_count = models.IntegerField(default=0)  # ✅ ❤️ 愛心數欄位（你新增的）
 
     # ✅ 不用 auto_now_add，讓 MySQL 自動填入時間
     created_at = models.DateTimeField(blank=True, null=True)
