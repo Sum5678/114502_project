@@ -1,0 +1,71 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>刪除貼文確認｜交流區</title>
+
+  <!-- CSS -->
+  <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/css/main.css' %}" rel="stylesheet">
+
+  <style>
+    .section-title {
+      text-align: center; margin-top: 80px; margin-bottom: 40px;
+    }
+    .section-title h2 {
+      font-size: 28px; color: #033e6b; font-weight: 700;
+      display: inline-block; position: relative; padding: 0 20px;
+    }
+    .section-title h2::before, .section-title h2::after {
+      content: ""; position: absolute; top: 50%; width: 60px; height: 2px; background: #0d6efd;
+    }
+    .section-title h2::before { left: -70px; }
+    .section-title h2::after { right: -70px; }
+    .card {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 20px;
+    }
+  </style>
+</head>
+<body>
+
+<header class="header d-flex align-items-center fixed-top">
+  <div class="container-fluid d-flex justify-content-between align-items-center">
+    <a href="{% url 'home' %}" class="logo d-flex align-items-center me-auto">
+      <h1 class="sitename" style="color: #033e6b;">怪怪走開，護您安全</h1>
+    </a>
+  </div>
+</header>
+
+<main class="main" style="margin-top: 100px;">
+  <div class="container">
+    <div class="section-title">
+      <h2>刪除確認｜交流區</h2>
+      <p>你確定要刪除這篇貼文嗎？</p>
+    </div>
+
+    <div class="card mx-auto mb-4" style="max-width: 600px;">
+      <h5 class="card-title">{{ post.title }}</h5>
+      <p class="card-text">{{ post.message_content }}</p>
+    </div>
+
+    <form method="POST" class="d-flex justify-content-between" style="max-width: 600px; margin: 0 auto;">
+      {% csrf_token %}
+      <a href="{% url 'post_display' %}" class="btn btn-secondary">取消</a>
+      <button type="submit" class="btn btn-danger">確認刪除</button>
+    </form>
+  </div>
+</main>
+
+<footer class="footer text-center mt-5 py-4 bg-light">
+  <p>&copy; 2025 怪怪走開，護您安全｜Append Template</p>
+</footer>
+
+<script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+</body>
+</html>
