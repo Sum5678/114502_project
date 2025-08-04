@@ -1953,9 +1953,10 @@ def store_data_api(request):
 #------------交流區貼文的部分-------
 
 from .models import ChatInteraction
-from django.utils import timezone  # 建議使用 timezone
+from django.utils import timezone
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
+from django.http import HttpResponseForbidden
 import bleach
 
 ALLOWED_TAGS = ['a']
@@ -1963,6 +1964,7 @@ ALLOWED_ATTRIBUTES = {
     'a': ['href', 'target', 'rel']
 }
 
+# 發文
 @login_required(login_url='/01userlogin/')
 def post(request):
     if request.method == 'POST':
@@ -1997,9 +1999,45 @@ def post(request):
 
     return render(request, 'post.html')
 
+
+# 貼文展示
 def post_display(request):
     posts = ChatInteraction.objects.all().order_by('-created_at')
     return render(request, 'post_display.html', {'posts': posts})
+
+
+# 編輯貼文（只能編輯自己的）
+@login_required(login_url='/01userlogin/')
+def edit_post(request, post_id):
+    post = get_object_or_404(ChatInteraction, pk=post_id)
+
+    if post.user_id != request.user.id:
+        return HttpResponseForbidden("⚠️ 你無權編輯這篇貼文。")
+
+    if request.method == 'POST':
+        post.title = request.POST.get('title')
+        post.message_content = request.POST.get('content')
+        post.created_at = timezone.now()
+        post.save()
+        return redirect('post_display')
+
+    return render(request, 'edit_post.html', {'post': post})
+
+
+# 刪除貼文（只能刪除自己的）
+@login_required(login_url='/01userlogin/')
+def delete_post(request, post_id):
+    post = get_object_or_404(ChatInteraction, pk=post_id)
+
+    if post.user_id != request.user.id:
+        return HttpResponseForbidden("⚠️ 你無權刪除這篇貼文。")
+
+    if request.method == 'POST':
+        post.delete()
+        return redirect('post_display')
+
+    return render(request, 'delete_post_confirm.html', {'post': post})
+
 
 
 
