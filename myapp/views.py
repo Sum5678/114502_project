@@ -2090,6 +2090,23 @@ def like_post(request, post_id):
 
 
 
+from django.db.models import Q  # 確保你有匯入這個
+
+def post_display(request):
+    query = request.GET.get('q')
+    if query:
+        posts = ChatInteraction.objects.filter(
+            Q(title__icontains=query) |
+            Q(message_content__icontains=query)
+        ).order_by('-created_at')
+    else:
+        posts = ChatInteraction.objects.all().order_by('-created_at')
+    return render(request, 'post_display.html', {'posts': posts})
+
+
+
+
+
 # from .models import ChatInteraction  # ✅ 不再匯入 ThisUserProfile
 # from datetime import datetime
 # from django.contrib.auth.decorators import login_required

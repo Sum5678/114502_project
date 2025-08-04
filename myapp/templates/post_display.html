@@ -145,6 +145,14 @@
       color: white;
       text-decoration: none;
     }
+    input[name="q"]::placeholder {
+  color: #5a7ca9;
+    }
+    input[name="q"]:focus {
+      box-shadow: none;
+    }
+
+
   </style>
 </head>
 <body>
@@ -198,6 +206,23 @@
         <h2>貼文總覽｜交流區</h2>
         <p>以下是大家的分享</p>
       </div>
+      
+      <form method="get" action="{% url 'post_display' %}" class="d-flex justify-content-center mt-4 mb-4">
+  <div class="input-group w-50" style="border-radius: 10px; overflow: hidden; box-shadow: 0 0 5px rgba(0, 0, 0, 0.05);">
+    <span class="input-group-text" style="background-color: #e6f3fb; border: none;">
+      <i class="bi bi-search" style="color: #63b3ed; font-size: 1.2rem;"></i>
+    </span>
+    <input type="text" name="q" class="form-control"
+           placeholder="輸入關鍵字搜尋貼文…" value="{{ request.GET.q }}"
+           style="border: none; background-color: #f0faff; color: #033e6b; font-size: 15px;">
+    <button type="submit" class="btn" style="background-color: #63b3ed; color: white; border: none;">
+      搜尋
+    </button>
+  </div>
+</form>
+
+
+
 
       {% for post in posts %}
       <div class="card mb-4" style="border-left: 8px solid #{{ post.bgcolor }};">
