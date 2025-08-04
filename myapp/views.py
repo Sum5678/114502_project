@@ -2090,7 +2090,8 @@ def like_post(request, post_id):
 
 
 
-from django.db.models import Q  # 確保你有匯入這個
+from django.db.models import Q
+import json
 
 def post_display(request):
     query = request.GET.get('q')
@@ -2101,7 +2102,16 @@ def post_display(request):
         ).order_by('-created_at')
     else:
         posts = ChatInteraction.objects.all().order_by('-created_at')
+
+    for post in posts:
+        try:
+            liked_user_ids = json.loads(post.liked_user_ids or '[]')
+        except json.JSONDecodeError:
+            liked_user_ids = []
+        post.liked_user_list = liked_user_ids  # 這一行很重要！
+
     return render(request, 'post_display.html', {'posts': posts})
+
 
 
 
