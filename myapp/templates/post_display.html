@@ -40,6 +40,29 @@
     .card .card-title { font-weight: 700; color: #033e6b; }
     .card .card-text { color: #444; font-size: 15px; }
     .meta { font-size: 13px; color: #888; }
+    .interaction-bar {
+      border-top: 1px solid #ddd;
+      border-bottom: 1px solid #ddd;
+      padding: 8px 0;
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+      color: #555;
+    }
+    .interaction-actions {
+      display: flex;
+      justify-content: space-around;
+      padding-top: 8px;
+    }
+    .interaction-actions button {
+      background: none;
+      border: none;
+      color: #555;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
     .btn-floating-post {
       position: fixed; bottom: 40px; right: 40px;
       width: 60px; height: 60px; background-color: #0d6efd;
@@ -53,47 +76,6 @@
 </head>
 <body class="index-page">
 
-<header id="header" class="header d-flex align-items-center fixed-top">
-  <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
-    <a href="{% url 'home' %}" class="logo d-flex align-items-center me-auto me-xl-0">
-      <h1 class="sitename" style="color: #033e6b;">怪怪走開，護您安全</h1>
-    </a>
-    <nav id="navmenu" class="navmenu">
-      <ul>
-        <li><a href="{% url 'home' %}#hero" class="active">主頁</a></li>
-        <li><a href="{% url 'home' %}#services" class="active">簡介及功能介紹</a></li>
-        <li><a href="{% url 'report' %}" class="active">填寫表單</a></li>
-        <li><a href="{% url 'business_upload' %}" class="active">商家填單</a></li>
-        <li><a href="{% url 'post' %}" class="active">我要發文</a></li>
-        <li><a href="{% url 'map' %}" class="active">事件地圖</a></li>
-        <li><a href="{% url 'harassment_prevention' %}" class="active">防鬧指南</a></li>
-      </ul>
-      <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
-    </nav>
-    {% if request.user.is_authenticated %}
-    <div class="dropdown">
-      <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown"
-         style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
-        {{ request.user.username }}
-      </a>
-      <ul class="dropdown-menu dropdown-menu-end">
-        <li><a class="dropdown-item" href="{% url '01_userlogin_out' %}">登出</a></li>
-      </ul>
-    </div>
-    {% else %}
-    <div class="dropdown">
-      <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown"
-         style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
-        登入
-      </a>
-      <ul class="dropdown-menu dropdown-menu-end">
-        <li><a class="dropdown-item" href="{% url 'userlogin' %}">一般使用者登入</a></li>
-        <li><a class="dropdown-item" href="{% url 'admin_login' %}">管理員登入</a></li>
-      </ul>
-    </div>
-    {% endif %}
-  </div>
-</header>
 
 <main class="main">
   <section class="post-list mt-5" id="post-list-section">
@@ -110,7 +92,7 @@
             <img src="{{ post.avatar_url }}" alt="avatar" class="rounded-circle me-3" style="width: 60px; height: 60px;">
             <div>
               <h5 class="card-title mb-0">{{ post.title }}</h5>
-              <div class="meta">{{ post.nickname }} ｜ {{ post.created_at|date:"Y/m/d H:i" }}</div>
+              <div class="meta">{{ post.nickname }} ・ {{ post.created_at|date:"Y/m/d H:i" }}</div>
             </div>
           </div>
 
@@ -121,26 +103,38 @@
             {% endif %}
           </p>
 
-          <div class="d-flex justify-content-between align-items-end mt-4">
-            <!-- ❤️ 愛心 -->
+          <!-- 數據列 -->
+          <div class="interaction-bar">
+            <div>
+              <i class="bi bi-hand-thumbs-up-fill text-primary"></i> {{ post.like_heart_count }}
+            </div>
+            <div>
+              <i class="bi bi-chat-left-text"></i> 0
+              <i class="bi bi-share ms-2"></i> 0
+            </div>
+          </div>
+
+          <!-- 操作列 -->
+          <div class="interaction-actions">
             <form method="post" action="{% url 'like_post' post.interaction_id %}">
               {% csrf_token %}
-              <button type="submit" class="btn btn-outline-danger btn-sm">
-                ❤️ {{ post.like_heart_count }}
-              </button>
+              <button type="submit"><i class="bi bi-hand-thumbs-up"></i> 讚</button>
             </form>
-
-            {% if request.user.id == post.user_id %}
-            <div>
-              <a href="{% url 'edit_post' post.interaction_id %}" class="btn btn-sm btn-outline-primary me-2">
-                <i class="bi bi-pencil-square"></i> 編輯
-              </a>
-              <a href="{% url 'delete_post' post.interaction_id %}" class="btn btn-sm btn-outline-danger">
-                <i class="bi bi-trash"></i> 刪除
-              </a>
-            </div>
-            {% endif %}
+            <button><i class="bi bi-chat-left-text"></i> 留言</button>
+            <button><i class="bi bi-share"></i> 分享</button>
           </div>
+
+          <!-- 編輯與刪除 -->
+          {% if request.user.id == post.user_id %}
+          <div class="d-flex justify-content-end mt-2">
+            <a href="{% url 'edit_post' post.interaction_id %}" class="btn btn-sm btn-outline-primary me-2">
+              <i class="bi bi-pencil-square"></i> 編輯
+            </a>
+            <a href="{% url 'delete_post' post.interaction_id %}" class="btn btn-sm btn-outline-danger">
+              <i class="bi bi-trash"></i> 刪除
+            </a>
+          </div>
+          {% endif %}
         </div>
       </div>
       {% empty %}
