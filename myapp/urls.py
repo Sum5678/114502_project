@@ -64,6 +64,9 @@ urlpatterns = [
     path('face_detection/', views.face_detection_view, name='face_detection'), #人臉辨識
     path('post/', views.post, name='post'),
     path('post_display/', views.post_display, name='post_display'),
+    path('edit_post/<int:post_id>/', views.edit_post, name='edit_post'),
+    path('delete_post/<int:post_id>/', views.delete_post, name='delete_post'),
+
     
 
 
