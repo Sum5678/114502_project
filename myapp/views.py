@@ -320,52 +320,6 @@ def mychatroom(request):
 def community(request):
     return render(request, 'community.html')
 
-# views.py
-
-from django.shortcuts import render
-from django.core.files.storage import default_storage
-import cv2
-import os
-
-# 載入人臉辨識模型（記得在 settings.py 設定 STATICFILES_DIRS）
-face_cascade = cv2.CascadeClassifier('myapp/static/haarcascade_frontalface_default.xml')
-
-def face_detection_view(request):
-    result_img = None
-
-    if request.method == 'POST' and request.FILES.get('image'):
-        file = request.FILES['image']
-        input_path = os.path.join('myapp', 'static', 'input.jpg')
-        with open(input_path, 'wb+') as destination:
-            for chunk in file.chunks():
-                destination.write(chunk)
-
-        img = cv2.imread(input_path)
-        if img is None:
-            return render(request, 'index0527.html', {'result_img': None, 'error': '無法讀取圖片，請重新上傳'})
-
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        faces = face_cascade.detectMultiScale(gray, 1.1, 5)
-
-        for (x, y, w, h) in faces:
-            # 取得人臉區域
-            face_roi = img[y:y+h, x:x+w]
-
-            # 縮小再放大做馬賽克
-            small = cv2.resize(face_roi, (10, 10), interpolation=cv2.INTER_LINEAR)
-            mosaic = cv2.resize(small, (w, h), interpolation=cv2.INTER_NEAREST)
-
-            # 替換原圖區域為馬賽克
-            img[y:y+h, x:x+w] = mosaic
-
-        output_path = os.path.join('myapp', 'static', 'output.jpg')
-        cv2.imwrite(output_path, img)
-        result_img = 'output.jpg'
-
-    return render(request, 'index0527.html', {'result_img': result_img})
-
-
-
 #-----------------想-------------------------
 def announcement(request):
     return render(request, 'announcement.html')
