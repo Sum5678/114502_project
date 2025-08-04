@@ -9,6 +9,7 @@ from .views import PemapAllListView, PemapAllUpdateView
 
 urlpatterns = [
     #思璇
+    path('chatrooms/', views.chatroom_map, name='chatroom_map'),
     path('api/submit_report/', views.submit_report, name='submit_report'),
     path('api/submit_store/', views.submit_store, name='submit_store'),
     path('business/upload/', views.business_upload, name='business_upload'),

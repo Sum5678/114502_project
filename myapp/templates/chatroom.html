@@ -1,0 +1,364 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>可疑事件聊天室地圖互動</title>
+  <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet" />
+  <link href="{% static 'assets/vendor/aos/aos.css' %}" rel="stylesheet" />
+  <link href="{% static 'assets/css/main.css' %}" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    body {
+      background: #f8f9fa;
+      padding-top: 80px;
+    }
+    #map {
+      height: 400px;
+      border-radius: 0.5rem;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .section-title {
+      font-weight: 700;
+      margin-bottom: 1rem;
+      border-bottom: 2px solid #007bff;
+      padding-bottom: 0.5rem;
+    }
+    .favorite-btn {
+      cursor: pointer;
+      user-select: none;
+      font-size: 1.4rem;
+      color: #bbb;
+      transition: color 0.3s;
+    }
+    .favorite-btn.favorited {
+      color: #ffc107;
+      text-shadow: 0 0 4px #ffdb58;
+    }
+    .chatroom-box {
+      margin-top: 1rem;
+      background: #fff;
+      border-radius: 0.5rem;
+      box-shadow: 0 0 12px rgba(0,0,0,0.12);
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+      padding: 1rem 1.5rem;
+    }
+    .chat-window {
+      height: 250px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      border-radius: 0.375rem;
+      padding: 1rem;
+      background: #f9f9f9;
+      margin-bottom: 0.75rem;
+      font-size: 0.9rem;
+    }
+    .chat-window p {
+      margin-bottom: 0.5rem;
+    }
+    .chat-input-area {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .chat-input-area input[type="text"] {
+      flex-grow: 1;
+      border-radius: 0.375rem;
+      border: 1px solid #ced4da;
+      padding: 0.5rem 0.75rem;
+      font-size: 1rem;
+    }
+    .chat-input-area button {
+      flex-shrink: 0;
+      border-radius: 0.375rem;
+      font-weight: 600;
+      padding: 0.5rem 1.25rem;
+    }
+    .sidebar-section {
+      background: #fff;
+      border-radius: 0.5rem;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      padding: 1rem;
+      max-height: 350px;
+      overflow-y: auto;
+      margin-bottom: 1.5rem;
+    }
+    .sidebar-section div.chatroom-item {
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid #eee;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      border-radius: 0.25rem;
+    }
+    .sidebar-section div.chatroom-item:hover {
+      background-color: #e9f2ff;
+    }
+    .container-flex {
+      display: flex;
+      gap: 2rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 1.5rem;
+    }
+    .sidebar-container {
+      flex: 1 1 300px;
+      max-width: 350px;
+    }
+    .map-container {
+      flex: 2 1 600px;
+      max-width: 700px;
+    }
+    @media(max-width: 768px) {
+      .container-flex {
+        flex-direction: column;
+        align-items: center;
+      }
+      .sidebar-container, .map-container {
+        max-width: 100%;
+      }
+    }
+  </style>
+</head>
+<body class="index-page">
+
+<header id="header" class="header d-flex align-items-center fixed-top">
+  <div class="container-fluid d-flex justify-content-between align-items-center">
+    <a href="{% url 'home' %}" class="logo d-flex align-items-center">
+      <h1 class="sitename">怪怪走開，護您安全</h1>
+    </a>
+    <nav id="navmenu" class="navmenu">
+      <ul>
+        <li><a href="{% url 'home' %}#hero">主頁</a></li>
+        <li><a href="{% url 'home' %}#services">簡介及功能介紹</a></li>
+        <li><a href="{% url 'report' %}">填寫表單</a></li>
+        <li><a href="{% url 'business_upload' %}">商家填單</a></li>
+        <li><a href="{% url 'post' %}">我要發文</a></li>
+        <li><a href="{% url 'map' %}">事件地圖</a></li>
+        <li><a href="{% url 'harassment_prevention' %}">防騷指南</a></li>
+      </ul>
+    </nav>
+    {% if request.user.is_authenticated %}
+      <div class="dropdown">
+        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown">{{ request.user.username }}</a>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="{% url 'about' %}">個人資料設定</a></li>
+          <li><a class="dropdown-item" href="{% url '01_userlogin_out' %}">登出</a></li>
+        </ul>
+      </div>
+    {% else %}
+      <a class="btn-getstarted" href="{% url 'userlogin' %}">登入</a>
+    {% endif %}
+  </div>
+</header>
+
+<main class="main mt-5 pt-5">
+  <div class="container container-flex" data-aos="fade-up">
+
+    <div class="sidebar-container">
+      <h4 class="section-title">區域分類</h4>
+      <select id="areaSelect" class="form-select mb-3">
+        <option value="all">全部區域</option>
+        <option value="信義區">信義區</option>
+        <option value="內湖區">內湖區</option>
+        <option value="松山區">松山區</option>
+        <option value="大安區">大安區</option>
+        <option value="中山區">中山區</option>
+      </select>
+
+      <div class="sidebar-section" id="popularList">
+        <h5>🔥 熱門聊天室</h5>
+      </div>
+
+      <div class="sidebar-section" id="userChatrooms">
+        <h5>🗂 我的聊天室</h5>
+      </div>
+    </div>
+
+    <div class="map-container">
+      <h4 class="section-title text-center mb-3">聊天室互動地圖 — 可疑事件分享專區</h4>
+      <div id="map"></div>
+
+      <div id="chatroomBox" class="chatroom-box d-none mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h5 id="chatroomTitle" class="mb-0">聊天室名稱</h5>
+          <span id="favoriteBtn" class="favorite-btn" title="點擊收藏/取消收藏">☆ 收藏</span>
+        </div>
+        <div class="chat-window" id="chatWindow"></div>
+        <div class="chat-input-area mt-3">
+          <input type="text" id="chatInput" placeholder="輸入留言..." autocomplete="off" />
+          <button class="btn btn-primary" onclick="sendMessage()">送出</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<footer id="footer" class="footer position-relative light-background mt-5 py-3 bg-white shadow-sm">
+  <div class="container text-center text-muted small">
+    © 2025 <strong class="sitename">怪怪走開</strong> All Rights Reserved
+  </div>
+</footer>
+
+<script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+<script src="{% static 'assets/vendor/aos/aos.js' %}"></script>
+<script src="{% static 'assets/js/main.js' %}"></script>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script>
+  const map = L.map('map').setView([25.033964, 121.562321], 13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors'
+  }).addTo(map);
+
+  // 模擬聊天室資料，區域分類屬性area
+  const chatrooms = [
+    { id: 1, name: '信義區聊天室A', lat: 25.034, lng: 121.562, area: '信義區', active: 92, messages: [] },
+    { id: 2, name: '內湖區聊天室B', lat: 25.078, lng: 121.580, area: '內湖區', active: 73, messages: [] },
+    { id: 3, name: '松山區聊天室C', lat: 25.052, lng: 121.559, area: '松山區', active: 85, messages: [] },
+    { id: 4, name: '大安區聊天室D', lat: 25.033, lng: 121.545, area: '大安區', active: 110, messages: [] },
+    { id: 5, name: '中山區聊天室E', lat: 25.067, lng: 121.520, area: '中山區', active: 60, messages: [] }
+  ];
+
+  let userChatroomIds = new Set();
+  let favoriteChatrooms = new Set();
+  let currentRoomId = null;
+
+  const chatWindow = document.getElementById('chatWindow');
+  const chatInput = document.getElementById('chatInput');
+  const chatroomBox = document.getElementById('chatroomBox');
+  const favoriteBtn = document.getElementById('favoriteBtn');
+  const userChatroomsContainer = document.getElementById('userChatrooms');
+  const popularListContainer = document.getElementById('popularList');
+  const areaSelect = document.getElementById('areaSelect');
+
+  function clearMapMarkers() {
+    map.eachLayer(layer => {
+      if (layer instanceof L.Marker) {
+        map.removeLayer(layer);
+      }
+    });
+  }
+
+  function renderChatroomsOnMap() {
+    clearMapMarkers();
+    const selectedArea = areaSelect.value;
+    chatrooms.forEach(room => {
+      if (selectedArea === 'all' || room.area === selectedArea) {
+        const marker = L.marker([room.lat, room.lng]).addTo(map);
+        marker.bindTooltip(room.name, {permanent: false, direction: 'top'});
+        marker.on('click', () => openChatroom(room.id));
+      }
+    });
+  }
+
+  function openChatroom(id) {
+    currentRoomId = id;
+    const room = chatrooms.find(r => r.id === id);
+    if (!room) return;
+
+    chatroomBox.classList.remove('d-none');
+    document.getElementById('chatroomTitle').textContent = room.name;
+    userChatroomIds.add(id);
+    renderUserChatrooms();
+    updateFavoriteBtn(id);
+    renderMessages(id);
+  }
+
+  function renderMessages(roomId) {
+    const room = chatrooms.find(r => r.id === roomId);
+    chatWindow.innerHTML = '';
+    if (room.messages.length === 0) {
+      chatWindow.innerHTML = '<p class="text-muted">還沒有留言，快來發表第一則訊息！</p>';
+    } else {
+      room.messages.forEach(msg => {
+        const p = document.createElement('p');
+        p.textContent = msg;
+        chatWindow.appendChild(p);
+      });
+    }
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+  }
+
+  function sendMessage() {
+    if (!currentRoomId) return alert('請先點選一個聊天室');
+    const msg = chatInput.value.trim();
+    if (!msg) return;
+    const room = chatrooms.find(r => r.id === currentRoomId);
+    room.messages.push(`你：${msg}`);
+    renderMessages(currentRoomId);
+    chatInput.value = '';
+    chatInput.focus();
+  }
+
+  function toggleFavorite(id) {
+    if (favoriteChatrooms.has(id)) {
+      favoriteChatrooms.delete(id);
+    } else {
+      favoriteChatrooms.add(id);
+    }
+    updateFavoriteBtn(id);
+  }
+
+  function updateFavoriteBtn(id) {
+    if (favoriteChatrooms.has(id)) {
+      favoriteBtn.classList.add('favorited');
+      favoriteBtn.textContent = '⭐ 已收藏';
+    } else {
+      favoriteBtn.classList.remove('favorited');
+      favoriteBtn.textContent = '☆ 收藏';
+    }
+  }
+
+  function renderUserChatrooms() {
+    userChatroomsContainer.innerHTML = '';
+    if (userChatroomIds.size === 0) {
+      userChatroomsContainer.innerHTML = '<p class="text-muted">尚未加入任何聊天室</p>';
+      return;
+    }
+    chatrooms.filter(r => userChatroomIds.has(r.id)).forEach(room => {
+      const div = document.createElement('div');
+      div.className = 'chatroom-item';
+      div.textContent = room.name;
+      div.onclick = () => openChatroom(room.id);
+      userChatroomsContainer.appendChild(div);
+    });
+  }
+
+  function renderPopularChatrooms() {
+    popularListContainer.innerHTML = '';
+    const sorted = [...chatrooms].sort((a,b) => b.active - a.active).slice(0, 5);
+    sorted.forEach(room => {
+      const div = document.createElement('div');
+      div.className = 'chatroom-item';
+      div.textContent = `${room.name}（活躍度：${room.active}）`;
+      div.onclick = () => openChatroom(room.id);
+      popularListContainer.appendChild(div);
+    });
+  }
+
+  areaSelect.addEventListener('change', () => {
+    renderChatroomsOnMap();
+    chatroomBox.classList.add('d-none');
+    currentRoomId = null;
+  });
+
+  favoriteBtn.onclick = () => {
+    if (currentRoomId !== null) {
+      toggleFavorite(currentRoomId);
+    }
+  };
+
+  chatInput.addEventListener('keydown', e => {
+    if(e.key === 'Enter') sendMessage();
+  });
+
+  // 初始渲染
+  renderChatroomsOnMap();
+  renderPopularChatrooms();
+  renderUserChatrooms();
+</script>
+
+</body>
+</html>
