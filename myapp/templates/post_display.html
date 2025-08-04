@@ -103,7 +103,7 @@
         <p>以下是大家的分享</p>
       </div>
 
-     {% for post in posts %}
+      {% for post in posts %}
       <div class="card mb-4" style="border-left: 8px solid #{{ post.bgcolor }};">
         <div class="card-body">
           <div class="d-flex align-items-center mb-3">
@@ -119,6 +119,14 @@
               <span class="ellipsis">...</span> <a href="#" class="toggle-more">查看更多</a>
             {% endif %}
           </p>
+
+          <!-- ❤️ 愛心按鈕區塊 -->
+          <form method="post" action="{% url 'like_post' post.interaction_id %}" style="display: inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-danger btn-sm">
+              ❤️ {{ post.like_heart_count }}
+            </button>
+          </form>
 
           {% if request.user.id == post.user_id %}
           <div class="mt-3">
