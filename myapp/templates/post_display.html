@@ -85,7 +85,6 @@
 </head>
 <body class="index-page">
 
-
 <main class="main">
   <section class="post-list mt-5" id="post-list-section">
     <div class="container">
@@ -126,10 +125,10 @@
 
           <div class="interaction-actions">
             <div class="interaction-actions-left">
-              <form method="post" action="{% url 'like_post' post.interaction_id %}" style="display:inline">
+              <form method="post" action="{% url 'like_post' post.interaction_id %}" class="like-form" data-post-id="{{ post.interaction_id }}">
                 {% csrf_token %}
                 <button type="submit" class="{% if request.user.id|stringformat:"s" in post.liked_user_list %}liked{% endif %}">
-                  <i class="bi bi-hand-thumbs-up"></i> 讚
+                  <i class="bi bi-hand-thumbs-up"></i> {% if request.user.id|stringformat:"s" in post.liked_user_list %}收回讚{% else %}讚{% endif %}
                 </button>
               </form>
               <button><i class="bi bi-chat-left-text"></i> 留言</button>
@@ -203,6 +202,23 @@
           p.appendChild(moreLink);
           moreLink.addEventListener('click', arguments.callee);
         }
+      });
+    });
+
+    // 防止按讚跳頁
+    document.querySelectorAll('.like-form').forEach(form => {
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        const url = this.action;
+        const formData = new FormData(this);
+
+        fetch(url, {
+          method: 'POST',
+          body: formData,
+          headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        }).then(() => {
+          location.reload();
+        });
       });
     });
   });
