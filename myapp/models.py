@@ -204,7 +204,6 @@ class StoreAll(models.Model):
         db_table = 'store_all'  # << 指定實際的 MySQL 資料表名稱
 
 
-
 #-------------------登入資料----------------------------------------------
 from django.db import models
 

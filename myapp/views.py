@@ -1219,16 +1219,11 @@ def business_list_view(request):
     for i, store in enumerate(user_stores):
         store.reverse_id = total - i  # 編號從總數開始往下減
     return render(request, 'business_list.html', {'stores': user_stores})
-
-
-
-#test_0610chatroom 試寫聊天室
+#----------------聊天室-----------------------------
 from django.shortcuts import render
 
-def room(request, room_name):
-    return render(request, 'test_0610chatroom.html', {
-        'room_name': room_name
-    })
+def chatroom_map(request):
+    return render(request, 'chatroom.html')  # HTML 檔名可自訂
 
 
 ##測試資料能不能放到地圖上
