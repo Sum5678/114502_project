@@ -339,12 +339,35 @@
         e.preventDefault();
         const url = this.action;
         const formData = new FormData(this);
+        const button = this.querySelector('button');
         fetch(url, {
           method: 'POST',
           body: formData,
           headers: { 'X-Requested-With': 'XMLHttpRequest' },
-        }).then(() => {
-          location.reload();
+        })
+        .then(response => {
+          if (response.ok) {
+            button.classList.toggle('liked');
+
+            const isLiked = button.classList.contains('liked');
+            button.innerHTML = `<i class="bi bi-hand-thumbs-up"></i> ${isLiked ? '收回讚' : '讚'}`;
+
+            // 更新上方圖示
+            const card = this.closest('.card-body');
+            const iconDiv = card.querySelector('.interaction-bar div:first-child i');
+            const countSpan = card.querySelector('.interaction-bar div:first-child');
+            if (iconDiv && countSpan) {
+              iconDiv.className = `bi ${isLiked ? 'bi-hand-thumbs-up-fill text-primary' : 'bi-hand-thumbs-up'}`;
+
+              let countText = countSpan.innerText.trim();
+              let count = parseInt(countText.replace(/\D/g, '')) || 0;
+              count = isLiked ? count + 1 : count - 1;
+              countSpan.innerHTML = `<i class="bi ${isLiked ? 'bi-hand-thumbs-up-fill text-primary' : 'bi-hand-thumbs-up'}"></i> ${count}`;
+            }
+          }
+        })
+        .catch(() => {
+          alert('按讚失敗，請稍後再試');
         });
       });
     });
