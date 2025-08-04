@@ -24,22 +24,63 @@
   <link href="{% static 'assets/css/main.css' %}" rel="stylesheet">
 
   <style>
-    .section-title { text-align: center; margin-top: 60px; margin-bottom: 30px; }
+    body {
+      background-color: #fff;
+      padding-top: 10px;
+      font-family: "Microsoft JhengHei", sans-serif;
+    }
+    .section-title {
+      text-align: center;
+      margin-top: 60px;
+      margin-bottom: 30px;
+    }
     .section-title h2 {
-      display: inline-block; position: relative; font-weight: 700;
-      font-size: 28px; color: #033e6b; padding: 0 20px;
+      display: inline-block;
+      position: relative;
+      font-weight: 700;
+      font-size: 28px;
+      color: #033e6b;
+      padding: 0 20px;
     }
-    .section-title h2::before, .section-title h2::after {
-      content: ""; position: absolute; top: 50%; width: 60px; height: 2px; background: #0d6efd;
+    .section-title h2::before,
+    .section-title h2::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      width: 60px;
+      height: 2px;
+      background: #0d6efd;
     }
-    .section-title h2::before { left: -70px; }
-    .section-title h2::after { right: -70px; }
-    .section-title p { margin-top: 10px; font-size: 16px; color: #555; }
-    .card { border-left: 8px solid #ccc; }
-    .card .card-body { background: #fff; border-radius: 6px; }
-    .card .card-title { font-weight: 700; color: #033e6b; }
-    .card .card-text { color: #444; font-size: 15px; }
-    .meta { font-size: 13px; color: #888; }
+    .section-title h2::before {
+      left: -70px;
+    }
+    .section-title h2::after {
+      right: -70px;
+    }
+    .section-title p {
+      margin-top: 10px;
+      font-size: 16px;
+      color: #555;
+    }
+    .card {
+      border-left: 8px solid #ccc;
+    }
+    .card .card-body {
+      background: #fff;
+      border-radius: 6px;
+    }
+    .card .card-title {
+      font-weight: 700;
+      color: #033e6b;
+    }
+    .card .card-text {
+      color: #444;
+      font-size: 15px;
+    }
+    .meta {
+      font-size: 13px;
+      color: #888;
+    }
     .interaction-bar {
       border-top: 1px solid #ddd;
       border-bottom: 1px solid #ddd;
@@ -81,9 +122,74 @@
       color: #0d6efd;
       font-weight: 700;
     }
+    .btn-floating-post {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      width: 60px;
+      height: 60px;
+      background-color: #63b3ed;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 28px;
+      text-decoration: none;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+      z-index: 1000;
+      transition: background-color 0.3s ease;
+    }
+    .btn-floating-post:hover {
+      background-color: #4299e1;
+      color: white;
+      text-decoration: none;
+    }
   </style>
 </head>
-<body class="index-page">
+<body>
+
+<header id="header" class="header d-flex align-items-center fixed-top">
+  <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
+    <a href="{% url 'home' %}" class="logo d-flex align-items-center me-auto me-xl-0">
+      <h1 class="sitename" style="color: #033e6b;">怪怪走開，護您安全</h1>
+    </a>
+    <nav id="navmenu" class="navmenu">
+      <ul>
+        <li><a href="{% url 'home' %}#hero" class="active">主頁</a></li>
+        <li><a href="{% url 'home' %}#services">簡介及功能介紹</a></li>
+        <li><a href="{% url 'report' %}">填寫表單</a></li>
+        <li><a href="{% url 'business_upload' %}">商家填單</a></li>
+        <li><a href="{% url 'post' %}">我要發文</a></li>
+        <li><a href="{% url 'map' %}">事件地圖</a></li>
+        <li><a href="{% url 'harassment_prevention' %}">防騷指南</a></li>
+      </ul>
+      <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+    </nav>
+    {% if request.user.is_authenticated %}
+      <div class="dropdown">
+        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown"
+           style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
+          {{ request.user.username }}
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="{% url '01_userlogin_out' %}">登出</a></li>
+        </ul>
+      </div>
+    {% else %}
+      <div class="dropdown">
+        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown"
+           style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
+          登入
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="{% url 'userlogin' %}">一般使用者登入</a></li>
+          <li><a class="dropdown-item" href="{% url 'admin_login' %}">管理員登入</a></li>
+        </ul>
+      </div>
+    {% endif %}
+  </div>
+</header>
 
 <main class="main">
   <section class="post-list mt-5" id="post-list-section">
@@ -150,7 +256,6 @@
       {% empty %}
         <p class="text-muted text-center">目前尚無貼文。</p>
       {% endfor %}
-
     </div>
   </section>
 </main>
@@ -177,7 +282,6 @@
         const p = this.closest('.message-content');
         const fullText = p.dataset.full;
         const truncated = fullText.slice(0, 100);
-
         if (this.textContent === '查看更多') {
           p.innerHTML = '';
           p.textContent = fullText;
@@ -205,13 +309,11 @@
       });
     });
 
-    // 防止按讚跳頁
     document.querySelectorAll('.like-form').forEach(form => {
       form.addEventListener('submit', function (e) {
         e.preventDefault();
         const url = this.action;
         const formData = new FormData(this);
-
         fetch(url, {
           method: 'POST',
           body: formData,
