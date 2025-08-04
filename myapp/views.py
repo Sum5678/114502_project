@@ -1971,6 +1971,7 @@ from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponseForbidden
+from django.views.decorators.http import require_POST
 import bleach
 
 ALLOWED_TAGS = ['a']
@@ -2006,6 +2007,7 @@ def post(request):
             avatar_url=avatar_url,
             title=title,
             message_content=clean_content,
+            like_heart_count=0,  # ✅ 發文時初始化愛心數為 0
             created_at=timezone.now()
         )
 
@@ -2051,6 +2053,16 @@ def delete_post(request, post_id):
         return redirect('post_display')
 
     return render(request, 'delete_post_confirm.html', {'post': post})
+
+
+# ❤️ 愛心按讚（+1）
+@require_POST
+@login_required(login_url='/01userlogin/')
+def like_post(request, post_id):
+    post = get_object_or_404(ChatInteraction, pk=post_id)
+    post.like_heart_count = (post.like_heart_count or 0) + 1
+    post.save(update_fields=['like_heart_count'])
+    return redirect('post_display')  # 或返回 request.META.get('HTTP_REFERER')
 
 
 
