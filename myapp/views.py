@@ -1964,8 +1964,6 @@ def store_data_api(request):
 #     return render(request, 'store_map.html')
 
 
-#------------交流區貼文的部分-------
-
 from .models import ChatInteraction
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
@@ -1973,6 +1971,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponseForbidden
 from django.views.decorators.http import require_POST
 import bleach
+import json
 
 ALLOWED_TAGS = ['a']
 ALLOWED_ATTRIBUTES = {
@@ -2007,7 +2006,8 @@ def post(request):
             avatar_url=avatar_url,
             title=title,
             message_content=clean_content,
-            like_heart_count=0,  # ✅ 發文時初始化愛心數為 0
+            like_heart_count=0,
+            liked_user_ids='[]',
             created_at=timezone.now()
         )
 
@@ -2019,6 +2019,12 @@ def post(request):
 # 貼文展示
 def post_display(request):
     posts = ChatInteraction.objects.all().order_by('-created_at')
+    for post in posts:
+        try:
+            liked_user_ids = json.loads(post.liked_user_ids or '[]')
+        except json.JSONDecodeError:
+            liked_user_ids = []
+        post.liked_user_list = liked_user_ids
     return render(request, 'post_display.html', {'posts': posts})
 
 
@@ -2055,14 +2061,31 @@ def delete_post(request, post_id):
     return render(request, 'delete_post_confirm.html', {'post': post})
 
 
-# ❤️ 愛心按讚（+1）
+# ❤️ 愛心按讚（可收回）
 @require_POST
 @login_required(login_url='/01userlogin/')
 def like_post(request, post_id):
     post = get_object_or_404(ChatInteraction, pk=post_id)
-    post.like_heart_count = (post.like_heart_count or 0) + 1
-    post.save(update_fields=['like_heart_count'])
-    return redirect('post_display')  # 或返回 request.META.get('HTTP_REFERER')
+    user_id_str = str(request.user.id)
+
+    try:
+        liked_user_ids = json.loads(post.liked_user_ids or '[]')
+    except json.JSONDecodeError:
+        liked_user_ids = []
+
+    if user_id_str in liked_user_ids:
+        # 取消愛心
+        liked_user_ids.remove(user_id_str)
+        post.like_heart_count = max((post.like_heart_count or 1) - 1, 0)
+    else:
+        # 按愛心
+        liked_user_ids.append(user_id_str)
+        post.like_heart_count = (post.like_heart_count or 0) + 1
+
+    post.liked_user_ids = json.dumps(liked_user_ids)
+    post.save(update_fields=['like_heart_count', 'liked_user_ids'])
+
+    return redirect('post_display')
 
 
 

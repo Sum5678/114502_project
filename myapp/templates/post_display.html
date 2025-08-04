@@ -46,13 +46,27 @@
       padding: 8px 0;
       display: flex;
       justify-content: space-between;
+      align-items: center;
       font-size: 14px;
       color: #555;
     }
+    .interaction-bar div {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
     .interaction-actions {
       display: flex;
-      justify-content: space-around;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      align-items: center;
       padding-top: 8px;
+    }
+    .interaction-actions-left,
+    .interaction-actions-right {
+      display: flex;
+      gap: 24px;
+      align-items: center;
     }
     .interaction-actions button {
       background: none;
@@ -63,15 +77,10 @@
       align-items: center;
       gap: 6px;
     }
-    .btn-floating-post {
-      position: fixed; bottom: 40px; right: 40px;
-      width: 60px; height: 60px; background-color: #0d6efd;
-      color: white; border-radius: 50%; font-size: 30px;
-      text-align: center; line-height: 60px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2); z-index: 999;
-      transition: background-color 0.3s;
+    .interaction-actions .liked {
+      color: #0d6efd;
+      font-weight: 700;
     }
-    .btn-floating-post:hover { background-color: #0b5ed7; text-decoration: none; }
   </style>
 </head>
 <body class="index-page">
@@ -103,38 +112,40 @@
             {% endif %}
           </p>
 
-          <!-- 數據列 -->
           <div class="interaction-bar">
             <div>
-              <i class="bi bi-hand-thumbs-up-fill text-primary"></i> {{ post.like_heart_count }}
+              {% if request.user.id|stringformat:"s" in post.liked_user_list %}
+              <i class="bi bi-hand-thumbs-up-fill text-primary"></i>
+              {% else %}
+              <i class="bi bi-hand-thumbs-up"></i>
+              {% endif %}
+              {{ post.like_heart_count }}
             </div>
-            <div>
-              <i class="bi bi-chat-left-text"></i> 0
-              <i class="bi bi-share ms-2"></i> 0
-            </div>
+            <div><i class="bi bi-chat-left-text"></i> 0 <i class="bi bi-share ms-2"></i> 0</div>
           </div>
 
-          <!-- 操作列 -->
           <div class="interaction-actions">
-            <form method="post" action="{% url 'like_post' post.interaction_id %}">
-              {% csrf_token %}
-              <button type="submit"><i class="bi bi-hand-thumbs-up"></i> 讚</button>
-            </form>
-            <button><i class="bi bi-chat-left-text"></i> 留言</button>
-            <button><i class="bi bi-share"></i> 分享</button>
+            <div class="interaction-actions-left">
+              <form method="post" action="{% url 'like_post' post.interaction_id %}" style="display:inline">
+                {% csrf_token %}
+                <button type="submit" class="{% if request.user.id|stringformat:"s" in post.liked_user_list %}liked{% endif %}">
+                  <i class="bi bi-hand-thumbs-up"></i> 讚
+                </button>
+              </form>
+              <button><i class="bi bi-chat-left-text"></i> 留言</button>
+              <button><i class="bi bi-share"></i> 分享</button>
+            </div>
+            {% if request.user.id == post.user_id %}
+            <div class="interaction-actions-right">
+              <a href="{% url 'edit_post' post.interaction_id %}" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-pencil-square"></i> 編輯
+              </a>
+              <a href="{% url 'delete_post' post.interaction_id %}" class="btn btn-sm btn-outline-danger">
+                <i class="bi bi-trash"></i> 刪除
+              </a>
+            </div>
+            {% endif %}
           </div>
-
-          <!-- 編輯與刪除 -->
-          {% if request.user.id == post.user_id %}
-          <div class="d-flex justify-content-end mt-2">
-            <a href="{% url 'edit_post' post.interaction_id %}" class="btn btn-sm btn-outline-primary me-2">
-              <i class="bi bi-pencil-square"></i> 編輯
-            </a>
-            <a href="{% url 'delete_post' post.interaction_id %}" class="btn btn-sm btn-outline-danger">
-              <i class="bi bi-trash"></i> 刪除
-            </a>
-          </div>
-          {% endif %}
         </div>
       </div>
       {% empty %}
