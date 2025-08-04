@@ -1,0 +1,74 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>編輯貼文｜交流區</title>
+
+  <!-- CSS -->
+  <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/css/main.css' %}" rel="stylesheet">
+
+  <style>
+    .section-title {
+      text-align: center; margin-top: 80px; margin-bottom: 40px;
+    }
+    .section-title h2 {
+      font-size: 28px; color: #033e6b; font-weight: 700;
+      display: inline-block; position: relative; padding: 0 20px;
+    }
+    .section-title h2::before, .section-title h2::after {
+      content: ""; position: absolute; top: 50%; width: 60px; height: 2px; background: #0d6efd;
+    }
+    .section-title h2::before { left: -70px; }
+    .section-title h2::after { right: -70px; }
+    .form-control:focus {
+      border-color: #63b3ed;
+      box-shadow: 0 0 0 0.2rem rgba(99, 179, 237, 0.25);
+    }
+  </style>
+</head>
+<body>
+
+<header class="header d-flex align-items-center fixed-top">
+  <div class="container-fluid d-flex justify-content-between align-items-center">
+    <a href="{% url 'home' %}" class="logo d-flex align-items-center me-auto">
+      <h1 class="sitename" style="color: #033e6b;">怪怪走開，護您安全</h1>
+    </a>
+  </div>
+</header>
+
+<main class="main" style="margin-top: 100px;">
+  <div class="container">
+    <div class="section-title">
+      <h2>編輯貼文｜交流區</h2>
+      <p>請修改下方內容並儲存</p>
+    </div>
+
+    <form method="POST" class="mx-auto" style="max-width: 600px;">
+      {% csrf_token %}
+      <div class="mb-3">
+        <label for="title" class="form-label">標題</label>
+        <input type="text" name="title" class="form-control" value="{{ post.title }}" maxlength="50" required>
+      </div>
+      <div class="mb-4">
+        <label for="content" class="form-label">內容</label>
+        <textarea name="content" class="form-control" rows="6" maxlength="300" required>{{ post.message_content }}</textarea>
+      </div>
+      <div class="d-flex justify-content-between">
+        <a href="{% url 'post_display' %}" class="btn btn-secondary">取消</a>
+        <button type="submit" class="btn btn-primary">儲存修改</button>
+      </div>
+    </form>
+  </div>
+</main>
+
+<footer class="footer text-center mt-5 py-4 bg-light">
+  <p>&copy; 2025 怪怪走開，護您安全｜Append Template</p>
+</footer>
+
+<script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+</body>
+</html>
