@@ -5,159 +5,91 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>貼文總覽｜交流區</title>
-
-  <!-- Favicons -->
   <link href="{% static 'assets/img/favicon.png' %}" rel="icon">
   <link href="{% static 'assets/img/apple-touch-icon.png' %}" rel="apple-touch-icon">
-
-  <!-- Google Fonts & Icons -->
   <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700|Nunito|Poppins" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/boxicons/2.1.0/css/boxicons.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css" rel="stylesheet">
-
-  <!-- Vendor CSS -->
   <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
   <link href="{% static 'assets/vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet">
   <link href="{% static 'assets/vendor/aos/aos.css' %}" rel="stylesheet">
   <link href="{% static 'assets/vendor/glightbox/css/glightbox.min.css' %}" rel="stylesheet">
   <link href="{% static 'assets/vendor/swiper/swiper-bundle.min.css' %}" rel="stylesheet">
   <link href="{% static 'assets/css/main.css' %}" rel="stylesheet">
-
   <style>
-    body {
-      background-color: #fff;
-      padding-top: 10px;
-      font-family: "Microsoft JhengHei", sans-serif;
-    }
-    .section-title {
-      text-align: center;
-      margin-top: 60px;
-      margin-bottom: 30px;
-    }
-    .section-title h2 {
-      display: inline-block;
-      position: relative;
-      font-weight: 700;
-      font-size: 28px;
-      color: #033e6b;
-      padding: 0 20px;
-    }
-    .section-title h2::before,
-    .section-title h2::after {
-      content: "";
-      position: absolute;
-      top: 50%;
-      width: 60px;
-      height: 2px;
-      background: #0d6efd;
-    }
-    .section-title h2::before {
-      left: -70px;
-    }
-    .section-title h2::after {
-      right: -70px;
-    }
-    .section-title p {
-      margin-top: 10px;
-      font-size: 16px;
-      color: #555;
-    }
-    .card {
-      border-left: 8px solid #ccc;
-    }
-    .card .card-body {
-      background: #fff;
-      border-radius: 6px;
-    }
-    .card .card-title {
-      font-weight: 700;
-      color: #033e6b;
-    }
-    .card .card-text {
-      color: #444;
-      font-size: 15px;
-    }
-    .meta {
-      font-size: 13px;
-      color: #888;
-    }
-    .interaction-bar {
-      border-top: 1px solid #ddd;
-      border-bottom: 1px solid #ddd;
-      padding: 8px 0;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 14px;
-      color: #555;
-    }
-    .interaction-bar div {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .interaction-actions {
-      display: flex;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      align-items: center;
-      padding-top: 8px;
-    }
-    .interaction-actions-left,
-    .interaction-actions-right {
-      display: flex;
-      gap: 24px;
-      align-items: center;
-    }
-    .interaction-actions button {
-      background: none;
-      border: none;
-      color: #555;
-      font-size: 15px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .interaction-actions .liked {
-      color: #dc3545; /* Bootstrap 的紅色，也可以用 #e63946 */
-      font-weight: 700;
-    }
-
+    body { background-color: #fff; padding-top: 10px; font-family: "Microsoft JhengHei", sans-serif; }
+    .section-title { text-align: center; margin-top: 60px; margin-bottom: 30px; }
+    .section-title h2 { display: inline-block; position: relative; font-weight: 700; font-size: 28px; color: #033e6b; padding: 0 20px; }
+    .section-title h2::before, .section-title h2::after { content: ""; position: absolute; top: 50%; width: 60px; height: 2px; background: #0d6efd; }
+    .section-title h2::before { left: -70px; }
+    .section-title h2::after { right: -70px; }
+    .section-title p { margin-top: 10px; font-size: 16px; color: #555; }
+    .card { border-left: 8px solid #ccc; }
+    .card .card-body { background: #fff; border-radius: 6px; }
+    .card .card-title { font-weight: 700; color: #033e6b; }
+    .card .card-text { color: #444; font-size: 15px; }
+    .meta { font-size: 13px; color: #888; }
+    .interaction-bar { border-top: 1px solid #ddd; border-bottom: 1px solid #ddd; padding: 8px 0; display: flex; justify-content: space-between; align-items: center; font-size: 14px; color: #555; }
+    .interaction-bar div { display: flex; align-items: center; gap: 8px; }
+    .interaction-actions { display: flex; justify-content: space-between; flex-wrap: wrap; align-items: center; padding-top: 8px; }
+    .interaction-actions-left, .interaction-actions-right { display: flex; gap: 24px; align-items: center; }
+    .interaction-actions button { background: none; border: none; color: #555; font-size: 15px; display: flex; align-items: center; gap: 6px; }
+    .interaction-actions .liked { color: #dc3545; font-weight: 700; }
     .btn-floating-post {
-      position: fixed;
-      bottom: 30px;
-      right: 30px;
-      width: 60px;
-      height: 60px;
-      background-color: #63b3ed;
-      color: white;
+      position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; background-color: #63b3ed; color: white;
+      border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 28px;
+      text-decoration: none; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); z-index: 1000; transition: background-color 0.3s ease;
+    }
+    .btn-floating-post:hover { background-color: #4299e1; color: white; text-decoration: none; }
+    input[name="q"]::placeholder { color: #5a7ca9; }
+    input[name="q"]:focus { box-shadow: none; }
+    .nav-right-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .scroll-top-nav {
+      background-color: transparent;
+      color: #63b3ed;
+      font-size: 20px;
+      width: 36px;
+      height: 36px;
       border-radius: 50%;
+      border: 2px solid #63b3ed;
       display: flex;
       justify-content: center;
       align-items: center;
-      font-size: 28px;
-      text-decoration: none;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-      z-index: 1000;
-      transition: background-color 0.3s ease;
+      cursor: pointer;
+      z-index: 1050;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
     }
-    .btn-floating-post:hover {
-      background-color: #4299e1;
+    .scroll-top-nav:hover {
+      background-color: #63b3ed;
       color: white;
-      text-decoration: none;
     }
-    input[name="q"]::placeholder {
-  color: #5a7ca9;
+    .scroll-top-wrapper {
+      display: none;
+      flex-direction: column;
+      align-items: center;
     }
-    input[name="q"]:focus {
-      box-shadow: none;
+    .scroll-top-text {
+      font-size: 10px;
+      color: #63b3ed;
+      margin-top: 4px;
     }
-
-
+    @media (max-width: 991.98px) {
+      .nav-right-group {
+        order: 1;
+        margin-left: auto;
+      }
+      .scroll-top-wrapper {
+        align-items: center;
+      }
+    }
   </style>
 </head>
 <body>
-
 <header id="header" class="header d-flex align-items-center fixed-top">
   <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
     <a href="{% url 'home' %}" class="logo d-flex align-items-center me-auto me-xl-0">
@@ -173,32 +105,44 @@
         <li><a href="{% url 'map' %}">事件地圖</a></li>
         <li><a href="{% url 'harassment_prevention' %}">防騷指南</a></li>
       </ul>
-      <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
     </nav>
-    {% if request.user.is_authenticated %}
-      <div class="dropdown">
-        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown"
-           style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
-          {{ request.user.username }}
-        </a>
-        <ul class="dropdown-menu dropdown-menu-end">
-          <li><a class="dropdown-item" href="{% url '01_userlogin_out' %}">登出</a></li>
-        </ul>
+    <div class="nav-right-group">
+      <div class="scroll-top-wrapper" id="scrollTopWrapper">
+        <div id="scrollToTopNav" class="scroll-top-nav">
+          <i class="bi bi-arrow-up-short"></i>
+        </div>
+        <div class="scroll-top-text">回頂部</div>
       </div>
-    {% else %}
-      <div class="dropdown">
-        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown"
-           style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
-          登入
-        </a>
-        <ul class="dropdown-menu dropdown-menu-end">
-          <li><a class="dropdown-item" href="{% url 'userlogin' %}">一般使用者登入</a></li>
-          <li><a class="dropdown-item" href="{% url 'admin_login' %}">管理員登入</a></li>
-        </ul>
-      </div>
-    {% endif %}
+      <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+      {% if request.user.is_authenticated %}
+        <div class="dropdown">
+          <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown"
+             style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
+            {{ request.user.username }}
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="{% url '01_userlogin_out' %}">登出</a></li>
+          </ul>
+        </div>
+      {% else %}
+        <div class="dropdown">
+          <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown"
+             style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
+            登入
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="{% url 'userlogin' %}">一般使用者登入</a></li>
+            <li><a class="dropdown-item" href="{% url 'admin_login' %}">管理員登入</a></li>
+          </ul>
+        </div>
+      {% endif %}
+    </div>
   </div>
 </header>
+
+
+
+
 
 <main class="main">
   <section class="post-list mt-5" id="post-list-section">
@@ -305,6 +249,7 @@
 <script src="{% static 'assets/js/main.js' %}"></script>
 <script>
   document.addEventListener('DOMContentLoaded', function () {
+    // ---- 查看更多/關閉詳情 ----
     document.querySelectorAll('.toggle-more').forEach(link => {
       link.addEventListener('click', function (e) {
         e.preventDefault();
@@ -338,6 +283,7 @@
       });
     });
 
+    // ---- 愛心功能 ----
     document.querySelectorAll('.like-form').forEach(form => {
       form.addEventListener('submit', function (e) {
         e.preventDefault();
@@ -352,24 +298,18 @@
         .then(response => {
           if (response.ok) {
             button.classList.toggle('liked');
-
             const isLiked = button.classList.contains('liked');
             button.innerHTML = `<i class="bi bi-heart"></i> ${isLiked ? '收回愛心' : '愛心'}`;
 
-
-            // 更新上方圖示
             const card = this.closest('.card-body');
             const iconDiv = card.querySelector('.interaction-bar div:first-child i');
             const countSpan = card.querySelector('.interaction-bar div:first-child');
             if (iconDiv && countSpan) {
               iconDiv.className = `bi ${isLiked ? 'bi-heart-fill text-danger' : 'bi-heart'}`;
-
-
               let countText = countSpan.innerText.trim();
               let count = parseInt(countText.replace(/\D/g, '')) || 0;
               count = isLiked ? count + 1 : count - 1;
               countSpan.innerHTML = `<i class="bi ${isLiked ? 'bi-heart-fill text-danger' : 'bi-heart'}"></i> ${count}`;
-
             }
           }
         })
@@ -378,7 +318,36 @@
         });
       });
     });
+
+    // ---- 回頂部顯示與隱藏 ----
+    const scrollTopWrapper = document.getElementById('scrollTopWrapper');
+    const scrollTopBtn = document.getElementById('scrollToTopNav');
+
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 100) {
+        scrollTopWrapper.style.display = 'flex';
+        scrollTopWrapper.classList.remove('hide-text');
+      } else {
+        scrollTopWrapper.style.display = 'none';
+      }
+    });
+
+    scrollTopBtn.addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      scrollTopWrapper.classList.add('hide-text');
+      setTimeout(() => {
+        scrollTopWrapper.style.display = 'none';
+      }, 400);
+    });
+
+    if (window.scrollY <= 100) {
+      scrollTopWrapper.style.display = 'none';
+    }
   });
 </script>
+
+
+
+
 </body>
 </html>
