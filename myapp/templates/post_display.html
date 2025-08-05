@@ -119,9 +119,10 @@
       gap: 6px;
     }
     .interaction-actions .liked {
-      color: #0d6efd;
+      color: #dc3545; /* Bootstrap 的紅色，也可以用 #e63946 */
       font-weight: 700;
     }
+
     .btn-floating-post {
       position: fixed;
       bottom: 30px;
@@ -245,10 +246,11 @@
           <div class="interaction-bar">
             <div>
               {% if request.user.id|stringformat:"s" in post.liked_user_list %}
-              <i class="bi bi-hand-thumbs-up-fill text-primary"></i>
+                <i class="bi bi-heart-fill text-danger"></i>
               {% else %}
-              <i class="bi bi-hand-thumbs-up"></i>
+                <i class="bi bi-heart"></i>
               {% endif %}
+
               {{ post.like_heart_count }}
             </div>
             <div><i class="bi bi-chat-left-text"></i> 0 <i class="bi bi-share ms-2"></i> 0</div>
@@ -259,8 +261,10 @@
               <form method="post" action="{% url 'like_post' post.interaction_id %}" class="like-form" data-post-id="{{ post.interaction_id }}">
                 {% csrf_token %}
                 <button type="submit" class="{% if request.user.id|stringformat:"s" in post.liked_user_list %}liked{% endif %}">
-                  <i class="bi bi-hand-thumbs-up"></i> {% if request.user.id|stringformat:"s" in post.liked_user_list %}收回讚{% else %}讚{% endif %}
+                  <i class="bi {% if request.user.id|stringformat:"s" in post.liked_user_list %}bi-heart-fill text-danger{% else %}bi-heart{% endif %}"></i>
+                  {% if request.user.id|stringformat:"s" in post.liked_user_list %}收回愛心{% else %}愛心{% endif %}
                 </button>
+
               </form>
               <button><i class="bi bi-chat-left-text"></i> 留言</button>
               <button><i class="bi bi-share"></i> 分享</button>
@@ -350,19 +354,22 @@
             button.classList.toggle('liked');
 
             const isLiked = button.classList.contains('liked');
-            button.innerHTML = `<i class="bi bi-hand-thumbs-up"></i> ${isLiked ? '收回讚' : '讚'}`;
+            button.innerHTML = `<i class="bi bi-heart"></i> ${isLiked ? '收回愛心' : '愛心'}`;
+
 
             // 更新上方圖示
             const card = this.closest('.card-body');
             const iconDiv = card.querySelector('.interaction-bar div:first-child i');
             const countSpan = card.querySelector('.interaction-bar div:first-child');
             if (iconDiv && countSpan) {
-              iconDiv.className = `bi ${isLiked ? 'bi-hand-thumbs-up-fill text-primary' : 'bi-hand-thumbs-up'}`;
+              iconDiv.className = `bi ${isLiked ? 'bi-heart-fill text-danger' : 'bi-heart'}`;
+
 
               let countText = countSpan.innerText.trim();
               let count = parseInt(countText.replace(/\D/g, '')) || 0;
               count = isLiked ? count + 1 : count - 1;
-              countSpan.innerHTML = `<i class="bi ${isLiked ? 'bi-hand-thumbs-up-fill text-primary' : 'bi-hand-thumbs-up'}"></i> ${count}`;
+              countSpan.innerHTML = `<i class="bi ${isLiked ? 'bi-heart-fill text-danger' : 'bi-heart'}"></i> ${count}`;
+
             }
           }
         })
