@@ -248,6 +248,7 @@
   <p>&copy; 2025 怪怪走開，護您安全｜Append Template</p>
 </footer>
 
+<!-- 顯示成功訊息 + 自動送出 -->
 <script>
   let bgColor = "2196f3";
 
@@ -292,13 +293,22 @@
     updateCharCount("content", "contentCounter", 300);
   };
 
+  // ✅ 顯示「發文成功」訊息，並在 1.5 秒後送出表單
   document.getElementById("postForm").addEventListener("submit", function (e) {
-    e.preventDefault();
-    const msg = document.getElementById("successMessage");
-    msg.style.display = "block";
-    setTimeout(() => { msg.style.opacity = 1; }, 50);
-    setTimeout(() => { this.submit(); }, 1500);
+    e.preventDefault();  // 阻止立即送出
+
+    const successBox = document.getElementById("successMessage");
+    successBox.style.display = "block";
+    setTimeout(() => {
+      successBox.style.opacity = 1;
+    }, 50);
+
+    setTimeout(() => {
+      document.getElementById("postForm").submit();  // 1.5 秒後送出
+    }, 1500);
   });
+
+
 </script>
 
 <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
