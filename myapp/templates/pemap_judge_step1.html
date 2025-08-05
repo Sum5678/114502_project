@@ -108,6 +108,18 @@
             <p><strong>理由：</strong>{{ item.reason }}</p>
             <p><strong>經緯度：</strong>{{ item.address }}</p>
             <p><strong>實際地址：</strong>{{ human_address }}</p>
+            <p><strong>圖片資料：</strong>
+              {% if item.img_url %}
+                <!-- 如果 img_url 是 Base64 -->
+                <!-- <img src="data:image/jpeg;base64,{{ item.img_url }}" alt="事件圖片" style="max-width: 100%; border-radius: 8px;"> -->
+
+                <!-- 如果 img_url 是網址，請改成這樣 -->
+                <img src="{{ item.img_url }}" alt="事件圖片" style="max-width: 100%; border-radius: 8px;">
+
+              {% else %}
+                沒有圖片資料
+              {% endif %}
+            </p>
           </div>
         </div>
       </div>
