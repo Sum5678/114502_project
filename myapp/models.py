@@ -35,7 +35,6 @@ class UserProfile(models.Model):
 from django.db import models
 
 class ThisUserProfile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
     username = models.CharField(max_length=100)
     gmail = models.EmailField()
     default_nickname1 = models.CharField(max_length=100, blank=True)
@@ -286,6 +285,8 @@ class ChatRoom(models.Model):
         db_table = 'chat_rooms'
 
 
+
+
 class ChatRoomClick(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -306,12 +307,13 @@ class ChatRoomClick(models.Model):
     def __str__(self):
         return f"{self.region} clicked at {self.click_time}"
 
-from myapp.models import ThisUserProfile  # 你的 ThisUserProfile 所在的 app 名字要改成正確的
+
 
 class ChatMessage(models.Model):
     user = models.ForeignKey(
-        ThisUserProfile,
+        'ThisUserProfile',
         on_delete=models.CASCADE,
+        db_column='user_id',  # 指定外鍵欄位
         help_text="留言的使用者"
     )
     region = models.CharField(max_length=50, help_text="區域名稱")
@@ -323,7 +325,5 @@ class ChatMessage(models.Model):
         verbose_name = "聊天室訊息"
         verbose_name_plural = "聊天室訊息"
 
-        def __str__(self):
-            return f"{self.user} @ {self.region}: {self.message[:20]}"
-
-
+    def __str__(self):
+        return f"{self.user} @ {self.region}: {self.message[:20]}"

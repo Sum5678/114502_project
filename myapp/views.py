@@ -177,7 +177,6 @@ def nearest_police_view(request):
 
 #縣市後端
 # regions/views.py
-from django.views.decorators.http import require_POST
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import TaiwanRegion
 from .taiwan_regions_forms import TaiwanRegionForm
@@ -207,11 +206,11 @@ def taiwan_regions_edit(request, id):
         form = TaiwanRegionForm(instance=region)
     return render(request, 'taiwan_regions_edit.html', {'form': form, 'action': '編輯'})
 
-@require_POST
 def taiwan_regions_delete(request, id):
     region = get_object_or_404(TaiwanRegion, pk=id)
-    region.delete()
-    return redirect('taiwan_regions_admin')
+    if request.method in ['POST', 'GET']:
+        region.delete()
+        return redirect('taiwan_regions_admin')
 
 
 
@@ -1174,7 +1173,9 @@ def about(request):
         'phone': db_profile.emergency_contact_phone if db_profile else '',
         'intro': db_profile.self_intro if db_profile else '',
         'show_name_option': int(db_profile.status_color) if db_profile and db_profile.status_color.isdigit() else 1,
-        'avatar_url': db_profile.user_images or extra_data.get('picture', None),
+        # 'avatar_url': db_profile.user_images or extra_data.get('picture', None),
+        'avatar_url': (db_profile.user_images if db_profile else None) or extra_data.get('picture', None),
+
     }
 
     return render(request, 'about.html', {
@@ -2289,27 +2290,64 @@ def chat_messages_api(request, room_id):
         return JsonResponse(data, safe=False)
 
 # 發送訊息（POST）
-from myapp.models import ThisUserProfile
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+import json
+from .models import ChatMessage, ThisUserProfile
+from django.contrib.auth.decorators import login_required
+
 @login_required
 def chat_send_api(request, room_id):
     if request.method == 'POST':
-        data = json.loads(request.body)
-        message = data.get('message')
-        if not message:
-            return JsonResponse({'status': 'error', 'msg': '訊息不能為空'})
-
-        # 直接從登入的使用者拿 profile
         try:
-            user_profile = request.user.profile
-        except ThisUserProfile.DoesNotExist:
-            return JsonResponse({'status': 'error', 'msg': '請先完成個人資料設定'})
+            data = json.loads(request.body)
+            message = data.get('message')
+            if not message:
+                return JsonResponse({'status': 'error', 'msg': '訊息不能為空'})
 
-        ChatMessage.objects.create(
-            user=user_profile,
-            region=room_id,
-            message=message
-        )
-        return JsonResponse({'status': 'success'})
+            # 找到 ThisUserProfile
+            user_profile = ThisUserProfile.objects.get(gmail=request.user.email)
+
+            ChatMessage.objects.create(
+                user=user_profile,
+                region=str(room_id),
+                message=message
+            )
+            return JsonResponse({'status': 'success'})
+        except ThisUserProfile.DoesNotExist:
+            return JsonResponse({'status': 'error', 'msg': '請先至個人資料設定填寫email'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'msg': str(e)})
+    else:
+        return JsonResponse({'status': 'error', 'msg': '只接受 POST'}, status=405)
+
+
+
+# def chat_send_api(request, room_id):
+#     if request.method == 'POST':
+#         data = json.loads(request.body)
+#         message = data.get('message')
+#         if not message:
+#             return JsonResponse({'status': 'error', 'msg': '訊息不能為空'})
+
+#         # 從登入 session 或自訂系統取出 this_user_profile.id
+#         user_id = request.session.get('my_user_id')
+#         if not user_id:
+#             return JsonResponse({'status': 'error', 'msg': '請先登入'})
+
+#         try:
+#             user_profile = ThisUserProfile.objects.get(id=user_id)
+#         except ThisUserProfile.DoesNotExist:
+#             return JsonResponse({'status': 'error', 'msg': '找不到使用者'})
+
+#         ChatMessage.objects.create(
+#             user=user_profile,  # ✅ 一定要是 ThisUserProfile 物件
+#             region=room_id,
+#             message=message
+#         )
+
+#         return JsonResponse({'status': 'success'})
+
 
 # @login_required
 # def chat_send_api(request, room_id):
