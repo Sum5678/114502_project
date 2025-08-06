@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 {% load static %}
 <html lang="zh-Hant">
 
@@ -144,7 +144,7 @@
                   <td>{{ addr.POINT_Y }}</td>
                   <td>
                     <a href="{% url 'police_address_edit' addr.pk %}" class="btn btn-custom btn-sm">編輯</a>
-                    <a href="{% url 'police_address_delete' addr.pk %}" class="btn btn-delete btn-sm" onclick="return confirm('確定刪除？')">刪除</a>
+                    <button type="button" class="btn btn-delete btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal" data-id="{{ addr.pk }}">刪除</button>
                   </td>
                 </tr>
                 {% empty %}
@@ -166,7 +166,36 @@
     </div>
   </footer>
 
+  <!-- Delete Modal -->
+  <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form id="deleteForm" method="post">
+          {% csrf_token %}
+          <div class="modal-header">
+            <h5 class="modal-title" id="deleteModalLabel">⚠️系統提示</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">您確定要刪除此資料嗎？此操作無法還原。</div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+            <button type="submit" class="btn btn-danger">確認刪除</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
   <script src="{% static 'assets/js/main.js' %}"></script>
+  <script>
+    const deleteModal = document.getElementById('deleteModal');
+    deleteModal.addEventListener('show.bs.modal', function (event) {
+      const button = event.relatedTarget;
+      const id = button.getAttribute('data-id');
+      const deleteForm = document.getElementById('deleteForm');
+      deleteForm.action = `/police-address/delete/${id}/`;
+    });
+  </script>
 </body>
 </html>
