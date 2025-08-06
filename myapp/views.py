@@ -107,12 +107,18 @@ def education_update(request, pk):
         form = EducationPageUploadForm(instance=page)
     return render(request, 'education_form.html', {'form': form})
 
+# 顯示確認刪除畫面
+def education_delete_confirm(request, pk):
+    page = get_object_or_404(EducationPage, pk=pk)
+    return render(request, 'education_confirm_delete.html', {'page': page})
+
+# 真正刪除
 def education_delete(request, pk):
     page = get_object_or_404(EducationPage, pk=pk)
     if request.method == 'POST':
         page.delete()
         return redirect('education_list')
-    return render(request, 'education_confirm_delete.html', {'page': page})
+    return redirect('education_delete_confirm', pk=pk)  # 若不是 POST，就導回確認頁
 
 from django.http import HttpResponse
 
