@@ -107,12 +107,18 @@ def education_update(request, pk):
         form = EducationPageUploadForm(instance=page)
     return render(request, 'education_form.html', {'form': form})
 
+# 顯示確認刪除畫面
+def education_delete_confirm(request, pk):
+    page = get_object_or_404(EducationPage, pk=pk)
+    return render(request, 'education_confirm_delete.html', {'page': page})
+
+# 真正刪除
 def education_delete(request, pk):
     page = get_object_or_404(EducationPage, pk=pk)
     if request.method == 'POST':
         page.delete()
         return redirect('education_list')
-    return render(request, 'education_confirm_delete.html', {'page': page})
+    return redirect('education_delete_confirm', pk=pk)  # 若不是 POST，就導回確認頁
 
 from django.http import HttpResponse
 
@@ -866,7 +872,7 @@ def room(request, room_name):
 from django.contrib.auth.decorators import login_required
 @login_required(login_url='/01userlogin/')
 def report_list_view(request):
-    user_reports = list(PemapAll.objects.all().order_by('-time_created'))
+    user_reports = list(PemapAll.objects.filter(user=request.user).order_by('-time_created'))
     # 加入反向編號（從最大值開始）
     for i, report in enumerate(user_reports):
         report.reverse_id = len(user_reports) - i
@@ -1214,7 +1220,7 @@ def submit_store(request):
 from django.contrib.auth.decorators import login_required
 @login_required(login_url='/01userlogin/')
 def business_list_view(request):
-    user_stores = list(StoreAll.objects.all().order_by('-created_at'))  # 依照 created_at 遞減排序
+    user_stores = list(StoreAll.objects.filter(user=request.user).order_by('-created_at'))
     total = len(user_stores)
     for i, store in enumerate(user_stores):
         store.reverse_id = total - i  # 編號從總數開始往下減
