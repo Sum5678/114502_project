@@ -265,3 +265,16 @@ class PemapWithSubkind(models.Model):
         managed = False  # 不由 Django 管理這個資料表
         db_table = 'pemap_with_subkind'  # 要跟你的 VIEW 名稱一致
 
+
+#-----------------------聊天室資料庫------------------------- 
+class ChatRoom(models.Model):
+    code = models.CharField(max_length=10, unique=True)  # 對應資料表 code 欄位
+    city = models.CharField(max_length=50)
+    district = models.CharField(max_length=50)
+    click_count = models.IntegerField(default=0)
+    message_count = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)    # 對應資料表的 created_at
+    updated_at = models.DateTimeField(auto_now=True)        # 對應資料表的 updated_at
+
+    def __str__(self):
+        return f"{self.city} {self.district} ({self.code})"
