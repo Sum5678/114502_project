@@ -225,6 +225,7 @@ def police_address_list(request):
 
 from django.shortcuts import render, redirect
 from .models import PoliceAddress
+from django.views.decorators.http import require_POST
 from django.urls import reverse
 from django.contrib import messages
 
@@ -272,13 +273,11 @@ def police_address_edit(request, pk):
 
     return render(request, 'police_address_edit.html', {'address': address})
 
+@require_POST
 def police_address_delete(request, pk):
-    address = get_object_or_404(PoliceAddress, pk=pk)
-    if request.method == 'POST':
-        address.delete()
-        return redirect('police_address_list')
-    return render(request, 'police_address_confirm_delete.html', {'address': address})
-
+    addr = get_object_or_404(PoliceAddress, pk=pk)
+    addr.delete()
+    return redirect('police_address_list')  # 刪除後回到列表頁
 
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
