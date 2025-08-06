@@ -125,6 +125,9 @@ urlpatterns = [
     path('chat/send/<int:room_id>/', views.chat_send_api, name='chat_send_api'),
 
 
+    
+
+
     # Pemap 管理員相關
     path('pemap/approve/<int:p_id>/<int:stage>/', views.pemap_approve, name='pemap_approve'),#處理管理員對pemap資料狀態
     # path('admin/pemap/approve/<int:p_id>/<int:stage>/', views.pemap_approve, name='pemap_approve'),#處理管理員對pemap資料狀態
