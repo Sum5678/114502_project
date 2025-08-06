@@ -49,7 +49,8 @@ urlpatterns = [
     path('education-crud/', views.education_list, name='education_list'),
     path('education-crud/new/', views.education_create, name='education_create'),
     path('education-crud/edit/<int:pk>/', views.education_update, name='education_update'),
-    path('education-crud/delete/<int:pk>/', views.education_delete, name='education_delete'),
+    path('education/delete/<int:pk>/confirm/', views.education_delete_confirm, name='education_delete_confirm'),
+    path('education/delete/<int:pk>/', views.education_delete, name='education_delete'),
     path('education-crud/image/<int:pk>/', views.education_image, name='education_image'), 
 
     path('anonymous-chat/', views.anonymous_chat, name='anonymous-chat'),  # anonymous-chat 頁面

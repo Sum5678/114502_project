@@ -132,7 +132,7 @@
               <p class="mt-2 fw-semibold">{{ page.title }}</p>
               <div class="actions">
                 <a href="{% url 'education_update' page.id %}" class="btn btn-custom btn-sm">編輯</a>
-                <a href="{% url 'education_delete' page.id %}" class="btn btn-delete btn-sm" onclick="return confirm('確定刪除這個資源？')">刪除</a>
+                <a href="{% url 'education_delete_confirm' page.id %}" class="btn btn-danger">刪除</a>
               </div>
             </div>
             {% empty %}
