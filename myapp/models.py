@@ -1,6 +1,8 @@
 # from django.db import models
 from django.db import models
 from django.utils import timezone
+from django.conf import settings
+
 
 
 # Create your models here.
@@ -33,6 +35,7 @@ class UserProfile(models.Model):
 from django.db import models
 
 class ThisUserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
     username = models.CharField(max_length=100)
     gmail = models.EmailField()
     default_nickname1 = models.CharField(max_length=100, blank=True)
@@ -278,3 +281,49 @@ class ChatRoom(models.Model):
 
     def __str__(self):
         return f"{self.city} {self.district} ({self.code})"
+    
+    class Meta:
+        db_table = 'chat_rooms'
+
+
+class ChatRoomClick(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        help_text="點擊聊天室的使用者（未登入為 NULL）"
+    )
+    region = models.CharField(max_length=50, help_text="區域名稱")
+    click_time = models.DateTimeField(auto_now_add=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+
+    class Meta:
+        db_table = 'chat_room_clicks'
+        verbose_name = "聊天室點擊紀錄"
+        verbose_name_plural = "聊天室點擊紀錄"
+
+    def __str__(self):
+        return f"{self.region} clicked at {self.click_time}"
+
+from myapp.models import ThisUserProfile  # 你的 ThisUserProfile 所在的 app 名字要改成正確的
+
+class ChatMessage(models.Model):
+    user = models.ForeignKey(
+        ThisUserProfile,
+        on_delete=models.CASCADE,
+        help_text="留言的使用者"
+    )
+    region = models.CharField(max_length=50, help_text="區域名稱")
+    message = models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'chat_messages'
+        verbose_name = "聊天室訊息"
+        verbose_name_plural = "聊天室訊息"
+
+        def __str__(self):
+            return f"{self.user} @ {self.region}: {self.message[:20]}"
+
+

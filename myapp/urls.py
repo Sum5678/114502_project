@@ -120,6 +120,9 @@ urlpatterns = [
     path('store_map/', views.store_map_view, name='store_map'),#商家地圖
     path('api/stores/', views.store_data_api, name='store_data_api'),#商家地圖
     path('api/reports_with_subkind/', views.reports_with_subkind_json, name='reports_with_subkind_json'),
+    path('api/chatrooms/', views.chatrooms_api, name='chatrooms_api'),
+    path('chat/messages/<int:room_id>/', views.chat_messages_api, name='chat_messages_api'),
+    path('chat/send/<int:room_id>/', views.chat_send_api, name='chat_send_api'),
 
 
     # Pemap 管理員相關
@@ -148,6 +151,7 @@ urlpatterns = [
     path('store/judge/<str:st_id>/', views.store_judge_view, name='store_judge_view'),
     path('store/reject/<str:st_id>/', views.store_step2_view, name='store_step2'),   #商家幾天
     path('send-email/', views.admin_send_email, name='admin_send_email'), #事件拒絕後跳轉頁面
+    
 
 
 

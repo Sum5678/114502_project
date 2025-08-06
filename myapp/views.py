@@ -2218,3 +2218,140 @@ def reports_with_subkind_json(request):
     # 從資料庫取得所有帶有 kind / subkind 的事件
     data = list(PemapWithSubkind.objects.values())
     return JsonResponse(data, safe=False)
+
+
+#------------------------聊天室---------------------
+from .models import ChatRoom
+
+def chatrooms_api(request):
+    rooms = ChatRoom.objects.all().values('id', 'city', 'district', 'click_count')
+    return JsonResponse(list(rooms), safe=False)
+
+# views.py
+from .models import ChatMessage
+
+def chat_messages_api(request, room_id):
+    messages = ChatMessage.objects.filter(region=room_id).order_by('timestamp').values(
+        'id', 'user_id', 'message', 'timestamp'
+    )
+    return JsonResponse(list(messages), safe=False)
+
+
+# from django.views.decorators.csrf import csrf_exempt
+# from django.utils import timezone
+# import json
+
+# @csrf_exempt
+# def send_message_api(request, room_id):
+#     if request.method == 'POST':
+#         data = json.loads(request.body)
+#         message_text = data.get('message', '').strip()
+#         user = request.user if request.user.is_authenticated else None
+        
+#         if not message_text:
+#             return JsonResponse({'error': '訊息不能空白'}, status=400)
+
+#         ChatMessage.objects.create(
+#             user_id=user.id if user else None,
+#             region=room_id,
+#             message=message_text,
+#             timestamp=timezone.now()
+#         )
+
+#         # 點擊紀錄
+#         ChatRoom.objects.filter(id=room_id).update(
+#             click_count=F('click_count') + 1
+#         )
+
+#         ChatRoomClick.objects.create(
+#             user_id=user.id if user else None,
+#             region=room_id,
+#             ip_address=request.META.get('REMOTE_ADDR')
+#         )
+
+#         return JsonResponse({'status': 'ok'})
+
+# from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+import json
+
+# 取得聊天室訊息
+def chat_messages_api(request, room_id):
+    if request.method == 'GET':
+        # 假設你有 ChatMessage model
+        messages = ChatMessage.objects.filter(region=room_id).order_by('timestamp')
+        data = [{
+            'user_id': msg.user.username if msg.user else '匿名',
+            'message': msg.message,
+            'timestamp': msg.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+        } for msg in messages]
+        return JsonResponse(data, safe=False)
+
+# 發送訊息（POST）
+from myapp.models import ThisUserProfile
+@login_required
+def chat_send_api(request, room_id):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        message = data.get('message')
+        if not message:
+            return JsonResponse({'status': 'error', 'msg': '訊息不能為空'})
+
+        # 直接從登入的使用者拿 profile
+        try:
+            user_profile = request.user.profile
+        except ThisUserProfile.DoesNotExist:
+            return JsonResponse({'status': 'error', 'msg': '請先完成個人資料設定'})
+
+        ChatMessage.objects.create(
+            user=user_profile,
+            region=room_id,
+            message=message
+        )
+        return JsonResponse({'status': 'success'})
+
+# @login_required
+# def chat_send_api(request, room_id):
+#     if request.method == 'POST':
+#         data = json.loads(request.body)
+#         message = data.get('message')
+#         if not message:
+#             return JsonResponse({'status': 'error', 'msg': '訊息不能為空'})
+
+#         try:
+#             user_profile = ThisUserProfile.objects.get(gmail=request.user.email)
+#         except ThisUserProfile.DoesNotExist:
+#             return JsonResponse({'status': 'error', 'msg': '找不到對應的使用者資料'})
+
+#         ChatMessage.objects.create(
+#             user=user_profile,
+#             region=room_id,
+#             message=message
+#         )
+#         return JsonResponse({'status': 'success'})
+
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+import json
+
+@login_required
+@csrf_exempt  # 或使用 CSRF token 驗證
+def send_message(request, room_id):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        message_text = data.get('message')
+        if not message_text:
+            return JsonResponse({'status': 'error', 'msg': '訊息不可為空'})
+
+        # 取得目前登入使用者
+        user = request.user
+
+        # 假設有 ChatMessage model，並且有 user 外鍵
+        ChatMessage.objects.create(
+            user=user,
+            region=room_id,  # 或改成區域代碼
+            message=message_text,
+        )
+        return JsonResponse({'status': 'ok'})
+    return JsonResponse({'status': 'error', 'msg': '僅接受 POST'})
