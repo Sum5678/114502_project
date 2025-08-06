@@ -866,7 +866,7 @@ def room(request, room_name):
 from django.contrib.auth.decorators import login_required
 @login_required(login_url='/01userlogin/')
 def report_list_view(request):
-    user_reports = list(PemapAll.objects.all().order_by('-time_created'))
+    user_reports = list(PemapAll.objects.filter(user=request.user).order_by('-time_created'))
     # 加入反向編號（從最大值開始）
     for i, report in enumerate(user_reports):
         report.reverse_id = len(user_reports) - i
@@ -1214,7 +1214,7 @@ def submit_store(request):
 from django.contrib.auth.decorators import login_required
 @login_required(login_url='/01userlogin/')
 def business_list_view(request):
-    user_stores = list(StoreAll.objects.all().order_by('-created_at'))  # 依照 created_at 遞減排序
+    user_stores = list(StoreAll.objects.filter(user=request.user).order_by('-created_at'))
     total = len(user_stores)
     for i, store in enumerate(user_stores):
         store.reverse_id = total - i  # 編號從總數開始往下減
