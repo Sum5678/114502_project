@@ -177,6 +177,7 @@ def nearest_police_view(request):
 
 #縣市後端
 # regions/views.py
+from django.views.decorators.http import require_POST
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import TaiwanRegion
 from .taiwan_regions_forms import TaiwanRegionForm
@@ -206,11 +207,11 @@ def taiwan_regions_edit(request, id):
         form = TaiwanRegionForm(instance=region)
     return render(request, 'taiwan_regions_edit.html', {'form': form, 'action': '編輯'})
 
+@require_POST
 def taiwan_regions_delete(request, id):
     region = get_object_or_404(TaiwanRegion, pk=id)
-    if request.method in ['POST', 'GET']:
-        region.delete()
-        return redirect('taiwan_regions_admin')
+    region.delete()
+    return redirect('taiwan_regions_admin')
 
 
 

@@ -4,25 +4,19 @@
 <head>
   <meta charset="utf-8" />
   <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-  <title>{% block title %}台灣地區管理系統{% endblock %}</title>
-
-  <meta content="" name="description" />
-  <meta content="" name="keywords" />
+  <title>台灣地區管理系統</title>
 
   <link href="{% static 'assets/img/favicon.png' %}" rel="icon" />
   <link href="{% static 'assets/img/apple-touch-icon.png' %}" rel="apple-touch-icon" />
-
   <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700|Nunito:300,400,600,700,800|Poppins:300,400,500,600,700" rel="stylesheet" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/boxicons/2.1.0/css/boxicons.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css" rel="stylesheet" />
-
   <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet" />
   <link href="{% static 'assets/vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet" />
   <link href="{% static 'assets/vendor/boxicons/css/boxicons.min.css' %}" rel="stylesheet" />
   <link href="{% static 'assets/vendor/quill/quill.snow.css' %}" rel="stylesheet" />
   <link href="{% static 'assets/vendor/quill/quill.bubble.css' %}" rel="stylesheet" />
   <link href="{% static 'assets/vendor/simple-datatables/style.css' %}" rel="stylesheet" />
-
   <link href="{% static 'assets/css/main.css' %}" rel="stylesheet" />
 
   <style>
@@ -71,15 +65,13 @@
     <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
       <a href="index.html" class="logo d-flex flex-column align-items-start me-auto me-xl-0">
         <h1 class="sitename">台灣地區管理系統</h1>
-        </a>
+      </a>
 
       <nav id="navmenu" class="navmenu">
         <ul>
-          <li><a href="{% url 'admin_index' %}#hero" >管理員主頁</a></li>
+          <li><a href="{% url 'admin_index' %}#hero">管理員主頁</a></li>
           <li><a href="{% url 'admin_interview' %}">管理員自我介紹</a></li>
           <li><a href="{% url 'show_judge_page' %}">審核表單</a></li>
-          <!-- <li><a href="{% url 'pemap_judge' %}">事件清單審核</a></li> -->
-          
           <li class="dropdown"><a href="#"><span>清單審核</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
             <ul>
               <li><a href="{% url 'pemap_judge' %}">事件清單審核</a></li>
@@ -87,7 +79,6 @@
               <li><a href="#">Dropdown 4</a></li>
             </ul> 
           </li>
-          
           <li class="dropdown"><a href="#"><span>我的審核紀錄</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
             <ul>
               <li><a href="{% url 'admin_decide' %}">事件審核紀錄</a></li>
@@ -95,7 +86,6 @@
               <li><a href="#">Dropdown 4</a></li>
             </ul> 
           </li>
-          <!-- ✅ 新增的下拉式選單 -->
           <li class="dropdown"><a href="#"><span>管理工具</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
             <ul>
               <li><a href="{% url 'education_list' %}">教育網頁管理</a></li>
@@ -104,7 +94,6 @@
               <li><a href="#">其他工具</a></li>
             </ul>
           </li>
-          <!-- <li><a href="{% url 'admin_logout' %}">登出</a></li> -->
         </ul>
         <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
       </nav>
@@ -112,8 +101,7 @@
     </div>
   </header>
 
-  <main class="main" >
-    <!-- Hero 區塊 -->
+  <main class="main">
     <section class="hero">
       <img src="{% static 'assets/img/1.png' %}" alt="Hero Image">
     </section>
@@ -123,10 +111,8 @@
         <div class="main-content bg-white p-4 shadow rounded">
           <h2 class="mb-4">台灣縣市／鄉鎮市區管理</h2>
 
-          <!-- 新增資料按鈕 -->
           <a href="{% url 'taiwan_regions_add' %}" class="btn btn-custom mb-3">新增縣市資料</a>
 
-          <!-- 資料表格 -->
           <div class="table-responsive">
             <table class="table table-bordered table-hover align-middle text-center">
               <thead class="table-primary">
@@ -147,7 +133,36 @@
                   <td>{{ r.district_town }}</td>
                   <td>
                     <a href="{% url 'taiwan_regions_edit' r.id %}" class="btn btn-custom btn-sm">編輯</a>
-                    <a href="{% url 'taiwan_regions_delete' r.id %}" class="btn btn-delete btn-sm" onclick="return confirm('確定刪除？')">刪除</a>
+                    <button type="button" class="btn btn-delete btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal{{ r.id }}">
+                      刪除
+                    </button>
+
+                    <!-- Modal -->
+                    <div class="modal fade" id="deleteModal{{ r.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ r.id }}" aria-hidden="true">
+                      <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                          <form method="post" action="{% url 'taiwan_regions_delete' r.id %}">
+                            {% csrf_token %}
+                            <div class="modal-header">
+                              <h5 class="modal-title" id="deleteModalLabel{{ r.id }}">⚠️ 系統提示</h5>
+                              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body text-start">
+                              你確定要刪除以下資料嗎？
+                              <ul>
+                                <li><strong>郵遞區號：</strong>{{ r.zipcode }}</li>
+                                <li><strong>縣市：</strong>{{ r.country_city }}</li>
+                                <li><strong>鄉鎮市區：</strong>{{ r.district_town }}</li>
+                              </ul>
+                            </div>
+                            <div class="modal-footer">
+                              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                              <button type="submit" class="btn btn-danger">確認刪除</button>
+                            </div>
+                          </form>
+                        </div>
+                      </div>
+                    </div>
                   </td>
                 </tr>
                 {% empty %}
@@ -172,8 +187,9 @@
     </div>
   </footer>
 
-  <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i
-      class="bi bi-arrow-up-short"></i></a>
+  <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center">
+    <i class="bi bi-arrow-up-short"></i>
+  </a>
   <div id="preloader"></div>
 
   <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
@@ -186,5 +202,4 @@
   <script src="{% static 'assets/vendor/swiper/swiper-bundle.min.js' %}"></script>
   <script src="{% static 'assets/js/main.js' %}"></script>
 </body>
-
 </html>
