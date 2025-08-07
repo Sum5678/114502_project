@@ -2408,32 +2408,24 @@ def send_message(request, room_id):
 
 
 #---------看自己收藏的聊天室---------------
-from django.contrib.auth.decorators import login_required
-from .models import ThisUserProfile, FavoriteChatRoom
-
-
-
 @login_required
 def chatroom_view(request):
     try:
         user_profile = ThisUserProfile.objects.get(gmail=request.user.email)
+        print(f"DEBUG: user_profile found: {user_profile.default_nickname1}, {user_profile.default_nickname2}")
         favorites = FavoriteChatRoom.objects.filter(user=user_profile).select_related('chat_room')
     except ThisUserProfile.DoesNotExist:
+        print("DEBUG: ThisUserProfile not found for", request.user.email)
         user_profile = None
         favorites = []
 
     favorite_ids = [fav.chat_room.id for fav in favorites]
-
-    # Debug print: 比對 request.user.email 與 ThisUserProfile 所有 gmail
-    print('DEBUG: request.user.email =', repr(request.user.email))
-    print('DEBUG: ThisUserProfile 所有 gmail =', list(ThisUserProfile.objects.values_list('gmail', flat=True)))
 
     return render(request, 'chatroom.html', {
         'user_profile': user_profile,
         'favorites': favorites,
         'favorite_chatroom_ids': favorite_ids,
     })
-
 
 # @login_required
 # def chatroom_view(request):
@@ -2541,23 +2533,22 @@ def chatrooms_api(request):
 
 @login_required
 def chatroom_page(request):
+    user_email = request.user.email.strip().lower()
+    print('DEBUG: user_email =', repr(user_email))
+
     try:
-        user_profile = ThisUserProfile.objects.get(gmail=request.user.email)
-        favorites = FavoriteChatRoom.objects.filter(user=user_profile).select_related('chat_room')
+        user_profile = ThisUserProfile.objects.get(gmail__iexact=user_email)
     except ThisUserProfile.DoesNotExist:
         user_profile = None
-        favorites = []
 
-    favorite_ids = [fav.chat_room.id for fav in favorites]
-
-    # Debug print: 比對 request.user.email 與 ThisUserProfile 所有 gmail
-    print('DEBUG: request.user.email =', repr(request.user.email))
-    print('DEBUG: ThisUserProfile 所有 gmail =', list(ThisUserProfile.objects.values_list('gmail', flat=True)))
+    if user_profile:
+        print('DEBUG: nickname1:', repr(user_profile.default_nickname1))
+        print('DEBUG: nickname2:', repr(user_profile.default_nickname2))
+    else:
+        print('DEBUG: user_profile is None')
 
     return render(request, 'chatroom.html', {
         'user_profile': user_profile,
-        'favorites': favorites,
-        'favorite_chatroom_ids': favorite_ids,
     })
 
 
@@ -2601,16 +2592,16 @@ from .models import ChatRoom, FavoriteChatRoom, ThisUserProfile
 @require_POST
 @login_required
 def toggle_favorite(request):
-    user_profile = ThisUserProfile.objects.get(gmail=request.user.email)
+    gmail = request.user.username
+    user_profile = ThisUserProfile.objects.get(gmail=gmail)
+
     room_id = request.POST.get('room_id')
     chat_room = get_object_or_404(ChatRoom, id=room_id)
 
     fav_obj = FavoriteChatRoom.objects.filter(user=user_profile, chat_room=chat_room).first()
     if fav_obj:
-        # 已收藏 -> 取消收藏
         fav_obj.delete()
         return JsonResponse({'status': 'removed'})
     else:
-        # 尚未收藏 -> 新增收藏
         FavoriteChatRoom.objects.create(user=user_profile, chat_room=chat_room)
         return JsonResponse({'status': 'added'})
