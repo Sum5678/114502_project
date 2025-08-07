@@ -327,3 +327,26 @@ class ChatMessage(models.Model):
 
     def __str__(self):
         return f"{self.user} @ {self.region}: {self.message[:20]}"
+
+
+class FavoriteChatRoom(models.Model):
+    user = models.ForeignKey(
+        'ThisUserProfile',
+        on_delete=models.CASCADE,
+        related_name='favorite_chat_rooms',  # optional: 讓 user.favorite_chat_rooms 可以呼叫
+    )
+    chat_room = models.ForeignKey(
+        ChatRoom,
+        on_delete=models.CASCADE,
+        related_name='favorited_by_users',  # optional: 讓 chat_room.favorited_by_users 呼叫
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'favorite_chat_rooms'  # ✅ 建議加上資料表名稱
+        unique_together = ('user', 'chat_room')
+        verbose_name = "使用者收藏聊天室"
+        verbose_name_plural = "使用者收藏聊天室"
+
+    def __str__(self):
+        return f"{self.user.username} 收藏了 {self.chat_room}"

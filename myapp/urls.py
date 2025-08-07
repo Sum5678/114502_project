@@ -123,6 +123,10 @@ urlpatterns = [
     path('api/chatrooms/', views.chatrooms_api, name='chatrooms_api'),
     path('chat/messages/<int:room_id>/', views.chat_messages_api, name='chat_messages_api'),
     path('chat/send/<int:room_id>/', views.chat_send_api, name='chat_send_api'),
+    path('favorites/add/', views.add_to_favorites, name='add_to_favorites'),
+    path('chat/toggle_favorite/', views.toggle_favorite, name='toggle_favorite'),
+    path('toggle_favorite/', views.toggle_favorite, name='toggle_favorite'),
+    
 
 
     
