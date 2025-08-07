@@ -4,6 +4,1324 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>可疑事件聊天室</title>
+  <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet" />
+  <link href="{% static 'assets/vendor/aos/aos.css' %}" rel="stylesheet" />
+  <link href="{% static 'assets/css/main.css' %}" rel="stylesheet" />
+  <style>
+    body {
+      background: #f8f9fa;
+      padding-top: 80px;
+    }
+    .container-flex {
+      display: flex;
+      gap: 2rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 1.5rem;
+      padding-bottom: 4rem;
+    }
+    .sidebar-container {
+      flex: 1 1 300px;
+      max-width: 350px;
+    }
+    .sidebar-section {
+      background: #fff;
+      border-radius: 0.5rem;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      max-height: 350px;
+      overflow-y: auto;
+    }
+    .chatroom-item {
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid #eee;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      border-radius: 0.25rem;
+      user-select: none;
+    }
+    .chatroom-item:hover {
+      background-color: #e9f2ff;
+    }
+    .chatroom-item.active {
+      background-color: #cce5ff;
+      font-weight: 600;
+    }
+    .favorites-section ul {
+      list-style-type: none;
+      padding-left: 0;
+    }
+    .favorites-section ul li {
+      margin-bottom: 0.5rem;
+    }
+    .favorites-section ul li a {
+      cursor: pointer;
+      text-decoration: underline;
+      color: #0d6efd;
+    }
+    .favorites-section ul li a:hover {
+      color: #0a58ca;
+    }
+    .chatroom-box {
+      flex: 2 1 600px;
+      max-width: 700px;
+      background: #fff;
+      border-radius: 0.5rem;
+      box-shadow: 0 0 12px rgba(0,0,0,0.12);
+      padding: 1rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+    }
+    .chat-window {
+      height: 300px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      border-radius: 0.375rem;
+      padding: 1rem;
+      background: #f9f9f9;
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
+      flex-grow: 1;
+    }
+    .chat-window p {
+      margin-bottom: 0.5rem;
+      word-break: break-word;
+    }
+    .chat-input-area {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .chat-input-area input[type="text"] {
+      flex-grow: 1;
+      border-radius: 0.375rem;
+      border: 1px solid #ced4da;
+      padding: 0.5rem 0.75rem;
+      font-size: 1rem;
+    }
+    .chat-input-area button {
+      flex-shrink: 0;
+      border-radius: 0.375rem;
+      font-weight: 600;
+      padding: 0.5rem 1.25rem;
+    }
+    .favorite-btn {
+      cursor: pointer;
+      user-select: none;
+      font-size: 1.4rem;
+      color: #bbb;
+      transition: color 0.3s;
+    }
+    .favorite-btn.favorited {
+      color: #ffc107;
+      text-shadow: 0 0 4px #ffdb58;
+    }
+    @media(max-width: 768px) {
+      .container-flex {
+        flex-direction: column;
+        align-items: center;
+      }
+      .sidebar-container, .chatroom-box {
+        max-width: 100%;
+      }
+      .chatroom-box {
+        height: auto;
+      }
+    }
+  </style>
+</head>
+<body class="index-page">
+
+<header id="header" class="header d-flex align-items-center fixed-top bg-white shadow-sm">
+  <div class="container-fluid d-flex justify-content-between align-items-center">
+    <a href="{% url 'home' %}" class="logo d-flex align-items-center">
+      <h1 class="sitename">怪怪走開，護您安全</h1>
+    </a>
+    <nav id="navmenu" class="navmenu">
+      <ul class="list-unstyled d-flex mb-0">
+        <li class="me-3"><a href="{% url 'home' %}#hero">主頁</a></li>
+        <li class="me-3"><a href="{% url 'home' %}#services">簡介及功能介紹</a></li>
+        <li class="me-3"><a href="{% url 'report' %}">填寫表單</a></li>
+        <li class="me-3"><a href="{% url 'business_upload' %}">商家填單</a></li>
+        <li class="me-3"><a href="{% url 'post' %}">我要發文</a></li>
+        <li class="me-3"><a href="{% url 'map' %}">事件地圖</a></li>
+        <li><a href="{% url 'harassment_prevention' %}">防騷指南</a></li>
+      </ul>
+    </nav>
+    {% if request.user.is_authenticated %}
+      <div class="dropdown">
+        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown">{{ request.user.username }}</a>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="{% url 'about' %}">個人資料設定</a></li>
+          <li><a class="dropdown-item" href="{% url '01_userlogin_out' %}">登出</a></li>
+        </ul>
+      </div>
+    {% else %}
+      <a class="btn-getstarted" href="{% url 'userlogin' %}">登入</a>
+    {% endif %}
+  </div>
+</header>
+
+<main class="main mt-5 pt-5">
+  <div class="container container-flex" data-aos="fade-up">
+
+    <!-- <div class="sidebar-container">
+      <div class="sidebar-section">
+        <h4 class="section-title">熱門聊天室</h4>
+        <div id="popularList"></div>
+      </div> -->
+
+
+      <div class="sidebar-section">
+        <h4 class="section-title">熱門聊天室</h4>
+        <select id="popularSelect" class="form-select" aria-label="熱門聊天室選擇">
+          <option value="" selected disabled>請選擇熱門聊天室</option>
+        </select>
+      </div>
+
+
+      <div class="sidebar-section">
+        <h4 class="section-title">我的聊天室</h4>
+        <div id="userChatrooms"></div>
+      </div>
+
+      <div class="sidebar-section favorites-section">
+        <h4 class="section-title">我的收藏聊天室</h4>
+        <ul id="favoriteList">
+          {% if favorites %}
+            {% for fav in favorites %}
+              <li>
+                <a href="javascript:void(0)" onclick="openChatroom({{ fav.chat_room.id }})">
+                  {{ fav.chat_room.city }} {{ fav.chat_room.district }}
+                </a>
+              </li>
+            {% endfor %}
+          {% else %}
+            <li>尚未收藏任何聊天室</li>
+          {% endif %}
+
+        </ul>
+      
+      </div>
+
+      <p>DEBUG: 收藏數量：{{ favorites|length }}</p>
+
+
+
+
+    </div>
+
+    <div class="chatroom-box d-none" id="chatroomBox">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h5 id="chatroomTitle" class="mb-0">聊天室名稱</h5>
+        <span id="favoriteBtn" class="favorite-btn" title="點擊收藏/取消收藏">☆ 收藏</span>
+      </div>
+      <div class="chat-window" id="chatWindow">
+        <!-- 訊息區 -->
+      </div>
+      <div class="chat-input-area mt-3">
+        <input type="text" id="chatInput" placeholder="輸入留言..." autocomplete="off" />
+        <button class="btn btn-primary" onclick="sendMessage()">送出</button>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<footer id="footer" class="footer position-relative light-background mt-5 py-3 bg-white shadow-sm">
+  <div class="container text-center text-muted small">
+    © 2025 <strong class="sitename">怪怪走開</strong> All Rights Reserved
+  </div>
+</footer>
+
+<script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+<script src="{% static 'assets/vendor/aos/aos.js' %}"></script>
+<script src="{% static 'assets/js/main.js' %}"></script>
+
+<script>
+  let chatrooms = [];
+  // 從後端傳入的收藏聊天室ID陣列 (JSON格式字串)
+  const favoriteChatrooms = new Set(JSON.parse('{{ favorite_chatroom_ids|default:"[]"|safe }}'));
+  let currentRoomId = null;
+  const userChatroomIds = new Set();
+
+  const chatWindow = document.getElementById('chatWindow');
+  const chatInput = document.getElementById('chatInput');
+  const chatroomBox = document.getElementById('chatroomBox');
+  const favoriteBtn = document.getElementById('favoriteBtn');
+  const userChatroomsContainer = document.getElementById('userChatrooms');
+  const popularListContainer = document.getElementById('popularList');
+  const favoriteListContainer = document.getElementById('favoriteList');
+
+  // 載入所有聊天室資料
+  fetch("{% url 'chatrooms_api' %}")
+    .then(res => res.json())
+    .then(data => {
+      chatrooms = data.map(room => ({
+        id: room.id,
+        name: `${room.city} ${room.district} 聊天室`,
+        city: room.city,
+        district: room.district,
+        click_count: room.click_count || 0
+      }));
+
+      renderPopularChatrooms();
+      renderUserChatrooms();
+      renderFavoriteChatrooms();
+    })
+    .catch(err => {
+      console.error('聊天室資料載入失敗', err);
+      popularListContainer.innerHTML = '<p class="text-danger">聊天室資料載入失敗，請稍後再試</p>';
+    });
+
+  // 渲染熱門聊天室 (活躍度最高5個)
+  // function renderPopularChatrooms() {
+  //   popularListContainer.innerHTML = '';
+  //   const sorted = [...chatrooms].sort((a,b) => b.click_count - a.click_count).slice(0,5);
+  //   sorted.forEach(room => {
+  //     const div = document.createElement('div');
+  //     div.className = 'chatroom-item';
+  //     div.textContent = `${room.name}（活躍度：${room.click_count}）`;
+  //     div.setAttribute('data-id', room.id);
+  //     div.onclick = () => openChatroom(room.id);
+  //     popularListContainer.appendChild(div);
+  //   });
+  // }
+  function renderPopularChatrooms() {
+    const popularSelect = document.getElementById('popularSelect');
+    popularSelect.innerHTML = '<option value="" selected disabled>請選擇熱門聊天室</option>';
+
+    const sorted = [...chatrooms].sort((a,b) => b.click_count - a.click_count).slice(0,5);
+    sorted.forEach(room => {
+      const option = document.createElement('option');
+      option.value = room.id;
+      option.textContent = `${room.name}（活躍度：${room.click_count}）`;
+      popularSelect.appendChild(option);
+    });
+
+    // 監聽選擇事件
+    popularSelect.onchange = () => {
+      const selectedId = parseInt(popularSelect.value);
+      if (!isNaN(selectedId)) {
+        openChatroom(selectedId);
+      }
+    };
+  }
+
+
+
+
+  // 渲染我的聊天室 (用 userChatroomIds 判斷)
+  function renderUserChatrooms() {
+    userChatroomsContainer.innerHTML = '';
+    if (userChatroomIds.size === 0) {
+      userChatroomsContainer.innerHTML = '<p class="text-muted">尚未加入任何聊天室</p>';
+      return;
+    }
+    chatrooms.filter(r => userChatroomIds.has(r.id)).forEach(room => {
+      const div = document.createElement('div');
+      div.className = 'chatroom-item';
+      div.textContent = room.name;
+      div.setAttribute('data-id', room.id);
+      div.onclick = () => openChatroom(room.id);
+      userChatroomsContainer.appendChild(div);
+    });
+  }
+
+  // 渲染收藏聊天室 (前端動態更新)
+  function renderFavoriteChatrooms() {
+    if (!favoriteListContainer) return;
+    favoriteListContainer.innerHTML = '';
+    if (favoriteChatrooms.size === 0) {
+      favoriteListContainer.innerHTML = '<li>尚未收藏任何聊天室</li>';
+      return;
+    }
+    chatrooms.filter(r => favoriteChatrooms.has(r.id)).forEach(room => {
+      const li = document.createElement('li');
+      li.innerHTML = `<a href="javascript:void(0)" data-id="${room.id}" onclick="openChatroom(${room.id})">${room.name}</a>`;
+      favoriteListContainer.appendChild(li);
+    });
+  }
+
+  // 開啟聊天室並載入訊息
+  function openChatroom(id) {
+    currentRoomId = id;
+    const room = chatrooms.find(r => r.id === id);
+    if (!room) return alert('找不到聊天室');
+
+    // 標示聊天室為 active（高亮）
+    highlightActiveChatroom(id);
+
+    fetch(`/chat/messages/${id}/`)
+      .then(res => {
+        if (!res.ok) throw new Error('API回傳錯誤');
+        return res.json();
+      })
+      .then(messages => {
+        renderMessages(messages);
+        document.getElementById('chatroomTitle').textContent = room.name;
+        chatroomBox.classList.remove('d-none');
+        userChatroomIds.add(id);
+        renderUserChatrooms();
+        updateFavoriteBtn(id);
+        renderFavoriteChatrooms();
+      })
+      .catch(err => {
+        console.error(err);
+        alert('載入聊天室訊息失敗');
+      });
+  }
+
+  // 標示當前聊天室為選取狀態（改用 data-id 判斷）
+  function highlightActiveChatroom(id) {
+    document.querySelectorAll('.chatroom-item').forEach(el => {
+      const elId = parseInt(el.getAttribute('data-id'));
+      el.classList.toggle('active', elId === id);
+    });
+
+    if(favoriteListContainer){
+      favoriteListContainer.querySelectorAll('a').forEach(a => {
+        const aId = parseInt(a.getAttribute('data-id'));
+        a.classList.toggle('active', aId === id);
+      });
+    }
+  }
+
+  // 渲染訊息列表
+  function renderMessages(messages) {
+    chatWindow.innerHTML = '';
+    if (messages.length === 0) {
+      chatWindow.innerHTML = '<p class="text-muted">還沒有留言，快來發表第一則訊息！</p>';
+      return;
+    }
+    messages.forEach(msg => {
+      const p = document.createElement('p');
+      p.textContent = `${msg.username}：${msg.message}`;
+      chatWindow.appendChild(p);
+    });
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+  }
+
+  // 送出訊息
+  function sendMessage() {
+    if (!currentRoomId) return alert('請先選擇聊天室');
+    const msg = chatInput.value.trim();
+    if (!msg) return;
+
+    fetch(`/chat/send/${currentRoomId}/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken'),
+      },
+      body: JSON.stringify({message: msg})
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === 'success') {
+          chatInput.value = '';
+          openChatroom(currentRoomId);
+        } else {
+          alert('送訊息失敗: ' + (data.msg || '未知錯誤'));
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        alert('送訊息時發生錯誤');
+      });
+  }
+
+  // 更新收藏按鈕狀態
+  function updateFavoriteBtn(id) {
+    if (favoriteChatrooms.has(id)) {
+      favoriteBtn.classList.add('favorited');
+      favoriteBtn.textContent = '⭐ 已收藏';
+    } else {
+      favoriteBtn.classList.remove('favorited');
+      favoriteBtn.textContent = '☆ 收藏';
+    }
+  }
+
+  // 收藏按鈕點擊事件
+  favoriteBtn.onclick = () => {
+    if (!currentRoomId) return;
+
+    fetch("{% url 'toggle_favorite' %}", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-CSRFToken': getCookie('csrftoken'),
+      },
+      body: `room_id=${currentRoomId}`
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === 'added') {
+          favoriteChatrooms.add(currentRoomId);
+        } else if (data.status === 'removed') {
+          favoriteChatrooms.delete(currentRoomId);
+        }
+        updateFavoriteBtn(currentRoomId);
+        renderFavoriteChatrooms();
+      })
+      .catch(err => {
+        alert('切換收藏失敗');
+        console.error(err);
+      });
+  };
+
+  // 輸入框按 Enter 送出訊息
+  chatInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') sendMessage();
+  });
+
+  // CSRF Cookie 取得函式
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let cookie of cookies) {
+        cookie = cookie.trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+</script>
+
+
+<!-- <script>
+  let chatrooms = [];
+  // 從後端傳入的收藏聊天室ID陣列 (JSON格式字串)
+  const favoriteChatrooms = new Set(JSON.parse('{{ favorite_chatroom_ids|safe }}'));
+  let currentRoomId = null;
+  const userChatroomIds = new Set();
+
+  const chatWindow = document.getElementById('chatWindow');
+  const chatInput = document.getElementById('chatInput');
+  const chatroomBox = document.getElementById('chatroomBox');
+  const favoriteBtn = document.getElementById('favoriteBtn');
+  const userChatroomsContainer = document.getElementById('userChatrooms');
+  const popularListContainer = document.getElementById('popularList');
+  const favoriteListContainer = document.getElementById('favoriteList');
+
+  // 載入所有聊天室資料
+  fetch("{% url 'chatrooms_api' %}")
+    .then(res => res.json())
+    .then(data => {
+      chatrooms = data.map(room => ({
+        id: room.id,
+        name: `${room.city} ${room.district} 聊天室`,
+        city: room.city,
+        district: room.district,
+        click_count: room.click_count || 0
+      }));
+
+      renderPopularChatrooms();
+      renderUserChatrooms();
+      renderFavoriteChatrooms();
+    })
+    .catch(err => {
+      console.error('聊天室資料載入失敗', err);
+      popularListContainer.innerHTML = '<p class="text-danger">聊天室資料載入失敗，請稍後再試</p>';
+    });
+
+  // 渲染熱門聊天室 (活躍度最高5個)
+  function renderPopularChatrooms() {
+    popularListContainer.innerHTML = '';
+    const sorted = [...chatrooms].sort((a,b) => b.click_count - a.click_count).slice(0,5);
+    sorted.forEach(room => {
+      const div = document.createElement('div');
+      div.className = 'chatroom-item';
+      div.textContent = `${room.name}（活躍度：${room.click_count}）`;
+      div.onclick = () => openChatroom(room.id);
+      popularListContainer.appendChild(div);
+    });
+  }
+
+  // 渲染我的聊天室 (用 userChatroomIds 判斷)
+  function renderUserChatrooms() {
+    userChatroomsContainer.innerHTML = '';
+    if (userChatroomIds.size === 0) {
+      userChatroomsContainer.innerHTML = '<p class="text-muted">尚未加入任何聊天室</p>';
+      return;
+    }
+    chatrooms.filter(r => userChatroomIds.has(r.id)).forEach(room => {
+      const div = document.createElement('div');
+      div.className = 'chatroom-item';
+      div.textContent = room.name;
+      div.onclick = () => openChatroom(room.id);
+      userChatroomsContainer.appendChild(div);
+    });
+  }
+
+  // 渲染收藏聊天室 (前端動態更新)
+  function renderFavoriteChatrooms() {
+    if (!favoriteListContainer) return;
+    favoriteListContainer.innerHTML = '';
+    if (favoriteChatrooms.size === 0) {
+      favoriteListContainer.innerHTML = '<li>尚未收藏任何聊天室</li>';
+      return;
+    }
+    chatrooms.filter(r => favoriteChatrooms.has(r.id)).forEach(room => {
+      const li = document.createElement('li');
+      li.innerHTML = `<a href="javascript:void(0)" onclick="openChatroom(${room.id})">${room.name}</a>`;
+      favoriteListContainer.appendChild(li);
+    });
+  }
+
+  // 開啟聊天室並載入訊息
+  function openChatroom(id) {
+    currentRoomId = id;
+    const room = chatrooms.find(r => r.id === id);
+    if (!room) return alert('找不到聊天室');
+
+    // 標示聊天室為 active（高亮）
+    highlightActiveChatroom(id);
+
+    fetch(`/chat/messages/${id}/`)
+      .then(res => {
+        if (!res.ok) throw new Error('API回傳錯誤');
+        return res.json();
+      })
+      .then(messages => {
+        renderMessages(messages);
+        document.getElementById('chatroomTitle').textContent = room.name;
+        chatroomBox.classList.remove('d-none');
+        userChatroomIds.add(id);
+        renderUserChatrooms();
+        updateFavoriteBtn(id);
+        renderFavoriteChatrooms();
+      })
+      .catch(err => {
+        console.error(err);
+        alert('載入聊天室訊息失敗');
+      });
+  }
+
+  // 標示當前聊天室為選取狀態
+  function highlightActiveChatroom(id) {
+    document.querySelectorAll('.chatroom-item').forEach(el => {
+      el.classList.toggle('active', el.textContent.includes(`聊天室`) && el.onclick && el.onclick.toString().includes(`openChatroom(${id})`));
+    });
+    // 收藏清單中的 a 標籤
+    if(favoriteListContainer){
+      favoriteListContainer.querySelectorAll('a').forEach(a => {
+        a.classList.toggle('active', a.onclick && a.onclick.toString().includes(`openChatroom(${id})`));
+      });
+    }
+  }
+
+  // 渲染訊息列表
+  function renderMessages(messages) {
+    chatWindow.innerHTML = '';
+    if (messages.length === 0) {
+      chatWindow.innerHTML = '<p class="text-muted">還沒有留言，快來發表第一則訊息！</p>';
+      return;
+    }
+    messages.forEach(msg => {
+      const p = document.createElement('p');
+      p.textContent = `${msg.username}：${msg.message}`;
+      chatWindow.appendChild(p);
+    });
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+  }
+
+  // 送出訊息
+  function sendMessage() {
+    if (!currentRoomId) return alert('請先選擇聊天室');
+    const msg = chatInput.value.trim();
+    if (!msg) return;
+
+    fetch(`/chat/send/${currentRoomId}/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken'),
+      },
+      body: JSON.stringify({message: msg})
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === 'success') {
+          chatInput.value = '';
+          openChatroom(currentRoomId);
+        } else {
+          alert('送訊息失敗: ' + (data.msg || '未知錯誤'));
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        alert('送訊息時發生錯誤');
+      });
+  }
+
+  // 更新收藏按鈕狀態
+  function updateFavoriteBtn(id) {
+    if (favoriteChatrooms.has(id)) {
+      favoriteBtn.classList.add('favorited');
+      favoriteBtn.textContent = '⭐ 已收藏';
+    } else {
+      favoriteBtn.classList.remove('favorited');
+      favoriteBtn.textContent = '☆ 收藏';
+    }
+  }
+
+  // 收藏按鈕點擊事件
+  favoriteBtn.onclick = () => {
+    if (!currentRoomId) return;
+
+    fetch("{% url 'toggle_favorite' %}", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-CSRFToken': getCookie('csrftoken'),
+      },
+      body: `room_id=${currentRoomId}`
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === 'added') {
+          favoriteChatrooms.add(currentRoomId);
+        } else if (data.status === 'removed') {
+          favoriteChatrooms.delete(currentRoomId);
+        }
+        updateFavoriteBtn(currentRoomId);
+        renderFavoriteChatrooms();
+      })
+      .catch(err => {
+        alert('切換收藏失敗');
+        console.error(err);
+      });
+  };
+
+  // 輸入框按 Enter 送出訊息
+  chatInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') sendMessage();
+  });
+
+  // CSRF Cookie 取得函式
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let cookie of cookies) {
+        cookie = cookie.trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+</script> -->
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+<!-- {% load static %}
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>聊天室區域選擇</title>
+  <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet" />
+</head>
+<body class="p-4">
+
+  <h3>請選擇聊天室縣市與區域</h3>
+
+  <div class="mb-3">
+    <label for="citySelect" class="form-label">縣市</label>
+    <select id="citySelect" class="form-select">
+      <option value="">請選擇縣市</option>
+    </select>
+  </div>
+
+  <div class="mb-3">
+    <label for="districtSelect" class="form-label">區域</label>
+    <select id="districtSelect" class="form-select" disabled>
+      <option value="">請先選擇縣市</option>
+    </select>
+  </div>
+
+  <button id="openChatroomBtn" class="btn btn-primary" disabled>進入聊天室</button>
+
+  <script>
+    let chatrooms = [];
+    const citySelect = document.getElementById('citySelect');
+    const districtSelect = document.getElementById('districtSelect');
+    const openBtn = document.getElementById('openChatroomBtn');
+    let selectedChatroomId = null;
+
+    // 載入聊天室資料
+    fetch("{% url 'chatrooms_api' %}")
+      .then(res => res.json())
+      .then(data => {
+        chatrooms = data;
+        initCityOptions();
+      })
+      .catch(err => {
+        alert('聊天室資料載入失敗，請稍後再試');
+        console.error(err);
+      });
+
+    // 初始化縣市下拉
+    function initCityOptions() {
+      const cities = [...new Set(chatrooms.map(c => c.city))].sort();
+      cities.forEach(city => {
+        const opt = document.createElement('option');
+        opt.value = city;
+        opt.textContent = city;
+        citySelect.appendChild(opt);
+      });
+    }
+
+    citySelect.addEventListener('change', () => {
+      const selectedCity = citySelect.value;
+      districtSelect.innerHTML = '';
+      selectedChatroomId = null;
+      openBtn.disabled = true;
+
+      if (!selectedCity) {
+        districtSelect.disabled = true;
+        districtSelect.innerHTML = '<option value="">請先選擇縣市</option>';
+        return;
+      }
+
+      const districts = chatrooms
+        .filter(r => r.city === selectedCity)
+        .map(r => ({id: r.id, district: r.district}))
+        // 避免重複區域
+        .filter((v,i,a) => a.findIndex(t => t.district === v.district) === i);
+
+      districtSelect.disabled = false;
+      districtSelect.innerHTML = '<option value="">請選擇區域</option>';
+
+      districts.forEach(({id, district}) => {
+        const opt = document.createElement('option');
+        opt.value = id;  // 用聊天室id作為值
+        opt.textContent = district;
+        districtSelect.appendChild(opt);
+      });
+    });
+
+    districtSelect.addEventListener('change', () => {
+      if (districtSelect.value) {
+        selectedChatroomId = districtSelect.value;
+        openBtn.disabled = false;
+      } else {
+        selectedChatroomId = null;
+        openBtn.disabled = true;
+      }
+    });
+
+    openBtn.addEventListener('click', () => {
+      if (!selectedChatroomId) return;
+      // 導向聊天室頁面（依你的URL設計調整）
+      window.location.href = `/chatroom/${selectedChatroomId}/`;
+    });
+  </script>
+
+</body>
+</html> -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- {% load static %}
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>可疑事件聊天室</title>
+  <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet" />
+  <link href="{% static 'assets/vendor/aos/aos.css' %}" rel="stylesheet" />
+  <link href="{% static 'assets/css/main.css' %}" rel="stylesheet" />
+  <style>
+    body {
+      background: #f8f9fa;
+      padding-top: 80px;
+    }
+    .section-title {
+      font-weight: 700;
+      margin-bottom: 1rem;
+      border-bottom: 2px solid #007bff;
+      padding-bottom: 0.5rem;
+    }
+    .favorite-btn {
+      cursor: pointer;
+      user-select: none;
+      font-size: 1.4rem;
+      color: #bbb;
+      transition: color 0.3s;
+    }
+    .favorite-btn.favorited {
+      color: #ffc107;
+      text-shadow: 0 0 4px #ffdb58;
+    }
+    .chatroom-box {
+      margin-top: 1rem;
+      background: #fff;
+      border-radius: 0.5rem;
+      box-shadow: 0 0 12px rgba(0,0,0,0.12);
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+      padding: 1rem 1.5rem;
+    }
+    .chat-window {
+      height: 250px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      border-radius: 0.375rem;
+      padding: 1rem;
+      background: #f9f9f9;
+      margin-bottom: 0.75rem;
+      font-size: 0.9rem;
+    }
+    .chat-window p {
+      margin-bottom: 0.5rem;
+    }
+    .chat-input-area {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .chat-input-area input[type="text"] {
+      flex-grow: 1;
+      border-radius: 0.375rem;
+      border: 1px solid #ced4da;
+      padding: 0.5rem 0.75rem;
+      font-size: 1rem;
+    }
+    .chat-input-area button {
+      flex-shrink: 0;
+      border-radius: 0.375rem;
+      font-weight: 600;
+      padding: 0.5rem 1.25rem;
+    }
+    .sidebar-section {
+      background: #fff;
+      border-radius: 0.5rem;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      padding: 1rem;
+      max-height: 350px;
+      overflow-y: auto;
+      margin-bottom: 1.5rem;
+    }
+    .sidebar-section div.chatroom-item {
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid #eee;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      border-radius: 0.25rem;
+    }
+    .sidebar-section div.chatroom-item:hover {
+      background-color: #e9f2ff;
+    }
+    .container-flex {
+      display: flex;
+      gap: 2rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 1.5rem;
+    }
+    .sidebar-container {
+      flex: 1 1 300px;
+      max-width: 350px;
+    }
+    @media(max-width: 768px) {
+      .container-flex {
+        flex-direction: column;
+        align-items: center;
+      }
+      .sidebar-container {
+        max-width: 100%;
+      }
+    }
+  </style>
+</head>
+<body class="index-page">
+
+<header id="header" class="header d-flex align-items-center fixed-top">
+  <div class="container-fluid d-flex justify-content-between align-items-center">
+    <a href="{% url 'home' %}" class="logo d-flex align-items-center">
+      <h1 class="sitename">怪怪走開，護您安全</h1>
+    </a>
+    <nav id="navmenu" class="navmenu">
+      <ul>
+        <li><a href="{% url 'home' %}#hero">主頁</a></li>
+        <li><a href="{% url 'home' %}#services">簡介及功能介紹</a></li>
+        <li><a href="{% url 'report' %}">填寫表單</a></li>
+        <li><a href="{% url 'business_upload' %}">商家填單</a></li>
+        <li><a href="{% url 'post' %}">我要發文</a></li>
+        <li><a href="{% url 'map' %}">事件地圖</a></li>
+        <li><a href="{% url 'harassment_prevention' %}">防騷指南</a></li>
+      </ul>
+    </nav>
+    {% if request.user.is_authenticated %}
+      <div class="dropdown">
+        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown">{{ request.user.username }}</a>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="{% url 'about' %}">個人資料設定</a></li>
+          <li><a class="dropdown-item" href="{% url '01_userlogin_out' %}">登出</a></li>
+        </ul>
+      </div>
+    {% else %}
+      <a class="btn-getstarted" href="{% url 'userlogin' %}">登入</a>
+    {% endif %}
+  </div>
+</header>
+
+<main class="main mt-5 pt-5">
+  <div class="container container-flex" data-aos="fade-up">
+    <div class="sidebar-container">
+      <h4 class="section-title">熱門聊天室</h4>
+      <div class="sidebar-section" id="popularList"></div>
+
+      <h4 class="section-title">我的聊天室</h4>
+      <div class="sidebar-section" id="userChatrooms"></div>
+
+      <h4 class="section-title">我的收藏聊天室</h4>
+      <div class="sidebar-section favorites-section">
+        <ul id="favoriteList">
+          {% if favorites %}
+            {% for fav in favorites %}
+              <li>
+                <a href="javascript:void(0)" onclick="openChatroom({{ fav.chat_room.id }})">
+                  {{ fav.chat_room.city }} {{ fav.chat_room.district }}
+                </a>
+              </li>
+            {% endfor %}
+          {% else %}
+            <li>尚未收藏任何聊天室</li>
+          {% endif %}
+        </ul>
+      </div>
+    </div>
+
+    <div class="chatroom-box d-none" id="chatroomBox">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h5 id="chatroomTitle" class="mb-0">聊天室名稱</h5>
+        <span id="favoriteBtn" class="favorite-btn" title="點擊收藏/取消收藏">☆ 收藏</span>
+      </div>
+      <div class="chat-window" id="chatWindow"></div>
+      <div class="chat-input-area mt-3">
+        <input type="text" id="chatInput" placeholder="輸入留言..." autocomplete="off" />
+        <button class="btn btn-primary" onclick="sendMessage()">送出</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer id="footer" class="footer position-relative light-background mt-5 py-3 bg-white shadow-sm">
+  <div class="container text-center text-muted small">
+    © 2025 <strong class="sitename">怪怪走開</strong> All Rights Reserved
+  </div>
+</footer>
+
+<script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+<script src="{% static 'assets/vendor/aos/aos.js' %}"></script>
+<script src="{% static 'assets/js/main.js' %}"></script>
+<script>
+  let chatrooms = [];
+  // 從後端傳入的收藏聊天室ID陣列 (一定要用 safe 或 escapejs 避免字串轉義問題)
+  const favoriteChatrooms = new Set(JSON.parse('{{ favorite_chatroom_ids|safe }}'));
+  let currentRoomId = null;
+  const userChatroomIds = new Set();
+
+  const chatWindow = document.getElementById('chatWindow');
+  const chatInput = document.getElementById('chatInput');
+  const chatroomBox = document.getElementById('chatroomBox');
+  const favoriteBtn = document.getElementById('favoriteBtn');
+  const userChatroomsContainer = document.getElementById('userChatrooms');
+  const popularListContainer = document.getElementById('popularList');
+  const favoriteListContainer = document.getElementById('favoriteList');
+
+  // 載入所有聊天室資料
+  fetch("{% url 'chatrooms_api' %}")
+    .then(res => res.json())
+    .then(data => {
+      chatrooms = data.map(room => ({
+        id: room.id,
+        name: `${room.city} ${room.district} 聊天室`,
+        city: room.city,
+        district: room.district,
+        click_count: room.click_count || 0
+      }));
+
+      renderPopularChatrooms();
+      renderUserChatrooms();
+      renderFavoriteChatrooms();
+    })
+    .catch(err => {
+      console.error('聊天室資料載入失敗', err);
+      popularListContainer.innerHTML = '<p class="text-danger">聊天室資料載入失敗，請稍後再試</p>';
+    });
+
+  // 渲染熱門聊天室 (活躍度最高5個)
+  function renderPopularChatrooms() {
+    popularListContainer.innerHTML = '';
+    const sorted = [...chatrooms].sort((a,b) => b.click_count - a.click_count).slice(0,5);
+    sorted.forEach(room => {
+      const div = document.createElement('div');
+      div.className = 'chatroom-item';
+      div.textContent = `${room.name}（活躍度：${room.click_count}）`;
+      div.onclick = () => openChatroom(room.id);
+      popularListContainer.appendChild(div);
+    });
+  }
+
+  // 渲染我的聊天室 (用 userChatroomIds 判斷)
+  function renderUserChatrooms() {
+    userChatroomsContainer.innerHTML = '';
+    if (userChatroomIds.size === 0) {
+      userChatroomsContainer.innerHTML = '<p class="text-muted">尚未加入任何聊天室</p>';
+      return;
+    }
+    chatrooms.filter(r => userChatroomIds.has(r.id)).forEach(room => {
+      const div = document.createElement('div');
+      div.className = 'chatroom-item';
+      div.textContent = room.name;
+      div.onclick = () => openChatroom(room.id);
+      userChatroomsContainer.appendChild(div);
+    });
+  }
+
+  // 渲染收藏聊天室 (前端動態更新)
+  function renderFavoriteChatrooms() {
+    if (!favoriteListContainer) return;
+    favoriteListContainer.innerHTML = '';
+    if (favoriteChatrooms.size === 0) {
+      favoriteListContainer.innerHTML = '<li>尚未收藏任何聊天室</li>';
+      return;
+    }
+    chatrooms.filter(r => favoriteChatrooms.has(r.id)).forEach(room => {
+      const li = document.createElement('li');
+      li.innerHTML = `<a href="javascript:void(0)" onclick="openChatroom(${room.id})">${room.name}</a>`;
+      favoriteListContainer.appendChild(li);
+    });
+  }
+
+  // 開啟聊天室並載入訊息
+  function openChatroom(id) {
+    currentRoomId = id;
+    const room = chatrooms.find(r => r.id === id);
+    if (!room) return alert('找不到聊天室');
+
+    fetch(`/chat/messages/${id}/`)
+      .then(res => {
+        if (!res.ok) throw new Error('API回傳錯誤');
+        return res.json();
+      })
+      .then(messages => {
+        renderMessages(messages);
+        document.getElementById('chatroomTitle').textContent = room.name;
+        chatroomBox.classList.remove('d-none');
+        userChatroomIds.add(id);
+        renderUserChatrooms();
+        updateFavoriteBtn(id);
+        renderFavoriteChatrooms();
+      })
+      .catch(err => {
+        console.error(err);
+        alert('載入聊天室訊息失敗');
+      });
+  }
+
+  // 渲染訊息列表
+  function renderMessages(messages) {
+    chatWindow.innerHTML = '';
+    if (messages.length === 0) {
+      chatWindow.innerHTML = '<p class="text-muted">還沒有留言，快來發表第一則訊息！</p>';
+      return;
+    }
+    messages.forEach(msg => {
+      const p = document.createElement('p');
+      p.textContent = `${msg.username}：${msg.message}`;
+      chatWindow.appendChild(p);
+    });
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+  }
+
+  // 送出訊息
+  function sendMessage() {
+    if (!currentRoomId) return alert('請先選擇聊天室');
+    const msg = chatInput.value.trim();
+    if (!msg) return;
+
+    fetch(`/chat/send/${currentRoomId}/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken'),
+      },
+      body: JSON.stringify({message: msg})
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === 'success') {
+          chatInput.value = '';
+          openChatroom(currentRoomId);
+        } else {
+          alert('送訊息失敗: ' + (data.msg || '未知錯誤'));
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        alert('送訊息時發生錯誤');
+      });
+  }
+
+  // 更新收藏按鈕狀態
+  function updateFavoriteBtn(id) {
+    if (favoriteChatrooms.has(id)) {
+      favoriteBtn.classList.add('favorited');
+      favoriteBtn.textContent = '⭐ 已收藏';
+    } else {
+      favoriteBtn.classList.remove('favorited');
+      favoriteBtn.textContent = '☆ 收藏';
+    }
+  }
+
+  // 收藏按鈕點擊事件
+  favoriteBtn.onclick = () => {
+    if (!currentRoomId) return;
+
+    fetch("{% url 'toggle_favorite' %}", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-CSRFToken': getCookie('csrftoken'),
+      },
+      body: `room_id=${currentRoomId}`
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === 'added') {
+          favoriteChatrooms.add(currentRoomId);
+        } else if (data.status === 'removed') {
+          favoriteChatrooms.delete(currentRoomId);
+        }
+        updateFavoriteBtn(currentRoomId);
+        renderFavoriteChatrooms();
+      })
+      .catch(err => {
+        alert('切換收藏失敗');
+        console.error(err);
+      });
+  };
+
+  // 輸入框按 Enter 送出訊息
+  chatInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') sendMessage();
+  });
+
+  // CSRF Cookie 取得函式
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let cookie of cookies) {
+        cookie = cookie.trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+</script>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+ -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- {% load static %}
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>可疑事件聊天室地圖互動</title>
   <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet" />
   <link href="{% static 'assets/vendor/aos/aos.css' %}" rel="stylesheet" />
@@ -215,7 +1533,8 @@
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script>
   let chatrooms = [];
-  const favoriteChatrooms = new Set({{ favorite_ids|safe }});
+  const favoriteChatrooms = new Set(JSON.parse('{{ favorite_ids|escapejs }}'));
+  // const favoriteChatrooms = new Set({{ favorite_ids|safe }});  // 從後端傳入收藏聊天室 id 陣列
   let currentRoomId = null;
   let userChatroomIds = new Set();
 
@@ -232,29 +1551,51 @@
     attribution: '© OpenStreetMap contributors'
   }).addTo(map);
 
+  // 從後端 API 拿聊天室資料
   fetch("{% url 'chatrooms_api' %}")
-    .then(res => res.json())
-    .then(data => {
-      console.log('聊天室資料:', data);  // 除錯用
-      chatrooms = data.map(item => ({
-        id: item.id,
-        name: `${item.city} ${item.district} 聊天室`,
-        lat: item.lat,  // 使用API的真實經緯度
-        lng: item.lng,
-        city: item.city,
-        district: item.district,
-        active: item.click_count
-      }));
-      renderAreaOptions();
-      renderChatroomsOnMap();
-      renderPopularChatrooms();
-      renderUserChatrooms();
-    })
-    .catch(err => {
-      console.error('載入聊天室資料失敗', err);
-      alert('載入聊天室資料失敗，請稍後再試');
-    });
+  .then(res => res.json())
+  .then(data => {
+    chatrooms = data.map(item => ({
+      id: item.id,
+      name: `${item.city} ${item.district} 聊天室`,
+      lat: item.lat || 25.0335,
+      lng: item.lng || 121.5651,
+      city: item.city,
+      district: item.district,
+      active: item.click_count
+    }));
 
+    renderAreaOptions();
+    renderChatroomsOnMap();
+    renderPopularChatrooms();
+    renderUserChatrooms();
+    renderFavoriteChatrooms();  // 一定要呼叫，才會渲染收藏聊天室
+  });
+
+  // fetch("{% url 'chatrooms_api' %}")
+  //   .then(res => res.json())
+  //   .then(data => {
+  //     chatrooms = data.map(item => ({
+  //       id: item.id,
+  //       name: `${item.city} ${item.district} 聊天室`,
+  //       lat: item.lat || 25.0335,  // fallback 坐標
+  //       lng: item.lng || 121.5651,
+  //       city: item.city,
+  //       district: item.district,
+  //       active: item.click_count
+  //     }));
+
+  //     renderAreaOptions();
+  //     renderChatroomsOnMap();
+  //     renderPopularChatrooms();
+  //     renderUserChatrooms();
+  //   })
+  //   .catch(err => {
+  //     console.error('聊天室資料載入失敗', err);
+  //     alert('聊天室資料載入失敗，請稍後再試');
+  //   });
+
+  // 產生區域選項
   function renderAreaOptions() {
     areaSelect.innerHTML = '<option value="all">全部區域</option>';
     const cities = [...new Set(chatrooms.map(r => r.city))];
@@ -271,6 +1612,7 @@
     });
   }
 
+  // 清除地圖標記
   function clearMapMarkers() {
     map.eachLayer(layer => {
       if (layer instanceof L.Marker) {
@@ -279,6 +1621,7 @@
     });
   }
 
+  // 依區域篩選並在地圖放標記
   function renderChatroomsOnMap() {
     clearMapMarkers();
     const selectedArea = areaSelect.value;
@@ -288,13 +1631,12 @@
           const marker = L.marker([room.lat, room.lng]).addTo(map);
           marker.bindTooltip(room.name, {permanent: false, direction: 'top'});
           marker.on('click', () => openChatroom(room.id));
-        } else {
-          console.warn('聊天室缺少經緯度', room);
         }
       }
     });
   }
 
+  // 開啟聊天室，並載入聊天訊息
   window.openChatroom = function(id) {
     currentRoomId = id;
     const room = chatrooms.find(r => r.id === id);
@@ -309,7 +1651,6 @@
         return res.json();
       })
       .then(messages => {
-        console.log('訊息資料', messages);
         renderMessages(messages);
         document.getElementById('chatroomTitle').textContent = room.name;
         chatroomBox.classList.remove('d-none');
@@ -318,11 +1659,12 @@
         updateFavoriteBtn(id);
       })
       .catch(err => {
-        console.error('載入訊息失敗', err);
+        console.error('載入聊天室訊息失敗', err);
         alert('載入聊天室訊息失敗');
       });
   };
 
+  // 渲染聊天訊息
   function renderMessages(messages) {
     chatWindow.innerHTML = '';
     if (messages.length === 0) {
@@ -337,6 +1679,7 @@
     chatWindow.scrollTop = chatWindow.scrollHeight;
   }
 
+  // 送出留言
   function sendMessage() {
     if (!currentRoomId) return alert('請先選擇聊天室');
     const msg = chatInput.value.trim();
@@ -365,6 +1708,7 @@
     });
   }
 
+  // 根據收藏狀態更新收藏按鈕
   function updateFavoriteBtn(id) {
     if (favoriteChatrooms.has(id)) {
       favoriteBtn.classList.add('favorited');
@@ -375,6 +1719,7 @@
     }
   }
 
+  // 渲染我的聊天室列表
   function renderUserChatrooms() {
     userChatroomsContainer.innerHTML = '';
     if (userChatroomIds.size === 0) {
@@ -390,6 +1735,7 @@
     });
   }
 
+  // 渲染熱門聊天室列表（依活躍度排序）
   function renderPopularChatrooms() {
     popularListContainer.innerHTML = '';
     const sorted = [...chatrooms].sort((a,b) => b.active - a.active).slice(0, 5);
@@ -402,12 +1748,14 @@
     });
   }
 
+  // 區域選單改變事件
   areaSelect.addEventListener('change', () => {
     renderChatroomsOnMap();
     chatroomBox.classList.add('d-none');
     currentRoomId = null;
   });
 
+  // 收藏按鈕點擊事件
   favoriteBtn.onclick = () => {
     if (currentRoomId === null) return;
 
@@ -434,10 +1782,12 @@
     });
   };
 
+  // 監聽輸入框按 Enter 送出
   chatInput.addEventListener('keydown', e => {
     if (e.key === 'Enter') sendMessage();
   });
 
+  // CSRF Cookie 取得函式
   function getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== '') {
@@ -452,6 +1802,7 @@
     }
     return cookieValue;
   }
+
 </script>
 
 </body>
@@ -465,7 +1816,7 @@
 
 
 
-
+ -->
 
 
 

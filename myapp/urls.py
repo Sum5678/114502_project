@@ -121,6 +121,7 @@ urlpatterns = [
     path('api/stores/', views.store_data_api, name='store_data_api'),#商家地圖
     path('api/reports_with_subkind/', views.reports_with_subkind_json, name='reports_with_subkind_json'),
     path('api/chatrooms/', views.chatrooms_api, name='chatrooms_api'),
+    path('chatrooms_api/', views.chatrooms_api, name='chatrooms_api'),
     path('chat/messages/<int:room_id>/', views.chat_messages_api, name='chat_messages_api'),
     path('chat/send/<int:room_id>/', views.chat_send_api, name='chat_send_api'),
     path('favorites/add/', views.add_to_favorites, name='add_to_favorites'),
