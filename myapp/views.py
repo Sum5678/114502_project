@@ -2460,13 +2460,9 @@ def add_to_favorites(request):
 #     return JsonResponse(data, safe=False)
 
 
-from django.http import JsonResponse
-from .models import ChatRoom  # 假設是 ChatRoom
-
 def chatrooms_api(request):
     data = list(ChatRoom.objects.values('id', 'code', 'city', 'district', 'click_count'))
     return JsonResponse(data, safe=False)
-
 
 
 
@@ -2486,11 +2482,6 @@ def chatrooms_api(request):
 #         # 其他 context ...
 #     })
 
-
-from django.shortcuts import render
-from django.contrib.auth.decorators import login_required
-from .models import FavoriteChatRoom
-
 # @login_required
 # def chatroom_page(request):
 #     user_profile = request.user.thisuserprofile  # 假設你User關聯ThisUserProfile是這樣取的
@@ -2506,28 +2497,28 @@ from .models import FavoriteChatRoom
 #     }
 #     return render(request, 'chatroom_page.html', context)
 
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
-from .models import FavoriteChatRoom, ThisUserProfile
-
 @login_required
 def chatroom_page(request):
     try:
-        user_profile = ThisUserProfile.objects.get(user=request.user)
+        user_profile = ThisUserProfile.objects.get(gmail=request.user.email)
+        print(f"User profile found: {user_profile}")
     except ThisUserProfile.DoesNotExist:
         user_profile = None
+        print("User profile not found")
 
-    favorites = []
-    favorite_chatroom_ids = []
     if user_profile:
         favorites = FavoriteChatRoom.objects.filter(user=user_profile).select_related('chat_room')
-        favorite_chatroom_ids = [fav.chat_room.id for fav in favorites]
+        print(f"Favorites count: {favorites.count()}")
+    else:
+        favorites = []
 
-    return render(request, 'chatroom_page.html', {
+    favorite_chatroom_ids = list(favorites.values_list('chat_room__id', flat=True)) if favorites else []
+
+    context = {
         'favorites': favorites,
-        'favorite_chatroom_ids': favorite_chatroom_ids,
-    })
-
+        'favorite_chatroom_ids': json.dumps(favorite_chatroom_ids),
+    }
+    return render(request, 'chatroom.html', context)
 
 
 # @login_required
