@@ -308,25 +308,39 @@ class ChatRoomClick(models.Model):
         return f"{self.region} clicked at {self.click_time}"
 
 
-
 class ChatMessage(models.Model):
     user = models.ForeignKey(
         'ThisUserProfile',
         on_delete=models.CASCADE,
-        db_column='user_id',  # 指定外鍵欄位
+        db_column='user_id',
         help_text="留言的使用者"
     )
     region = models.CharField(max_length=50, help_text="區域名稱")
     message = models.TextField()
+    nickname = models.CharField(max_length=100, blank=True, null=True)  # ✅ 加這行！
     timestamp = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         db_table = 'chat_messages'
-        verbose_name = "聊天室訊息"
-        verbose_name_plural = "聊天室訊息"
 
-    def __str__(self):
-        return f"{self.user} @ {self.region}: {self.message[:20]}"
+# class ChatMessage(models.Model):
+#     user = models.ForeignKey(
+#         'ThisUserProfile',
+#         on_delete=models.CASCADE,
+#         db_column='user_id',  # 指定外鍵欄位
+#         help_text="留言的使用者"
+#     )
+#     region = models.CharField(max_length=50, help_text="區域名稱")
+#     message = models.TextField()
+#     timestamp = models.DateTimeField(auto_now_add=True)
+
+#     class Meta:
+#         db_table = 'chat_messages'
+#         verbose_name = "聊天室訊息"
+#         verbose_name_plural = "聊天室訊息"
+
+#     def __str__(self):
+#         return f"{self.user} @ {self.region}: {self.message[:20]}"
 
 
 class FavoriteChatRoom(models.Model):

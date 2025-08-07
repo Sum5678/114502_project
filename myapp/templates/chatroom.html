@@ -251,6 +251,26 @@
 </header>
 
 <main class="main mt-5 pt-5">
+
+  <!-- DEBUG 暱稱顯示區塊，僅開發用 -->
+
+  <div style="background:#e2e3e5;padding:8px 16px;margin:10px 0;border-radius:6px;color:#383d41;">
+    <b>DEBUG:</b> 目前登入帳號 email: <code>{{ request.user.email }}</code>
+    <!-- Debug: 暱稱 -->
+    <p>nickname1: {{ user_profile.default_nickname1 }}</p>
+    <p>nickname2: {{ user_profile.default_nickname2 }}</p>
+
+  </div>
+  {% if user_profile %}
+    <div style="background:#ffeeba;padding:8px 16px;margin:10px 0;border-radius:6px;color:#856404;">
+      <b>DEBUG:</b> default_nickname1 = <code>{{ user_profile.default_nickname1 }}</code> ， default_nickname2 = <code>{{ user_profile.default_nickname2 }}</code>
+    </div>
+  {% else %}
+    <div style="background:#f8d7da;padding:8px 16px;margin:10px 0;border-radius:6px;color:#721c24;">
+      <b>DEBUG:</b> user_profile is <code>None</code>（查無個人資料，請先到個人資料設定頁填寫）
+    </div>
+  {% endif %}
+
   <div class="container container-flex" data-aos="fade-up">
 
     <!-- 左側邊欄 -->
@@ -273,7 +293,7 @@
           {% if favorites %}
             {% for fav in favorites %}
               <li>
-                <a href="javascript:void(0)" onclick="openChatroom({{ fav.chat_room.id }})">
+                <a href="javascript:void(0)" onclick="openChatroom('{{ fav.chat_room.id }}')">
                   {{ fav.chat_room.city }} {{ fav.chat_room.district }}
                 </a>
               </li>
@@ -294,9 +314,22 @@
         <span id="favoriteBtn" class="favorite-btn" title="點擊收藏/取消收藏" role="button" tabindex="0" aria-pressed="false" aria-label="收藏聊天室">☆ 收藏</span>
       </div>
       <div class="chat-window" id="chatWindow" tabindex="0" aria-label="聊天訊息區">
-        <!-- 訊息區 -->
+        <!-- 訊息區（由 JavaScript 動態渲染） -->
       </div>
       <div class="chat-input-area mt-3">
+        <select id="nicknameSelect" class="form-select" style="max-width: 140px;">
+          <option value="">匿名</option>
+          {% if user_profile.default_nickname1 %}
+            <option value="{{ user_profile.default_nickname1 }}" data-link="{% url 'about' %}">
+              {{ user_profile.default_nickname1 }}
+            </option>
+          {% endif %}
+          {% if user_profile.default_nickname2 %}
+            <option value="{{ user_profile.default_nickname2 }}" data-link="{% url 'about' %}">
+              {{ user_profile.default_nickname2 }}
+            </option>
+          {% endif %}
+        </select>
         <input type="text" id="chatInput" placeholder="輸入留言..." autocomplete="off" aria-label="輸入聊天訊息" />
         <button class="btn btn-primary" onclick="sendMessage()" aria-label="送出訊息">送出</button>
       </div>
@@ -449,30 +482,58 @@
     chatWindow.scrollTop = chatWindow.scrollHeight;
   }
 
+  // 點擊暱稱選單時，若點到暱稱選項，跳轉到個人資料設定
+  document.addEventListener('DOMContentLoaded', function() {
+    const nicknameSelect = document.getElementById('nicknameSelect');
+    if (nicknameSelect) {
+      nicknameSelect.addEventListener('change', function(e) {
+        const selected = nicknameSelect.options[nicknameSelect.selectedIndex];
+        const link = selected.getAttribute('data-link');
+        if (link) {
+          // 跳轉到個人資料設定頁
+          window.open(link, '_blank');
+        }
+      });
+    }
+  });
+
   function sendMessage() {
-    if (!currentRoomId) return alert('請先選擇聊天室');
-    const msg = chatInput.value.trim();
-    if (!msg) return;
+    const message = document.getElementById("chatInput").value.trim();
+    const nickname = document.getElementById("nicknameSelect").value;
+
+    if (!message) {
+      alert("訊息不能為空！");
+      return;
+    }
+
+    // 直接使用外層的 currentRoomId
+    if (!currentRoomId) {
+      alert("請先選擇聊天室！");
+      return;
+    }
 
     fetch(`/chat/send/${currentRoomId}/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-CSRFToken': getCookie('csrftoken'),
+        'X-CSRFToken': getCookie('csrftoken')
       },
-      body: JSON.stringify({message: msg})
+      body: JSON.stringify({
+        message: message,
+        nickname: nickname
+      })
     })
-    .then(res => res.json())
+    .then(response => response.json())
     .then(data => {
-      if (data.status === 'success') {
-        chatInput.value = '';
-        openChatroom(currentRoomId);
+      if (data.status === 'ok') {
+        document.getElementById("chatInput").value = "";
       } else {
-        alert('送訊息失敗: ' + (data.msg || '未知錯誤'));
+        alert("發送失敗：" + data.msg);
       }
-    })
-    .catch(() => alert('送訊息時發生錯誤'));
+    });
   }
+
+
 
   function updateFavoriteBtn(id) {
     if (favoriteChatrooms.has(id)) {
