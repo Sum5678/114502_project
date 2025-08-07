@@ -8,8 +8,8 @@ from django.urls import path
 from .views import PemapAllListView, PemapAllUpdateView
 
 urlpatterns = [
-    #思璇
-    path('chatrooms/', views.chatroom_map, name='chatroom_map'),
+    # #思璇
+    # path('chatrooms/', views.chatroom_map, name='chatroom_map'),
     path('api/submit_report/', views.submit_report, name='submit_report'),
     path('api/submit_store/', views.submit_store, name='submit_store'),
     path('business/upload/', views.business_upload, name='business_upload'),
@@ -84,7 +84,6 @@ urlpatterns = [
     #想的
     # 一般頁面
     path('announcement/', views.announcement, name='announcement'),
-    path('chatroom/', views.chatroom, name='chatroom'),
     path('form/', views.form, name='form'),
     path('safety/', views.safety, name='safety'),
     path('autodial/', views.autodial, name='autodial'),
