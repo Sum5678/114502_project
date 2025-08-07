@@ -572,9 +572,14 @@
     .catch(() => alert('切換收藏失敗'));
   };
 
-  chatInput.addEventListener('keydown', e => {
-    if (e.key === 'Enter') sendMessage();
+  nicknameSelect.addEventListener('change', function () {
+      const selectedNickname = nicknameSelect.value;
+      nicknameDisplay.textContent = selectedNickname === 'anonymous' ? '匿名' : selectedNickname;
   });
+
+  // 初始化顯示一次（避免 undefined）
+  nicknameDisplay.textContent = nicknameSelect.value === 'anonymous' ? '匿名' : nicknameSelect.value;
+
 
   function getCookie(name) {
     let cookieValue = null;
