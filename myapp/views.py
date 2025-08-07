@@ -2277,11 +2277,13 @@ from django.views.decorators.csrf import csrf_exempt
 import json
 
 # 取得聊天室訊息
+from .models import ChatMessage
+
 def chat_messages_api(request, room_id):
     if request.method == 'GET':
-        # 假設你有 ChatMessage model
         messages = ChatMessage.objects.filter(region=room_id).order_by('timestamp')
         data = [{
+            'nickname': msg.nickname,  # 這裡加上 nickname
             'user_id': msg.user.username if msg.user else '匿名',
             'message': msg.message,
             'timestamp': msg.timestamp.strftime('%Y-%m-%d %H:%M:%S')
@@ -2348,25 +2350,6 @@ def chat_send_api(request, room_id):
 #         return JsonResponse({'status': 'success'})
 
 
-# @login_required
-# def chat_send_api(request, room_id):
-#     if request.method == 'POST':
-#         data = json.loads(request.body)
-#         message = data.get('message')
-#         if not message:
-#             return JsonResponse({'status': 'error', 'msg': '訊息不能為空'})
-
-#         try:
-#             user_profile = ThisUserProfile.objects.get(gmail=request.user.email)
-#         except ThisUserProfile.DoesNotExist:
-#             return JsonResponse({'status': 'error', 'msg': '找不到對應的使用者資料'})
-
-#         ChatMessage.objects.create(
-#             user=user_profile,
-#             region=room_id,
-#             message=message
-#         )
-#         return JsonResponse({'status': 'success'})
 
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
@@ -2374,7 +2357,7 @@ from django.http import JsonResponse
 import json
 
 @login_required
-@csrf_exempt  # 若未使用 CSRF token 驗證
+@csrf_exempt
 def send_message(request, room_id):
     if request.method == 'POST':
         try:
@@ -2388,22 +2371,28 @@ def send_message(request, room_id):
         if not message_text:
             return JsonResponse({'status': 'error', 'msg': '訊息不可為空'})
 
-        # 取得 ThisUserProfile 物件
         try:
             user_profile = ThisUserProfile.objects.get(gmail=request.user.email)
         except ThisUserProfile.DoesNotExist:
             return JsonResponse({'status': 'error', 'msg': '找不到使用者資料'})
 
-        ChatMessage.objects.create(
+        chat_msg = ChatMessage.objects.create(
             user=user_profile,
             region=room_id,
             message=message_text,
             nickname=nickname if nickname else None
         )
 
-        return JsonResponse({'status': 'ok'})
+        # 回傳剛送出的訊息內容（含 nickname）
+        return JsonResponse({
+            'status': 'ok',
+            'message': {
+                'nickname': chat_msg.nickname,
+                'message': chat_msg.message,
+                'timestamp': chat_msg.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+            }
+        })
 
-    # 所有非 POST 請求都帶 msg
     return JsonResponse({'status': 'error', 'msg': '僅接受 POST'})
 
 
@@ -2515,21 +2504,6 @@ def chatrooms_api(request):
 #         'favorite_ids': json.dumps(favorite_ids),  # 一定要用 json.dumps 包成字串
 #         # 其他 context ...
 #     })
-
-# @login_required
-# def chatroom_page(request):
-#     user_profile = request.user.thisuserprofile  # 假設你User關聯ThisUserProfile是這樣取的
-#     favorites = FavoriteChatRoom.objects.filter(user=user_profile).select_related('chat_room')
-
-#     # 傳給模板的收藏清單（favorites）和收藏聊天室 ID 陣列（用於前端 JS）
-#     favorite_chatroom_ids = [fav.chat_room.id for fav in favorites]
-
-#     context = {
-#         'favorites': favorites,
-#         'favorite_chatroom_ids': favorite_chatroom_ids,
-#         # 其他你模板需要的變數...
-#     }
-#     return render(request, 'chatroom_page.html', context)
 
 @login_required
 def chatroom_page(request):
