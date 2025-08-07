@@ -2368,30 +2368,42 @@ def chat_send_api(request, room_id):
 #         )
 #         return JsonResponse({'status': 'success'})
 
+from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
 import json
 
 @login_required
-@csrf_exempt  # 或使用 CSRF token 驗證
+@csrf_exempt  # 若未使用 CSRF token 驗證
 def send_message(request, room_id):
     if request.method == 'POST':
-        data = json.loads(request.body)
+        try:
+            data = json.loads(request.body)
+        except Exception:
+            return JsonResponse({'status': 'error', 'msg': '資料格式錯誤'})
+
         message_text = data.get('message')
+        nickname = data.get('nickname', '').strip()
+
         if not message_text:
             return JsonResponse({'status': 'error', 'msg': '訊息不可為空'})
 
-        # 取得目前登入使用者
-        user = request.user
+        # 取得 ThisUserProfile 物件
+        try:
+            user_profile = ThisUserProfile.objects.get(gmail=request.user.email)
+        except ThisUserProfile.DoesNotExist:
+            return JsonResponse({'status': 'error', 'msg': '找不到使用者資料'})
 
-        # 假設有 ChatMessage model，並且有 user 外鍵
         ChatMessage.objects.create(
-            user=user,
-            region=room_id,  # 或改成區域代碼
+            user=user_profile,
+            region=room_id,
             message=message_text,
+            nickname=nickname if nickname else None
         )
+
         return JsonResponse({'status': 'ok'})
+
+    # 所有非 POST 請求都帶 msg
     return JsonResponse({'status': 'error', 'msg': '僅接受 POST'})
 
 
@@ -2399,19 +2411,49 @@ def send_message(request, room_id):
 from django.contrib.auth.decorators import login_required
 from .models import ThisUserProfile, FavoriteChatRoom
 
+
+
 @login_required
 def chatroom_view(request):
-    user = request.user
     try:
-        user_profile = ThisUserProfile.objects.get(gmail=user.email)
+        user_profile = ThisUserProfile.objects.get(gmail=request.user.email)
         favorites = FavoriteChatRoom.objects.filter(user=user_profile).select_related('chat_room')
     except ThisUserProfile.DoesNotExist:
+        user_profile = None
         favorites = []
 
+    favorite_ids = [fav.chat_room.id for fav in favorites]
+
+    # Debug print: 比對 request.user.email 與 ThisUserProfile 所有 gmail
+    print('DEBUG: request.user.email =', repr(request.user.email))
+    print('DEBUG: ThisUserProfile 所有 gmail =', list(ThisUserProfile.objects.values_list('gmail', flat=True)))
+
     return render(request, 'chatroom.html', {
+        'user_profile': user_profile,
         'favorites': favorites,
-        # ...其他 context 也可以放這裡
+        'favorite_chatroom_ids': favorite_ids,
     })
+
+
+# @login_required
+# def chatroom_view(request):
+#     user = request.user
+#     # user_gmail = user.username  # 這裡直接用 username 當 gmail
+#     # logging.warning(f"[chatroom_view] 目前登入帳號 username(當gmail): {user_gmail}")
+#     try:
+#         user_profile = ThisUserProfile.objects.get(gmail=user.username)
+#         favorites = FavoriteChatRoom.objects.filter(user=user_profile).select_related('chat_room')
+#     except ThisUserProfile.DoesNotExist:
+#         user_profile = None
+#         favorites = []
+
+#     favorite_chatroom_ids = [fav.chat_room.id for fav in favorites]
+
+#     return render(request, 'chatroom.html', {
+#         'user_profile': user_profile,
+#         'favorites': favorites,
+#         'favorite_chatroom_ids': favorite_chatroom_ids,
+#     })
 
 
 
@@ -2501,24 +2543,23 @@ def chatrooms_api(request):
 def chatroom_page(request):
     try:
         user_profile = ThisUserProfile.objects.get(gmail=request.user.email)
-        print(f"User profile found: {user_profile}")
+        favorites = FavoriteChatRoom.objects.filter(user=user_profile).select_related('chat_room')
     except ThisUserProfile.DoesNotExist:
         user_profile = None
-        print("User profile not found")
-
-    if user_profile:
-        favorites = FavoriteChatRoom.objects.filter(user=user_profile).select_related('chat_room')
-        print(f"Favorites count: {favorites.count()}")
-    else:
         favorites = []
 
-    favorite_chatroom_ids = list(favorites.values_list('chat_room__id', flat=True)) if favorites else []
+    favorite_ids = [fav.chat_room.id for fav in favorites]
 
-    context = {
+    # Debug print: 比對 request.user.email 與 ThisUserProfile 所有 gmail
+    print('DEBUG: request.user.email =', repr(request.user.email))
+    print('DEBUG: ThisUserProfile 所有 gmail =', list(ThisUserProfile.objects.values_list('gmail', flat=True)))
+
+    return render(request, 'chatroom.html', {
+        'user_profile': user_profile,
         'favorites': favorites,
-        'favorite_chatroom_ids': json.dumps(favorite_chatroom_ids),
-    }
-    return render(request, 'chatroom.html', context)
+        'favorite_chatroom_ids': favorite_ids,
+    })
+
 
 
 # @login_required
