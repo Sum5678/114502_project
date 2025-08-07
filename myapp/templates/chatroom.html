@@ -226,16 +226,33 @@
       <h1 class="sitename mb-0">怪怪走開，護您安全</h1>
     </a>
     <nav id="navmenu" class="navmenu">
-      <ul class="list-unstyled d-flex mb-0 flex-wrap">
-        <li class="me-3"><a href="{% url 'home' %}#hero" class="nav-link px-2 py-1">主頁</a></li>
-        <li class="me-3"><a href="{% url 'home' %}#services" class="nav-link px-2 py-1">簡介及功能介紹</a></li>
-        <li class="me-3"><a href="{% url 'report' %}" class="nav-link px-2 py-1">填寫表單</a></li>
-        <li class="me-3"><a href="{% url 'business_upload' %}" class="nav-link px-2 py-1">商家填單</a></li>
-        <li class="me-3"><a href="{% url 'post' %}" class="nav-link px-2 py-1">我要發文</a></li>
-        <li class="me-3"><a href="{% url 'map' %}" class="nav-link px-2 py-1">事件地圖</a></li>
-        <li><a href="{% url 'harassment_prevention' %}" class="nav-link px-2 py-1">防騷指南</a></li>
-      </ul>
-    </nav>
+        <ul>
+          <li><a href="{% url 'home' %}#hero">主頁</a></li>
+          <li><a href="index.html#services">簡介及功能介紹</a></li>
+          <li><a href="{% url 'report' %}">填寫表單</a></li>
+          <li><a href="{% url 'business_upload' %}">商家填單</a></li>
+          <li><a href="{% url 'about' %}">個人資料設定</a></li>
+          <li><a href="{% url 'chatroom_page' %}">聊天室</a></li>
+        <li class="dropdown">
+          <a href="#"><span>交流區</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+          <ul>
+            <li><a href="{% url 'post' %}#hero">我要發文</a></li>
+            <li><a href="{% url 'post_display' %}">貼文總覽</a></li>
+          </ul>
+        </li>
+          
+          <li class="dropdown"><a href="#"><span>地圖</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+            <ul>
+              <li><a href="{% url 'map' %}">事件地圖</a></li>
+              <li><a href="{% url 'store_map' %}">商家地圖</a></li>
+            </ul> 
+          </li>
+          
+          <li><a href="{% url 'harassment_prevention' %}">防騷指南</a></li>
+
+        </ul>
+        <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+      </nav>
     {% if request.user.is_authenticated %}
       <div class="dropdown">
         <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown" aria-expanded="false">{{ request.user.username }}</a>
