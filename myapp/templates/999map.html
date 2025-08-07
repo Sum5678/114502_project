@@ -172,7 +172,14 @@
 
   // 從後端 API 取得報告資料並畫標記
   function fetchReportsAndRenderMarkers(kind, subkind) {
-    fetch("{% url 'reports_with_subkind_json' %}")
+    fetch("{% url 'reports_with_subkind_json' %}", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')  // 請確保 CSRF token 有設定
+      },
+      body: JSON.stringify({ kind, subkind })
+    })
       .then(response => {
         if (!response.ok) throw new Error("Network response was not ok");
         return response.json();
@@ -180,11 +187,13 @@
       .then(data => {
         reports = data;
         renderMarkers(kind, subkind);
+        promptNearbyEvents();
       })
       .catch(error => {
         console.error("fetch 錯誤:", error);
       });
   }
+
 
   // 渲染地圖標記
   function renderMarkers(kind, subkind) {
@@ -218,6 +227,8 @@
 
     const bounds = new google.maps.LatLngBounds();
 
+    let infoWindow = new google.maps.InfoWindow();
+
     filtered.forEach(r => {
       if (typeof r.latitude === "number" && typeof r.longitude === "number") {
         const marker = new google.maps.Marker({
@@ -232,10 +243,17 @@
           }
         });
 
+        // 圖片 HTML，如果有圖才顯示
+        let imgHtml = "";
+        if (r.img_url && r.img_url.trim() !== "") {
+          imgHtml = `<br><img src="${r.img_url}" alt="附加圖片" style="max-width:200px; max-height:150px; margin-top:5px; border-radius:4px;" />`;
+        }
+
         const infowindow = new google.maps.InfoWindow({
           content: `<strong>${r.display_name}</strong><br>
+                    發布者: ${r.poster_id || '未知'}<br>
                     原因: ${r.reason || '無'}<br>
-                    時間: ${r.time_created || '未知'}`
+                    時間: ${r.time_created || '未知'}${imgHtml}`
         });
 
         marker.addListener("click", () => {
@@ -244,10 +262,9 @@
 
         allMarkers.push(marker);
         bounds.extend(marker.getPosition());
-      } else {
-        console.warn("經緯度格式錯誤:", r);
       }
     });
+
 
     map.fitBounds(bounds);
   }
@@ -291,20 +308,7 @@
     return R * c;
   }
 
-  // 新增一個函式判斷使用者附近事件數量並通知
-  // function checkNearbyEvents(userLat, userLng) {
-  //   const nearbyEvents = reports.filter(r => {
-  //     if (typeof r.latitude === "number" && typeof r.longitude === "number") {
-  //       const dist = getDistanceMeters(userLat, userLng, r.latitude, r.longitude);
-  //       return dist <= 500;  // 500公尺內
-  //     }
-  //     return false;
-  //   });
-
-  //   if (nearbyEvents.length > 5) {
-  //     alert(`您附近 500 公尺內有 ${nearbyEvents.length} 起事件，請注意安全！`);
-  //   }
-  // }
+  
   function checkNearbyEvents(userLat, userLng) {
     const nearbyEvents = reports.filter(r => {
       if (typeof r.latitude === "number" && typeof r.longitude === "number") {

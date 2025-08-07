@@ -127,6 +127,8 @@ urlpatterns = [
     path('chat/toggle_favorite/', views.toggle_favorite, name='toggle_favorite'),
     path('toggle_favorite/', views.toggle_favorite, name='toggle_favorite'),
     path('chatrooms/', views.chatroom_page, name='chatroom_page'),
+    path('api/reports.json', views.reports_with_subkind_json, name='reports_with_subkind_json'),
+
 
     
 

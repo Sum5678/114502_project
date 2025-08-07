@@ -813,57 +813,7 @@ from .models import PemapAll
 
 
 
-#!!!!!!!!!!!!!!!!!!!!!好像是思璇的要說!!!!!!!!!!!!!!!!!!!
-#
-#
-# @csrf_exempt
-# def submit_report(request):
-#     if request.method == 'POST':
-#         try:
-#             data = json.loads(request.body)
 
-#             # 自動產生 poster_id（例如用目前時間戳 + email）
-#             poster_id = int(timezone.now().strftime("%Y%m%d%H%M%S"))
- 
-#             display_name = data.get('display_name', '')
-#             kind = data.get('kind', '')
-#             reason = data.get('reason', '')
-#             address = data.get('address', '')
-
-#             # 分離經緯度
-#             latitude = 0
-#             longitude = 0
-#             if ',' in address:
-#                 parts = [p.strip() for p in address.split(',')]
-#                 if len(parts) >= 2:
-#                     try:
-#                         latitude = float(parts[0])
-#                         longitude = float(parts[1])
-#                     except ValueError:
-#                         pass  # 維持預設 0
-
-#             img_url = data.get('img_url', '')  # 這就是 base64
-
-#             # 寫入資料表
-#             PemapAll.objects.create(
-#                 poster_id=poster_id,
-#                 display_name=display_name,
-#                 kind=kind,
-#                 reason=reason,
-#                 address=address,
-#                 latitude=latitude,
-#                 longitude=longitude,
-#                 img_url=img_url,
-#                 time_created=timezone.now(),
-#                 review_status="待審核"
-#             )
-
-#             return JsonResponse({"status": "success"})
-
-#         except Exception as e:
-#             return JsonResponse({"status": "error", "message": str(e)})
-#     else:
-#         return JsonResponse({"status": "error", "message": "Invalid method"})
     
 def room(request, room_name):
     return render(request, 'test_0610chatroom.html', {'room_name': room_name})
@@ -1865,11 +1815,47 @@ def store_decide(request):
 
     
 #----------------使用者 事件地圖--------------
+# from django.http import JsonResponse
+# from .models import PemapAll
+
+# def approved_locations_api(request):
+#     approved = PemapAll.objects.filter(review_status='已通過')  # 只取審核通過的
+#     data = []
+
+#     for item in approved:
+#         data.append({
+#             'id': item.p_id,
+#             'title': item.display_name,
+#             'kind': item.kind,
+#             'reason': item.reason,
+#             'lat': item.latitude,
+#             'lng': item.longitude,
+#         })
+
+#     return JsonResponse(data, safe=False)
+
 from django.http import JsonResponse
 from .models import PemapAll
 
+# def approved_locations_api(request):
+#     approved = PemapAll.objects.filter(review_status='已通過')  # 只取審核通過的
+#     data = []
+
+#     for item in approved:
+#         data.append({
+#             'id': item.p_id,
+#             'title': item.display_name,
+#             'kind': item.kind,
+#             'reason': item.reason or "未填寫",  # 如果是空字串或 None，給「未填寫」
+#             'lat': item.latitude,
+#             'lng': item.longitude,
+#         })
+
+#     return JsonResponse(data, safe=False)
+
+
 def approved_locations_api(request):
-    approved = PemapAll.objects.filter(review_status='已通過')  # 只取審核通過的
+    approved = PemapAll.objects.filter(review_status='已通過')
     data = []
 
     for item in approved:
@@ -1877,9 +1863,54 @@ def approved_locations_api(request):
             'id': item.p_id,
             'title': item.display_name,
             'kind': item.kind,
-            'reason': item.reason,
+            'reason': item.reason or "未填寫",
             'lat': item.latitude,
             'lng': item.longitude,
+        })
+
+    print(data)  # 看看資料格式和內容
+    return JsonResponse(data, safe=False)
+
+
+# from django.http import JsonResponse
+# from django.utils.timezone import localtime
+# from .models import PemapAll
+
+# def reports_with_subkind_json(request):
+#     approved = PemapAll.objects.filter(review_status='已通過')
+
+#     data = []
+#     for item in approved:
+#         data.append({
+#             "display_name": item.display_name,
+#             "reason": item.reason or "未填寫",
+#             "time_created": localtime(item.time_created).strftime("%Y-%m-%d %H:%M:%S") if item.time_created else "未知",
+#             "latitude": item.latitude,
+#             "longitude": item.longitude,
+#             "kind": item.kind or "",
+#             "subkind": item.subkind or "",
+#         })
+
+#     return JsonResponse(data, safe=False)
+from django.http import JsonResponse
+from .models import PemapAll  # 假設資料表叫 PemapAll
+
+def reports_with_subkind_json(request):
+    # 可以加條件只回傳已審核通過的資料，避免回傳過多或不合規資料
+    reports = PemapAll.objects.filter(review_status='approved')  # 假設有這欄位過濾
+
+    # 轉成前端需要的 JSON 格式列表
+    data = []
+    for r in reports:
+        data.append({
+            "id": r.id,
+            "kind": r.kind,
+            "subkind": r.subkind,
+            "latitude": r.latitude,
+            "longitude": r.longitude,
+            "display_name": r.display_name or r.title or "無名稱",
+            "reason": r.reason or "",
+            "time_created": r.time_created.strftime("%Y-%m-%d %H:%M:%S") if r.time_created else "",
         })
 
     return JsonResponse(data, safe=False)
