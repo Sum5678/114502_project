@@ -254,9 +254,9 @@
 
   <!-- DEBUG 暱稱顯示區塊，僅開發用 -->
 
-  <div style="background:#e2e3e5;padding:8px 16px;margin:10px 0;border-radius:6px;color:#383d41;">
+  <!-- <div style="background:#e2e3e5;padding:8px 16px;margin:10px 0;border-radius:6px;color:#383d41;">
     <b>DEBUG:</b> 目前登入帳號 email: <code>{{ request.user.email }}</code>
-    <!-- Debug: 暱稱 -->
+   
     <p>nickname1: {{ user_profile.default_nickname1 }}</p>
     <p>nickname2: {{ user_profile.default_nickname2 }}</p>
 
@@ -269,7 +269,7 @@
     <div style="background:#f8d7da;padding:8px 16px;margin:10px 0;border-radius:6px;color:#721c24;">
       <b>DEBUG:</b> user_profile is <code>None</code>（查無個人資料，請先到個人資料設定頁填寫）
     </div>
-  {% endif %}
+  {% endif %} -->
 
   <div class="container container-flex" data-aos="fade-up">
 
@@ -469,6 +469,7 @@
     }
   }
 
+  f// ...existing code...
   function renderMessages(messages) {
     chatWindow.innerHTML = '';
     if (messages.length === 0) {
@@ -476,14 +477,18 @@
       return;
     }
     messages.forEach(msg => {
-      // 優先顯示 ChatMessage 裡的 nickname
-      const displayName = msg.nickname || msg.username || msg.user_id || '匿名';
+      // 只顯示 nickname，沒有就顯示「匿名」
+      const displayName = msg.nickname ? msg.nickname : '匿名';
       const p = document.createElement('p');
       p.textContent = `${displayName}：${msg.message}`;
       chatWindow.appendChild(p);
     });
     chatWindow.scrollTop = chatWindow.scrollHeight;
+
   }
+// ...existing code...
+
+
   // 點擊暱稱選單時，若點到暱稱選項，跳轉到個人資料設定
   document.addEventListener('DOMContentLoaded', function() {
     const nicknameSelect = document.getElementById('nicknameSelect');
