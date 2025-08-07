@@ -476,13 +476,14 @@
       return;
     }
     messages.forEach(msg => {
+      // 優先顯示 ChatMessage 裡的 nickname
+      const displayName = msg.nickname || msg.username || msg.user_id || '匿名';
       const p = document.createElement('p');
-      p.textContent = `${msg.username}：${msg.message}`;
+      p.textContent = `${displayName}：${msg.message}`;
       chatWindow.appendChild(p);
     });
     chatWindow.scrollTop = chatWindow.scrollHeight;
   }
-
   // 點擊暱稱選單時，若點到暱稱選項，跳轉到個人資料設定
   document.addEventListener('DOMContentLoaded', function() {
     const nicknameSelect = document.getElementById('nicknameSelect');
@@ -498,7 +499,8 @@
     }
   });
 
-  function sendMessage() {
+  // ...existing code...
+function sendMessage() {
     const message = document.getElementById("chatInput").value.trim();
     const nickname = document.getElementById("nicknameSelect").value;
 
@@ -506,8 +508,6 @@
       alert("訊息不能為空！");
       return;
     }
-
-    // 直接使用外層的 currentRoomId
     if (!currentRoomId) {
       alert("請先選擇聊天室！");
       return;
@@ -528,6 +528,17 @@
     .then(data => {
       if (data.status === 'ok') {
         document.getElementById("chatInput").value = "";
+        // 直接顯示剛送出的訊息
+        if (data.message) {
+          const p = document.createElement('p');
+          const displayName = data.message.nickname || '匿名';
+          p.textContent = `${displayName}：${data.message.message}`;
+          chatWindow.appendChild(p);
+          chatWindow.scrollTop = chatWindow.scrollHeight;
+        } else {
+          // 若沒有即時訊息，則重新載入全部訊息
+          openChatroom(currentRoomId);
+        }
       } else {
         alert("發送失敗：" + data.msg);
       }
