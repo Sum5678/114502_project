@@ -2443,11 +2443,127 @@ def add_to_favorites(request):
     else:
         return JsonResponse({'status': 'exists', 'message': '已經收藏過了'})
 
+# from django.http import JsonResponse
+# from .models import ChatRoom
+
+# def chatrooms_api(request):
+#     chatrooms = ChatRoom.objects.all()
+#     data = []
+#     for room in chatrooms:
+#         data.append({
+#             'id': room.id,
+#             'name': room.name,
+#             'city': room.city,
+#             'district': room.district,
+#             'click_count': room.click_count,
+#         })
+#     return JsonResponse(data, safe=False)
+
 
 from django.http import JsonResponse
+from .models import ChatRoom  # 假設是 ChatRoom
+
+def chatrooms_api(request):
+    data = list(ChatRoom.objects.values('id', 'code', 'city', 'district', 'click_count'))
+    return JsonResponse(data, safe=False)
+
+
+
+
+# import json
+
+# @login_required
+# def chatroom_page(request):
+#     try:
+#         profile = ThisUserProfile.objects.get(gmail=request.user.email)
+#         favorites = FavoriteChatRoom.objects.filter(user=profile).values_list('chat_room_id', flat=True)
+#         favorite_ids = list(favorites)
+#     except ThisUserProfile.DoesNotExist:
+#         favorite_ids = []
+
+#     return render(request, 'chatroom.html', {
+#         'favorite_ids': json.dumps(favorite_ids),  # 一定要用 json.dumps 包成字串
+#         # 其他 context ...
+#     })
+
+
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from .models import FavoriteChatRoom
+
+# @login_required
+# def chatroom_page(request):
+#     user_profile = request.user.thisuserprofile  # 假設你User關聯ThisUserProfile是這樣取的
+#     favorites = FavoriteChatRoom.objects.filter(user=user_profile).select_related('chat_room')
+
+#     # 傳給模板的收藏清單（favorites）和收藏聊天室 ID 陣列（用於前端 JS）
+#     favorite_chatroom_ids = [fav.chat_room.id for fav in favorites]
+
+#     context = {
+#         'favorites': favorites,
+#         'favorite_chatroom_ids': favorite_chatroom_ids,
+#         # 其他你模板需要的變數...
+#     }
+#     return render(request, 'chatroom_page.html', context)
+
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+from .models import FavoriteChatRoom, ThisUserProfile
+
+@login_required
+def chatroom_page(request):
+    try:
+        user_profile = ThisUserProfile.objects.get(user=request.user)
+    except ThisUserProfile.DoesNotExist:
+        user_profile = None
+
+    favorites = []
+    favorite_chatroom_ids = []
+    if user_profile:
+        favorites = FavoriteChatRoom.objects.filter(user=user_profile).select_related('chat_room')
+        favorite_chatroom_ids = [fav.chat_room.id for fav in favorites]
+
+    return render(request, 'chatroom_page.html', {
+        'favorites': favorites,
+        'favorite_chatroom_ids': favorite_chatroom_ids,
+    })
+
+
+
+# @login_required
+# def chatroom_page(request):
+#     try:
+#         profile = ThisUserProfile.objects.get(gmail=request.user.email)
+#         favorites = FavoriteChatRoom.objects.filter(user=profile).values_list('chat_room_id', flat=True)
+#         favorite_ids = list(favorites)
+#     except ThisUserProfile.DoesNotExist:
+#         favorite_ids = []
+
+#     return render(request, 'chatroom.html', {
+#         'favorite_ids': json.dumps(favorite_ids),  # 傳給前端的json字串
+#         # 其他 context...
+#     })
+
+import json
+
+def chatroom_view(request):
+    favorites = ...  # 你的收藏物件列表
+    favorite_ids = [f.chat_room.id for f in favorites]
+    context = {
+        'favorites': favorites,
+        'favorite_chatroom_ids': json.dumps(favorite_ids),  # 一定要 json.dumps
+    }
+    return render(request, 'chatroom.html', context)
+
+
+
+
+
+
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404
+from django.http import JsonResponse
 from .models import ChatRoom, FavoriteChatRoom, ThisUserProfile
 
 @require_POST
@@ -2465,41 +2581,4 @@ def toggle_favorite(request):
     else:
         # 尚未收藏 -> 新增收藏
         FavoriteChatRoom.objects.create(user=user_profile, chat_room=chat_room)
-        return JsonResponse({'status': 'added'})
-
-
-import json
-
-def chatroom_page(request):
-    favorites = FavoriteChatRoom.objects.filter(user__gmail=request.user.email).values_list('chat_room__id', flat=True)
-    context = {
-        # 其他 context
-        'favorite_ids': json.dumps(list(favorites)),  # 轉成 JSON 字串
-    }
-    return render(request, 'chatroom.html', context)
-
-
-from django.http import JsonResponse
-from django.views.decorators.http import require_POST
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import get_object_or_404
-from .models import ChatRoom, FavoriteChatRoom
-
-@login_required
-@require_POST
-def toggle_favorite(request):
-    user = request.user
-    room_id = request.POST.get('room_id')
-    if not room_id:
-        return JsonResponse({'status': 'error', 'msg': '缺少room_id'})
-
-    chatroom = get_object_or_404(ChatRoom, id=room_id)
-
-    fav, created = FavoriteChatRoom.objects.get_or_create(user=user, chat_room=chatroom)
-    if not created:
-        # 已收藏，取消收藏
-        fav.delete()
-        return JsonResponse({'status': 'removed'})
-    else:
-        # 新增收藏
         return JsonResponse({'status': 'added'})
