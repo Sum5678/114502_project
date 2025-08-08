@@ -1507,32 +1507,42 @@ def store_judge(request):
 
 
 #--step1
-# from django.shortcuts import render, get_object_or_404, redirect
-# from .models import PemapAll
+
+
+
+# from django.urls import reverse
 
 # def pemap_judge_step1(request, p_id):
 #     form_data = get_object_or_404(PemapAll, p_id=p_id)
 
+#     admin_id = request.session.get('admin_id')
+#     admin_name = request.session.get('admin_name', '未知管理員')
+
+#     if not admin_id:
+#         return redirect('admin_login')
+
 #     if request.method == 'POST':
 #         new_status = request.POST.get('review_status')
 #         if new_status is not None and new_status.isdigit():
-#             form_data.review_status = int(new_status)
+#             new_status_int = int(new_status)
+#             form_data.review_status = new_status_int
 #             form_data.time_reviewed = timezone.now()
+#             form_data.admin_id = admin_id  
 
-#             # 👉 記錄修改人（例如存 log、或印出 log）
-#             admin_name = request.session.get('admin_name', '未知管理員')
-#             print(f"表單 {p_id} 被 {admin_name} 修改狀態為 {new_status}")
+#             print(f"表單 {p_id} 被 {admin_name} 修改狀態為 {new_status_int}")
 
 #             form_data.save()
-#             return redirect('pemap_judge')  # 完成後回事件清單頁
 
-#     return render(request, 'pemap_judge_step1.html', {
-#         'item': form_data
-#     })
+#             if new_status_int == 4:  # 人工審核未通過
+#                 url = reverse('admin_send_email') + f'?p_id={p_id}'
+#                 return redirect(url)
 
+#             return redirect('pemap_judge')
 
-
+from django.shortcuts import redirect
 from django.urls import reverse
+from django.utils import timezone
+from django.shortcuts import get_object_or_404, render
 
 def pemap_judge_step1(request, p_id):
     form_data = get_object_or_404(PemapAll, p_id=p_id)
@@ -1551,12 +1561,10 @@ def pemap_judge_step1(request, p_id):
             form_data.time_reviewed = timezone.now()
             form_data.admin_id = admin_id  
 
-            print(f"表單 {p_id} 被 {admin_name} 修改狀態為 {new_status_int}")
-
             form_data.save()
 
             if new_status_int == 4:  # 人工審核未通過
-                url = reverse('admin_send_email') + f'?p_id={p_id}'
+                url = reverse('admin_send_email', kwargs={'p_id': p_id})
                 return redirect(url)
 
             return redirect('pemap_judge')
@@ -1566,6 +1574,13 @@ def pemap_judge_step1(request, p_id):
         'admin_id': admin_id,
         'admin_name': admin_name,
     })
+
+
+#     return render(request, 'pemap_judge_step1.html', {
+#         'item': form_data,
+#         'admin_id': admin_id,
+#         'admin_name': admin_name,
+#     })
 
 # from django.shortcuts import render, get_object_or_404, redirect
 # from .models import PemapAll
@@ -2230,25 +2245,77 @@ def post_display(request):
 
 
 #------------事件表單拒絕後傳送-------
+# from django.core.mail import send_mail
+# from django.http import HttpResponse
+
+# @login_required
+# def admin_send_email(request):
+#     p_id = request.GET.get('p_id')
+#     item = PemapAll.objects.filter(p_id=p_id).first()
+#     if not item:
+#         return HttpResponse("找不到該筆資料", status=404)
+
+#     if request.method == 'POST':
+#         to_email = item.poster_gmail
+#         subject = request.POST.get('subject', '關於您的報告審核結果')
+#         message = request.POST.get('message', '')
+
+#         # 寄信 (請先設定好 Django EMAIL 設定)
+#         try:
+#             send_mail(subject, message, '你的發信地址@example.com', [to_email])
+#             return HttpResponse("郵件已寄出")
+#         except Exception as e:
+#             return HttpResponse(f"寄信失敗: {str(e)}")
+
+#     return render(request, 'admin_send_email.html', {
+#         'item': item,
+#         'to_email': item.poster_gmail,
+#     })
+
+from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404
+from django.contrib.auth.decorators import login_required
 from django.core.mail import send_mail
 from django.http import HttpResponse
 
-@login_required
-def admin_send_email(request):
-    p_id = request.GET.get('p_id')
-    item = PemapAll.objects.filter(p_id=p_id).first()
-    if not item:
-        return HttpResponse("找不到該筆資料", status=404)
+# # @login_required
+# def admin_send_email(request, p_id):  # p_id 從路徑參數取得
+#     item = get_object_or_404(PemapAll, p_id=p_id)
+
+#     if request.method == 'POST':
+#         to_email = item.poster_gmail
+#         subject = request.POST.get('subject', '關於您的報告審核結果')
+#         message = request.POST.get('message', '')
+
+#         try:
+#             send_mail(subject, message, '你的發信地址@example.com', [to_email])
+#             return HttpResponse("郵件已寄出")
+#         except Exception as e:
+#             return HttpResponse(f"寄信失敗: {str(e)}")
+
+#     return render(request, 'admin_send_email.html', {
+#         'item': item,
+#         'to_email': item.poster_gmail,
+#     })
+from django.shortcuts import redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.core.mail import send_mail
+from django.http import HttpResponse
+from .models import PemapAll
+
+# @login_required
+def admin_send_email(request, p_id):
+    item = get_object_or_404(PemapAll, p_id=p_id)
 
     if request.method == 'POST':
         to_email = item.poster_gmail
         subject = request.POST.get('subject', '關於您的報告審核結果')
         message = request.POST.get('message', '')
 
-        # 寄信 (請先設定好 Django EMAIL 設定)
         try:
             send_mail(subject, message, '你的發信地址@example.com', [to_email])
-            return HttpResponse("郵件已寄出")
+            # 寄信成功後，跳轉到管理員審核列表頁
+            return redirect('admin_decide')
         except Exception as e:
             return HttpResponse(f"寄信失敗: {str(e)}")
 
@@ -2256,6 +2323,7 @@ def admin_send_email(request):
         'item': item,
         'to_email': item.poster_gmail,
     })
+
 
 
 
@@ -2614,19 +2682,47 @@ def chatroom_view(request):
 
 
 
+# from django.views.decorators.http import require_POST
+# from django.contrib.auth.decorators import login_required
+# from django.shortcuts import get_object_or_404
+# from django.http import JsonResponse
+# from .models import ChatRoom, FavoriteChatRoom, ThisUserProfile
+
+# @require_POST
+# @login_required
+# def toggle_favorite(request):
+#     gmail = request.user.username
+#     user_profile = ThisUserProfile.objects.get(gmail=gmail)
+
+#     room_id = request.POST.get('room_id')
+#     chat_room = get_object_or_404(ChatRoom, id=room_id)
+
+#     fav_obj = FavoriteChatRoom.objects.filter(user=user_profile, chat_room=chat_room).first()
+#     if fav_obj:
+#         fav_obj.delete()
+#         return JsonResponse({'status': 'removed'})
+#     else:
+#         FavoriteChatRoom.objects.create(user=user_profile, chat_room=chat_room)
+#         return JsonResponse({'status': 'added'})
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import get_object_or_404
 from django.http import JsonResponse
-from .models import ChatRoom, FavoriteChatRoom, ThisUserProfile
+from django.shortcuts import get_object_or_404
+from myapp.models import ThisUserProfile, ChatRoom, FavoriteChatRoom
 
 @require_POST
 @login_required
 def toggle_favorite(request):
-    gmail = request.user.username
-    user_profile = ThisUserProfile.objects.get(gmail=gmail)
+    try:
+        gmail = request.user.email  # 用 email 查詢
+        user_profile = ThisUserProfile.objects.get(gmail=gmail)
+    except ThisUserProfile.DoesNotExist:
+        return JsonResponse({'status': 'error', 'msg': '找不到使用者資料'}, status=404)
 
     room_id = request.POST.get('room_id')
+    if not room_id:
+        return JsonResponse({'status': 'error', 'msg': '缺少 room_id'}, status=400)
+
     chat_room = get_object_or_404(ChatRoom, id=room_id)
 
     fav_obj = FavoriteChatRoom.objects.filter(user=user_profile, chat_room=chat_room).first()

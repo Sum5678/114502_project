@@ -333,7 +333,7 @@
       <div class="chat-window" id="chatWindow" tabindex="0" aria-label="聊天訊息區">
         <!-- 訊息區（由 JavaScript 動態渲染） -->
       </div>
-      <div class="chat-input-area mt-3">
+      <!-- <div class="chat-input-area mt-3">
         <select id="nicknameSelect" class="form-select" style="max-width: 140px;">
           <option value="">匿名</option>
           {% if user_profile.default_nickname1 %}
@@ -351,6 +351,27 @@
         <input type="text" id="chatInput" placeholder="輸入留言..." autocomplete="off" aria-label="輸入聊天訊息" />
         <button class="btn btn-primary" onclick="sendMessage()" aria-label="送出訊息">送出</button>
       </div>
+       -->
+      <div class="chat-input-area mt-3" style="align-items:center; gap:0.5rem;">
+        <select id="nicknameSelect" class="form-select" style="max-width: 140px;">
+          <option value="">匿名</option>
+          {% if user_profile.default_nickname1 %}
+            <option value="{{ user_profile.default_nickname1 }}" data-link="{% url 'about' %}">
+              {{ user_profile.default_nickname1 }}
+            </option>
+          {% endif %}
+          {% if user_profile.default_nickname2 %}
+            <option value="{{ user_profile.default_nickname2 }}" data-link="{% url 'about' %}">
+              {{ user_profile.default_nickname2 }}
+            </option>
+          {% endif %}
+        </select>
+        <span id="nicknameDisplay" style="min-width: 50px; font-weight: 600; color: #0d6efd;">匿名</span>
+        
+        <input type="text" id="chatInput" placeholder="輸入留言..." autocomplete="off" aria-label="輸入聊天訊息" />
+        <button class="btn btn-primary" onclick="sendMessage()" aria-label="送出訊息">送出</button>
+      </div>
+
     </div>
 
     <div id="chatroomData" data-favorites='{{ favorite_chatroom_ids|escapejs }}'></div>
@@ -371,6 +392,9 @@
 <script>
   // 你的 JS 程式碼保持不變（功能完整且結構清晰）
   // 只做必要的微調，例如提升可讀性與一致性
+  const nicknameDisplay = document.getElementById('nicknameDisplay');
+  const nicknameSelect = document.getElementById('nicknameSelect');
+
   let chatrooms = [];
   const favoriteChatrooms = new Set(JSON.parse('{{ favorite_chatroom_ids|default:"[]"|safe }}'));
   let currentRoomId = null;
@@ -486,7 +510,7 @@
     }
   }
 
-  f// ...existing code...
+  // ...existing code...
   function renderMessages(messages) {
     chatWindow.innerHTML = '';
     if (messages.length === 0) {
@@ -507,21 +531,44 @@
 
 
   // 點擊暱稱選單時，若點到暱稱選項，跳轉到個人資料設定
+  // document.addEventListener('DOMContentLoaded', function() {
+  //   const nicknameSelect = document.getElementById('nicknameSelect');
+  //   if (nicknameSelect) {
+  //     nicknameSelect.addEventListener('change', function(e) {
+  //       const selected = nicknameSelect.options[nicknameSelect.selectedIndex];
+  //       const link = selected.getAttribute('data-link');
+  //       if (link) {
+  //         // 跳轉到個人資料設定頁
+  //         window.open(link, '_blank');
+  //       }
+  //     });
+  //   }
+  // });
+
+
   document.addEventListener('DOMContentLoaded', function() {
     const nicknameSelect = document.getElementById('nicknameSelect');
-    if (nicknameSelect) {
-      nicknameSelect.addEventListener('change', function(e) {
+    const nicknameDisplay = document.getElementById('nicknameDisplay');
+
+    if (nicknameSelect && nicknameDisplay) {
+      // 初始化顯示一次（避免 undefined）
+      nicknameDisplay.textContent = nicknameSelect.value === '' ? '匿名' : nicknameSelect.value;
+
+      nicknameSelect.addEventListener('change', function () {
+        const selectedNickname = nicknameSelect.value || '';
+        nicknameDisplay.textContent = selectedNickname === '' ? '匿名' : selectedNickname;
+
         const selected = nicknameSelect.options[nicknameSelect.selectedIndex];
         const link = selected.getAttribute('data-link');
         if (link) {
-          // 跳轉到個人資料設定頁
+          // 跳轉到個人資料設定頁（新分頁）
           window.open(link, '_blank');
         }
       });
     }
   });
 
-  // ...existing code...
+
 function sendMessage() {
     const message = document.getElementById("chatInput").value.trim();
     const nickname = document.getElementById("nicknameSelect").value;
@@ -581,8 +628,34 @@ function sendMessage() {
     }
   }
 
+  // favoriteBtn.onclick = () => {
+  //   if (!currentRoomId) return;
+
+  //   fetch("{% url 'toggle_favorite' %}", {
+  //     method: 'POST',
+  //     headers: {
+  //       'Content-Type': 'application/x-www-form-urlencoded',
+  //       'X-CSRFToken': getCookie('csrftoken'),
+  //     },
+  //     body: `room_id=${currentRoomId}`
+  //   })
+  //   .then(res => res.json())
+  //   .then(data => {
+  //     if (data.status === 'added') {
+  //       favoriteChatrooms.add(currentRoomId);
+  //     } else if (data.status === 'removed') {
+  //       favoriteChatrooms.delete(currentRoomId);
+  //     }
+  //     updateFavoriteBtn(currentRoomId);
+  //     renderFavoriteChatrooms();
+  //   })
+  //   .catch(() => alert('切換收藏失敗'));
+  // };
   favoriteBtn.onclick = () => {
     if (!currentRoomId) return;
+
+    const formData = new FormData();
+    formData.append('room_id', currentRoomId);
 
     fetch("{% url 'toggle_favorite' %}", {
       method: 'POST',
@@ -592,7 +665,19 @@ function sendMessage() {
       },
       body: `room_id=${currentRoomId}`
     })
-    .then(res => res.json())
+
+
+    // fetch("{% url 'toggle_favorite' %}", {
+    //   method: 'POST',
+    //   headers: {
+    //     'X-CSRFToken': getCookie('csrftoken'),
+    //   },
+    //   body: formData
+    // })
+    .then(res => {
+      if (!res.ok) throw new Error('伺服器回應錯誤，狀態碼:' + res.status);
+      return res.json();
+    })
     .then(data => {
       if (data.status === 'added') {
         favoriteChatrooms.add(currentRoomId);
@@ -602,8 +687,9 @@ function sendMessage() {
       updateFavoriteBtn(currentRoomId);
       renderFavoriteChatrooms();
     })
-    .catch(() => alert('切換收藏失敗'));
+    .catch(err => alert('切換收藏失敗: ' + err.message));
   };
+
 
   nicknameSelect.addEventListener('change', function () {
       const selectedNickname = nicknameSelect.value;
