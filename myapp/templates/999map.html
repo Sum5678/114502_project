@@ -126,6 +126,14 @@
         <script id="reportData" type="application/json">
           {{ reports_json|safe }}
         </script>
+
+        <script>
+          fetch("{% url 'approved_locations_api' %}")
+            .then(res => res.json())
+            .then(data => console.log(data))
+            .catch(err => console.error(err));
+        </script>
+
       </header>
 
       <footer>
@@ -164,35 +172,406 @@
     fetchReportsAndRenderMarkers("全部", "");
   }
 
+  // 動態更新細分類下拉選單
+  function updateSubkindOptions(kind) {
+    const subkindSelect = document.getElementById("subkindFilter");
+    subkindSelect.innerHTML = "";
+
+    const defaultOption = document.createElement("option");
+    defaultOption.value = "";
+    defaultOption.text = "全部細分類";
+    subkindSelect.add(defaultOption);
+
+    if (kind !== "全部" && subkindOptions[kind]) {
+      subkindOptions[kind].forEach(s => {
+        const option = document.createElement("option");
+        option.value = s;
+        option.text = s;
+        subkindSelect.add(option);
+      });
+    }
+  }
+
+
+  // 渲染地圖標記，並印出偵錯訊息
+  function renderMarkers(kind, subkind) {
+    console.log(`開始渲染標記，篩選條件 kind: "${kind}", subkind: "${subkind}"`);
+    
+    const kindLc = String(kind || "").trim();
+    const subkindLc = String(subkind || "").trim();
+
+    // 清除舊標記
+    allMarkers.forEach(m => m.setMap(null));
+    allMarkers = [];
+
+    // 過濾資料
+    const filtered = reports.filter(r => {
+      // 取 r.kind 左側主分類，並 trim
+      const mainKindRaw = String(r.kind || "").split("-")[0].trim();
+      const rSubkindRaw = String(r.subkind || "").trim();
+
+      // 判斷
+      const isAllKind = (kindLc === "全部" || kindLc === "");
+      const isAllSubkind = (subkindLc === "" || subkindLc === "全部細分類");
+
+      const kindMatch = isAllKind || (mainKindRaw === kindLc);
+      const subkindMatch = isAllSubkind || (rSubkindRaw === subkindLc);
+
+      return kindMatch && subkindMatch;
+    });
+
+    console.log(`過濾後的資料筆數: ${filtered.length}`);
+
+    if (filtered.length === 0) {
+      map.setCenter({ lat: 25.033964, lng: 121.562321 });
+      map.setZoom(14);
+      return;
+    }
+
+    const bounds = new google.maps.LatLngBounds();
+
+    // 判斷 reason 是否有效的函式
+    function isValidReason(text) {
+      return typeof text === "string" && text.trim().length > 0 && text.trim().toLowerCase() !== "null";
+    }
+
+    filtered.forEach(r => {
+      if (typeof r.latitude === "number" && typeof r.longitude === "number") {
+        console.log(`事件 "${r.display_name}" 的 raw reason:`, r.reason);
+
+        const reason = isValidReason(r.reason) ? r.reason.trim() : "無";
+
+        console.log(`事件 "${r.display_name}" 的 reason: "${reason}"`);
+
+        const marker = new google.maps.Marker({
+          position: { lat: r.latitude, lng: r.longitude },
+          map: map,
+          title: r.display_name || "未命名",
+          icon: {
+            url: iconUrl,
+            scaledSize: new google.maps.Size(30, 30),
+            origin: new google.maps.Point(0, 0),
+            anchor: new google.maps.Point(15, 15)
+          }
+        });
+
+        let imgHtml = "";
+        if (r.img_url && r.img_url.trim() !== "") {
+          imgHtml = `<br><img src="${r.img_url}" alt="附加圖片" style="max-width:200px; max-height:150px; margin-top:5px; border-radius:4px;" />`;
+        }
+
+        const infowindow = new google.maps.InfoWindow({
+          content: `<strong>${r.display_name}</strong><br>
+                    發布者: ${r.poster_id || '未知'}<br>
+                    原因: ${reason}<br>
+                    時間: ${r.time_created || '未知'}${imgHtml}`
+        });
+
+        marker.addListener("click", () => {
+          infowindow.open(map, marker);
+        });
+
+        allMarkers.push(marker);
+        bounds.extend(marker.getPosition());
+      }
+    });
+
+    map.fitBounds(bounds);
+  }
+
+
+
+
+
+
   
+  // CSRF 取得函式
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
 
-
-
-
-
-  // 從後端 API 取得報告資料並畫標記
+  // 從後端 API 取得資料並更新地圖
   function fetchReportsAndRenderMarkers(kind, subkind) {
+    console.log(`fetchReportsAndRenderMarkers 呼叫，參數 kind: "${kind}", subkind: "${subkind}"`);
+
     fetch("{% url 'reports_with_subkind_json' %}", {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-CSRFToken': getCookie('csrftoken')  // 請確保 CSRF token 有設定
+        'X-CSRFToken': getCookie('csrftoken')
       },
       body: JSON.stringify({ kind, subkind })
     })
-      .then(response => {
-        if (!response.ok) throw new Error("Network response was not ok");
-        return response.json();
-      })
-      .then(data => {
-        reports = data;
-        renderMarkers(kind, subkind);
-        promptNearbyEvents();
-      })
-      .catch(error => {
-        console.error("fetch 錯誤:", error);
-      });
+    .then(response => {
+      if (!response.ok) throw new Error("Network response was not ok");
+      return response.json();
+    })
+    .then(data => {
+      console.log("後端回傳資料筆數:", data.length);
+      reports = data;
+      renderMarkers(kind, subkind);
+      promptNearbyEvents();
+    })
+    .catch(error => {
+      console.error("fetch 錯誤:", error);
+    });
   }
+
+  // 距離計算函式
+  function getDistanceMeters(lat1, lng1, lat2, lng2) {
+    const R = 6371000;
+    const toRad = deg => deg * Math.PI / 180;
+
+    const dLat = toRad(lat2 - lat1);
+    const dLng = toRad(lng2 - lng1);
+
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+              Math.sin(dLng/2) * Math.sin(dLng/2);
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  }
+
+  // 檢查附近事件
+  function checkNearbyEvents(userLat, userLng) {
+    const nearbyEvents = reports.filter(r => {
+      if (typeof r.latitude === "number" && typeof r.longitude === "number") {
+        const dist = getDistanceMeters(userLat, userLng, r.latitude, r.longitude);
+        return dist <= 500;
+      }
+      return false;
+    });
+
+    if (nearbyEvents.length === 0) {
+      alert("您附近 500 公尺內沒有事件，看起來很安全 👍");
+    } else if (nearbyEvents.length > 5) {
+      alert(`您附近 500 公尺內有 ${nearbyEvents.length} 起事件，請注意安全！`);
+    } else {
+      alert(`您附近 500 公尺內有 ${nearbyEvents.length} 起事件`);
+    }
+  }
+
+  // 取得使用者位置並顯示
+  function promptNearbyEvents() {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+
+          checkNearbyEvents(lat, lng);
+
+          const userMarker = new google.maps.Marker({
+            position: { lat, lng },
+            map: map,
+            title: "您目前的位置",
+            icon: {
+              url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+              scaledSize: new google.maps.Size(40, 40)
+            }
+          });
+
+          map.setCenter({ lat, lng });
+        },
+        err => console.warn("定位失敗:", err.message)
+      );
+    } else {
+      console.warn("瀏覽器不支援地理定位");
+    }
+  }
+
+  // 事件分類下拉事件
+  document.getElementById("kindFilter").addEventListener("change", function () {
+    const kind = this.value;
+    updateSubkindOptions(kind);
+    document.getElementById("subkindFilter").value = "";
+    fetchReportsAndRenderMarkers(kind, "");
+  });
+
+  // 細分類下拉事件
+  document.getElementById("subkindFilter").addEventListener("change", function () {
+    const kind = document.getElementById("kindFilter").value;
+    const subkind = this.value;
+    renderMarkers(kind, subkind);
+  });
+  
+  function isValidReason(text) {
+    return typeof text === "string" && text.trim().length > 0 && text.trim().toLowerCase() !== "null";
+  }
+
+  const reason = isValidReason(r.reason) ? r.reason.trim() : "無";
+
+  
+  </script>
+
+  <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAUuPZMMJvgVWftmqVyzfX8mKTwMX4kA6o&callback=initMap">
+  </script>
+
+  <footer id="footer" class="footer position-relative light-background">
+    <div class="container copyright text-center mt-4">
+      <p>© <span>Copyright</span> <strong class="sitename">Append</strong> <span>All Rights Reserved</span></p>
+      <div class="credits">
+        Designed by <a href="https://bootstrapmade.com/">BootstrapMade</a>
+      </div>
+    </div>
+    <div class="credits">
+      Icon by <a href="https://www.flaticon.com/free-icons/paw" title="paw icons">Freepik - Flaticon</a>
+    </div>
+  </footer>
+
+  <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i
+      class="bi bi-arrow-up-short"></i></a>
+  <div id="preloader"></div>
+
+  <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/php-email-form/validate.js' %}"></script>
+  <script src="{% static 'assets/vendor/aos/aos.js' %}"></script>
+  <script src="{% static 'assets/vendor/glightbox/js/glightbox.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/purecounter/purecounter_vanilla.js' %}"></script>
+  <script src="{% static 'assets/vendor/imagesloaded/imagesloaded.pkgd.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/isotope-layout/isotope.pkgd.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/swiper/swiper-bundle.min.js' %}"></script>
+  <script src="{% static 'assets/js/main.js' %}"></script>
+</body>
+
+</html>
+
+
+
+
+<!-- const subkindOptions = {
+    "騷擾": ["推銷", "暴露狂", "跟蹤", "言語騷擾", "拍攝他人", "擋路糾纏", "其他"],
+    "打架": ["肢體衝突", "口角爭執", "幫派鬥毆", "攻擊路人", "其他"],
+    "動物": ["咬人", "無人看管寵物", "攻擊性動物", "受傷動物", "野生動物闖入", "其他"],
+    "環境髒亂": ["公共財物破壞", "可疑物品", "垃圾堆積", "噪音擾人", "惡臭", "噴漆塗鴉", "其他"]
+  };
+
+  let map;
+  let allMarkers = [];
+  let reports = [];
+
+  // icon 圖片 URL，用變數帶入確保 Django 模板能解析
+  const iconUrl = "{% static 'assets/img/paw_icon.png' %}";
+
+  // 初始化地圖
+  function initMap() {
+    map = new google.maps.Map(document.getElementById("map"), {
+      center: { lat: 25.033964, lng: 121.562321 },
+      zoom: 14
+    });
+
+    updateSubkindOptions("全部");
+    document.getElementById("subkindFilter").value = "";
+
+    fetchReportsAndRenderMarkers("全部", "");
+  }
+
+  
+
+
+
+function renderMarkers(kind, subkind) {
+    console.log(`開始渲染標記，篩選條件 kind: "${kind}", subkind: "${subkind}"`);
+    
+    const kindLc = String(kind || "").trim();
+    const subkindLc = String(subkind || "").trim();
+
+    // 清除舊標記
+    allMarkers.forEach(m => m.setMap(null));
+    allMarkers = [];
+
+    // 過濾資料
+    const filtered = reports.filter(r => {
+      // 取 r.kind 左側主分類，並 trim
+      const mainKindRaw = String(r.kind || "").split("-")[0].trim();
+      const rSubkindRaw = String(r.subkind || "").trim();
+
+      // 印出偵錯
+      // console.log(`資料 kind: "${mainKindRaw}", subkind: "${rSubkindRaw}"`);
+
+      // 判斷
+      const isAllKind = (kindLc === "全部" || kindLc === "");
+      const isAllSubkind = (subkindLc === "" || subkindLc === "全部細分類");
+
+      const kindMatch = isAllKind || (mainKindRaw === kindLc);
+      const subkindMatch = isAllSubkind || (rSubkindRaw === subkindLc);
+
+      return kindMatch && subkindMatch;
+    });
+
+    console.log(`過濾後的資料筆數: ${filtered.length}`);
+
+    if (filtered.length === 0) {
+      map.setCenter({ lat: 25.033964, lng: 121.562321 });
+      map.setZoom(14);
+      return;
+    }
+
+    const bounds = new google.maps.LatLngBounds();
+ 
+
+
+    filtered.forEach(r => {
+      if (typeof r.latitude === "number" && typeof r.longitude === "number") {
+        console.log(`事件 "${r.display_name}" 的 raw reason:`, r.reason);
+        const marker = new google.maps.Marker({
+          position: { lat: r.latitude, lng: r.longitude },
+          map: map,
+          title: r.display_name || "未命名",
+          icon: {
+            url: iconUrl,
+            scaledSize: new google.maps.Size(30, 30),
+            origin: new google.maps.Point(0, 0),
+            anchor: new google.maps.Point(15, 15)
+          }
+        });
+
+        console.log(`事件 "${r.display_name}" 的 raw reason:`, r.reason);
+        const reason = r.reason && r.reason.trim() !== "" ? r.reason : "無";
+
+
+        // 偵錯印出 reason
+        console.log(`事件 "${r.display_name}" 的 reason: "${reason}"`);
+
+        let imgHtml = "";
+        if (r.img_url && r.img_url.trim() !== "") {
+          imgHtml = `<br><img src="${r.img_url}" alt="附加圖片" style="max-width:200px; max-height:150px; margin-top:5px; border-radius:4px;" />`;
+        }
+
+        const infowindow = new google.maps.InfoWindow({
+          content: `<strong>${r.display_name}</strong><br>
+                    發布者: ${r.poster_id || '未知'}<br>
+                    原因: ${reason}<br>
+                    時間: ${r.time_created || '未知'}${imgHtml}`
+        });
+
+        marker.addListener("click", () => {
+          infowindow.open(map, marker);
+        });
+
+        allMarkers.push(marker);
+        bounds.extend(marker.getPosition());
+      }
+    });
+
+    map.fitBounds(bounds);
+  }
+
+
+  
 
 
   // 渲染地圖標記
@@ -243,6 +622,8 @@
           }
         });
 
+        const reason = r.reason && r.reason.trim() !== "" ? r.reason : "無";
+
         // 圖片 HTML，如果有圖才顯示
         let imgHtml = "";
         if (r.img_url && r.img_url.trim() !== "") {
@@ -252,7 +633,7 @@
         const infowindow = new google.maps.InfoWindow({
           content: `<strong>${r.display_name}</strong><br>
                     發布者: ${r.poster_id || '未知'}<br>
-                    原因: ${r.reason || '無'}<br>
+                    原因: ${reason}<br>   <!-- 這裡用 reason 變數 -->
                     時間: ${r.time_created || '未知'}${imgHtml}`
         });
 
@@ -382,22 +763,83 @@
     }
   }
 
-  function fetchReportsAndRenderMarkers(kind, subkind) {
-    fetch("{% url 'reports_with_subkind_json' %}")
-      .then(response => {
-        if (!response.ok) throw new Error("Network response was not ok");
-        return response.json();
-      })
-      .then(data => {
-        reports = data;
-        renderMarkers(kind, subkind);
+  // function fetchReportsAndRenderMarkers(kind, subkind) {
+  //   fetch("{% url 'reports_with_subkind_json' %}")
+  //     .then(response => {
+  //       if (!response.ok) throw new Error("Network response was not ok");
+  //       return response.json();
+  //     })
+  //     .then(data => {
+  //       reports = data;
+  //       renderMarkers(kind, subkind);
 
-        // ✅ 抓完事件後再顯示自己位置
-        promptNearbyEvents();
-      })
-      .catch(error => {
-        console.error("fetch 錯誤:", error);
-      });
+  //       // ✅ 抓完事件後再顯示自己位置
+  //       promptNearbyEvents();
+  //     })
+  //     .catch(error => {
+  //       console.error("fetch 錯誤:", error);
+  //     });
+  // }
+
+  // // 從後端 API 取得報告資料並畫標記
+  // function fetchReportsAndRenderMarkers(kind, subkind) {
+  //   fetch("{% url 'reports_with_subkind_json' %}", {
+  //     method: 'POST',
+  //     headers: {
+  //       'Content-Type': 'application/json',
+  //       'X-CSRFToken': getCookie('csrftoken')  // 請確保 CSRF token 有設定
+  //     },
+  //     body: JSON.stringify({ kind, subkind })
+  //   })
+  //     .then(response => {
+  //       if (!response.ok) throw new Error("Network response was not ok");
+  //       return response.json();
+  //     })
+  //     .then(data => {
+  //       reports = data;
+  //       renderMarkers(kind, subkind);
+  //       promptNearbyEvents();
+  //     })
+  //     .catch(error => {
+  //       console.error("fetch 錯誤:", error);
+  //     });
+  // }
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+function fetchReportsAndRenderMarkers(kind, subkind) {
+    fetch("{% url 'reports_with_subkind_json' %}", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      body: JSON.stringify({ kind, subkind })
+    })
+    .then(response => {
+      if (!response.ok) throw new Error("Network response was not ok");
+      return response.json();
+    })
+    .then(data => {
+      reports = data;
+      renderMarkers(kind, subkind);
+      promptNearbyEvents();
+    })
+    .catch(error => {
+      console.error("fetch 錯誤:", error);
+    });
   }
 
 
@@ -454,46 +896,7 @@
       const subkind = this.value;
       renderMarkers(kind, subkind);
     });
-  </script>
-
-  <script async defer
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAUuPZMMJvgVWftmqVyzfX8mKTwMX4kA6o&callback=initMap">
-  </script>
-
-  <footer id="footer" class="footer position-relative light-background">
-    <div class="container copyright text-center mt-4">
-      <p>© <span>Copyright</span> <strong class="sitename">Append</strong> <span>All Rights Reserved</span></p>
-      <div class="credits">
-        Designed by <a href="https://bootstrapmade.com/">BootstrapMade</a>
-      </div>
-    </div>
-    <div class="credits">
-      Icon by <a href="https://www.flaticon.com/free-icons/paw" title="paw icons">Freepik - Flaticon</a>
-    </div>
-  </footer>
-
-  <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i
-      class="bi bi-arrow-up-short"></i></a>
-  <div id="preloader"></div>
-
-  <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
-  <script src="{% static 'assets/vendor/php-email-form/validate.js' %}"></script>
-  <script src="{% static 'assets/vendor/aos/aos.js' %}"></script>
-  <script src="{% static 'assets/vendor/glightbox/js/glightbox.min.js' %}"></script>
-  <script src="{% static 'assets/vendor/purecounter/purecounter_vanilla.js' %}"></script>
-  <script src="{% static 'assets/vendor/imagesloaded/imagesloaded.pkgd.min.js' %}"></script>
-  <script src="{% static 'assets/vendor/isotope-layout/isotope.pkgd.min.js' %}"></script>
-  <script src="{% static 'assets/vendor/swiper/swiper-bundle.min.js' %}"></script>
-  <script src="{% static 'assets/js/main.js' %}"></script>
-</body>
-
-</html>
-
-
-
-
-
-
+ -->
 
 
 
