@@ -69,31 +69,29 @@
 
       <nav id="navmenu" class="navmenu">
         <ul>
-          <li><a href="{% url 'admin_index' %}#hero">管理員主頁</a></li>
-          <li><a href="{% url 'admin_interview' %}">管理員自我介紹</a></li>
-          <li><a href="{% url 'show_judge_page' %}">審核表單</a></li>
-          <li class="dropdown"><a href="#"><span>清單審核</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+          <li><a href="{% url 'home' %}#hero">主頁</a></li>
+          <li><a href="index.html#services">簡介及功能介紹</a></li>
+          <li><a href="{% url 'report' %}">填寫表單</a></li>
+          <li><a href="{% url 'business_upload' %}">商家填單</a></li>
+          <li><a href="{% url 'about' %}">個人資料設定</a></li>
+          <li><a href="{% url 'chatroom_page' %}">聊天室</a></li>
+        <li class="dropdown">
+          <a href="#"><span>交流區</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+          <ul>
+            <li><a href="{% url 'post' %}#hero">我要發文</a></li>
+            <li><a href="{% url 'post_display' %}">貼文總覽</a></li>
+          </ul>
+        </li>
+          
+          <li class="dropdown"><a href="#"><span>地圖</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
             <ul>
-              <li><a href="{% url 'pemap_judge' %}">事件清單審核</a></li>
-              <li><a href="{% url 'store_judge' %}">商家清單審核</a></li>
-              <li><a href="#">Dropdown 4</a></li>
+              <li><a href="{% url 'map' %}">事件地圖</a></li>
+              <li><a href="{% url 'store_map' %}">商家地圖</a></li>
             </ul> 
           </li>
-          <li class="dropdown"><a href="#"><span>我的審核紀錄</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
-            <ul>
-              <li><a href="{% url 'admin_decide' %}">事件審核紀錄</a></li>
-              <li><a href="{% url 'store_decide' %}">商家審核紀錄</a></li>
-              <li><a href="#">Dropdown 4</a></li>
-            </ul> 
-          </li>
-          <li class="dropdown"><a href="#"><span>管理工具</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
-            <ul>
-              <li><a href="{% url 'education_list' %}">教育網頁管理</a></li>
-              <li><a href="{% url 'taiwan_regions_admin' %}">台灣縣市管理</a></li>
-              <li><a href="{% url 'police_address_list' %}">最近警局管理</a></li>
-              <li><a href="#">其他工具</a></li>
-            </ul>
-          </li>
+          
+          <li><a href="{% url 'harassment_prevention' %}">防騷指南</a></li>
+
         </ul>
         <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
       </nav>

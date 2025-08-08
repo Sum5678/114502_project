@@ -1903,9 +1903,8 @@ def reports_with_subkind_json(request):
     data = []
     for r in reports:
         data.append({
-            "id": r.id,
+            "id": r.p_id,
             "kind": r.kind,
-            "subkind": r.subkind,
             "latitude": r.latitude,
             "longitude": r.longitude,
             "display_name": r.display_name or r.title or "無名稱",
