@@ -87,7 +87,7 @@ urlpatterns = [
     path('form/', views.form, name='form'),
     path('safety/', views.safety, name='safety'),
     path('autodial/', views.autodial, name='autodial'),
-    path('mymap/', views.mymap, name='mymap'),
+    # path('mymap/', views.mymap, name='mymap'),
     #path('settings/', views.settings, name='settings'),
     #path('write/', views.settings, name='write'),  # 同 settings，可保留或合併
 
@@ -112,13 +112,15 @@ urlpatterns = [
     path('lookup/', views.lookup_page, name='lookup_page'),#地圖顯示測試
     path('fake_incident_lookup/', views.fake_incident_lookup, name='fake_incident_lookup'),  # 重複可刪一個
     path('map0257/', views.show_map, name='show_map'),
-    path('999map/', views.map_view, name='map_view'),
+    path('mymap/', views.map_view, name='map_view'),
     path('api/reports/', views.reports_json, name='reports_json'),#地圖顯示測試again(pemap_all的)
     path('api/submit_report/', views.submit_report, name='submit_report'),
     path('api/approved-locations/', views.approved_locations_api, name='approved_locations_api'),#事件地圖
     path('store_map/', views.store_map_view, name='store_map'),#商家地圖
     path('api/stores/', views.store_data_api, name='store_data_api'),#商家地圖
-    path('api/reports_with_subkind/', views.reports_with_subkind_json, name='reports_with_subkind_json'),
+    # path('api/reports_with_subkind/', views.reports_with_subkind_json, name='reports_with_subkind_json'),
+    path('api/reports_with_subkind_json/', views.reports_with_subkind_json, name='reports_with_subkind_json'),
+
     path('api/chatrooms/', views.chatrooms_api, name='chatrooms_api'),
     path('chatrooms_api/', views.chatrooms_api, name='chatrooms_api'),
     path('chat/messages/<int:room_id>/', views.chat_messages_api, name='chat_messages_api'),

@@ -38,14 +38,13 @@
         <ul>
           <li><a href="{% url 'admin_index' %}#hero" class="active">管理員主頁</a></li>
           <li><a href="{% url 'admin_interview' %}">管理員自我介紹</a></li>
-          <li><a href="{% url 'show_judge_page' %}">審核表單</a></li>
+          <!-- <li><a href="{% url 'show_judge_page' %}">審核表單</a></li> -->
           <!-- <li><a href="{% url 'pemap_judge' %}">事件清單審核</a></li> -->
           
           <li class="dropdown"><a href="#"><span>清單審核</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
             <ul>
               <li><a href="{% url 'pemap_judge' %}">事件清單審核</a></li>
               <li><a href="{% url 'store_judge' %}">商家清單審核</a></li>
-              <li><a href="#">Dropdown 4</a></li>
             </ul> 
           </li>
           
@@ -53,8 +52,6 @@
             <ul>
               <li><a href="{% url 'admin_decide' %}">事件審核紀錄</a></li>
               <li><a href="{% url 'store_decide' %}">商家審核紀錄</a></li>
-
-              <li><a href="#">Dropdown 4</a></li>
             </ul> 
           </li>
           <!-- ✅ 新增的下拉式選單 -->

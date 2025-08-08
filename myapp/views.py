@@ -1854,65 +1854,92 @@ from .models import PemapAll
 #     return JsonResponse(data, safe=False)
 
 
+from django.http import JsonResponse
+from .models import PemapAll
+
 def approved_locations_api(request):
-    approved = PemapAll.objects.filter(review_status='已通過')
+    approved = PemapAll.objects.filter(review_status='approved')
     data = []
-
-    for item in approved:
+    for r in approved:
         data.append({
-            'id': item.p_id,
-            'title': item.display_name,
-            'kind': item.kind,
-            'reason': item.reason or "未填寫",
-            'lat': item.latitude,
-            'lng': item.longitude,
+            'id': r.id,
+            'display_name': r.display_name,
+            'kind': r.kind,
+            'subkind': r.subkind,
+            # 這裡加 reason，確保是字串
+            'reason': r.reason if r.reason else "",
+            'latitude': r.latitude,
+            'longitude': r.longitude,
+            'time_created': r.time_created.strftime("%Y-%m-%d %H:%M"),
+            'img_url': r.img_url
         })
-
-    print(data)  # 看看資料格式和內容
     return JsonResponse(data, safe=False)
 
-
 # from django.http import JsonResponse
-# from django.utils.timezone import localtime
-# from .models import PemapAll
+# from .models import PemapAll  # 假設資料表叫 PemapAll
 
 # def reports_with_subkind_json(request):
-#     approved = PemapAll.objects.filter(review_status='已通過')
+#     # 可以加條件只回傳已審核通過的資料，避免回傳過多或不合規資料
+#     reports = PemapAll.objects.filter(review_status='approved')  # 假設有這欄位過濾
 
+#     # 轉成前端需要的 JSON 格式列表
 #     data = []
-#     for item in approved:
+#     for r in reports:
 #         data.append({
-#             "display_name": item.display_name,
-#             "reason": item.reason or "未填寫",
-#             "time_created": localtime(item.time_created).strftime("%Y-%m-%d %H:%M:%S") if item.time_created else "未知",
-#             "latitude": item.latitude,
-#             "longitude": item.longitude,
-#             "kind": item.kind or "",
-#             "subkind": item.subkind or "",
+#             "id": r.p_id,
+#             "kind": r.kind,
+#             "latitude": r.latitude,
+#             "longitude": r.longitude,
+#             "display_name": r.display_name or r.title or "無名稱",
+#             "reason": r.reason or "",
+#             "time_created": r.time_created.strftime("%Y-%m-%d %H:%M:%S") if r.time_created else "",
 #         })
 
 #     return JsonResponse(data, safe=False)
 from django.http import JsonResponse
-from .models import PemapAll  # 假設資料表叫 PemapAll
+from django.views.decorators.csrf import csrf_exempt
+import json
+from .models import PemapWithSubkind, PemapAll
 
+@csrf_exempt
 def reports_with_subkind_json(request):
-    # 可以加條件只回傳已審核通過的資料，避免回傳過多或不合規資料
-    reports = PemapAll.objects.filter(review_status='approved')  # 假設有這欄位過濾
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        kind = data.get('kind')
+        subkind = data.get('subkind')
 
-    # 轉成前端需要的 JSON 格式列表
-    data = []
-    for r in reports:
-        data.append({
-            "id": r.p_id,
-            "kind": r.kind,
-            "latitude": r.latitude,
-            "longitude": r.longitude,
-            "display_name": r.display_name or r.title or "無名稱",
-            "reason": r.reason or "",
-            "time_created": r.time_created.strftime("%Y-%m-%d %H:%M:%S") if r.time_created else "",
-        })
+        # 用 VIEW 篩選
+        queryset = PemapWithSubkind.objects.all()
+        if kind and kind != "全部":
+            queryset = queryset.filter(kind=kind)
+        if subkind and subkind != "":
+            queryset = queryset.filter(subkind=subkind)
 
-    return JsonResponse(data, safe=False)
+        results = []
+        for item in queryset:
+            try:
+                # 用 p_id 從 PemapAll 拿 reason
+                pemap_detail = PemapAll.objects.get(p_id=item.p_id)
+                reason = pemap_detail.reason
+            except PemapAll.DoesNotExist:
+                reason = "無"
+
+            results.append({
+                "p_id": item.p_id,
+                "display_name": item.display_name,
+                "kind": item.kind,
+                "subkind": item.subkind,
+                "latitude": item.latitude,
+                "longitude": item.longitude,
+                "address": item.address,
+                "img_url": item.img_url,
+                "time_created": item.time_created,
+                "reason": reason,
+            })
+
+        return JsonResponse(results, safe=False)
+    else:
+        return JsonResponse({"error": "POST method required"}, status=400)
 
 
 
