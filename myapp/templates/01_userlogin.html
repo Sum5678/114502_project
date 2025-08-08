@@ -34,41 +34,54 @@
       </a>
       <nav id="navmenu" class="navmenu">
         <ul>
-          <li><a href="{% url 'home' %}#hero" class="active">主頁</a></li>
-          <li><a href="index.html#about">簡介及功能介紹</a></li>
+          <li><a href="{% url 'home' %}#hero">主頁</a></li>
+          <li><a href="index.html#services">簡介及功能介紹</a></li>
           <li><a href="{% url 'report' %}">填寫表單</a></li>
           <li><a href="{% url 'business_upload' %}">商家填單</a></li>
           <li><a href="{% url 'about' %}">個人資料設定</a></li>
-          <li><a href="index.html#portfolio">Portfolio</a></li>
-          <li><a href="{% url 'post' %}#hero">我要發文</a></li>
-          <li><a href="{% url 'map' %}">事件地圖</a></li>
-          <li><a href="{% url 'harassment_prevention' %}">防騷指南</a></li>
-          <li class="dropdown"><a href="#"><span>Dropdown</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+          <li><a href="{% url 'chatroom_page' %}">聊天室</a></li>
+        <li class="dropdown">
+          <a href="#"><span>交流區</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+          <ul>
+            <li><a href="{% url 'post' %}#hero">我要發文</a></li>
+            <li><a href="{% url 'post_display' %}">貼文總覽</a></li>
+          </ul>
+        </li>
+          
+          <li class="dropdown"><a href="#"><span>地圖</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
             <ul>
-              <li><a href="#">Dropdown 1</a></li>
-              <li class="dropdown"><a href="#"><span>Deep Dropdown</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
-                <ul>
-                  <li><a href="#">Deep Dropdown 1</a></li>
-                  <li><a href="#">Deep Dropdown 2</a></li>
-                  <li><a href="#">Deep Dropdown 3</a></li>
-                  <li><a href="#">Deep Dropdown 4</a></li>
-                  <li><a href="#">Deep Dropdown 5</a></li>
-                </ul>
-              </li>
-              <li><a href="#">Dropdown 2</a></li>
-              <li><a href="#">Dropdown 3</a></li>
-              <li><a href="#">Dropdown 4</a></li>
-            </ul>
+              <li><a href="{% url 'map' %}">事件地圖</a></li>
+              <li><a href="{% url 'store_map' %}">商家地圖</a></li>
+            </ul> 
           </li>
-          <li><a href="index.html#contact">Contact</a></li>
+          
+          <li><a href="{% url 'harassment_prevention' %}">防騷指南</a></li>
+
         </ul>
         <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
       </nav>
-      <!-- <a class="btn-getstarted" href="index.html#about">Get Started</a> -->
-      <a class="btn-getstarted" href="{% url 'userlogin' %}">登入</a>
+    {% if request.user.is_authenticated %}
+    <div class="dropdown">
+      <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown" style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
+        {{ request.user.username }}
+      </a>
+      <ul class="dropdown-menu dropdown-menu-end">
+        <li><a class="dropdown-item" href="{% url '01_userlogin_out' %}">登出</a></li>
+      </ul>
+    </div>
+    {% else %}
+    <div class="dropdown">
+      <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown" style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
+        登入
+      </a>
+      <ul class="dropdown-menu dropdown-menu-end">
+        <li><a class="dropdown-item" href="{% url 'userlogin' %}">一般使用者登入</a></li>
+        <li><a class="dropdown-item" href="{% url 'admin_login' %}">管理員登入</a></li>
+      </ul>
+    </div>
+    {% endif %}
     </div>
   </header>
-
   <main class="main">
 
     <!-- Hero Section -->

@@ -163,7 +163,10 @@ urlpatterns = [
     path('store_decide/', views.store_decide, name='store_decide'),#顯示出該管理員審核過的資料
     path('store/judge/<str:st_id>/', views.store_judge_view, name='store_judge_view'),
     path('store/reject/<str:st_id>/', views.store_step2_view, name='store_step2'),   #商家幾天
-    path('send-email/', views.admin_send_email, name='admin_send_email'), #事件拒絕後跳轉頁面
+    # path('send-email/', views.admin_send_email, name='admin_send_email'), #事件拒絕後跳轉頁面
+    # urls.py
+    path('send-email/<int:p_id>/', views.admin_send_email, name='admin_send_email'), 
+
     
 
 
