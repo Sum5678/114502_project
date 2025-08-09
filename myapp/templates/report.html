@@ -11,6 +11,7 @@
   <link href="{% static 'assets/vendor/aos/aos.css' %}" rel="stylesheet">
   <link href="{% static 'assets/css/main.css' %}" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+  <link href="{% static 'assets/vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet">
 </head>
 
 <body class="index-page">
@@ -343,7 +344,42 @@
         sendData("");
       }
     });
+    
+    document.addEventListener('DOMContentLoaded', function () {
+      const mobileNavToggle = document.querySelector('.mobile-nav-toggle');
+      const navmenu = document.querySelector('#navmenu');
+
+      if (mobileNavToggle) {
+        mobileNavToggle.addEventListener('click', function () {
+          navmenu.classList.toggle('navmenu-active');
+          this.classList.toggle('bi-list');
+          this.classList.toggle('bi-x');
+        });
+      }
+    });
+    
   </script>
+  <!-- 手機版選單樣式 -->
+  <style>
+    @media (max-width: 991px) {
+      #navmenu ul {
+        display: none;
+        flex-direction: column;
+        position: absolute;
+        top: 60px;
+        right: 15px;
+        background: #fff;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      #navmenu.navmenu-active ul {
+        display: flex;
+      }
+    }
+  </style>
+
 </body>
 </html>
 
