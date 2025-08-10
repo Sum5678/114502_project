@@ -1849,29 +1849,27 @@ def store_decide(request):
 
 #     return JsonResponse(data, safe=False)
 
-from django.http import JsonResponse
-from .models import PemapAll
 
 
 from django.http import JsonResponse
 from .models import PemapAll
 
 def approved_locations_api(request):
-    approved = PemapAll.objects.filter(review_status='approved')
+    approved = PemapWithSubkind.objects.filter(review_status='3')
     data = []
     for r in approved:
         data.append({
-            'id': r.id,
-            'display_name': r.display_name,
-            'kind': r.kind,
-            'subkind': r.subkind,
-            # 這裡加 reason，確保是字串
-            'reason': r.reason if r.reason else "",
-            'latitude': r.latitude,
-            'longitude': r.longitude,
-            'time_created': r.time_created.strftime("%Y-%m-%d %H:%M"),
-            'img_url': r.img_url
-        })
+                        'id': r.p_id,
+                        'display_name': r.display_name,
+                        'kind': r.kind,
+                        'subkind': r.subkind,
+                        'reason': getattr(r, 'reason', ""),  # 避免沒有這欄位報錯
+                        'latitude': r.latitude,
+                        'longitude': r.longitude,
+                        'time_created': r.time_created.strftime("%Y-%m-%d %H:%M"),
+                        'img_url': r.img_url
+                    })
+
     return JsonResponse(data, safe=False)
 
 
