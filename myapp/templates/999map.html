@@ -147,7 +147,6 @@
 
 
   <script>
-    // 細分類選項資料
     const subkindOptions = {
       "騷擾": ["推銷", "暴露狂", "跟蹤", "言語騷擾", "拍攝他人", "擋路糾纏", "其他"],
       "打架": ["肢體衝突", "口角爭執", "幫派鬥毆", "攻擊路人", "其他"],
@@ -159,10 +158,8 @@
     let allMarkers = [];
     let reports = [];
 
-    // icon 圖片 URL
     const pawIconUrl = "{% static 'assets/img/paw_icon.png' %}";
 
-    // 初始化地圖
     function initMap() {
       map = new google.maps.Map(document.getElementById("map"), {
         center: { lat: 25.033964, lng: 121.562321 },
@@ -175,7 +172,6 @@
       fetchReportsAndRenderMarkers("全部", "");
     }
 
-    // 動態更新細分類下拉選單
     function updateSubkindOptions(kind) {
       const subkindSelect = document.getElementById("subkindFilter");
       subkindSelect.innerHTML = "";
@@ -195,10 +191,13 @@
       }
     }
 
-    // 渲染地圖標記
-    function renderMarkers(kind, subkind) {
+    function clearMarkers() {
       allMarkers.forEach(marker => marker.setMap(null));
       allMarkers = [];
+    }
+
+    function renderMarkers(kind, subkind) {
+      clearMarkers();
 
       const filtered = reports.filter(r => {
         const matchKind = (kind === "全部" || r.kind === kind);
@@ -209,24 +208,19 @@
       const bounds = new google.maps.LatLngBounds();
 
       filtered.forEach(r => {
-        const reason = (typeof r.reason === "string" && r.reason.trim() !== "")
-          ? r.reason.trim()
-          : "無";
-
         if (typeof r.latitude === "number" && typeof r.longitude === "number") {
+          const reason = r.reason?.trim() || "無";
+          const imgHtml = r.img_url ? `<br><img src="${r.img_url}" style="width:100px;height:auto;">` : "";
+
           const marker = new google.maps.Marker({
             position: { lat: r.latitude, lng: r.longitude },
             map: map,
             title: r.display_name,
             icon: {
               url: pawIconUrl,
-              scaledSize: new google.maps.Size(30, 30) // 調整圖示大小
+              scaledSize: new google.maps.Size(30, 30)
             }
           });
-
-          const imgHtml = r.img_url
-            ? `<br><img src="${r.img_url}" style="width:100px;height:auto;">`
-            : "";
 
           const infowindow = new google.maps.InfoWindow({
             content: `
@@ -252,7 +246,6 @@
       }
     }
 
-    // CSRF 取得函式
     function getCookie(name) {
       let cookieValue = null;
       if (document.cookie && document.cookie !== '') {
@@ -268,7 +261,6 @@
       return cookieValue;
     }
 
-    // 從後端 API 取得資料並更新地圖
     function fetchReportsAndRenderMarkers(kind, subkind) {
       fetch("{% url 'reports_with_subkind_json' %}", {
         method: 'POST',
@@ -276,105 +268,41 @@
           'Content-Type': 'application/json',
           'X-CSRFToken': getCookie('csrftoken')
         },
-        body: JSON.stringify({ kind, subkind })  // 這樣是正確的 POST body
+        body: JSON.stringify({ kind, subkind })
       })
-
-      .then(response => {
-        if (!response.ok) throw new Error("Network response was not ok");
-        return response.json();
-      })
-      .then(data => {
-        reports = data;
-        renderMarkers(kind, subkind);
-        promptNearbyEvents();
-      })
-      .catch(error => {
-        console.error("fetch 錯誤:", error);
-      });
+        .then(response => {
+          if (!response.ok) throw new Error("Network response was not ok");
+          return response.json();
+        })
+        .then(data => {
+          reports = data;
+          renderMarkers(kind, subkind);
+          promptNearbyEvents();
+        })
+        .catch(error => {
+          console.error("fetch 錯誤:", error);
+        });
     }
 
-    // 距離計算
-    function getDistanceMeters(lat1, lng1, lat2, lng2) {
-      const R = 6371000;
-      const toRad = deg => deg * Math.PI / 180;
-      const dLat = toRad(lat2 - lat1);
-      const dLng = toRad(lng2 - lng1);
-      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-                Math.sin(dLng/2) * Math.sin(dLng/2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-      return R * c;
-    }
+    // 監聽大分類改變事件
+    document.getElementById("kindFilter").addEventListener("change", function () {
+      const kind = this.value;
+      updateSubkindOptions(kind);
+      document.getElementById("subkindFilter").value = "";
+      fetchReportsAndRenderMarkers(kind, "");
+    });
 
-    // 檢查附近事件
-    function checkNearbyEvents(userLat, userLng) {
-      const nearbyEvents = reports.filter(r => {
-        if (typeof r.latitude === "number" && typeof r.longitude === "number") {
-          const dist = getDistanceMeters(userLat, userLng, r.latitude, r.longitude);
-          return dist <= 500;
-        }
-        return false;
-      });
-
-      if (nearbyEvents.length === 0) {
-        alert("您附近 500 公尺內沒有事件，看起來很安全 👍");
-      } else if (nearbyEvents.length > 5) {
-        alert(`您附近 500 公尺內有 ${nearbyEvents.length} 起事件，請注意安全！`);
-      } else {
-        alert(`您附近 500 公尺內有 ${nearbyEvents.length} 起事件`);
-      }
-    }
-
-    // 顯示使用者位置
-    function promptNearbyEvents() {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          pos => {
-            const lat = pos.coords.latitude;
-            const lng = pos.coords.longitude;
-
-            checkNearbyEvents(lat, lng);
-
-            new google.maps.Marker({
-              position: { lat, lng },
-              map: map,
-              title: "您目前的位置",
-              icon: {
-                url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
-                scaledSize: new google.maps.Size(40, 40)
-              }
-            });
-
-            map.setCenter({ lat, lng });
-          },
-          err => console.warn("定位失敗:", err.message)
-        );
-      } else {
-        console.warn("瀏覽器不支援地理定位");
-      }
-    }
-
-    // 事件分類篩選
-    // document.getElementById("kindFilter").addEventListener("change", function () {
-    //   const kind = this.value;
-    //   updateSubkindOptions(kind);
-    //   document.getElementById("subkindFilter").value = "";
-    //   fetchReportsAndRenderMarkers(kind, "");
-    // });
+    // 監聽細分類改變事件
     document.getElementById("subkindFilter").addEventListener("change", function () {
       const kind = document.getElementById("kindFilter").value;
       const subkind = this.value;
       fetchReportsAndRenderMarkers(kind, subkind);
     });
 
-
-    // 細分類篩選
-    document.getElementById("subkindFilter").addEventListener("change", function () {
-      const kind = document.getElementById("kindFilter").value;
-      const subkind = this.value;
-      renderMarkers(kind, subkind);
-    });
+    // 初始化地圖
+    window.initMap = initMap;
   </script>
+
 
 
   
