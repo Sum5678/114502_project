@@ -1852,22 +1852,6 @@ def store_decide(request):
 from django.http import JsonResponse
 from .models import PemapAll
 
-# def approved_locations_api(request):
-#     approved = PemapAll.objects.filter(review_status='已通過')  # 只取審核通過的
-#     data = []
-
-#     for item in approved:
-#         data.append({
-#             'id': item.p_id,
-#             'title': item.display_name,
-#             'kind': item.kind,
-#             'reason': item.reason or "未填寫",  # 如果是空字串或 None，給「未填寫」
-#             'lat': item.latitude,
-#             'lng': item.longitude,
-#         })
-
-#     return JsonResponse(data, safe=False)
-
 
 from django.http import JsonResponse
 from .models import PemapAll
@@ -1890,27 +1874,7 @@ def approved_locations_api(request):
         })
     return JsonResponse(data, safe=False)
 
-# from django.http import JsonResponse
-# from .models import PemapAll  # 假設資料表叫 PemapAll
 
-# def reports_with_subkind_json(request):
-#     # 可以加條件只回傳已審核通過的資料，避免回傳過多或不合規資料
-#     reports = PemapAll.objects.filter(review_status='approved')  # 假設有這欄位過濾
-
-#     # 轉成前端需要的 JSON 格式列表
-#     data = []
-#     for r in reports:
-#         data.append({
-#             "id": r.p_id,
-#             "kind": r.kind,
-#             "latitude": r.latitude,
-#             "longitude": r.longitude,
-#             "display_name": r.display_name or r.title or "無名稱",
-#             "reason": r.reason or "",
-#             "time_created": r.time_created.strftime("%Y-%m-%d %H:%M:%S") if r.time_created else "",
-#         })
-
-#     return JsonResponse(data, safe=False)
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
@@ -2652,19 +2616,7 @@ def chatroom_page(request):
 
 
 
-# @login_required
-# def chatroom_page(request):
-#     try:
-#         profile = ThisUserProfile.objects.get(gmail=request.user.email)
-#         favorites = FavoriteChatRoom.objects.filter(user=profile).values_list('chat_room_id', flat=True)
-#         favorite_ids = list(favorites)
-#     except ThisUserProfile.DoesNotExist:
-#         favorite_ids = []
 
-#     return render(request, 'chatroom.html', {
-#         'favorite_ids': json.dumps(favorite_ids),  # 傳給前端的json字串
-#         # 其他 context...
-#     })
 
 import json
 
@@ -2681,29 +2633,6 @@ def chatroom_view(request):
 
 
 
-
-# from django.views.decorators.http import require_POST
-# from django.contrib.auth.decorators import login_required
-# from django.shortcuts import get_object_or_404
-# from django.http import JsonResponse
-# from .models import ChatRoom, FavoriteChatRoom, ThisUserProfile
-
-# @require_POST
-# @login_required
-# def toggle_favorite(request):
-#     gmail = request.user.username
-#     user_profile = ThisUserProfile.objects.get(gmail=gmail)
-
-#     room_id = request.POST.get('room_id')
-#     chat_room = get_object_or_404(ChatRoom, id=room_id)
-
-#     fav_obj = FavoriteChatRoom.objects.filter(user=user_profile, chat_room=chat_room).first()
-#     if fav_obj:
-#         fav_obj.delete()
-#         return JsonResponse({'status': 'removed'})
-#     else:
-#         FavoriteChatRoom.objects.create(user=user_profile, chat_room=chat_room)
-#         return JsonResponse({'status': 'added'})
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
