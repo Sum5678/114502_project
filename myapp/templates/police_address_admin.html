@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>  
 {% load static %}
 <html lang="zh-Hant">
 
@@ -144,7 +144,18 @@
                   <td>{{ addr.POINT_Y }}</td>
                   <td>
                     <a href="{% url 'police_address_edit' addr.pk %}" class="btn btn-custom btn-sm">編輯</a>
-                    <button type="button" class="btn btn-delete btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal" data-id="{{ addr.pk }}">刪除</button>
+                    <button type="button" class="btn btn-delete btn-sm" 
+                            data-bs-toggle="modal" 
+                            data-bs-target="#deleteModal" 
+                            data-id="{{ addr.pk }}"
+                            data-name="{{ addr.precinct_name }}"
+                            data-zipcode="{{ addr.zipcode }}"
+                            data-address="{{ addr.address }}"
+                            data-phone="{{ addr.phone }}"
+                            data-PONINT_X="{{ addr.POINT_X }}"
+                            data-PONINT_Y="{{ addr.POINT_Y }}">
+                      刪除
+                    </button>
                   </td>
                 </tr>
                 {% empty %}
@@ -176,7 +187,12 @@
             <h5 class="modal-title" id="deleteModalLabel">⚠️系統提示</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
-          <div class="modal-body">您確定要刪除此資料嗎？此操作無法還原。</div>
+          <div class="modal-body">
+            <p>您確定要刪除此資料嗎？此操作無法還原。</p>
+            <div id="deleteData" class="border p-2 mt-2 bg-light rounded">
+              <!-- 資料會由 JS 填入 -->
+            </div>
+          </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
             <button type="submit" class="btn btn-danger">確認刪除</button>
@@ -193,8 +209,28 @@
     deleteModal.addEventListener('show.bs.modal', function (event) {
       const button = event.relatedTarget;
       const id = button.getAttribute('data-id');
+      const name = button.getAttribute('data-name');
+      const zipcode = button.getAttribute('data-zipcode');
+      const address = button.getAttribute('data-address');
+      const phone = button.getAttribute('data-phone');
+      const POINT_X = button.getAttribute('data-PONINT_X');
+      const POINT_Y = button.getAttribute('data-PONINT_Y');
+
+
+      // 設定表單 action
       const deleteForm = document.getElementById('deleteForm');
       deleteForm.action = `/police-address/delete/${id}/`;
+
+      // 更新 Modal 內顯示資料
+      const deleteData = document.getElementById('deleteData');
+      deleteData.innerHTML = `
+        <p><strong>警局名稱:</strong> ${name}</p>
+        <p><strong>郵遞區號:</strong> ${zipcode}</p>
+        <p><strong>地址:</strong> ${address}</p>
+        <p><strong>電話:</strong> ${phone}</p>
+        <p><strong>經度:</strong> ${POINT_X}</p>
+        <p><strong>緯度:</strong> ${POINT_Y}</p>
+      `;
     });
   </script>
 </body>
