@@ -220,7 +220,7 @@
             title: r.display_name,
             icon: {
               url: pawIconUrl,
-              scaledSize: new google.maps.Size(40, 40) // 調整圖示大小
+              scaledSize: new google.maps.Size(30, 30) // 調整圖示大小
             }
           });
 
@@ -355,12 +355,18 @@
     }
 
     // 事件分類篩選
-    document.getElementById("kindFilter").addEventListener("change", function () {
-      const kind = this.value;
-      updateSubkindOptions(kind);
-      document.getElementById("subkindFilter").value = "";
-      fetchReportsAndRenderMarkers(kind, "");
+    // document.getElementById("kindFilter").addEventListener("change", function () {
+    //   const kind = this.value;
+    //   updateSubkindOptions(kind);
+    //   document.getElementById("subkindFilter").value = "";
+    //   fetchReportsAndRenderMarkers(kind, "");
+    // });
+    document.getElementById("subkindFilter").addEventListener("change", function () {
+      const kind = document.getElementById("kindFilter").value;
+      const subkind = this.value;
+      fetchReportsAndRenderMarkers(kind, subkind);
     });
+
 
     // 細分類篩選
     document.getElementById("subkindFilter").addEventListener("change", function () {
