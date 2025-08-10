@@ -151,7 +151,9 @@
                             data-name="{{ addr.precinct_name }}"
                             data-zipcode="{{ addr.zipcode }}"
                             data-address="{{ addr.address }}"
-                            data-phone="{{ addr.phone }}">
+                            data-phone="{{ addr.phone }}"
+                            data-PONINT_X="{{ addr.POINT_X }}"
+                            data-PONINT_Y="{{ addr.POINT_Y }}">
                       刪除
                     </button>
                   </td>
@@ -211,6 +213,9 @@
       const zipcode = button.getAttribute('data-zipcode');
       const address = button.getAttribute('data-address');
       const phone = button.getAttribute('data-phone');
+      const POINT_X = button.getAttribute('data-PONINT_X');
+      const POINT_Y = button.getAttribute('data-PONINT_Y');
+
 
       // 設定表單 action
       const deleteForm = document.getElementById('deleteForm');
@@ -223,6 +228,8 @@
         <p><strong>郵遞區號:</strong> ${zipcode}</p>
         <p><strong>地址:</strong> ${address}</p>
         <p><strong>電話:</strong> ${phone}</p>
+        <p><strong>經度:</strong> ${POINT_X}</p>
+        <p><strong>緯度:</strong> ${POINT_Y}</p>
       `;
     });
   </script>
