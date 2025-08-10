@@ -1925,10 +1925,12 @@ def reports_with_subkind_json(request):
 
 # def map_view(request):
 #     return render(request, '999map.html')
-import json
 from django.shortcuts import render
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+import json
 from datetime import datetime, date
-from .models import PemapWithSubkind  # 或你的模型名稱
+from .models import PemapAll, PemapWithSubkind
 
 def datetime_handler(obj):
     if isinstance(obj, (datetime, date)):
@@ -2301,13 +2303,50 @@ class PemapWithSubkindViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = PemapWithSubkindSerializer
 
 
-from django.http import JsonResponse
-from .models import PemapWithSubkind
+# from django.http import JsonResponse
+# from .models import PemapWithSubkind
 
+# def reports_with_subkind_json(request):
+#     # 從資料庫取得所有帶有 kind / subkind 的事件
+#     data = list(PemapWithSubkind.objects.values())
+#     return JsonResponse(data, safe=False)
+@csrf_exempt
 def reports_with_subkind_json(request):
-    # 從資料庫取得所有帶有 kind / subkind 的事件
-    data = list(PemapWithSubkind.objects.values())
-    return JsonResponse(data, safe=False)
+    if request.method == "POST":
+        data = json.loads(request.body)
+        kind = data.get("kind")
+        subkind = data.get("subkind")
+
+        queryset = PemapWithSubkind.objects.all()
+        if kind and kind != "全部":
+            queryset = queryset.filter(kind=kind)
+        if subkind and subkind != "":
+            queryset = queryset.filter(subkind=subkind)
+
+        results = []
+        for item in queryset:
+            try:
+                pemap_detail = PemapAll.objects.get(p_id=item.p_id)
+                reason = pemap_detail.reason or "無"
+                time_created = pemap_detail.time_created.strftime("%Y-%m-%d %H:%M")
+            except PemapAll.DoesNotExist:
+                reason = "無"
+                time_created = "未知"
+
+            results.append({
+                "p_id": item.p_id,
+                "display_name": item.display_name,
+                "kind": item.kind,
+                "subkind": item.subkind,
+                "latitude": item.latitude,
+                "longitude": item.longitude,
+                "address": item.address,
+                "img_url": item.img_url,
+                "time_created": time_created,
+                "reason": reason,
+            })
+        return JsonResponse(results, safe=False)
+    return JsonResponse({"error": "POST method required"}, status=400)
 
 
 #------------------------聊天室---------------------
