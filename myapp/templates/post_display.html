@@ -25,7 +25,7 @@
     .section-title h2::after { right: -70px; }
     .section-title p { margin-top: 10px; font-size: 16px; color: #555; }
     .card { border-left: 8px solid #ccc; }
-    .card .card-body { background: #fff; border-radius: 6px; }
+    .card .card-body { background: #fff; border-radius: 6px; position: relative; } /* 讓右上角定位用 */
     .card .card-title { font-weight: 700; color: #033e6b; }
     .card .card-text { color: #444; font-size: 15px; }
     .meta { font-size: 13px; color: #888; }
@@ -35,8 +35,23 @@
     .interaction-actions-left, .interaction-actions-right { display: flex; gap: 24px; align-items: center; }
     .interaction-actions button { background: none; border: none; color: #555; font-size: 15px; display: flex; align-items: center; gap: 6px; }
     .interaction-actions .liked { color: #dc3545; font-weight: 700; }
-    /* 新增：收藏狀態的樣式 */
-    .interaction-actions .saved { color: #f0ad4e; font-weight: 700; }
+
+    /* 右上角收藏按鈕樣式 */
+    .save-top-right { position: absolute; top: 12px; right: 12px; }
+    .save-top-right button {
+      background: rgba(255,255,255,0.95);
+      border: 1px solid #e6f3fb;
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 14px;
+      color: #033e6b;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .save-top-right button .bi-star-fill { color: #f0ad4e; } /* 黃色星星 */
+
     .btn-floating-post {
       position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; background-color: #63b3ed; color: white;
       border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 28px;
@@ -45,49 +60,18 @@
     .btn-floating-post:hover { background-color: #4299e1; color: white; text-decoration: none; }
     input[name="q"]::placeholder { color: #5a7ca9; }
     input[name="q"]:focus { box-shadow: none; }
-    .nav-right-group {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
+    .nav-right-group { display: flex; align-items: center; gap: 10px; }
     .scroll-top-nav {
-      background-color: transparent;
-      color: #63b3ed;
-      font-size: 20px;
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      border: 2px solid #63b3ed;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      cursor: pointer;
-      z-index: 1050;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-      transition: all 0.3s ease;
+      background-color: transparent; color: #63b3ed; font-size: 20px; width: 36px; height: 36px; border-radius: 50%;
+      border: 2px solid #63b3ed; display: flex; justify-content: center; align-items: center; cursor: pointer;
+      z-index: 1050; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); transition: all 0.3s ease;
     }
-    .scroll-top-nav:hover {
-      background-color: #63b3ed;
-      color: white;
-    }
-    .scroll-top-wrapper {
-      display: none;
-      flex-direction: column;
-      align-items: center;
-    }
-    .scroll-top-text {
-      font-size: 10px;
-      color: #63b3ed;
-      margin-top: 4px;
-    }
+    .scroll-top-nav:hover { background-color: #63b3ed; color: white; }
+    .scroll-top-wrapper { display: none; flex-direction: column; align-items: center; }
+    .scroll-top-text { font-size: 10px; color: #63b3ed; margin-top: 4px; }
     @media (max-width: 991.98px) {
-      .nav-right-group {
-        order: 1;
-        margin-left: auto;
-      }
-      .scroll-top-wrapper {
-        align-items: center;
-      }
+      .nav-right-group { order: 1; margin-left: auto; }
+      .scroll-top-wrapper { align-items: center; }
     }
   </style>
 </head>
@@ -97,25 +81,16 @@
     <a href="{% url 'home' %}" class="logo d-flex align-items-center me-auto me-xl-0">
       <h1 class="sitename" style="color: #033e6b;">怪怪走開，護您安全</h1>
     </a>
-    <!-- <nav id="navmenu" class="navmenu">
+
+    <nav id="navmenu" class="navmenu">
       <ul>
-        <li><a href="{% url 'home' %}#hero" class="active">主頁</a></li>
-        <li><a href="{% url 'home' %}#services">簡介及功能介紹</a></li>
+        <li><a href="{% url 'home' %}#hero">主頁</a></li>
+        <li><a href="index.html#services">簡介及功能介紹</a></li>
         <li><a href="{% url 'report' %}">填寫表單</a></li>
         <li><a href="{% url 'business_upload' %}">商家填單</a></li>
-        <li><a href="{% url 'post' %}">我要發文</a></li>
-        <li><a href="{% url 'map' %}">事件地圖</a></li>
-        <li><a href="{% url 'harassment_prevention' %}">防騷指南</a></li>
-      </ul>
-    </nav> -->
-    <nav id="navmenu" class="navmenu">
-        <ul>
-          <li><a href="{% url 'home' %}#hero">主頁</a></li>
-          <li><a href="index.html#services">簡介及功能介紹</a></li>
-          <li><a href="{% url 'report' %}">填寫表單</a></li>
-          <li><a href="{% url 'business_upload' %}">商家填單</a></li>
-          <li><a href="{% url 'about' %}">個人資料設定</a></li>
-          <li><a href="{% url 'chatroom_page' %}">聊天室</a></li>
+        <li><a href="{% url 'about' %}">個人資料設定</a></li>
+        <li><a href="{% url 'chatroom_page' %}">聊天室</a></li>
+
         <li class="dropdown">
           <a href="#"><span>交流區</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
           <ul>
@@ -123,19 +98,20 @@
             <li><a href="{% url 'post_display' %}">貼文總覽</a></li>
           </ul>
         </li>
-          
-          <li class="dropdown"><a href="#"><span>地圖</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
-            <ul>
-              <li><a href="{% url 'map' %}">事件地圖</a></li>
-              <li><a href="{% url 'store_map' %}">商家地圖</a></li>
-            </ul> 
-          </li>
-          
-          <li><a href="{% url 'harassment_prevention' %}">防騷指南</a></li>
 
-        </ul>
-        <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
-      </nav>
+        <li class="dropdown">
+          <a href="#"><span>地圖</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+          <ul>
+            <li><a href="{% url 'map' %}">事件地圖</a></li>
+            <li><a href="{% url 'store_map' %}">商家地圖</a></li>
+          </ul>
+        </li>
+
+        <li><a href="{% url 'harassment_prevention' %}">防騷指南</a></li>
+      </ul>
+      <!-- 這一行已刪除：<i class="mobile-nav-toggle d-xl-none bi bi-list"></i> -->
+    </nav>
+
     <div class="nav-right-group">
       <div class="scroll-top-wrapper" id="scrollTopWrapper">
         <div id="scrollToTopNav" class="scroll-top-nav">
@@ -143,7 +119,10 @@
         </div>
         <div class="scroll-top-text">回頂部</div>
       </div>
+
+      <!-- ✅ 保留這顆，手機板可正常開合 -->
       <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+
       {% if request.user.is_authenticated %}
         <div class="dropdown">
           <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown"
@@ -171,9 +150,6 @@
 </header>
 
 
-
-
-
 <main class="main">
   <section class="post-list mt-5" id="post-list-section">
     <div class="container">
@@ -183,25 +159,29 @@
       </div>
       
       <form method="get" action="{% url 'post_display' %}" class="d-flex justify-content-center mt-4 mb-4">
-  <div class="input-group w-50" style="border-radius: 10px; overflow: hidden; box-shadow: 0 0 5px rgba(0, 0, 0, 0.05);">
-    <span class="input-group-text" style="background-color: #e6f3fb; border: none;">
-      <i class="bi bi-search" style="color: #63b3ed; font-size: 1.2rem;"></i>
-    </span>
-    <input type="text" name="q" class="form-control"
-           placeholder="輸入關鍵字搜尋貼文…" value="{{ request.GET.q }}"
-           style="border: none; background-color: #f0faff; color: #033e6b; font-size: 15px;">
-    <button type="submit" class="btn" style="background-color: #63b3ed; color: white; border: none;">
-      搜尋
-    </button>
-  </div>
-</form>
-
-
-
+        <div class="input-group w-50" style="border-radius: 10px; overflow: hidden; box-shadow: 0 0 5px rgba(0, 0, 0, 0.05);">
+          <span class="input-group-text" style="background-color: #e6f3fb; border: none;">
+            <i class="bi bi-search" style="color: #63b3ed; font-size: 1.2rem;"></i>
+          </span>
+          <input type="text" name="q" class="form-control"
+                placeholder="輸入關鍵字搜尋貼文…" value="{{ request.GET.q }}"
+                style="border: none; background-color: #f0faff; color: #033e6b; font-size: 15px;">
+          <button type="submit" class="btn" style="background-color: #63b3ed; color: white; border: none;">搜尋</button>
+        </div>
+      </form>
 
       {% for post in posts %}
       <div class="card mb-4" style="border-left: 8px solid #{{ post.bgcolor }};">
         <div class="card-body">
+          <!-- 右上角收藏 -->
+          <form method="post" action="{% url 'save_post' post.interaction_id %}" class="save-form save-top-right" data-post-id="{{ post.interaction_id }}">
+            {% csrf_token %}
+            <button type="submit">
+              <i class="bi {% if request.user.id|stringformat:"s" in post.saved_user_list %}bi-star-fill{% else %}bi-star{% endif %}"></i>
+              收藏
+            </button>
+          </form>
+
           <div class="d-flex align-items-center mb-3">
             <img src="{{ post.avatar_url }}" alt="avatar" class="rounded-circle me-3" style="width: 60px; height: 60px;">
             <div>
@@ -224,42 +204,24 @@
               {% else %}
                 <i class="bi bi-heart"></i>
               {% endif %}
-
               {{ post.like_heart_count }}
             </div>
-            <!-- 暫時隱藏留言與分享 -->
-            <!-- <div><i class="bi bi-chat-left-text"></i> 0 <i class="bi bi-share ms-2"></i> 0</div> -->
+            <!-- 暫藏留言/分享 -->
           </div>
 
           <div class="interaction-actions">
             <div class="interaction-actions-left">
+              <!-- 愛心 -->
               <form method="post" action="{% url 'like_post' post.interaction_id %}" class="like-form" data-post-id="{{ post.interaction_id }}">
                 {% csrf_token %}
                 <button type="submit" class="{% if request.user.id|stringformat:"s" in post.liked_user_list %}liked{% endif %}">
                   <i class="bi {% if request.user.id|stringformat:"s" in post.liked_user_list %}bi-heart-fill text-danger{% else %}bi-heart{% endif %}"></i>
                   {% if request.user.id|stringformat:"s" in post.liked_user_list %}收回愛心{% else %}愛心{% endif %}
                 </button>
-
               </form>
-
-              <!-- 新增：收藏按鈕 -->
-              <form method="post" action="{% url 'save_post' post.interaction_id %}" class="save-form" data-post-id="{{ post.interaction_id }}">
-                {% csrf_token %}
-                <button type="submit" class="{% if request.user.id|stringformat:"s" in post.saved_user_list %}saved{% endif %}">
-                  <i class="bi {% if request.user.id|stringformat:"s" in post.saved_user_list %}bi-star-fill text-warning{% else %}bi-star{% endif %}"></i>
-                  {% if request.user.id|stringformat:"s" in post.saved_user_list %}取消收藏{% else %}收藏{% endif %}
-                </button>
-              </form>
-              <!-- 收藏按鈕結束 -->
-
-              <!--
-                  <div class="interaction-bar">
-                    <span><i class="bi bi-chat-dots"></i> 留言</span>
-                    <span><i class="bi bi-share"></i> 分享</span>
-                  </div>
-                  -->
-
+              <!-- （注意：收藏按鈕已移到右上角，這裡不再放第二顆） -->
             </div>
+
             {% if request.user.id == post.user_id %}
             <div class="interaction-actions-right">
               <a href="{% url 'edit_post' post.interaction_id %}" class="btn btn-sm btn-outline-primary">
@@ -346,7 +308,7 @@
           if (response.ok) {
             button.classList.toggle('liked');
             const isLiked = button.classList.contains('liked');
-            button.innerHTML = `<i class="bi bi-heart"></i> ${isLiked ? '收回愛心' : '愛心'}`;
+            button.innerHTML = `<i class="bi ${isLiked ? 'bi-heart-fill text-danger' : 'bi-heart'}"></i> ${isLiked ? '收回愛心' : '愛心'}`;
 
             const card = this.closest('.card-body');
             const iconDiv = card.querySelector('.interaction-bar div:first-child i');
@@ -366,13 +328,15 @@
       });
     });
 
-    // ---- 收藏功能（新增） ----
+    // ---- 收藏功能（右上角） ----
     document.querySelectorAll('.save-form').forEach(form => {
       form.addEventListener('submit', function (e) {
         e.preventDefault();
         const url = this.action;
         const formData = new FormData(this);
         const button = this.querySelector('button');
+        const icon = button.querySelector('i');
+
         fetch(url, {
           method: 'POST',
           body: formData,
@@ -380,9 +344,9 @@
         })
         .then(response => {
           if (response.ok) {
-            button.classList.toggle('saved');
-            const isSaved = button.classList.contains('saved');
-            button.innerHTML = `<i class="bi ${isSaved ? 'bi-star-fill text-warning' : 'bi-star'}"></i> ${isSaved ? '取消收藏' : '收藏'}`;
+            // 只切換 icon，文字固定顯示「收藏」
+            const isFilled = icon.classList.contains('bi-star-fill');
+            icon.className = `bi ${isFilled ? 'bi-star' : 'bi-star-fill'}`;
           }
         })
         .catch(() => {
@@ -417,9 +381,6 @@
     }
   });
 </script>
-
-
-
 
 </body>
 </html>
