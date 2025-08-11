@@ -1,0 +1,65 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>刪除教育資源</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Bootstrap -->
+  <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet" />
+  <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+
+  <style>
+    body {
+      font-family: "Noto Sans TC", sans-serif;
+      background-color: #f8f9fa;
+      padding-top: 100px;
+    }
+
+    .container {
+      max-width: 600px;
+    }
+
+    .btn-danger {
+      background-color: #dc3545;
+      border: none;
+    }
+
+    .btn-danger:hover {
+      background-color: #c82333;
+    }
+
+    .btn-secondary {
+      background-color: #6c757d;
+      border: none;
+    }
+
+    .btn-secondary:hover {
+      background-color: #5a6268;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container text-center shadow p-4 bg-white rounded">
+    <h3 class="mb-4">⚠️ 系統提示</h3>
+    <p>確定要刪除「<strong>{{ page.title }}</strong>」這筆教育資源嗎？此操作無法還原。</p>
+
+    <form id="deleteForm" method="post" action="{% url 'education_delete' page.id %}">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger me-2">確認刪除</button>
+      <a href="{% url 'education_list' %}" class="btn btn-secondary">取消</a>
+    </form>
+  </div>
+
+  <script>
+    // 點擊按鈕時送出表單，不跳原生 alert
+    document.getElementById("deleteBtn").addEventListener("click", function () {
+      document.getElementById("deleteForm").submit();
+    });
+  </script>
+</body>
+
+</html>
