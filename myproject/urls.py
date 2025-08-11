@@ -34,6 +34,7 @@ urlpatterns = [
 
 
 
+
 # 讓 Django 在開發模式下提供靜態檔案
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS[0])

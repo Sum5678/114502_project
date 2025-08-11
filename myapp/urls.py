@@ -68,6 +68,7 @@ urlpatterns = [
     path('edit_post/<int:post_id>/', views.edit_post, name='edit_post'),
     path('delete_post/<int:post_id>/', views.delete_post, name='delete_post'),
     path('like_post/<int:post_id>/', views.like_post, name='like_post'),
+    path('save_post/<int:post_id>/', views.save_post, name='save_post'),  # 🌟 新增
 
 
     
