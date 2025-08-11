@@ -33,7 +33,7 @@
     .interaction-bar div { display: flex; align-items: center; gap: 8px; }
     .interaction-actions { display: flex; justify-content: space-between; flex-wrap: wrap; align-items: center; padding-top: 8px; }
     .interaction-actions-left, .interaction-actions-right { display: flex; gap: 24px; align-items: center; }
-    .interaction-actions button { background: none; border: none; color: #555; font-size: 15px; display: flex; align-items: center; gap: 6px; }
+    .interaction-actions button { background: none; border: none; color: #555; font-size: 15px; display: flex; align-items: center; gap: 6px; cursor: pointer; }
     .interaction-actions .liked { color: #dc3545; font-weight: 700; }
 
     /* 右上角收藏按鈕 */
@@ -56,7 +56,7 @@
     .btn-floating-post {
       position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; background-color: #63b3ed; color: white;
       border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 28px;
-      text-decoration: none; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); z-index: 1000; transition: background-color 0.3s ease;
+      text-decoration: none; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 1000; transition: background-color 0.3s ease;
     }
     .btn-floating-post:hover { background-color: #4299e1; color: white; text-decoration: none; }
     input[name="q"]::placeholder { color: #5a7ca9; }
@@ -66,7 +66,7 @@
     .scroll-top-nav {
       background-color: transparent; color: #63b3ed; font-size: 20px; width: 36px; height: 36px; border-radius: 50%;
       border: 2px solid #63b3ed; display: flex; justify-content: center; align-items: center; cursor: pointer;
-      z-index: 1050; box-shadow: 0 2px 6px rgba(0,0,0,0.1); transition: all 0.3s ease;
+      z-index: 1050; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); transition: all 0.3s ease;
     }
     .scroll-top-nav:hover { background-color: #63b3ed; color: white; }
     .scroll-top-wrapper { display: none; flex-direction: column; align-items: center; }
@@ -74,6 +74,38 @@
     @media (max-width: 991.98px) {
       .nav-right-group { order: 1; margin-left: auto; }
       .scroll-top-wrapper { align-items: center; }
+    }
+
+    /* ===== 未登入提示 Modal：淺藍色系 ===== */
+    #authRequiredModal .modal-content {
+      border-radius: 14px;
+      border: none;
+      background-color: #f0faff; /* 淺藍底 */
+    }
+    #authRequiredModal .modal-body { color: #033e6b; }
+    #authRequiredModal h5 { color: #033e6b; font-weight: 700; }
+    #authRequiredModal p { color: #055a8c; }
+
+    #authRequiredModal .modal-icon {
+      color: #63b3ed; /* 圖示顏色 */
+    }
+    #authRequiredModal .btn-primary {
+      background-color: #63b3ed;
+      border-color: #63b3ed;
+    }
+    #authRequiredModal .btn-primary:hover {
+      background-color: #4299e1;
+      border-color: #4299e1;
+    }
+    #authRequiredModal .btn-outline-secondary {
+      border-color: #a7e0ff;
+      color: #033e6b;
+      background-color: transparent;
+    }
+    #authRequiredModal .btn-outline-secondary:hover {
+      background-color: #e6f3fb;
+      border-color: #63b3ed;
+      color: #033e6b;
     }
   </style>
 </head>
@@ -210,7 +242,6 @@
               {% endif %}
               {{ post.like_heart_count }}
             </div>
-            <!-- 留言 / 分享 暫時拿掉 -->
           </div>
 
           <div class="interaction-actions">
@@ -258,16 +289,16 @@
   <i class="bi bi-plus-lg"></i>
 </a>
 
-<!-- 未登入提醒 Modal -->
+<!-- 未登入提醒 Modal（淺藍主題） -->
 <div class="modal fade" id="authRequiredModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content border-0 shadow">
       <div class="modal-body p-4 text-center">
         <div class="mb-2">
-          <i class="bi bi-exclamation-triangle-fill fs-1 text-warning"></i>
+          <i class="bi bi-info-circle-fill fs-1 modal-icon"></i>
         </div>
         <h5 class="mb-2">您尚未登入</h5>
-        <p class="text-muted mb-3">請先登入才能使用「愛心」與「收藏」功能。</p>
+        <p class="mb-3">請先登入才能使用此功能。</p>
         <div class="d-flex gap-2 justify-content-center">
           <a class="btn btn-primary" id="goLoginBtn" href="/01userlogin/?next={{ request.get_full_path|urlencode }}">前往登入</a>
           <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">稍後再說</button>
@@ -319,7 +350,7 @@
       });
     });
 
-    // 愛心（僅登入時存在 .like-form）
+    // 愛心（登入狀態）
     document.querySelectorAll('.like-form').forEach(form => {
       form.addEventListener('submit', function (e) {
         e.preventDefault();
@@ -338,7 +369,6 @@
             const isLiked = button.classList.contains('liked');
             button.innerHTML = `<i class="bi ${isLiked ? 'bi-heart-fill text-danger' : 'bi-heart'}"></i> ${isLiked ? '收回愛心' : '愛心'}`;
 
-            // 上方統計列同步
             const card = this.closest('.card-body');
             const iconDiv = card.querySelector('.interaction-bar div:first-child i');
             const countSpan = card.querySelector('.interaction-bar div:first-child');
@@ -357,7 +387,7 @@
       });
     });
 
-    // 收藏（僅登入時存在 .save-form）
+    // 收藏（登入狀態）
     document.querySelectorAll('.save-form').forEach(form => {
       form.addEventListener('submit', function (e) {
         e.preventDefault();
