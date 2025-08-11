@@ -1296,52 +1296,106 @@ client = OpenAI(api_key="我的先拿下")
 
 
 
-
-from django.views.decorators.csrf import csrf_exempt
-from django.http import JsonResponse
+import os
 import json
+import requests
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 
 @csrf_exempt
 def ai_judge(request):
     if request.method != 'POST':
-        return JsonResponse({'result': 2, 'reason': '請使用 POST 請求'})
+        return JsonResponse({'result': 0, 'reason': '請使用 POST 請求'})
 
     try:
         data = json.loads(request.body)
-        description = data.get('description', '').strip()
+        description = data.get('description', '')
 
-        if not description or len(description) < 10:
-            return JsonResponse({'result': 1, 'reason': '描述內容過短，不足以判斷'})
+        if not description.strip():
+            return JsonResponse({'result': 0, 'reason': '描述為空'})
 
-        # 敏感詞分類詞庫
-        sensitive_categories = {
-            '仇恨言論': ['仇恨', '恨死', '殺光', '滅絕'],
-            '暴力': ['暴力', '打死', '砍', '攻擊', '虐待'],
-            '歧視': ['歧視', '種族主義', '排擠', '偏見'],
+        prompt = f"""
+請判斷以下文字描述是否過於主觀，包含仇恨言論、恐懼煽動，或者不當內容？或是對案件描述太無關？
+若沒有，請只回覆「通過」；若有問題，請說明理由。
+
+文字描述：
+{description}
+"""
+
+        github_token = os.getenv("GITHUB_TOKEN")
+        if not github_token:
+            return JsonResponse({'result': 0, 'reason': '未設定 GITHUB_TOKEN'})
+
+        url = "https://models.inference.ai.azure.com/chat/completions"
+        headers = {
+            "Authorization": f"Bearer {github_token}",
+            "Content-Type": "application/json",
+            "X-GitHub-Api-Version": "2023-07-01"
+        }
+        payload = {
+            "model": "gpt-4o-mini",
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": 0
         }
 
-        # 檢查是否含敏感詞
-        has_sensitive_word = any(
-            keyword in description
-            for keywords in sensitive_categories.values()
-            for keyword in keywords
-        )
+        response = requests.post(url, headers=headers, json=payload)
+        response.raise_for_status()
 
-        # 案件關聯詞彙
-        case_related_keywords = [
-            '案件', '事件', '警方', '警察', '報警', '報案', '證據',
-            '被跟蹤', '跟蹤', '尾隨', '偷拍', '性騷擾', '偷窺', '侵入',
-            '陌生男子', '紅衣男子', '追蹤', '恐嚇', '求助', '監視'
-        ]
-        is_case_related = any(kw in description for kw in case_related_keywords)
+        reply = response.json()["choices"][0]["message"]["content"].strip()
 
-        if has_sensitive_word or not is_case_related:
-            return JsonResponse({'result': 2, 'reason': '需再由人工審核'})
-
-        return JsonResponse({'result': 0, 'reason': '人工審核通過'})
+        if "通過" in reply:
+            return JsonResponse({'result': 1})
+        else:
+            return JsonResponse({'result': 0, 'reason': reply})
 
     except Exception as e:
-        return JsonResponse({'result': 2, 'reason': f'系統錯誤：{str(e)}'})
+        return JsonResponse({'result': 0, 'reason': f"系統錯誤：{str(e)}"})
+
+# from django.views.decorators.csrf import csrf_exempt
+# from django.http import JsonResponse
+# import json
+
+# @csrf_exempt
+# def ai_judge(request):
+#     if request.method != 'POST':
+#         return JsonResponse({'result': 2, 'reason': '請使用 POST 請求'})
+
+#     try:
+#         data = json.loads(request.body)
+#         description = data.get('description', '').strip()
+
+#         if not description or len(description) < 10:
+#             return JsonResponse({'result': 1, 'reason': '描述內容過短，不足以判斷'})
+
+#         # 敏感詞分類詞庫
+#         sensitive_categories = {
+#             '仇恨言論': ['仇恨', '恨死', '殺光', '滅絕'],
+#             '暴力': ['暴力', '打死', '砍', '攻擊', '虐待'],
+#             '歧視': ['歧視', '種族主義', '排擠', '偏見'],
+#         }
+
+#         # 檢查是否含敏感詞
+#         has_sensitive_word = any(
+#             keyword in description
+#             for keywords in sensitive_categories.values()
+#             for keyword in keywords
+#         )
+
+#         # 案件關聯詞彙
+#         case_related_keywords = [
+#             '案件', '事件', '警方', '警察', '報警', '報案', '證據',
+#             '被跟蹤', '跟蹤', '尾隨', '偷拍', '性騷擾', '偷窺', '侵入',
+#             '陌生男子', '紅衣男子', '追蹤', '恐嚇', '求助', '監視'
+#         ]
+#         is_case_related = any(kw in description for kw in case_related_keywords)
+
+#         if has_sensitive_word or not is_case_related:
+#             return JsonResponse({'result': 2, 'reason': '需再由人工審核'})
+
+#         return JsonResponse({'result': 0, 'reason': '人工審核通過'})
+
+#     except Exception as e:
+#         return JsonResponse({'result': 2, 'reason': f'系統錯誤：{str(e)}'})
 
 
 
