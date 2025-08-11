@@ -35,6 +35,8 @@
     .interaction-actions-left, .interaction-actions-right { display: flex; gap: 24px; align-items: center; }
     .interaction-actions button { background: none; border: none; color: #555; font-size: 15px; display: flex; align-items: center; gap: 6px; }
     .interaction-actions .liked { color: #dc3545; font-weight: 700; }
+    /* 新增：收藏狀態的樣式 */
+    .interaction-actions .saved { color: #f0ad4e; font-weight: 700; }
     .btn-floating-post {
       position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; background-color: #63b3ed; color: white;
       border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 28px;
@@ -239,6 +241,17 @@
                 </button>
 
               </form>
+
+              <!-- 新增：收藏按鈕 -->
+              <form method="post" action="{% url 'save_post' post.interaction_id %}" class="save-form" data-post-id="{{ post.interaction_id }}">
+                {% csrf_token %}
+                <button type="submit" class="{% if request.user.id|stringformat:"s" in post.saved_user_list %}saved{% endif %}">
+                  <i class="bi {% if request.user.id|stringformat:"s" in post.saved_user_list %}bi-star-fill text-warning{% else %}bi-star{% endif %}"></i>
+                  {% if request.user.id|stringformat:"s" in post.saved_user_list %}取消收藏{% else %}收藏{% endif %}
+                </button>
+              </form>
+              <!-- 收藏按鈕結束 -->
+
               <!--
                   <div class="interaction-bar">
                     <span><i class="bi bi-chat-dots"></i> 留言</span>
@@ -349,6 +362,31 @@
         })
         .catch(() => {
           alert('按讚失敗，請稍後再試');
+        });
+      });
+    });
+
+    // ---- 收藏功能（新增） ----
+    document.querySelectorAll('.save-form').forEach(form => {
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        const url = this.action;
+        const formData = new FormData(this);
+        const button = this.querySelector('button');
+        fetch(url, {
+          method: 'POST',
+          body: formData,
+          headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        })
+        .then(response => {
+          if (response.ok) {
+            button.classList.toggle('saved');
+            const isSaved = button.classList.contains('saved');
+            button.innerHTML = `<i class="bi ${isSaved ? 'bi-star-fill text-warning' : 'bi-star'}"></i> ${isSaved ? '取消收藏' : '收藏'}`;
+          }
+        })
+        .catch(() => {
+          alert('收藏失敗，請稍後再試');
         });
       });
     });

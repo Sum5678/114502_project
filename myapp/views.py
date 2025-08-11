@@ -2006,8 +2006,9 @@ from .models import ChatInteraction
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponseForbidden
+from django.http import HttpResponseForbidden, JsonResponse, HttpResponseBadRequest
 from django.views.decorators.http import require_POST
+from django.db.models import Q
 import bleach
 import json
 
@@ -2045,7 +2046,8 @@ def post(request):
             title=title,
             message_content=clean_content,
             like_heart_count=0,
-            liked_user_ids='[]',
+            liked_user_ids='[]',   # ❤️
+            saved_user_ids='[]',   # 🌟 新增：收藏 JSON 欄位初始值
             created_at=timezone.now()
         )
 
@@ -2054,15 +2056,32 @@ def post(request):
     return render(request, 'post.html')
 
 
-# 貼文展示
+# 貼文展示（含關鍵字搜尋 + 將 JSON 欄位轉為 list 給模板）
 def post_display(request):
-    posts = ChatInteraction.objects.all().order_by('-created_at')
+    query = request.GET.get('q')
+    if query:
+        posts = ChatInteraction.objects.filter(
+            Q(title__icontains=query) |
+            Q(message_content__icontains=query)
+        ).order_by('-created_at')
+    else:
+        posts = ChatInteraction.objects.all().order_by('-created_at')
+
     for post in posts:
+        # liked
         try:
             liked_user_ids = json.loads(post.liked_user_ids or '[]')
         except json.JSONDecodeError:
             liked_user_ids = []
         post.liked_user_list = liked_user_ids
+
+        # saved
+        try:
+            saved_user_ids = json.loads(getattr(post, 'saved_user_ids', '[]') or '[]')
+        except json.JSONDecodeError:
+            saved_user_ids = []
+        post.saved_user_list = saved_user_ids
+
     return render(request, 'post_display.html', {'posts': posts})
 
 
@@ -2070,7 +2089,6 @@ def post_display(request):
 @login_required(login_url='/01userlogin/')
 def edit_post(request, post_id):
     post = get_object_or_404(ChatInteraction, pk=post_id)
-
     if post.user_id != request.user.id:
         return HttpResponseForbidden("⚠️ 你無權編輯這篇貼文。")
 
@@ -2078,7 +2096,7 @@ def edit_post(request, post_id):
         post.title = request.POST.get('title')
         post.message_content = request.POST.get('content')
         post.created_at = timezone.now()
-        post.save()
+        post.save(update_fields=['title', 'message_content', 'created_at'])
         return redirect('post_display')
 
     return render(request, 'edit_post.html', {'post': post})
@@ -2088,7 +2106,6 @@ def edit_post(request, post_id):
 @login_required(login_url='/01userlogin/')
 def delete_post(request, post_id):
     post = get_object_or_404(ChatInteraction, pk=post_id)
-
     if post.user_id != request.user.id:
         return HttpResponseForbidden("⚠️ 你無權刪除這篇貼文。")
 
@@ -2112,43 +2129,54 @@ def like_post(request, post_id):
         liked_user_ids = []
 
     if user_id_str in liked_user_ids:
-        # 取消愛心
         liked_user_ids.remove(user_id_str)
         post.like_heart_count = max((post.like_heart_count or 1) - 1, 0)
     else:
-        # 按愛心
         liked_user_ids.append(user_id_str)
         post.like_heart_count = (post.like_heart_count or 0) + 1
 
-    post.liked_user_ids = json.dumps(liked_user_ids)
+    post.liked_user_ids = json.dumps(liked_user_ids, ensure_ascii=False)
     post.save(update_fields=['like_heart_count', 'liked_user_ids'])
 
+    # 若要支援 AJAX，也可回傳 JSON，這裡先維持 redirect（和你原本一致）
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({
+            'liked': user_id_str in liked_user_ids,
+            'count': post.like_heart_count,
+        })
     return redirect('post_display')
 
 
+# 🌟 收藏（可收回）
+@require_POST
+@login_required(login_url='/01userlogin/')
+def save_post(request, post_id):
+    post = get_object_or_404(ChatInteraction, pk=post_id)
+    user_id_str = str(request.user.id)
 
+    # 讀取 saved_user_ids JSON
+    try:
+        saved_user_ids = json.loads(getattr(post, 'saved_user_ids', '[]') or '[]')
+    except json.JSONDecodeError:
+        saved_user_ids = []
 
-from django.db.models import Q
-import json
-
-def post_display(request):
-    query = request.GET.get('q')
-    if query:
-        posts = ChatInteraction.objects.filter(
-            Q(title__icontains=query) |
-            Q(message_content__icontains=query)
-        ).order_by('-created_at')
+    # 切換收藏狀態
+    if user_id_str in saved_user_ids:
+        saved_user_ids.remove(user_id_str)
+        saved_state = False
     else:
-        posts = ChatInteraction.objects.all().order_by('-created_at')
+        saved_user_ids.append(user_id_str)
+        saved_state = True
 
-    for post in posts:
-        try:
-            liked_user_ids = json.loads(post.liked_user_ids or '[]')
-        except json.JSONDecodeError:
-            liked_user_ids = []
-        post.liked_user_list = liked_user_ids  # 這一行很重要！
+    post.saved_user_ids = json.dumps(saved_user_ids, ensure_ascii=False)
+    post.save(update_fields=['saved_user_ids'])
 
-    return render(request, 'post_display.html', {'posts': posts})
+    # AJAX 回應（你的前端 fetch 會帶 X-Requested-With）
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({'saved': saved_state})
+
+    # 非 AJAX 就導回列表
+    return redirect('post_display')
 
 
 
