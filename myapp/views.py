@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from .models import TaiwanRegion, PoliceAddress #資料表的
 from django.views.decorators.http import require_GET
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from .forms import AutoDialForm
 from django.views.decorators.csrf import csrf_exempt
 from .models import PemapAll
@@ -89,15 +89,13 @@ def admin_login_required(view_func):
 
 #教育網頁
 from .models import EducationPage
+from django.shortcuts import render, redirect, get_object_or_404
+from .education_forms import EducationPageUploadForm
 def education_page(request):
     pages = EducationPage.objects.all()
     return render(request, 'education_page.html', {'pages': pages})
 
 #教育網頁新增改刪
-from django.shortcuts import render, redirect, get_object_or_404
-from .models import EducationPage
-from .education_forms import EducationPageUploadForm
-
 @admin_login_required
 def education_list(request):
     pages = EducationPage.objects.all()
@@ -139,8 +137,6 @@ def education_delete(request, pk):
         return redirect('education_list')
     return redirect('education_delete_confirm', pk=pk)  # 若不是 POST，就導回確認頁
 
-from django.http import HttpResponse
-
 @admin_login_required
 def education_image(request, pk):
     page = get_object_or_404(EducationPage, pk=pk)
@@ -154,11 +150,9 @@ from django.shortcuts import render
 from .models import TaiwanRegion, PoliceAddress
 from django.forms.models import model_to_dict
 
-
 def nearest_police_view(request):
     country_city = request.GET.get('country_city')
     district_town = request.GET.get('district_town')
-
     countries = TaiwanRegion.objects.values_list('country_city', flat=True).distinct()
     districts = []
     police_data = []
@@ -196,15 +190,15 @@ def nearest_police_view(request):
 
 
 #縣市後端
-# regions/views.py
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import TaiwanRegion
 from .taiwan_regions_forms import TaiwanRegionForm
 
+@admin_login_required
 def taiwan_regions_admin(request):
     regions = TaiwanRegion.objects.all()
     return render(request, 'taiwan_regions_admin.html', {'regions': regions})
 
+@admin_login_required
 def taiwan_regions_add(request):
     if request.method == 'POST':
         form = TaiwanRegionForm(request.POST)
@@ -215,6 +209,7 @@ def taiwan_regions_add(request):
         form = TaiwanRegionForm()
     return render(request, 'taiwan_regions_add.html', {'form': form, 'action': '新增'})
 
+@admin_login_required
 def taiwan_regions_edit(request, id):
     region = get_object_or_404(TaiwanRegion, pk=id)
     if request.method == 'POST':
@@ -233,21 +228,18 @@ def taiwan_regions_delete(request, id):
         return redirect('taiwan_regions_admin')
 
 
-
 #警局地址後端
 from django.shortcuts import render, get_object_or_404, redirect
-from .models import PoliceAddress
 from .police_forms import PoliceAddressForm
+from django.views.decorators.http import require_POST
+from django.urls import reverse
+from django.contrib import messages
+
 
 def police_address_list(request):
     addresses = PoliceAddress.objects.all().order_by('precinct_name')
     return render(request, 'police_address_admin.html', {'addresses': addresses})
 
-from django.shortcuts import render, redirect
-from .models import PoliceAddress
-from django.views.decorators.http import require_POST
-from django.urls import reverse
-from django.contrib import messages
 
 def police_address_add(request):
     if request.method == 'POST':
@@ -257,7 +249,6 @@ def police_address_add(request):
         phone = request.POST.get('phone')
         point_x = request.POST.get('POINT_X')
         point_y = request.POST.get('POINT_Y')
-
         # 資料驗證可視需求加強
         if precinct_name and zipcode and address and phone and point_x and point_y:
             PoliceAddress.objects.create(
@@ -272,7 +263,6 @@ def police_address_add(request):
             return redirect('police_address_list')  # 替換為你列表頁的網址名稱
         else:
             messages.error(request, "所有欄位皆為必填，請確認填寫完整。")
-
     return render(request, 'police_address_add.html')
 
 
@@ -298,6 +288,7 @@ def police_address_delete(request, pk):
     addr = get_object_or_404(PoliceAddress, pk=pk)
     addr.delete()
     return redirect('police_address_list')  # 刪除後回到列表頁
+
 
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
