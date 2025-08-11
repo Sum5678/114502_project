@@ -8,6 +8,8 @@
   <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
   <link href="{% static 'assets/vendor/aos/aos.css' %}" rel="stylesheet">
   <link href="{% static 'assets/css/main.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet">
+
   <style>
     .profile-container {
       max-width: 700px;
@@ -42,9 +44,9 @@
 <body class="index-page">
 
 <header id="header" class="header d-flex align-items-center fixed-top">
-  <div class="container-fluid d-flex justify-content-between align-items-center">
-    <a href="{% url 'home' %}" class="logo d-flex align-items-center">
-      <h1 class="sitename">怪怪走開，護您安全</h1>
+  <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
+    <a href="{% url 'home' %}" class="logo d-flex align-items-center me-auto me-xl-0">
+      <h1 class="sitename" style="color: #033e6b;">怪怪走開，護您安全</h1>
     </a>
     <nav id="navmenu" class="navmenu">
         <ul>
@@ -75,24 +77,24 @@
         <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
       </nav>
     {% if request.user.is_authenticated %}
-    <div class="dropdown">
-      <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown" style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
-        {{ request.user.username }}
-      </a>
-      <ul class="dropdown-menu dropdown-menu-end">
-        <li><a class="dropdown-item" href="{% url '01_userlogin_out' %}">登出</a></li>
-      </ul>
-    </div>
+      <div class="dropdown">
+        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown" style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
+          {{ request.user.username }}
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="{% url '01_userlogin_out' %}">登出</a></li>
+        </ul>
+      </div>
     {% else %}
-    <div class="dropdown">
-      <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown" style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
-        登入
-      </a>
-      <ul class="dropdown-menu dropdown-menu-end">
-        <li><a class="dropdown-item" href="{% url 'userlogin' %}">一般使用者登入</a></li>
-        <li><a class="dropdown-item" href="{% url 'admin_login' %}">管理員登入</a></li>
-      </ul>
-    </div>
+      <div class="dropdown">
+        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown" style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
+          登入
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="{% url 'userlogin' %}">一般使用者登入</a></li>
+          <li><a class="dropdown-item" href="{% url 'admin_login' %}">管理員登入</a></li>
+        </ul>
+      </div>
     {% endif %}
   </div>
 </header>

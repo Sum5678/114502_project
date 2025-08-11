@@ -8,6 +8,7 @@
   <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
   <link href="{% static 'assets/vendor/aos/aos.css' %}" rel="stylesheet">
   <link href="{% static 'assets/css/main.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet">
   <style>
     table {
       width: 100%;
@@ -39,11 +40,11 @@
 <body class="index-page">
 
   <header id="header" class="header d-flex align-items-center fixed-top">
-    <div class="container-fluid d-flex justify-content-between align-items-center">
-      <a href="{% url 'home' %}" class="logo d-flex align-items-center">
-        <h1 class="sitename">怪怪走開，護您安全</h1>
-      </a>
-      <nav id="navmenu" class="navmenu">
+  <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
+    <a href="{% url 'home' %}" class="logo d-flex align-items-center me-auto me-xl-0">
+      <h1 class="sitename" style="color: #033e6b;">怪怪走開，護您安全</h1>
+    </a>
+    <nav id="navmenu" class="navmenu">
         <ul>
           <li><a href="{% url 'home' %}#hero">主頁</a></li>
           <li><a href="index.html#services">簡介及功能介紹</a></li>
@@ -71,8 +72,7 @@
         </ul>
         <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
       </nav>
-      {% if request.user.is_authenticated %}
-      <!-- ✅ 登入狀態，顯示帳號 + 登出 -->
+    {% if request.user.is_authenticated %}
       <div class="dropdown">
         <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown" style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
           {{ request.user.username }}
@@ -82,7 +82,6 @@
         </ul>
       </div>
     {% else %}
-      <!-- ❌ 未登入，顯示登入選項 -->
       <div class="dropdown">
         <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown" style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
           登入
@@ -93,8 +92,8 @@
         </ul>
       </div>
     {% endif %}
-    </div>
-  </header>
+  </div>
+</header>
   <!-- Main -->
   <main class="main" style="padding-top: 100px;">
     <section class="section">
