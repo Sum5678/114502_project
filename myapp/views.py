@@ -1309,10 +1309,13 @@ def ai_judge(request):
 
     try:
         data = json.loads(request.body)
-        description = data.get('description', '')
+        description = data.get('description', '').strip()
 
-        if not description.strip():
-            return JsonResponse({'result': 0, 'reason': '描述為空'})
+        if not description:
+            return JsonResponse({'result': 1, 'reason': '描述為空，請輸入內容'})
+
+        if len(description) < 10:
+            return JsonResponse({'result': 1, 'reason': '描述內容過短，請補充更多細節'})
 
         prompt = f"""
 請判斷以下文字描述是否過於主觀，包含仇恨言論、恐懼煽動，或者不當內容？或是對案件描述太無關？
@@ -1324,7 +1327,7 @@ def ai_judge(request):
 
         github_token = os.getenv("GITHUB_TOKEN")
         if not github_token:
-            return JsonResponse({'result': 0, 'reason': '未設定 GITHUB_TOKEN'})
+            return JsonResponse({'result': 0, 'reason': '未設定 GITHUB_TOKEN 環境變數'})
 
         url = "https://models.inference.ai.azure.com/chat/completions"
         headers = {
@@ -1343,13 +1346,17 @@ def ai_judge(request):
 
         reply = response.json()["choices"][0]["message"]["content"].strip()
 
+        print("AI 回傳全文:", reply)  # <--- 這行會在伺服器終端或日誌中印出
+
+
         if "通過" in reply:
-            return JsonResponse({'result': 1})
+            return JsonResponse({'result': 0, 'reason': '描述符合規範，無需人工審核'})
         else:
-            return JsonResponse({'result': 0, 'reason': reply})
+            return JsonResponse({'result': 2, 'reason': reply})
 
     except Exception as e:
         return JsonResponse({'result': 0, 'reason': f"系統錯誤：{str(e)}"})
+
 
 # from django.views.decorators.csrf import csrf_exempt
 # from django.http import JsonResponse

@@ -185,16 +185,18 @@
         resultElem.className = '';
 
         if (data.result === 0) {
-          resultElem.innerText = "✅ 人工審核通過";
+          resultElem.innerHTML = "✅ 通過<br><small>" + (data.reason || '') + "</small>";
           resultElem.classList.add('success');
         } else if (data.result === 1) {
-          resultElem.innerText = "⚠️ 描述內容過短，不足以判斷";
+          resultElem.innerHTML = "⚠️ 描述過短<br><small>" + (data.reason || '') + "</small>";
           resultElem.classList.add('warning');
         } else {
-          resultElem.innerText = "❌ 需再由人工審核：" + data.reason;
+          resultElem.innerHTML = "❌ 需要人工審核<br><small>" + (data.reason || '') + "</small>";
           resultElem.classList.add('error');
         }
       })
+
+
       .catch(error => {
         const resultElem = document.getElementById("result");
         resultElem.innerText = "❌ 發生錯誤：" + error;
