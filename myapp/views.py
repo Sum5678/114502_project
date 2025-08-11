@@ -1938,25 +1938,40 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
 from .models import PemapWithSubkind, PemapAll
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+import json
+from .models import PemapWithSubkind, PemapAll
 
 @csrf_exempt
 def reports_with_subkind_json(request):
-    if request.method == 'POST':
+    if request.method == "POST":
         data = json.loads(request.body)
-        kind = data.get('kind')
-        subkind = data.get('subkind')
+        kind = data.get("kind")
+        subkind = data.get("subkind")
+        north = data.get("north")
+        east = data.get("east")
+        south = data.get("south")
+        west = data.get("west")
 
-        # 用 VIEW 篩選
         queryset = PemapWithSubkind.objects.all()
+
         if kind and kind != "全部":
             queryset = queryset.filter(kind=kind)
         if subkind and subkind != "":
             queryset = queryset.filter(subkind=subkind)
 
+        if None not in (north, east, south, west):
+            queryset = queryset.filter(
+                latitude__lte=north,
+                latitude__gte=south,
+                longitude__lte=east,
+                longitude__gte=west,
+            )
+
         results = []
         for item in queryset:
             try:
-                # 用 p_id 從 PemapAll 拿 reason
                 pemap_detail = PemapAll.objects.get(p_id=item.p_id)
                 reason = pemap_detail.reason
             except PemapAll.DoesNotExist:
@@ -1971,13 +1986,14 @@ def reports_with_subkind_json(request):
                 "longitude": item.longitude,
                 "address": item.address,
                 "img_url": item.img_url,
-                "time_created": item.time_created,
+                "time_created": item.time_created.strftime("%Y-%m-%d %H:%M"),
                 "reason": reason,
             })
 
         return JsonResponse(results, safe=False)
     else:
         return JsonResponse({"error": "POST method required"}, status=400)
+
 
 
 
@@ -2787,3 +2803,44 @@ def toggle_favorite(request):
     else:
         FavoriteChatRoom.objects.create(user=user_profile, chat_room=chat_room)
         return JsonResponse({'status': 'added'})
+
+
+# @csrf_exempt
+# def reports_with_subkind_json(request):
+#     if request.method == 'POST':
+#         data = json.loads(request.body)
+#         kind = data.get('kind')
+#         subkind = data.get('subkind')
+
+#         # 用 VIEW 篩選
+#         queryset = PemapWithSubkind.objects.all()
+#         if kind and kind != "全部":
+#             queryset = queryset.filter(kind=kind)
+#         if subkind and subkind != "":
+#             queryset = queryset.filter(subkind=subkind)
+
+#         results = []
+#         for item in queryset:
+#             try:
+#                 # 用 p_id 從 PemapAll 拿 reason
+#                 pemap_detail = PemapAll.objects.get(p_id=item.p_id)
+#                 reason = pemap_detail.reason
+#             except PemapAll.DoesNotExist:
+#                 reason = "無"
+
+#             results.append({
+#                 "p_id": item.p_id,
+#                 "display_name": item.display_name,
+#                 "kind": item.kind,
+#                 "subkind": item.subkind,
+#                 "latitude": item.latitude,
+#                 "longitude": item.longitude,
+#                 "address": item.address,
+#                 "img_url": item.img_url,
+#                 "time_created": item.time_created,
+#                 "reason": reason,
+#             })
+
+#         return JsonResponse(results, safe=False)
+#     else:
+#         return JsonResponse({"error": "POST method required"}, status=400)
