@@ -3,8 +3,8 @@
 <html lang="zh-Hant">
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>教育資源管理</title>
 
   <link href="{% static 'assets/img/favicon.png' %}" rel="icon" />
@@ -79,33 +79,28 @@
         <ul>
           <li><a href="{% url 'admin_index' %}#hero" class="active">管理員主頁</a></li>
           <li><a href="{% url 'admin_interview' %}">管理員自我介紹</a></li>
-          <!-- <li><a href="{% url 'show_judge_page' %}">審核表單</a></li> -->
-          <!-- <li><a href="{% url 'pemap_judge' %}">事件清單審核</a></li> -->
-          
+
           <li class="dropdown"><a href="#"><span>清單審核</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
             <ul>
               <li><a href="{% url 'pemap_judge' %}">事件清單審核</a></li>
               <li><a href="{% url 'store_judge' %}">商家清單審核</a></li>
-            </ul> 
+            </ul>
           </li>
-          
+
           <li class="dropdown"><a href="#"><span>我的審核紀錄</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
             <ul>
               <li><a href="{% url 'admin_decide' %}">事件審核紀錄</a></li>
               <li><a href="{% url 'store_decide' %}">商家審核紀錄</a></li>
-            </ul> 
+            </ul>
           </li>
-          <!-- ✅ 新增的下拉式選單 -->
+
           <li class="dropdown"><a href="#"><span>管理工具</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
             <ul>
               <li><a href="{% url 'education_list' %}">教育網頁管理</a></li>
               <li><a href="{% url 'taiwan_regions_admin' %}">台灣縣市管理</a></li>
               <li><a href="{% url 'police_address_list' %}">最近警局管理</a></li>
-              <!-- <li><a href="#">其他工具</a></li> -->
             </ul>
           </li>
-        </ul>
-          <!-- <li><a href="{% url 'admin_logout' %}">登出</a></li> -->
         </ul>
         <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
       </nav>
@@ -113,9 +108,11 @@
       <a class="btn-getstarted" href="{% url 'admin_logout' %}">登出</a>
     </div>
   </header>
-    <section class="hero">
-      <img src="{% static 'assets/img/1.png' %}" alt="Hero Image">
-    </section>
+
+  <section class="hero">
+    <img src="{% static 'assets/img/1.png' %}" alt="Hero Image" />
+  </section>
+
   <!-- 主內容 -->
   <main class="main" style="padding-top: 100px;">
     <section class="section light-background">
@@ -133,7 +130,38 @@
               <p class="mt-2 fw-semibold">{{ page.title }}</p>
               <div class="actions">
                 <a href="{% url 'education_update' page.id %}" class="btn btn-custom btn-sm">編輯</a>
-                <a href="{% url 'education_delete_confirm' page.id %}" class="btn btn-danger">刪除</a>
+
+                <!-- 刪除按鈕 -->
+                <button type="button" class="btn btn-delete btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal{{ page.id }}">
+                  刪除
+                </button>
+
+                <!-- 刪除確認 Modal -->
+                <div class="modal fade" id="deleteModal{{ page.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ page.id }}" aria-hidden="true">
+                  <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                      <form method="POST" action="{% url 'education_delete' page.id %}">
+                        {% csrf_token %}
+                        <div class="modal-header">
+                          <h5 class="modal-title" id="deleteModalLabel{{ page.id }}">⚠️ 系統提示</h5>
+                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
+                        </div>
+                        <div class="modal-body text-start">
+                          你確定要刪除以下資料嗎？
+                          <ul>
+                            <li><strong>標題：</strong>{{ page.title }}</li>
+                            <li><strong>連結：</strong><a href="{{ page.url }}" target="_blank">{{ page.url }}</a></li>
+                          </ul>
+                        </div>
+                        <div class="modal-footer">
+                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                          <button type="submit" class="btn btn-danger">確認刪除</button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+                <!-- Modal end -->
               </div>
             </div>
             {% empty %}
