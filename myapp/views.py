@@ -2968,6 +2968,8 @@ def chatroom_page(request):
     except ThisUserProfile.DoesNotExist:
         user_profile = None
 
+    favorites = FavoriteChatRoom.objects.filter(user=user_profile).select_related('chat_room') if user_profile else []
+
     if user_profile:
         print('DEBUG: nickname1:', repr(user_profile.default_nickname1))
         print('DEBUG: nickname2:', repr(user_profile.default_nickname2))
@@ -2976,6 +2978,7 @@ def chatroom_page(request):
 
     return render(request, 'chatroom.html', {
         'user_profile': user_profile,
+        'favorites':favorites
     })
 
 
