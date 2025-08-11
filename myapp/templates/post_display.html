@@ -49,6 +49,7 @@
       align-items: center;
       gap: 6px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      cursor: pointer;
     }
     .save-top-right .bi-star-fill { color: #f0ad4e; }
 
@@ -65,7 +66,7 @@
     .scroll-top-nav {
       background-color: transparent; color: #63b3ed; font-size: 20px; width: 36px; height: 36px; border-radius: 50%;
       border: 2px solid #63b3ed; display: flex; justify-content: center; align-items: center; cursor: pointer;
-      z-index: 1050; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); transition: all 0.3s ease;
+      z-index: 1050; box-shadow: 0 2px 6px rgba(0,0,0,0.1); transition: all 0.3s ease;
     }
     .scroll-top-nav:hover { background-color: #63b3ed; color: white; }
     .scroll-top-wrapper { display: none; flex-direction: column; align-items: center; }
@@ -144,7 +145,6 @@
   </div>
 </header>
 
-
 <main class="main">
   <section class="post-list mt-5" id="post-list-section">
     <div class="container">
@@ -170,13 +170,21 @@
         <div class="card-body">
 
           <!-- 右上角收藏 -->
-          <form method="post" action="{% url 'save_post' post.interaction_id %}" class="save-form save-top-right" data-post-id="{{ post.interaction_id }}">
-            {% csrf_token %}
-            <button type="submit">
-              <i class="bi {% if post.is_saved %}bi-star-fill{% else %}bi-star{% endif %}"></i>
-              收藏
-            </button>
-          </form>
+          {% if request.user.is_authenticated %}
+            <form method="post" action="{% url 'save_post' post.interaction_id %}" class="save-form save-top-right" data-post-id="{{ post.interaction_id }}">
+              {% csrf_token %}
+              <button type="submit">
+                <i class="bi {% if post.is_saved %}bi-star-fill{% else %}bi-star{% endif %}"></i>
+                收藏
+              </button>
+            </form>
+          {% else %}
+            <div class="save-top-right">
+              <button type="button" class="require-login">
+                <i class="bi bi-star"></i> 收藏
+              </button>
+            </div>
+          {% endif %}
 
           <div class="d-flex align-items-center mb-3">
             <img src="{{ post.avatar_url }}" alt="avatar" class="rounded-circle me-3" style="width: 60px; height: 60px;">
@@ -207,13 +215,19 @@
 
           <div class="interaction-actions">
             <div class="interaction-actions-left">
-              <form method="post" action="{% url 'like_post' post.interaction_id %}" class="like-form" data-post-id="{{ post.interaction_id }}">
-                {% csrf_token %}
-                <button type="submit" class="{% if post.is_liked %}liked{% endif %}">
-                  <i class="bi {% if post.is_liked %}bi-heart-fill text-danger{% else %}bi-heart{% endif %}"></i>
-                  {% if post.is_liked %}收回愛心{% else %}愛心{% endif %}
+              {% if request.user.is_authenticated %}
+                <form method="post" action="{% url 'like_post' post.interaction_id %}" class="like-form" data-post-id="{{ post.interaction_id }}">
+                  {% csrf_token %}
+                  <button type="submit" class="{% if post.is_liked %}liked{% endif %}">
+                    <i class="bi {% if post.is_liked %}bi-heart-fill text-danger{% else %}bi-heart{% endif %}"></i>
+                    {% if post.is_liked %}收回愛心{% else %}愛心{% endif %}
+                  </button>
+                </form>
+              {% else %}
+                <button type="button" class="require-login">
+                  <i class="bi bi-heart"></i> 愛心
                 </button>
-              </form>
+              {% endif %}
             </div>
 
             {% if request.user.id == post.user_id %}
@@ -243,6 +257,25 @@
 <a href="{% url 'post' %}" class="btn-floating-post">
   <i class="bi bi-plus-lg"></i>
 </a>
+
+<!-- 未登入提醒 Modal -->
+<div class="modal fade" id="authRequiredModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-body p-4 text-center">
+        <div class="mb-2">
+          <i class="bi bi-exclamation-triangle-fill fs-1 text-warning"></i>
+        </div>
+        <h5 class="mb-2">您尚未登入</h5>
+        <p class="text-muted mb-3">請先登入才能使用「愛心」與「收藏」功能。</p>
+        <div class="d-flex gap-2 justify-content-center">
+          <a class="btn btn-primary" id="goLoginBtn" href="/01userlogin/?next={{ request.get_full_path|urlencode }}">前往登入</a>
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">稍後再說</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
 <script src="{% static 'assets/vendor/aos/aos.js' %}"></script>
@@ -286,7 +319,7 @@
       });
     });
 
-    // 愛心
+    // 愛心（僅登入時存在 .like-form）
     document.querySelectorAll('.like-form').forEach(form => {
       form.addEventListener('submit', function (e) {
         e.preventDefault();
@@ -319,12 +352,12 @@
           }
         })
         .catch(() => {
-          alert('按讚失敗，請稍後再試');
+          alert('按愛心失敗，請稍後再試');
         });
       });
     });
 
-    // 收藏（右上角）
+    // 收藏（僅登入時存在 .save-form）
     document.querySelectorAll('.save-form').forEach(form => {
       form.addEventListener('submit', function (e) {
         e.preventDefault();
@@ -346,6 +379,15 @@
         .catch(() => {
           alert('收藏失敗，請稍後再試');
         });
+      });
+    });
+
+    // 未登入提示：綁定 .require-login
+    document.querySelectorAll('.require-login').forEach(el => {
+      el.addEventListener('click', function (e) {
+        e.preventDefault();
+        const modal = new bootstrap.Modal(document.getElementById('authRequiredModal'));
+        modal.show();
       });
     });
 
