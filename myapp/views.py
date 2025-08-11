@@ -2190,7 +2190,7 @@ from .models import ChatInteraction
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponseForbidden, JsonResponse, HttpResponseBadRequest
+from django.http import HttpResponseForbidden, JsonResponse
 from django.views.decorators.http import require_POST
 from django.db.models import Q
 import bleach
@@ -2231,25 +2231,25 @@ def post(request):
             message_content=clean_content,
             like_heart_count=0,
             liked_user_ids='[]',   # ❤️
-            saved_user_ids='[]',   # 🌟 新增：收藏 JSON 欄位初始值
+            saved_user_ids='[]',   # 🌟 收藏
             created_at=timezone.now()
         )
-
         return redirect('post_display')
 
     return render(request, 'post.html')
 
 
-# 貼文展示（含關鍵字搜尋 + 將 JSON 欄位轉為 list 給模板）
+# 貼文展示（含關鍵字搜尋 + 將 JSON 欄位轉為布林給模板）
 def post_display(request):
     query = request.GET.get('q')
     if query:
         posts = ChatInteraction.objects.filter(
-            Q(title__icontains=query) |
-            Q(message_content__icontains=query)
+            Q(title__icontains=query) | Q(message_content__icontains=query)
         ).order_by('-created_at')
     else:
         posts = ChatInteraction.objects.all().order_by('-created_at')
+
+    user_id_str = str(request.user.id) if request.user.is_authenticated else None
 
     for post in posts:
         # liked
@@ -2257,13 +2257,17 @@ def post_display(request):
             liked_user_ids = json.loads(post.liked_user_ids or '[]')
         except json.JSONDecodeError:
             liked_user_ids = []
-        post.liked_user_list = liked_user_ids
+        liked_user_ids = [str(x) for x in liked_user_ids]
+        post.is_liked = bool(user_id_str and (user_id_str in liked_user_ids))
+        post.liked_user_list = liked_user_ids  # 若模板其他處需要
 
         # saved
         try:
             saved_user_ids = json.loads(getattr(post, 'saved_user_ids', '[]') or '[]')
         except json.JSONDecodeError:
             saved_user_ids = []
+        saved_user_ids = [str(x) for x in saved_user_ids]
+        post.is_saved = bool(user_id_str and (user_id_str in saved_user_ids))
         post.saved_user_list = saved_user_ids
 
     return render(request, 'post_display.html', {'posts': posts})
@@ -2312,22 +2316,22 @@ def like_post(request, post_id):
     except json.JSONDecodeError:
         liked_user_ids = []
 
+    # 轉字串 + 去重
+    liked_user_ids = list({str(x) for x in liked_user_ids})
+
+    # 切換
     if user_id_str in liked_user_ids:
         liked_user_ids.remove(user_id_str)
-        post.like_heart_count = max((post.like_heart_count or 1) - 1, 0)
     else:
         liked_user_ids.append(user_id_str)
-        post.like_heart_count = (post.like_heart_count or 0) + 1
 
+    # 以實際清單長度為準重算數量（避免漂移）
+    post.like_heart_count = len(liked_user_ids)
     post.liked_user_ids = json.dumps(liked_user_ids, ensure_ascii=False)
     post.save(update_fields=['like_heart_count', 'liked_user_ids'])
 
-    # 若要支援 AJAX，也可回傳 JSON，這裡先維持 redirect（和你原本一致）
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        return JsonResponse({
-            'liked': user_id_str in liked_user_ids,
-            'count': post.like_heart_count,
-        })
+        return JsonResponse({'liked': user_id_str in liked_user_ids, 'count': post.like_heart_count})
     return redirect('post_display')
 
 
@@ -2338,13 +2342,15 @@ def save_post(request, post_id):
     post = get_object_or_404(ChatInteraction, pk=post_id)
     user_id_str = str(request.user.id)
 
-    # 讀取 saved_user_ids JSON
     try:
         saved_user_ids = json.loads(getattr(post, 'saved_user_ids', '[]') or '[]')
     except json.JSONDecodeError:
         saved_user_ids = []
 
-    # 切換收藏狀態
+    # 轉字串 + 去重
+    saved_user_ids = list({str(x) for x in saved_user_ids})
+
+    # 切換
     if user_id_str in saved_user_ids:
         saved_user_ids.remove(user_id_str)
         saved_state = False
@@ -2355,11 +2361,8 @@ def save_post(request, post_id):
     post.saved_user_ids = json.dumps(saved_user_ids, ensure_ascii=False)
     post.save(update_fields=['saved_user_ids'])
 
-    # AJAX 回應（你的前端 fetch 會帶 X-Requested-With）
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         return JsonResponse({'saved': saved_state})
-
-    # 非 AJAX 就導回列表
     return redirect('post_display')
 
 

@@ -25,7 +25,7 @@
     .section-title h2::after { right: -70px; }
     .section-title p { margin-top: 10px; font-size: 16px; color: #555; }
     .card { border-left: 8px solid #ccc; }
-    .card .card-body { background: #fff; border-radius: 6px; position: relative; } /* 讓右上角定位用 */
+    .card .card-body { background: #fff; border-radius: 6px; position: relative; }
     .card .card-title { font-weight: 700; color: #033e6b; }
     .card .card-text { color: #444; font-size: 15px; }
     .meta { font-size: 13px; color: #888; }
@@ -36,7 +36,7 @@
     .interaction-actions button { background: none; border: none; color: #555; font-size: 15px; display: flex; align-items: center; gap: 6px; }
     .interaction-actions .liked { color: #dc3545; font-weight: 700; }
 
-    /* 右上角收藏按鈕樣式 */
+    /* 右上角收藏按鈕 */
     .save-top-right { position: absolute; top: 12px; right: 12px; }
     .save-top-right button {
       background: rgba(255,255,255,0.95);
@@ -50,7 +50,7 @@
       gap: 6px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
-    .save-top-right button .bi-star-fill { color: #f0ad4e; } /* 黃色星星 */
+    .save-top-right .bi-star-fill { color: #f0ad4e; }
 
     .btn-floating-post {
       position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; background-color: #63b3ed; color: white;
@@ -60,6 +60,7 @@
     .btn-floating-post:hover { background-color: #4299e1; color: white; text-decoration: none; }
     input[name="q"]::placeholder { color: #5a7ca9; }
     input[name="q"]:focus { box-shadow: none; }
+
     .nav-right-group { display: flex; align-items: center; gap: 10px; }
     .scroll-top-nav {
       background-color: transparent; color: #63b3ed; font-size: 20px; width: 36px; height: 36px; border-radius: 50%;
@@ -90,7 +91,6 @@
         <li><a href="{% url 'business_upload' %}">商家填單</a></li>
         <li><a href="{% url 'about' %}">個人資料設定</a></li>
         <li><a href="{% url 'chatroom_page' %}">聊天室</a></li>
-
         <li class="dropdown">
           <a href="#"><span>交流區</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
           <ul>
@@ -98,7 +98,6 @@
             <li><a href="{% url 'post_display' %}">貼文總覽</a></li>
           </ul>
         </li>
-
         <li class="dropdown">
           <a href="#"><span>地圖</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
           <ul>
@@ -106,10 +105,8 @@
             <li><a href="{% url 'store_map' %}">商家地圖</a></li>
           </ul>
         </li>
-
         <li><a href="{% url 'harassment_prevention' %}">防騷指南</a></li>
       </ul>
-      <!-- 這一行已刪除：<i class="mobile-nav-toggle d-xl-none bi bi-list"></i> -->
     </nav>
 
     <div class="nav-right-group">
@@ -119,8 +116,6 @@
         </div>
         <div class="scroll-top-text">回頂部</div>
       </div>
-
-      <!-- ✅ 保留這顆，手機板可正常開合 -->
       <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
 
       {% if request.user.is_authenticated %}
@@ -157,15 +152,15 @@
         <h2>貼文總覽｜交流區</h2>
         <p>以下是大家的分享</p>
       </div>
-      
+
       <form method="get" action="{% url 'post_display' %}" class="d-flex justify-content-center mt-4 mb-4">
         <div class="input-group w-50" style="border-radius: 10px; overflow: hidden; box-shadow: 0 0 5px rgba(0, 0, 0, 0.05);">
           <span class="input-group-text" style="background-color: #e6f3fb; border: none;">
             <i class="bi bi-search" style="color: #63b3ed; font-size: 1.2rem;"></i>
           </span>
           <input type="text" name="q" class="form-control"
-                placeholder="輸入關鍵字搜尋貼文…" value="{{ request.GET.q }}"
-                style="border: none; background-color: #f0faff; color: #033e6b; font-size: 15px;">
+                 placeholder="輸入關鍵字搜尋貼文…" value="{{ request.GET.q }}"
+                 style="border: none; background-color: #f0faff; color: #033e6b; font-size: 15px;">
           <button type="submit" class="btn" style="background-color: #63b3ed; color: white; border: none;">搜尋</button>
         </div>
       </form>
@@ -173,11 +168,12 @@
       {% for post in posts %}
       <div class="card mb-4" style="border-left: 8px solid #{{ post.bgcolor }};">
         <div class="card-body">
+
           <!-- 右上角收藏 -->
           <form method="post" action="{% url 'save_post' post.interaction_id %}" class="save-form save-top-right" data-post-id="{{ post.interaction_id }}">
             {% csrf_token %}
             <button type="submit">
-              <i class="bi {% if request.user.id|stringformat:"s" in post.saved_user_list %}bi-star-fill{% else %}bi-star{% endif %}"></i>
+              <i class="bi {% if post.is_saved %}bi-star-fill{% else %}bi-star{% endif %}"></i>
               收藏
             </button>
           </form>
@@ -199,27 +195,25 @@
 
           <div class="interaction-bar">
             <div>
-              {% if request.user.id|stringformat:"s" in post.liked_user_list %}
+              {% if post.is_liked %}
                 <i class="bi bi-heart-fill text-danger"></i>
               {% else %}
                 <i class="bi bi-heart"></i>
               {% endif %}
               {{ post.like_heart_count }}
             </div>
-            <!-- 暫藏留言/分享 -->
+            <!-- 留言 / 分享 暫時拿掉 -->
           </div>
 
           <div class="interaction-actions">
             <div class="interaction-actions-left">
-              <!-- 愛心 -->
               <form method="post" action="{% url 'like_post' post.interaction_id %}" class="like-form" data-post-id="{{ post.interaction_id }}">
                 {% csrf_token %}
-                <button type="submit" class="{% if request.user.id|stringformat:"s" in post.liked_user_list %}liked{% endif %}">
-                  <i class="bi {% if request.user.id|stringformat:"s" in post.liked_user_list %}bi-heart-fill text-danger{% else %}bi-heart{% endif %}"></i>
-                  {% if request.user.id|stringformat:"s" in post.liked_user_list %}收回愛心{% else %}愛心{% endif %}
+                <button type="submit" class="{% if post.is_liked %}liked{% endif %}">
+                  <i class="bi {% if post.is_liked %}bi-heart-fill text-danger{% else %}bi-heart{% endif %}"></i>
+                  {% if post.is_liked %}收回愛心{% else %}愛心{% endif %}
                 </button>
               </form>
-              <!-- （注意：收藏按鈕已移到右上角，這裡不再放第二顆） -->
             </div>
 
             {% if request.user.id == post.user_id %}
@@ -258,14 +252,14 @@
 <script src="{% static 'assets/js/main.js' %}"></script>
 <script>
   document.addEventListener('DOMContentLoaded', function () {
-    // ---- 查看更多/關閉詳情 ----
+    // 查看更多/關閉詳情
     document.querySelectorAll('.toggle-more').forEach(link => {
       link.addEventListener('click', function (e) {
         e.preventDefault();
         const p = this.closest('.message-content');
         const fullText = p.dataset.full;
         const truncated = fullText.slice(0, 100);
-        if (this.textContent === '查看更多') {
+        if (this.textContent.trim() === '查看更多') {
           p.innerHTML = '';
           p.textContent = fullText;
           const closeLink = document.createElement('a');
@@ -292,13 +286,14 @@
       });
     });
 
-    // ---- 愛心功能 ----
+    // 愛心
     document.querySelectorAll('.like-form').forEach(form => {
       form.addEventListener('submit', function (e) {
         e.preventDefault();
         const url = this.action;
         const formData = new FormData(this);
         const button = this.querySelector('button');
+
         fetch(url, {
           method: 'POST',
           body: formData,
@@ -310,6 +305,7 @@
             const isLiked = button.classList.contains('liked');
             button.innerHTML = `<i class="bi ${isLiked ? 'bi-heart-fill text-danger' : 'bi-heart'}"></i> ${isLiked ? '收回愛心' : '愛心'}`;
 
+            // 上方統計列同步
             const card = this.closest('.card-body');
             const iconDiv = card.querySelector('.interaction-bar div:first-child i');
             const countSpan = card.querySelector('.interaction-bar div:first-child');
@@ -317,7 +313,7 @@
               iconDiv.className = `bi ${isLiked ? 'bi-heart-fill text-danger' : 'bi-heart'}`;
               let countText = countSpan.innerText.trim();
               let count = parseInt(countText.replace(/\D/g, '')) || 0;
-              count = isLiked ? count + 1 : count - 1;
+              count = isLiked ? count + 1 : Math.max(count - 1, 0);
               countSpan.innerHTML = `<i class="bi ${isLiked ? 'bi-heart-fill text-danger' : 'bi-heart'}"></i> ${count}`;
             }
           }
@@ -328,14 +324,13 @@
       });
     });
 
-    // ---- 收藏功能（右上角） ----
+    // 收藏（右上角）
     document.querySelectorAll('.save-form').forEach(form => {
       form.addEventListener('submit', function (e) {
         e.preventDefault();
         const url = this.action;
         const formData = new FormData(this);
-        const button = this.querySelector('button');
-        const icon = button.querySelector('i');
+        const icon = this.querySelector('button i');
 
         fetch(url, {
           method: 'POST',
@@ -344,7 +339,6 @@
         })
         .then(response => {
           if (response.ok) {
-            // 只切換 icon，文字固定顯示「收藏」
             const isFilled = icon.classList.contains('bi-star-fill');
             icon.className = `bi ${isFilled ? 'bi-star' : 'bi-star-fill'}`;
           }
@@ -355,30 +349,29 @@
       });
     });
 
-    // ---- 回頂部顯示與隱藏 ----
+    // 回頂部顯示/隱藏
     const scrollTopWrapper = document.getElementById('scrollTopWrapper');
     const scrollTopBtn = document.getElementById('scrollToTopNav');
 
-    window.addEventListener('scroll', () => {
+    const updateScrollTopVisibility = () => {
       if (window.scrollY > 100) {
         scrollTopWrapper.style.display = 'flex';
-        scrollTopWrapper.classList.remove('hide-text');
       } else {
         scrollTopWrapper.style.display = 'none';
       }
-    });
+    };
+    window.addEventListener('scroll', updateScrollTopVisibility);
+    updateScrollTopVisibility();
 
     scrollTopBtn.addEventListener('click', () => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
-      scrollTopWrapper.classList.add('hide-text');
-      setTimeout(() => {
-        scrollTopWrapper.style.display = 'none';
-      }, 400);
+      const timer = setInterval(() => {
+        if (window.scrollY === 0) {
+          scrollTopWrapper.style.display = 'none';
+          clearInterval(timer);
+        }
+      }, 80);
     });
-
-    if (window.scrollY <= 100) {
-      scrollTopWrapper.style.display = 'none';
-    }
   });
 </script>
 
