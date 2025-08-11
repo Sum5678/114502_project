@@ -70,9 +70,25 @@ def harassment_prevention(request):
 def education_page(request):
     return render(request, 'education_page.html')
 
+
+#禮品真的東西(主要是讓下面東西管理的東西要先登入才能編輯)
+from django.shortcuts import redirect
+from functools import wraps
+
+def admin_login_required(view_func):
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        print("admin_login_required 被呼叫")
+        if 'admin_id' in request.session:
+            print("已登入")
+            return view_func(request, *args, **kwargs)
+        else:
+            print("沒登入，導向登入頁")
+            return redirect('admin_login')
+    return wrapper
+
 #教育網頁
 from .models import EducationPage
-
 def education_page(request):
     pages = EducationPage.objects.all()
     return render(request, 'education_page.html', {'pages': pages})
@@ -82,10 +98,12 @@ from django.shortcuts import render, redirect, get_object_or_404
 from .models import EducationPage
 from .education_forms import EducationPageUploadForm
 
+@admin_login_required
 def education_list(request):
     pages = EducationPage.objects.all()
     return render(request, 'education_list.html', {'pages': pages})
 
+@admin_login_required
 def education_create(request):
     if request.method == 'POST':
         form = EducationPageUploadForm(request.POST, request.FILES)
@@ -96,6 +114,7 @@ def education_create(request):
         form = EducationPageUploadForm()
     return render(request, 'education_form.html', {'form': form})
 
+@admin_login_required
 def education_update(request, pk):
     page = get_object_or_404(EducationPage, pk=pk)
     if request.method == 'POST':
@@ -122,6 +141,7 @@ def education_delete(request, pk):
 
 from django.http import HttpResponse
 
+@admin_login_required
 def education_image(request, pk):
     page = get_object_or_404(EducationPage, pk=pk)
     if page.image_url:
