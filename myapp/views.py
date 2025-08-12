@@ -2223,6 +2223,7 @@ def post(request):
             like_heart_count=0,
             liked_user_ids='[]',   # ❤️
             saved_user_ids='[]',   # 🌟 收藏
+            comments='[]',         # 💬 留言
             created_at=timezone.now()
         )
         return redirect('post_display')
@@ -2230,7 +2231,7 @@ def post(request):
     return render(request, 'post.html')
 
 
-# 貼文展示（含關鍵字搜尋 + 將 JSON 欄位轉為布林給模板）
+# 貼文展示
 def post_display(request):
     query = request.GET.get('q')
     if query:
@@ -2250,7 +2251,7 @@ def post_display(request):
             liked_user_ids = []
         liked_user_ids = [str(x) for x in liked_user_ids]
         post.is_liked = bool(user_id_str and (user_id_str in liked_user_ids))
-        post.liked_user_list = liked_user_ids  # 若模板其他處需要
+        post.liked_user_list = liked_user_ids
 
         # saved
         try:
@@ -2261,10 +2262,16 @@ def post_display(request):
         post.is_saved = bool(user_id_str and (user_id_str in saved_user_ids))
         post.saved_user_list = saved_user_ids
 
+        # comments
+        try:
+            post.comment_list = json.loads(getattr(post, 'comments', '[]') or '[]')
+        except json.JSONDecodeError:
+            post.comment_list = []
+
     return render(request, 'post_display.html', {'posts': posts})
 
 
-# 編輯貼文（只能編輯自己的）
+# 編輯貼文
 @login_required(login_url='/01userlogin/')
 def edit_post(request, post_id):
     post = get_object_or_404(ChatInteraction, pk=post_id)
@@ -2281,7 +2288,7 @@ def edit_post(request, post_id):
     return render(request, 'edit_post.html', {'post': post})
 
 
-# 刪除貼文（只能刪除自己的）
+# 刪除貼文
 @login_required(login_url='/01userlogin/')
 def delete_post(request, post_id):
     post = get_object_or_404(ChatInteraction, pk=post_id)
@@ -2295,7 +2302,7 @@ def delete_post(request, post_id):
     return render(request, 'delete_post_confirm.html', {'post': post})
 
 
-# ❤️ 愛心按讚（可收回）
+# ❤️ 按讚
 @require_POST
 @login_required(login_url='/01userlogin/')
 def like_post(request, post_id):
@@ -2307,16 +2314,13 @@ def like_post(request, post_id):
     except json.JSONDecodeError:
         liked_user_ids = []
 
-    # 轉字串 + 去重
     liked_user_ids = list({str(x) for x in liked_user_ids})
 
-    # 切換
     if user_id_str in liked_user_ids:
         liked_user_ids.remove(user_id_str)
     else:
         liked_user_ids.append(user_id_str)
 
-    # 以實際清單長度為準重算數量（避免漂移）
     post.like_heart_count = len(liked_user_ids)
     post.liked_user_ids = json.dumps(liked_user_ids, ensure_ascii=False)
     post.save(update_fields=['like_heart_count', 'liked_user_ids'])
@@ -2326,7 +2330,7 @@ def like_post(request, post_id):
     return redirect('post_display')
 
 
-# 🌟 收藏（可收回）
+# 🌟 收藏
 @require_POST
 @login_required(login_url='/01userlogin/')
 def save_post(request, post_id):
@@ -2338,10 +2342,8 @@ def save_post(request, post_id):
     except json.JSONDecodeError:
         saved_user_ids = []
 
-    # 轉字串 + 去重
     saved_user_ids = list({str(x) for x in saved_user_ids})
 
-    # 切換
     if user_id_str in saved_user_ids:
         saved_user_ids.remove(user_id_str)
         saved_state = False
@@ -2355,6 +2357,35 @@ def save_post(request, post_id):
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         return JsonResponse({'saved': saved_state})
     return redirect('post_display')
+
+
+# 💬 新增留言
+@require_POST
+@login_required(login_url='/01userlogin/')
+def add_comment(request, post_id):
+    post = get_object_or_404(ChatInteraction, pk=post_id)
+    comment_text = request.POST.get('comment', '').strip()
+    user_id_str = str(request.user.id)
+
+    if not comment_text:
+        return JsonResponse({'error': '留言不能為空'}, status=400)
+
+    try:
+        comments = json.loads(getattr(post, 'comments', '[]') or '[]')
+    except json.JSONDecodeError:
+        comments = []
+
+    comments.append({
+        'user_id': user_id_str,
+        'nickname': request.user.username,
+        'content': comment_text,
+        'time': timezone.now().strftime("%Y-%m-%d %H:%M:%S")
+    })
+
+    post.comments = json.dumps(comments, ensure_ascii=False)
+    post.save(update_fields=['comments'])
+
+    return JsonResponse({'success': True, 'comments': comments})
 
 
 

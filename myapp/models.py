@@ -240,11 +240,12 @@ class ChatInteraction(models.Model):
     avatar_url = models.URLField(max_length=300)
     title = models.CharField(max_length=50)
     message_content = models.CharField(max_length=300)
-    like_heart_count = models.IntegerField(default=0)  # ✅ ❤️ 愛心數欄位（你新增的）
-    liked_user_ids = models.TextField(default="[]")    # ✅ 儲存 JSON 格式字串（例如 ["1","5"]）
+    like_heart_count = models.IntegerField(default=0)  # ❤️ 愛心數欄位
+    liked_user_ids = models.TextField(default="[]")    # 👍 按讚清單
+    saved_user_ids = models.TextField(default="[]")    # ⭐ 收藏清單
 
-    # 🌟 新增：收藏清單（同樣用 JSON 字串，與你 liked_user_ids 一致）
-    saved_user_ids = models.TextField(default="[]")
+    # 🆕 新增：留言清單（存 JSON 格式，例如 [{"user_id":1,"text":"內容"}]）
+    comments = models.TextField(default="[]")
 
     # ✅ 不用 auto_now_add，讓 MySQL 自動填入時間
     created_at = models.DateTimeField(blank=True, null=True)
@@ -252,6 +253,7 @@ class ChatInteraction(models.Model):
     class Meta:
         db_table = 'chat_interaction'  # ✅ 對應資料表名稱
         managed = False  # ✅ 禁止 Django 自行創建或修改這張表
+
 
 
 
