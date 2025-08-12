@@ -153,17 +153,6 @@
   const iconUrl = "{% static 'assets/img/paw_icon.png' %}";
 
   // 初始化地圖
-  // function initMap() {
-  //   map = new google.maps.Map(document.getElementById("map"), {
-  //     center: { lat: 25.033964, lng: 121.562321 },
-  //     zoom: 14
-  //   });
-
-  //   updateSubkindOptions("全部");
-  //   document.getElementById("subkindFilter").value = "";
-
-  //   fetchReportsAndRenderMarkers("全部", "");
-  // }
   function initMap() {
     map = new google.maps.Map(document.getElementById("map"), {
       center: { lat: 25.033964, lng: 121.562321 },
@@ -178,7 +167,6 @@
     // 啟動定位追蹤
     trackUserLocation();
   }
-
 
 
   function trackUserLocation() {
@@ -228,9 +216,12 @@
       });
     }
 
+    // 呼叫檢查附近事件
+    checkNearbyEvents(lat, lng);
+
     // 可選：將地圖中心移動到用戶位置（或註解掉）
     // map.setCenter(pos);
-}
+  }
 
 
 
@@ -351,6 +342,48 @@
     const subkind = this.value;
     renderMarkers(kind, subkind);
   });
+
+  // 距離計算
+  function getDistanceMeters(lat1, lng1, lat2, lng2) {
+    const R = 6371000;
+    const toRad = deg => deg * Math.PI / 180;
+    const dLat = toRad(lat2 - lat1);
+    const dLng = toRad(lng2 - lng1);
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+              Math.sin(dLng/2) * Math.sin(dLng/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  }
+
+  // 檢查附近事件
+  function checkNearbyEvents(userLat, userLng) {
+    const nearbyEvents = reports.filter(r => {
+      if (typeof r.latitude === "number" && typeof r.longitude === "number") {
+        const dist = getDistanceMeters(userLat, userLng, r.latitude, r.longitude);
+        return dist <= 500;
+      }
+      return false;
+    });
+
+    if (nearbyEvents.length === 0) {
+      alert("您附近 500 公尺內沒有事件，看起來很安全 👍");
+    } else if (nearbyEvents.length > 5) {
+      alert(`您附近 500 公尺內有 ${nearbyEvents.length} 起事件，請注意安全！`);
+    } else {
+      alert(`您附近 500 公尺內有 ${nearbyEvents.length} 起事件`);
+    }
+  }
+
+
+
+
+
+
+
+
+
+
 </script>
 
   <script async defer
