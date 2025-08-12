@@ -235,12 +235,12 @@ from django.views.decorators.http import require_POST
 from django.urls import reverse
 from django.contrib import messages
 
-
+@admin_login_required
 def police_address_list(request):
     addresses = PoliceAddress.objects.all().order_by('precinct_name')
     return render(request, 'police_address_admin.html', {'addresses': addresses})
 
-
+@admin_login_required
 def police_address_add(request):
     if request.method == 'POST':
         precinct_name = request.POST.get('precinct_name')
@@ -265,7 +265,7 @@ def police_address_add(request):
             messages.error(request, "所有欄位皆為必填，請確認填寫完整。")
     return render(request, 'police_address_add.html')
 
-
+@admin_login_required
 def police_address_edit(request, pk):
     address = get_object_or_404(PoliceAddress, pk=pk)
 
