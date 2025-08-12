@@ -17,7 +17,6 @@
   <link href="{% static 'assets/vendor/swiper/swiper-bundle.min.css' %}" rel="stylesheet">
   <link href="{% static 'assets/css/main.css' %}" rel="stylesheet">
   <style>
-    /* 你的原本 CSS 全保留 */
     body { background-color: #fff; padding-top: 10px; font-family: "Microsoft JhengHei", sans-serif; }
     .section-title { text-align: center; margin-top: 60px; margin-bottom: 30px; }
     .section-title h2 { display: inline-block; position: relative; font-weight: 700; font-size: 28px; color: #033e6b; padding: 0 20px; }
@@ -36,26 +35,153 @@
     .interaction-actions-left, .interaction-actions-right { display: flex; gap: 24px; align-items: center; }
     .interaction-actions button { background: none; border: none; color: #555; font-size: 15px; display: flex; align-items: center; gap: 6px; cursor: pointer; }
     .interaction-actions .liked { color: #dc3545; font-weight: 700; }
-    /* 收藏按鈕 */
+
+    /* 右上角收藏按鈕 */
     .save-top-right { position: absolute; top: 12px; right: 12px; }
-    .save-top-right button { background: rgba(255,255,255,0.95); border: 1px solid #e6f3fb; border-radius: 999px; padding: 6px 12px; font-size: 14px; color: #033e6b; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: pointer; }
+    .save-top-right button {
+      background: rgba(255,255,255,0.95);
+      border: 1px solid #e6f3fb;
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 14px;
+      color: #033e6b;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      cursor: pointer;
+    }
     .save-top-right .bi-star-fill { color: #f0ad4e; }
-    /* 浮動按鈕 */
-    .btn-floating-post { position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; background-color: #63b3ed; color: white; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 28px; text-decoration: none; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 1000; transition: background-color 0.3s ease; }
+
+    .btn-floating-post {
+      position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; background-color: #63b3ed; color: white;
+      border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 28px;
+      text-decoration: none; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 1000; transition: background-color 0.3s ease;
+    }
     .btn-floating-post:hover { background-color: #4299e1; color: white; text-decoration: none; }
     input[name="q"]::placeholder { color: #5a7ca9; }
     input[name="q"]:focus { box-shadow: none; }
+
+    .nav-right-group { display: flex; align-items: center; gap: 10px; }
+    .scroll-top-nav {
+      background-color: transparent; color: #63b3ed; font-size: 20px; width: 36px; height: 36px; border-radius: 50%;
+      border: 2px solid #63b3ed; display: flex; justify-content: center; align-items: center; cursor: pointer;
+      z-index: 1050; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); transition: all 0.3s ease;
+    }
+    .scroll-top-nav:hover { background-color: #63b3ed; color: white; }
+    .scroll-top-wrapper { display: none; flex-direction: column; align-items: center; }
+    .scroll-top-text { font-size: 10px; color: #63b3ed; margin-top: 4px; }
+    @media (max-width: 991.98px) {
+      .nav-right-group { order: 1; margin-left: auto; }
+      .scroll-top-wrapper { align-items: center; }
+    }
+
+    /* ===== 未登入提示 Modal：淺藍色系 ===== */
+    #authRequiredModal .modal-content {
+      border-radius: 14px;
+      border: none;
+      background-color: #f0faff; /* 淺藍底 */
+    }
+    #authRequiredModal .modal-body { color: #033e6b; }
+    #authRequiredModal h5 { color: #033e6b; font-weight: 700; }
+    #authRequiredModal p { color: #055a8c; }
+
+    #authRequiredModal .modal-icon { color: #63b3ed; }
+    #authRequiredModal .btn-primary { background-color: #63b3ed; border-color: #63b3ed; }
+    #authRequiredModal .btn-primary:hover { background-color: #4299e1; border-color: #4299e1; }
+    #authRequiredModal .btn-outline-secondary { border-color: #a7e0ff; color: #033e6b; background-color: transparent; }
+    #authRequiredModal .btn-outline-secondary:hover { background-color: #e6f3fb; border-color: #63b3ed; color: #033e6b; }
   </style>
 </head>
 <body>
 <header id="header" class="header d-flex align-items-center fixed-top">
-  <!-- 你的 header 全保留 -->
+  <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
+    <a href="{% url 'home' %}" class="logo d-flex align-items-center me-auto me-xl-0">
+      <h1 class="sitename" style="color: #033e6b;">怪怪走開，護您安全</h1>
+    </a>
+
+    <nav id="navmenu" class="navmenu">
+      <ul>
+        <li><a href="{% url 'home' %}#hero">主頁</a></li>
+        <li><a href="index.html#services">簡介及功能介紹</a></li>
+        <li><a href="{% url 'report' %}">填寫表單</a></li>
+        <li><a href="{% url 'business_upload' %}">商家填單</a></li>
+        <li><a href="{% url 'about' %}">個人資料設定</a></li>
+        <li><a href="{% url 'chatroom_page' %}">聊天室</a></li>
+        <li class="dropdown">
+          <a href="#"><span>交流區</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+          <ul>
+            <li><a href="{% url 'post' %}#hero">我要發文</a></li>
+            <li><a href="{% url 'post_display' %}">貼文總覽</a></li>
+          </ul>
+        </li>
+        <li class="dropdown">
+          <a href="#"><span>地圖</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+          <ul>
+            <li><a href="{% url 'map' %}">事件地圖</a></li>
+            <li><a href="{% url 'store_map' %}">商家地圖</a></li>
+          </ul>
+        </li>
+        <li><a href="{% url 'harassment_prevention' %}">防騷指南</a></li>
+      </ul>
+    </nav>
+
+    <div class="nav-right-group">
+      <div class="scroll-top-wrapper" id="scrollTopWrapper">
+        <div id="scrollToTopNav" class="scroll-top-nav">
+          <i class="bi bi-arrow-up-short"></i>
+        </div>
+        <div class="scroll-top-text">回頂部</div>
+      </div>
+      <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+
+      {% if request.user.is_authenticated %}
+        <div class="dropdown">
+          <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown"
+             style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
+            {{ request.user.username }}
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="{% url '01_userlogin_out' %}">登出</a></li>
+          </ul>
+        </div>
+      {% else %}
+        <div class="dropdown">
+          <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown"
+             style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
+            登入
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="{% url 'userlogin' %}">一般使用者登入</a></li>
+            <li><a class="dropdown-item" href="{% url 'admin_login' %}">管理員登入</a></li>
+          </ul>
+        </div>
+      {% endif %}
+    </div>
+  </div>
 </header>
+<script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+
 
 <main class="main">
   <section class="post-list mt-5" id="post-list-section">
     <div class="container">
-      <!-- 搜尋區域保留 -->
+      <div class="section-title text-center">
+        <h2>貼文總覽｜交流區</h2>
+        <p>以下是大家的分享</p>
+      </div>
+
+      <form method="get" action="{% url 'post_display' %}" class="d-flex justify-content-center mt-4 mb-4">
+        <div class="input-group w-50" style="border-radius: 10px; overflow: hidden; box-shadow: 0 0 5px rgba(0, 0, 0, 0.05);">
+          <span class="input-group-text" style="background-color: #e6f3fb; border: none;">
+            <i class="bi bi-search" style="color: #63b3ed; font-size: 1.2rem;"></i>
+          </span>
+          <input type="text" name="q" class="form-control"
+                 placeholder="輸入關鍵字搜尋貼文…" value="{{ request.GET.q }}"
+                 style="border: none; background-color: #f0faff; color: #033e6b; font-size: 15px;">
+          <button type="submit" class="btn" style="background-color: #63b3ed; color: white; border: none;">搜尋</button>
+        </div>
+      </form>
 
       {% for post in posts %}
       <div class="card mb-4" style="border-left: 8px solid #{{ post.bgcolor }};">
@@ -135,6 +261,79 @@
             </div>
             {% endif %}
           </div>
+<!-- 💬 留言區（預設隱藏，按「留言」展開） -->
+<div class="comments mt-3" id="comments-{{ post.interaction_id }}" style="display:none;">
+  <ul class="list-unstyled mb-3" data-list>
+    {# 只顯示前三則 #}
+    {% for c in post.comment_list|slice:":3" %}
+      <li class="mb-2 border-bottom pb-2 position-relative">
+        <div>
+          <div class="small text-muted">{{ c.nickname }} ・ {{ c.time }}</div>
+          <div class="mt-1">{{ c.content|escape }}</div>
+        </div>
+
+        {% if request.user.is_authenticated and c.user_id|stringformat:"s" == request.user.id|stringformat:"s" %}
+          <!-- 三點選單 -->
+          <div class="dropdown position-absolute top-0 end-0">
+            <button class="btn btn-link text-muted p-0" type="button" id="commentMenu{{ forloop.counter }}" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="bi bi-three-dots-vertical"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="commentMenu{{ forloop.counter }}">
+              <li>
+                <a class="dropdown-item text-primary edit-comment-btn"
+                   href="#"
+                   data-post-id="{{ post.interaction_id }}"
+                   data-time="{{ c.time }}"
+                   data-content="{{ c.content|escapejs }}">
+                  <i class="bi bi-pencil-fill me-2"></i> 編輯
+                </a>
+              </li>
+              <li>
+                <a class="dropdown-item text-danger delete-comment-btn"
+                   href="#"
+                   data-post-id="{{ post.interaction_id }}"
+                   data-time="{{ c.time }}">
+                  <i class="bi bi-trash-fill me-2"></i> 刪除
+                </a>
+              </li>
+            </ul>
+          </div>
+        {% endif %}
+      </li>
+    {% empty %}
+      <li class="text-muted" data-empty>還沒有留言，搶第一個發表吧！</li>
+    {% endfor %}
+  </ul>
+
+  {# 若有超過 3 則，顯示「查看全部留言」 #}
+  {% if post.comment_list|length > 3 %}
+    <a class="btn btn-sm btn-outline-primary"
+       href="{% url 'post_comments' post.interaction_id %}">
+      查看全部留言（共 {{ post.comment_list|length }} 則）
+    </a>
+  {% endif %}
+
+  {% if request.user.is_authenticated %}
+    <form method="post"
+          action="{% url 'add_comment' post.interaction_id %}"
+          class="comment-form"
+          data-post-id="{{ post.interaction_id }}">
+      {% csrf_token %}
+      <div class="input-group mt-2">
+        <input type="text" name="comment" class="form-control" placeholder="寫點什麼…" maxlength="300" required>
+        <button type="submit" class="btn btn-primary">送出</button>
+      </div>
+      <div class="form-text">最多 300 字。</div>
+    </form>
+  {% else %}
+    <button type="button" class="btn btn-sm btn-outline-primary require-login">登入後留言</button>
+  {% endif %}
+</div>
+<!-- /留言區 -->
+
+
+
+
         </div>
       </div>
       {% empty %}
@@ -146,35 +345,283 @@
 
 <a href="{% url 'post' %}" class="btn-floating-post"><i class="bi bi-plus-lg"></i></a>
 
-<!-- 未登入提醒 Modal 保留 -->
+<!-- 未登入提醒 Modal（淺藍主題） -->
+<div class="modal fade" id="authRequiredModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-body p-4 text-center">
+        <div class="mb-2">
+          <i class="bi bi-info-circle-fill fs-1 modal-icon"></i>
+        </div>
+        <h5 class="mb-2">您尚未登入</h5>
+        <p class="mb-3">請先登入才能使用此功能。</p>
+        <div class="d-flex gap-2 justify-content-center">
+          <a class="btn btn-primary" id="goLoginBtn" href="/01userlogin/?next={{ request.get_full_path|urlencode }}">前往登入</a>
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">稍後再說</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+<script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+<script src="{% static 'assets/vendor/aos/aos.js' %}"></script>
+<script src="{% static 'assets/vendor/glightbox/js/glightbox.min.js' %}"></script>
+<script src="{% static 'assets/vendor/purecounter/purecounter_vanilla.js' %}"></script>
+<script src="{% static 'assets/vendor/swiper/swiper-bundle.min.js' %}"></script>
+<script src="{% static 'assets/js/main.js' %}"></script>
 <script>
-// 愛心、收藏的原本 JS 保留...
-
-// 💬 留言
-document.querySelectorAll('.btn-comment').forEach(btn => {
-  btn.addEventListener('click', function () {
-    const postId = this.dataset.postId;
-    alert(`留言功能尚未實作，貼文 ID: ${postId}`);
-  });
-});
-
-// 📤 分享
-document.querySelectorAll('.btn-share').forEach(btn => {
-  btn.addEventListener('click', function () {
-    const postId = this.dataset.postId;
-    const shareUrl = `${window.location.origin}/post/${postId}`;
-    if (navigator.share) {
-      navigator.share({ title: document.title, text: '快來看看這則貼文！', url: shareUrl })
-        .catch(console.error);
-    } else {
-      navigator.clipboard.writeText(shareUrl).then(() => {
-        alert('分享連結已複製到剪貼簿');
+  document.addEventListener('DOMContentLoaded', function () {
+    // 查看更多/關閉詳情
+    document.querySelectorAll('.toggle-more').forEach(link => {
+      link.addEventListener('click', function (e) {
+        e.preventDefault();
+        const p = this.closest('.message-content');
+        const fullText = p.dataset.full;
+        const truncated = fullText.slice(0, 100);
+        if (this.textContent.trim() === '查看更多') {
+          p.innerHTML = '';
+          p.textContent = fullText;
+          const closeLink = document.createElement('a');
+          closeLink.href = "#";
+          closeLink.textContent = " 關閉詳情";
+          closeLink.classList.add('toggle-more');
+          p.appendChild(closeLink);
+          closeLink.addEventListener('click', arguments.callee);
+        } else {
+          p.innerHTML = '';
+          p.textContent = truncated;
+          const dots = document.createElement('span');
+          dots.classList.add('ellipsis');
+          dots.textContent = '...';
+          const moreLink = document.createElement('a');
+          moreLink.href = "#";
+          moreLink.textContent = " 查看更多";
+          moreLink.classList.add('toggle-more');
+          p.appendChild(dots);
+          p.appendChild(document.createTextNode(' '));
+          p.appendChild(moreLink);
+          moreLink.addEventListener('click', arguments.callee);
+        }
       });
-    }
+    });
+
+    // 愛心（登入狀態）
+    document.querySelectorAll('.like-form').forEach(form => {
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        const url = this.action;
+        const formData = new FormData(this);
+        const button = this.querySelector('button');
+
+        fetch(url, {
+          method: 'POST',
+          body: formData,
+          headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        })
+        .then(response => {
+          if (response.ok) {
+            button.classList.toggle('liked');
+            const isLiked = button.classList.contains('liked');
+            button.innerHTML = `<i class="bi ${isLiked ? 'bi-heart-fill text-danger' : 'bi-heart'}"></i> ${isLiked ? '收回愛心' : '愛心'}`;
+
+            const card = this.closest('.card-body');
+            const iconDiv = card.querySelector('.interaction-bar div:first-child i');
+            const countSpan = card.querySelector('.interaction-bar div:first-child');
+            if (iconDiv && countSpan) {
+              iconDiv.className = `bi ${isLiked ? 'bi-heart-fill text-danger' : 'bi-heart'}`;
+              let countText = countSpan.innerText.trim();
+              let count = parseInt(countText.replace(/\D/g, '')) || 0;
+              count = isLiked ? count + 1 : Math.max(count - 1, 0);
+              countSpan.innerHTML = `<i class="bi ${isLiked ? 'bi-heart-fill text-danger' : 'bi-heart'}"></i> ${count}`;
+            }
+          }
+        })
+        .catch(() => {
+          alert('按愛心失敗，請稍後再試');
+        });
+      });
+    });
+
+    // 收藏（登入狀態）
+    document.querySelectorAll('.save-form').forEach(form => {
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        const url = this.action;
+        const formData = new FormData(this);
+        const icon = this.querySelector('button i');
+
+        fetch(url, {
+          method: 'POST',
+          body: formData,
+          headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        })
+        .then(response => {
+          if (response.ok) {
+            const isFilled = icon.classList.contains('bi-star-fill');
+            icon.className = `bi ${isFilled ? 'bi-star' : 'bi-star-fill'}`;
+          }
+        })
+        .catch(() => {
+          alert('收藏失敗，請稍後再試');
+        });
+      });
+    });
+
+    // 未登入提示：綁定 .require-login
+    document.querySelectorAll('.require-login').forEach(el => {
+      el.addEventListener('click', function (e) {
+        e.preventDefault();
+        const modal = new bootstrap.Modal(document.getElementById('authRequiredModal'));
+        modal.show();
+      });
+    });
+
+    // 回頂部顯示/隱藏
+    const scrollTopWrapper = document.getElementById('scrollTopWrapper');
+    const scrollTopBtn = document.getElementById('scrollToTopNav');
+
+    const updateScrollTopVisibility = () => {
+      if (window.scrollY > 100) {
+        scrollTopWrapper.style.display = 'flex';
+      } else {
+        scrollTopWrapper.style.display = 'none';
+      }
+    };
+    window.addEventListener('scroll', updateScrollTopVisibility);
+    updateScrollTopVisibility();
+
+    scrollTopBtn.addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      const timer = setInterval(() => {
+        if (window.scrollY === 0) {
+          scrollTopWrapper.style.display = 'none';
+          clearInterval(timer);
+        }
+      }, 80);
+    });
+
+    /* ====== 新增：留言展開/送出 ====== */
+    // 展開/收合留言區
+    document.querySelectorAll('.btn-comment').forEach(btn => {
+      btn.addEventListener('click', function () {
+        const postId = this.dataset.postId;
+        const box = document.getElementById(`comments-${postId}`);
+        if (box) {
+          box.style.display = (box.style.display === 'none' || box.style.display === '') ? 'block' : 'none';
+        }
+      });
+    });
+
+    // 送出留言（AJAX）
+    document.querySelectorAll('.comment-form').forEach(form => {
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        const url = this.action;
+        const formData = new FormData(this);
+        const csrfToken = this.querySelector('input[name="csrfmiddlewaretoken"]')?.value || '';
+
+        fetch(url, {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': csrfToken
+          },
+        })
+        .then(async (res) => {
+          if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            throw new Error(data.error || '留言失敗，請稍後再試');
+          }
+          return res.json();
+        })
+        .then(data => {
+          // 清空輸入框
+          this.reset();
+
+          // 重新渲染留言列表（以後端回傳為準）
+          const wrap = this.closest('.comments');
+          const list = wrap.querySelector('[data-list]');
+          const empty = wrap.querySelector('[data-empty]');
+          if (empty) empty.remove();
+          list.innerHTML = '';
+
+          (data.comments || []).forEach(c => {
+            const li = document.createElement('li');
+            li.className = 'mb-2 border-bottom pb-2';
+            li.innerHTML = `
+              <div class="small text-muted">${c.nickname} ・ ${c.time}</div>
+              <div class="mt-1">${c.content}</div>
+            `;
+            list.appendChild(li);
+          });
+        })
+        .catch(err => {
+          alert(err.message || '留言失敗，請稍後再試');
+        });
+      });
+    });
+    /* ====== /留言展開/送出 ====== */
+  });
+  // 刪除留言
+document.querySelectorAll('.delete-comment-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    if (!confirm('確定要刪除這則留言嗎？')) return;
+    const postId = this.dataset.postId;
+    const time = this.dataset.time;
+
+    fetch(`/post/${postId}/comment/delete/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRFToken': getCookie('csrftoken'),
+      },
+      body: `time=${encodeURIComponent(time)}`
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (!data.success) throw new Error(data.error || '刪除失敗');
+      window.location.reload(); // 重新整理保持 UI 一致
+    })
+    .catch(err => alert(err.message || '刪除失敗'));
   });
 });
+
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+
+
+  // 📤 分享
+  document.querySelectorAll('.btn-share').forEach(btn => {
+    btn.addEventListener('click', function () {
+      const postId = this.dataset.postId;
+      const shareUrl = `${window.location.origin}/post/${postId}`;
+      if (navigator.share) {
+        navigator.share({ title: document.title, text: '快來看看這則貼文！', url: shareUrl })
+          .catch(console.error);
+      } else {
+        navigator.clipboard.writeText(shareUrl).then(() => {
+          alert('分享連結已複製到剪貼簿');
+        });
+      }
+    });
+  });
 </script>
 </body>
 </html>
