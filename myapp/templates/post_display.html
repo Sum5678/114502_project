@@ -16,7 +16,7 @@
   <link href="{% static 'assets/vendor/glightbox/css/glightbox.min.css' %}" rel="stylesheet">
   <link href="{% static 'assets/vendor/swiper/swiper-bundle.min.css' %}" rel="stylesheet">
   <link href="{% static 'assets/css/main.css' %}" rel="stylesheet">
-  <style>
+ <style>
     body { background-color: #fff; padding-top: 10px; font-family: "Microsoft JhengHei", sans-serif; }
     .section-title { text-align: center; margin-top: 60px; margin-bottom: 30px; }
     .section-title h2 { display: inline-block; position: relative; font-weight: 700; font-size: 28px; color: #033e6b; padding: 0 20px; }
@@ -91,7 +91,19 @@
     #authRequiredModal .btn-primary:hover { background-color: #4299e1; border-color: #4299e1; }
     #authRequiredModal .btn-outline-secondary { border-color: #a7e0ff; color: #033e6b; background-color: transparent; }
     #authRequiredModal .btn-outline-secondary:hover { background-color: #e6f3fb; border-color: #63b3ed; color: #033e6b; }
-  </style>
+
+    /* 查看全部留言按鈕（淺藍色系） */
+    .btn-outline-primary {
+      color: #63b3ed; /* 文字顏色 */
+      border-color: #63b3ed; /* 邊框顏色 */
+    }
+    .btn-outline-primary:hover {
+      color: #fff; /* 滑過時文字變白 */
+      background-color: #63b3ed; /* 滑過時背景色 */
+      border-color: #63b3ed;
+    }
+</style>
+
 </head>
 <body>
 <header id="header" class="header d-flex align-items-center fixed-top">
@@ -245,8 +257,9 @@
 
               <!-- 💬 留言 -->
               <button type="button" class="btn-comment" data-post-id="{{ post.interaction_id }}">
-                <i class="bi bi-chat-dots"></i> 留言
+                <i class="bi bi-chat-dots"></i> 留言（{{ post.comment_list|length }}）
               </button>
+
 
               <!-- 📤 分享 -->
               <button type="button" class="btn-share" data-post-id="{{ post.interaction_id }}">
