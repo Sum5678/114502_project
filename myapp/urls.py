@@ -6,10 +6,21 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import path
 from .views import PemapAllListView, PemapAllUpdateView
+from django.views.generic import TemplateView
 
 urlpatterns = [
     # #思璇
     # path('chatrooms/', views.chatroom_map, name='chatroom_map'),
+    path(
+        'manifest.json',
+        TemplateView.as_view(template_name='manifest.json', content_type='application/json'),
+        name='manifest' 
+    ),
+    path(
+        'service-worker.js',
+        TemplateView.as_view(template_name='service-worker.js', content_type='application/javascript'),
+        name='service-worker'
+    ),
     path('api/submit_report/', views.submit_report, name='submit_report'),
     path('api/submit_store/', views.submit_store, name='submit_store'),
     path('business/upload/', views.business_upload, name='business_upload'),
