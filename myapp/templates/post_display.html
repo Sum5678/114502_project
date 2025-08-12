@@ -16,7 +16,7 @@
   <link href="{% static 'assets/vendor/glightbox/css/glightbox.min.css' %}" rel="stylesheet">
   <link href="{% static 'assets/vendor/swiper/swiper-bundle.min.css' %}" rel="stylesheet">
   <link href="{% static 'assets/css/main.css' %}" rel="stylesheet">
-  <style>
+ <style>
     body { background-color: #fff; padding-top: 10px; font-family: "Microsoft JhengHei", sans-serif; }
     .section-title { text-align: center; margin-top: 60px; margin-bottom: 30px; }
     .section-title h2 { display: inline-block; position: relative; font-weight: 700; font-size: 28px; color: #033e6b; padding: 0 20px; }
@@ -91,7 +91,19 @@
     #authRequiredModal .btn-primary:hover { background-color: #4299e1; border-color: #4299e1; }
     #authRequiredModal .btn-outline-secondary { border-color: #a7e0ff; color: #033e6b; background-color: transparent; }
     #authRequiredModal .btn-outline-secondary:hover { background-color: #e6f3fb; border-color: #63b3ed; color: #033e6b; }
-  </style>
+
+    /* 查看全部留言按鈕（淺藍色系） */
+    .btn-outline-primary {
+      color: #63b3ed; /* 文字顏色 */
+      border-color: #63b3ed; /* 邊框顏色 */
+    }
+    .btn-outline-primary:hover {
+      color: #fff; /* 滑過時文字變白 */
+      background-color: #63b3ed; /* 滑過時背景色 */
+      border-color: #63b3ed;
+    }
+</style>
+
 </head>
 <body>
 <header id="header" class="header d-flex align-items-center fixed-top">
@@ -245,8 +257,9 @@
 
               <!-- 💬 留言 -->
               <button type="button" class="btn-comment" data-post-id="{{ post.interaction_id }}">
-                <i class="bi bi-chat-dots"></i> 留言
+                <i class="bi bi-chat-dots"></i> 留言（{{ post.comment_list|length }}）
               </button>
+
 
               <!-- 📤 分享 -->
               <button type="button" class="btn-share" data-post-id="{{ post.interaction_id }}">
@@ -263,8 +276,10 @@
           </div>
 <!-- 💬 留言區（預設隱藏，按「留言」展開） -->
 <div class="comments mt-3" id="comments-{{ post.interaction_id }}" style="display:none;">
+  <!-- 顯示留言數 -->
+  <div class="mb-2 text-primary fw-bold">共有 {{ post.comment_list|length }} 則留言</div>
+
   <ul class="list-unstyled mb-3" data-list>
-    {# 只顯示前三則 #}
     {% for c in post.comment_list|slice:":3" %}
       <li class="mb-2 border-bottom pb-2 position-relative">
         <div>
@@ -305,9 +320,8 @@
     {% endfor %}
   </ul>
 
-  {# 若有超過 3 則，顯示「查看全部留言」 #}
   {% if post.comment_list|length > 3 %}
-    <a class="btn btn-sm btn-outline-primary"
+    <a class="btn btn-sm btn-outline-primary" style="border-color: #a7e0ff; color: #033e6b;"
        href="{% url 'post_comments' post.interaction_id %}">
       查看全部留言（共 {{ post.comment_list|length }} 則）
     </a>
@@ -329,7 +343,28 @@
     <button type="button" class="btn btn-sm btn-outline-primary require-login">登入後留言</button>
   {% endif %}
 </div>
-<!-- /留言區 -->
+
+<!-- 編輯留言 Modal -->
+<div class="modal fade" id="editCommentModal" tabindex="-1" aria-labelledby="editCommentModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0" style="border-radius: 12px;">
+      <div class="modal-header" style="background-color: #e6f3fb;">
+        <h5 class="modal-title fw-bold text-primary" id="editCommentModalLabel">
+          <i class="bi bi-pencil-square me-2"></i> 編輯留言
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
+      </div>
+      <div class="modal-body">
+        <textarea id="editCommentContent" class="form-control" rows="4" maxlength="300"></textarea>
+        <div class="form-text mt-1">最多 300 字。</div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+        <button type="button" class="btn btn-primary" id="saveCommentEdit">儲存修改</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 
 
@@ -363,6 +398,8 @@
     </div>
   </div>
 </div>
+
+
 
 <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
 <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
@@ -604,6 +641,59 @@ function getCookie(name) {
   }
   return cookieValue;
 }
+
+
+document.addEventListener('DOMContentLoaded', function () {
+  let currentPostId = null;
+  let currentTime = null;
+  const modal = new bootstrap.Modal(document.getElementById('editCommentModal'));
+  const textarea = document.getElementById('editCommentContent');
+
+  // 綁定編輯按鈕
+  document.querySelectorAll('.edit-comment-btn').forEach(btn => {
+    btn.addEventListener('click', function (e) {
+      e.preventDefault();
+      currentPostId = this.dataset.postId;
+      currentTime = this.dataset.time;
+      textarea.value = this.dataset.content;
+      modal.show();
+    });
+  });
+
+  // 儲存修改
+  document.getElementById('saveCommentEdit').addEventListener('click', function () {
+    const newContent = textarea.value.trim();
+    if (!newContent) {
+      alert("留言內容不能為空！");
+      return;
+    }
+
+    fetch(`/edit_comment/${currentPostId}/${encodeURIComponent(currentTime)}/`, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ content: newContent })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        // 更新畫面
+        const commentEls = document.querySelectorAll(`#comments-${currentPostId} .small.text-muted`);
+        commentEls.forEach(el => {
+          if (el.innerText.includes(currentTime)) {
+            el.parentElement.querySelector('.mt-1').innerText = newContent;
+          }
+        });
+        modal.hide();
+      } else {
+        alert(data.error || "更新失敗");
+      }
+    });
+  });
+});
+
 
 
 
