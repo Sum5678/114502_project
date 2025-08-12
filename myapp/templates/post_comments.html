@@ -9,10 +9,37 @@
   <link href="{% static 'assets/vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet">
   <link href="{% static 'assets/css/main.css' %}" rel="stylesheet">
   <style>
-    .save-top-right{position:absolute;top:12px;right:12px}
-    .save-top-right button{background:rgba(255,255,255,.95);border:1px solid #e6f3fb;border-radius:999px;padding:6px 12px;font-size:14px;color:#033e6b;display:inline-flex;align-items:center;gap:6px;box-shadow:0 1px 3px rgba(0,0,0,.05);cursor:pointer}
-    .save-top-right .bi-star-fill{color:#f0ad4e}
-    .interaction-bar{border-top:1px solid #ddd;border-bottom:1px solid #ddd;padding:8px 0;display:flex;justify-content:space-between;align-items:center;font-size:14px;color:#555}
+    .save-top-right {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+    }
+    .save-top-right button {
+      background: rgba(255,255,255,.95);
+      border: 1px solid #e6f3fb;
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 14px;
+      color: #033e6b;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.05);
+      cursor: pointer;
+    }
+    .save-top-right .bi-star-fill {
+      color: #f0ad4e;
+    }
+    .interaction-bar {
+      border-top: 1px solid #ddd;
+      border-bottom: 1px solid #ddd;
+      padding: 8px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 14px;
+      color: #555;
+    }
   </style>
 </head>
 <body>
@@ -82,37 +109,37 @@
     <!-- 留言清單 -->
     <div class="list-group mb-3" id="commentsList">
       {% for c in page_obj.object_list %}
-        <div class="list-group-item d-flex justify-content-between align-items-start">
+        <div class="list-group-item position-relative">
           <div class="me-3">
             <div class="small text-muted">{{ c.nickname }} ・ {{ c.time }}</div>
             <div class="mt-1">{{ c.content|escape }}</div>
           </div>
 
           {% if request.user.is_authenticated and c.user_id|stringformat:"s" == request.user.id|stringformat:"s" %}
-          <div class="dropdown">
-            <button class="btn btn-link text-dark p-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-              <i class="bi bi-three-dots-vertical"></i>
-            </button>
-            <ul class="dropdown-menu dropdown-menu-end">
-              <li>
-                <a class="dropdown-item text-primary edit-comment-btn"
-                   href="#"
-                   data-post-id="{{ post.interaction_id }}"
-                   data-time="{{ c.time }}"
-                   data-content="{{ c.content|escape }}">
-                  編輯
-                </a>
-              </li>
-              <li>
-                <a class="dropdown-item text-danger delete-comment-btn"
-                   href="#"
-                   data-post-id="{{ post.interaction_id }}"
-                   data-time="{{ c.time }}">
-                  刪除
-                </a>
-              </li>
-            </ul>
-          </div>
+            <div class="dropdown position-absolute top-0 end-0">
+              <button class="btn btn-link text-muted p-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-three-dots-vertical"></i>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end">
+                <li>
+                  <a class="dropdown-item text-primary edit-comment-btn"
+                     href="#"
+                     data-post-id="{{ post.interaction_id }}"
+                     data-time="{{ c.time }}"
+                     data-content="{{ c.content|escapejs }}">
+                    <i class="bi bi-pencil-fill me-2"></i> 編輯
+                  </a>
+                </li>
+                <li>
+                  <a class="dropdown-item text-danger delete-comment-btn"
+                     href="#"
+                     data-post-id="{{ post.interaction_id }}"
+                     data-time="{{ c.time }}">
+                    <i class="bi bi-trash-fill me-2"></i> 刪除
+                  </a>
+                </li>
+              </ul>
+            </div>
           {% endif %}
         </div>
       {% empty %}
