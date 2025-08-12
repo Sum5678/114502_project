@@ -1905,26 +1905,6 @@ def store_decide(request):
 # from django.http import JsonResponse
 # from .models import PemapAll
 
-# def approved_locations_api(request):
-#     approved = PemapAll.objects.filter(review_status='已通過')  # 只取審核通過的
-#     data = []
-
-#     for item in approved:
-#         data.append({
-#             'id': item.p_id,
-#             'title': item.display_name,
-#             'kind': item.kind,
-#             'reason': item.reason,
-#             'lat': item.latitude,
-#             'lng': item.longitude,
-#         })
-
-#     return JsonResponse(data, safe=False)
-
-
-
-from django.http import JsonResponse
-from .models import PemapAll
 
 # def approved_locations_api(request):
 #     approved = PemapWithSubkind.objects.filter(review_status='3')
@@ -2031,66 +2011,102 @@ from .models import PemapWithSubkind, PemapAll
 #         return JsonResponse(results, safe=False)
 #     else:
 #         return JsonResponse({"error": "POST method required"}, status=400)
+
+
+
+
+
+# from django.http import JsonResponse
+# from django.views.decorators.csrf import csrf_exempt
+# import json
+# from .models import PemapWithSubkind, PemapAll
+# @csrf_exempt
+# def reports_with_subkind_json(request):
+#     if request.method == "POST":
+#         data = json.loads(request.body)
+#         kind = data.get("kind")
+#         subkind = data.get("subkind")
+#         north = data.get("north")
+#         south = data.get("south")
+#         east = data.get("east")
+#         west = data.get("west")
+
+#         # 先取出 review_status = '3' 的 p_id 清單
+#         approved_p_ids = PemapAll.objects.filter(review_status='3').values_list('p_id', flat=True)
+
+#         queryset = PemapWithSubkind.objects.filter(p_id__in=approved_p_ids)
+
+#         if kind and kind != "全部":
+#             queryset = queryset.filter(kind=kind)
+#         if subkind and subkind != "":
+#             queryset = queryset.filter(subkind=subkind)
+
+#         if None not in (north, east, south, west):
+#             queryset = queryset.filter(
+#                 latitude__lte=north,
+#                 latitude__gte=south,
+#                 longitude__lte=east,
+#                 longitude__gte=west,
+#             )
+
+#         results = []
+#         for item in queryset:
+#             try:
+#                 pemap_detail = PemapAll.objects.get(p_id=item.p_id)
+#                 reason = pemap_detail.reason or "無"
+#                 time_created = pemap_detail.time_created.strftime("%Y-%m-%d %H:%M")
+#             except PemapAll.DoesNotExist:
+#                 reason = "無"
+#                 time_created = "未知"
+
+#             results.append({
+#                 "p_id": item.p_id,
+#                 "display_name": item.display_name,
+#                 "kind": item.kind,
+#                 "subkind": item.subkind,
+#                 "latitude": item.latitude,
+#                 "longitude": item.longitude,
+#                 "address": item.address,
+#                 "img_url": item.img_url,
+#                 "time_created": time_created,
+#                 "reason": reason,
+#             })
+
+#         return JsonResponse(results, safe=False)
+#     else:
+#         return JsonResponse({"error": "POST method required"}, status=400)
+
 from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-import json
-from .models import PemapWithSubkind, PemapAll
-@csrf_exempt
+from .models import PemapAll, PemapWithSubkind
+
 def reports_with_subkind_json(request):
-    if request.method == "POST":
-        data = json.loads(request.body)
-        kind = data.get("kind")
-        subkind = data.get("subkind")
-        north = data.get("north")
-        south = data.get("south")
-        east = data.get("east")
-        west = data.get("west")
+    approved_p_ids = PemapAll.objects.filter(review_status='3').values_list('p_id', flat=True)
+    queryset = PemapWithSubkind.objects.filter(p_id__in=approved_p_ids)
 
-        # 先取出 review_status = '3' 的 p_id 清單
-        approved_p_ids = PemapAll.objects.filter(review_status='3').values_list('p_id', flat=True)
+    results = []
+    for item in queryset:
+        try:
+            pemap_detail = PemapAll.objects.get(p_id=item.p_id)
+            reason = pemap_detail.reason or "無"
+            time_created = pemap_detail.time_created.strftime("%Y-%m-%d %H:%M")
+        except PemapAll.DoesNotExist:
+            reason = "無"
+            time_created = "未知"
 
-        queryset = PemapWithSubkind.objects.filter(p_id__in=approved_p_ids)
+        results.append({
+            "p_id": item.p_id,
+            "display_name": item.display_name,
+            "kind": item.kind,
+            "subkind": item.subkind,
+            "latitude": item.latitude,
+            "longitude": item.longitude,
+            "address": item.address,
+            "img_url": item.img_url,
+            "time_created": time_created,
+            "reason": reason,
+        })
 
-        if kind and kind != "全部":
-            queryset = queryset.filter(kind=kind)
-        if subkind and subkind != "":
-            queryset = queryset.filter(subkind=subkind)
-
-        if None not in (north, east, south, west):
-            queryset = queryset.filter(
-                latitude__lte=north,
-                latitude__gte=south,
-                longitude__lte=east,
-                longitude__gte=west,
-            )
-
-        results = []
-        for item in queryset:
-            try:
-                pemap_detail = PemapAll.objects.get(p_id=item.p_id)
-                reason = pemap_detail.reason or "無"
-                time_created = pemap_detail.time_created.strftime("%Y-%m-%d %H:%M")
-            except PemapAll.DoesNotExist:
-                reason = "無"
-                time_created = "未知"
-
-            results.append({
-                "p_id": item.p_id,
-                "display_name": item.display_name,
-                "kind": item.kind,
-                "subkind": item.subkind,
-                "latitude": item.latitude,
-                "longitude": item.longitude,
-                "address": item.address,
-                "img_url": item.img_url,
-                "time_created": time_created,
-                "reason": reason,
-            })
-
-        return JsonResponse(results, safe=False)
-    else:
-        return JsonResponse({"error": "POST method required"}, status=400)
-
+    return JsonResponse(results, safe=False)
 
 
 
