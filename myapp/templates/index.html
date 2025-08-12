@@ -31,7 +31,8 @@
   <!-- Template Main CSS File -->
   <link href="{% static 'assets/css/main.css' %}" rel="stylesheet">
 </head>
-
+<link rel="manifest" href="{% static 'manifest.json' %}">
+<meta name="theme-color" content="#4a90e2">
 <body class="index-page">
   <header id="header" class="header d-flex align-items-center fixed-top">
     <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
@@ -1199,6 +1200,15 @@
 
 <!-- Main JS File -->
 <script src="{% static 'assets/js/main.js' %}"></script>
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/service-worker.js")
+      .then(reg => console.log("✅ PWA 已啟用", reg))
+      .catch(err => console.error("❌ PWA 啟用失敗", err));
+  });
+}
+</script>
 
 
 </body>
