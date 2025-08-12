@@ -2050,40 +2050,51 @@ def store_data_api(request):
 #     return render(request, 'store_map.html')
 
 
-from .models import ChatInteraction
+from .models import ChatInteraction, ThisUserProfile  # ← 加入 ThisUserProfile
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponseForbidden, JsonResponse
-from django.views.decorators.http import require_POST
-from django.db.models import Q
+from django.shortcuts import render, redirect
 import bleach
 import json
+from urllib.parse import quote  # 給 dicebear seed 安全編碼
 
 ALLOWED_TAGS = ['a']
-ALLOWED_ATTRIBUTES = {
-    'a': ['href', 'target', 'rel']
-}
+ALLOWED_ATTRIBUTES = {'a': ['href', 'target', 'rel']}
 
-# 發文
+# 發文（可選用 暱稱1 / 暱稱2 / 匿名）
 @login_required(login_url='/01userlogin/')
 def post(request):
+    # 讀取個人資料設定中的兩個預設暱稱
+    prof = ThisUserProfile.objects.filter(gmail=request.user.email).first()
+    nick1 = (prof.default_nickname1 or "").strip() if prof else ""
+    nick2 = (prof.default_nickname2 or "").strip() if prof else ""
+
     if request.method == 'POST':
-        nickname = "(匿名)"
+        # 由前端 radio 送上來：nickname1 / nickname2 / anonymous
+        identity = request.POST.get('post_identity', 'anonymous')
+        if identity == 'nickname1' and nick1:
+            nickname = nick1
+        elif identity == 'nickname2' and nick2:
+            nickname = nick2
+        else:
+            nickname = "(匿名)"
+
         bgcolor = request.POST.get('bgcolor')
         avatar_style = request.POST.get('avatar_style')
         title = request.POST.get('title')
         raw_content = request.POST.get('content')
 
         clean_content = bleach.clean(
-            raw_content,
+            raw_content or "",
             tags=ALLOWED_TAGS,
             attributes=ALLOWED_ATTRIBUTES,
             protocols=['http', 'https'],
             strip=True
         )
 
-        avatar_url = f"https://api.dicebear.com/7.x/{avatar_style}/svg?seed={nickname}&backgroundColor={bgcolor}"
+        # dicebear 的 seed 建議編碼，避免有空白或特殊字元
+        seed = quote(nickname)
+        avatar_url = f"https://api.dicebear.com/7.x/{avatar_style}/svg?seed={seed}&backgroundColor={bgcolor}"
 
         ChatInteraction.objects.create(
             user=request.user,
@@ -2101,7 +2112,12 @@ def post(request):
         )
         return redirect('post_display')
 
-    return render(request, 'post.html')
+    # GET：把暱稱帶給模板，用於顯示與預設選項
+    return render(request, 'post.html', {
+        'profile_nickname1': nick1,
+        'profile_nickname2': nick2,
+    })
+
 
 
 # 貼文展示
@@ -2301,6 +2317,27 @@ def delete_comment(request, post_id):
     post.save(update_fields=['comments'])
 
     return JsonResponse({'success': True, 'comments': comments})
+
+@require_POST
+@login_required
+def edit_comment(request, post_id, time):
+    import json
+    data = json.loads(request.body)
+    new_content = data.get("content", "").strip()
+    if not new_content:
+        return JsonResponse({"success": False, "error": "內容不能為空"})
+
+    post = get_object_or_404(ChatInteraction, pk=post_id)
+    comments = post.comment_list
+    for comment in comments:
+        if comment["time"] == time and str(comment["user_id"]) == str(request.user.id):
+            comment["content"] = new_content
+            post.comment_list = comments
+            post.save()
+            return JsonResponse({"success": True})
+
+    return JsonResponse({"success": False, "error": "沒有權限編輯這則留言"})
+
 
 
 from django.core.paginator import Paginator
