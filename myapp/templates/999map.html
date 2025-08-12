@@ -136,193 +136,152 @@
   </main>
 
   <script>
-    // 細分類選項資料
-    const subkindOptions = {
-      "騷擾": ["推銷", "暴露狂", "跟蹤", "言語騷擾", "拍攝他人", "擋路糾纏", "其他"],
-      "打架": ["肢體衝突", "口角爭執", "幫派鬥毆", "攻擊路人", "其他"],
-      "動物": ["咬人", "無人看管寵物", "攻擊性動物", "受傷動物", "野生動物闖入", "其他"],
-      "環境髒亂": ["公共財物破壞", "可疑物品", "垃圾堆積", "噪音擾人", "惡臭", "噴漆塗鴉", "其他"]
-    };
+  // 細分類選項資料
+  const subkindOptions = {
+    "騷擾": ["推銷", "暴露狂", "跟蹤", "言語騷擾", "拍攝他人", "擋路糾纏", "其他"],
+    "打架": ["肢體衝突", "口角爭執", "幫派鬥毆", "攻擊路人", "其他"],
+    "動物": ["咬人", "無人看管寵物", "攻擊性動物", "受傷動物", "野生動物闖入", "其他"],
+    "環境髒亂": ["公共財物破壞", "可疑物品", "垃圾堆積", "噪音擾人", "惡臭", "噴漆塗鴉", "其他"]
+  };
 
-    let map;
-    let allMarkers = [];
-    let reports = [];
-    let myLocationMarker = null;
+  let map;
+  let allMarkers = [];
+  let reports = [];
 
-    // icon 圖片 URL
-    const iconUrl = "{% static 'assets/img/paw_icon.png' %}";
+  // icon 圖片 URL，用變數帶入確保 Django 模板能解析
+  const iconUrl = "{% static 'assets/img/paw_icon.png' %}";
 
-    // 初始化地圖
-    function initMap() {
-      map = new google.maps.Map(document.getElementById("map"), {
-        center: { lat: 25.033964, lng: 121.562321 }, // 預設台北
-        zoom: 14
+  // 初始化地圖
+  function initMap() {
+    map = new google.maps.Map(document.getElementById("map"), {
+      center: { lat: 25.033964, lng: 121.562321 },
+      zoom: 14
+    });
+
+    updateSubkindOptions("全部");
+    document.getElementById("subkindFilter").value = "";
+
+    fetchReportsAndRenderMarkers("全部", "");
+  }
+
+  // 從後端 API 取得報告資料並畫標記
+  function fetchReportsAndRenderMarkers(kind, subkind) {
+    fetch("{% url 'reports_with_subkind_json' %}")
+      .then(response => {
+        if (!response.ok) throw new Error("Network response was not ok");
+        return response.json();
+      })
+      .then(data => {
+        reports = data;
+        renderMarkers(kind, subkind);
+      })
+      .catch(error => {
+        console.error("fetch 錯誤:", error);
       });
+  }
 
-      updateSubkindOptions("全部");
-      document.getElementById("subkindFilter").value = "";
+  // 渲染地圖標記
+  function renderMarkers(kind, subkind) {
+    const kindLc = String(kind || "").trim().replace(/\s+/g, "").toLowerCase();
+    const subkindLc = String(subkind || "").trim().replace(/\s+/g, "").toLowerCase();
 
-      // 先顯示一次定位
-      updateMyLocation();
-      // 每 40 秒更新定位
-      setInterval(updateMyLocation, 40000);
+    // 清除舊標記
+    allMarkers.forEach(m => m.setMap(null));
+    allMarkers = [];
 
-      // 載入事件資料
-      fetchReportsAndRenderMarkers("全部", "");
+    // 過濾資料
+    const filtered = reports.filter(r => {
+      // 拆分 kind 字串，只取主分類 (左側)
+      const mainKind = String(r.kind || "").split("-")[0].trim().replace(/\s+/g, "").toLowerCase();
+      const rSubkind = String(r.subkind || "").trim().replace(/\s+/g, "").toLowerCase();
+
+      const isAllKind = (kindLc === "全部");
+      const isAllSubkind = (subkindLc === "");
+
+      const kindMatch = isAllKind || (mainKind === kindLc);
+      const subkindMatch = isAllSubkind || (rSubkind === subkindLc);
+
+      return kindMatch && subkindMatch;
+    });
+
+    if (filtered.length === 0) {
+      map.setCenter({ lat: 25.033964, lng: 121.562321 });
+      map.setZoom(14);
+      return;
     }
 
-    // 更新使用者定位
-    function updateMyLocation() {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          function (position) {
-            const userLatLng = {
-              lat: position.coords.latitude,
-              lng: position.coords.longitude
-            };
+    const bounds = new google.maps.LatLngBounds();
 
-            if (myLocationMarker) {
-              myLocationMarker.setPosition(userLatLng);
-            } else {
-              myLocationMarker = new google.maps.Marker({
-                position: userLatLng,
-                map: map,
-                icon: {
-                  path: google.maps.SymbolPath.CIRCLE,
-                  scale: 8,
-                  fillColor: "#4285F4",
-                  fillOpacity: 1,
-                  strokeWeight: 2,
-                  strokeColor: "white"
-                },
-                title: "我的位置"
-              });
-            }
-          },
-          function (error) {
-            console.error("定位失敗：", error.message);
+    filtered.forEach(r => {
+      if (typeof r.latitude === "number" && typeof r.longitude === "number") {
+        const marker = new google.maps.Marker({
+          position: { lat: r.latitude, lng: r.longitude },
+          map: map,
+          title: r.display_name || "未命名",
+          icon: {
+            url: iconUrl,
+            scaledSize: new google.maps.Size(30, 30),
+            origin: new google.maps.Point(0, 0),
+            anchor: new google.maps.Point(15, 15)
           }
-        );
+        });
+
+        const infowindow = new google.maps.InfoWindow({
+          content: `<strong>${r.display_name}</strong><br>
+                    原因: ${r.reason || '無'}<br>
+                    時間: ${r.time_created || '未知'}`
+        });
+
+        marker.addListener("click", () => {
+          infowindow.open(map, marker);
+        });
+
+        allMarkers.push(marker);
+        bounds.extend(marker.getPosition());
       } else {
-        console.error("此瀏覽器不支援定位功能");
+        console.warn("經緯度格式錯誤:", r);
       }
-    }
-
-    // 從後端 API 取得報告資料並畫標記
-    function fetchReportsAndRenderMarkers(kind, subkind) {
-      fetch("{% url 'reports_with_subkind_json' %}")
-        .then(response => {
-          if (!response.ok) throw new Error("Network response was not ok");
-          return response.json();
-        })
-        .then(data => {
-          reports = data;
-          renderMarkers(kind, subkind);
-        })
-        .catch(error => {
-          console.error("fetch 錯誤:", error);
-        });
-    }
-
-    // 渲染地圖標記
-    function renderMarkers(kind, subkind) {
-      const kindLc = String(kind || "").trim().replace(/\s+/g, "").toLowerCase();
-      const subkindLc = String(subkind || "").trim().replace(/\s+/g, "").toLowerCase();
-
-      // 清除舊標記
-      allMarkers.forEach(m => m.setMap(null));
-      allMarkers = [];
-
-      // 過濾資料
-      const filtered = reports.filter(r => {
-        const mainKind = String(r.kind || "").split("-")[0].trim().replace(/\s+/g, "").toLowerCase();
-        const rSubkind = String(r.subkind || "").trim().replace(/\s+/g, "").toLowerCase();
-
-        const isAllKind = (kindLc === "全部");
-        const isAllSubkind = (subkindLc === "");
-
-        const kindMatch = isAllKind || (mainKind === kindLc);
-        const subkindMatch = isAllSubkind || (rSubkind === subkindLc);
-
-        return kindMatch && subkindMatch;
-      });
-
-      if (filtered.length === 0) {
-        map.setCenter({ lat: 25.033964, lng: 121.562321 });
-        map.setZoom(14);
-        return;
-      }
-
-      const bounds = new google.maps.LatLngBounds();
-
-      filtered.forEach(r => {
-        if (typeof r.latitude === "number" && typeof r.longitude === "number") {
-          const marker = new google.maps.Marker({
-            position: { lat: r.latitude, lng: r.longitude },
-            map: map,
-            title: r.display_name || "未命名",
-            icon: {
-              url: iconUrl,
-              scaledSize: new google.maps.Size(30, 30),
-              origin: new google.maps.Point(0, 0),
-              anchor: new google.maps.Point(15, 15)
-            }
-          });
-
-          const infowindow = new google.maps.InfoWindow({
-            content: `<strong>${r.display_name}</strong><br>
-                      原因: ${r.reason || '無'}<br>
-                      時間: ${r.time_created || '未知'}`
-          });
-
-          marker.addListener("click", () => {
-            infowindow.open(map, marker);
-          });
-
-          allMarkers.push(marker);
-          bounds.extend(marker.getPosition());
-        }
-      });
-
-      map.fitBounds(bounds);
-    }
-
-    // 動態更新細分類下拉選單
-    function updateSubkindOptions(kind) {
-      const subkindSelect = document.getElementById("subkindFilter");
-      subkindSelect.innerHTML = "";
-
-      const defaultOption = document.createElement("option");
-      defaultOption.value = "";
-      defaultOption.text = "全部細分類";
-      subkindSelect.add(defaultOption);
-
-      if (kind !== "全部" && subkindOptions[kind]) {
-        subkindOptions[kind].forEach(s => {
-          const option = document.createElement("option");
-          option.value = s;
-          option.text = s;
-          subkindSelect.add(option);
-        });
-      }
-    }
-
-    // 事件分類下拉事件
-    document.getElementById("kindFilter").addEventListener("change", function () {
-      const kind = this.value;
-      updateSubkindOptions(kind);
-      document.getElementById("subkindFilter").value = "";
-      fetchReportsAndRenderMarkers(kind, "");
     });
 
-    // 細分類下拉事件
-    document.getElementById("subkindFilter").addEventListener("change", function () {
-      const kind = document.getElementById("kindFilter").value;
-      const subkind = this.value;
-      renderMarkers(kind, subkind);
-    });
-  </script>
+    map.fitBounds(bounds);
+  }
 
+  // 動態更新細分類下拉選單
+  function updateSubkindOptions(kind) {
+    const subkindSelect = document.getElementById("subkindFilter");
+    subkindSelect.innerHTML = "";
+
+    const defaultOption = document.createElement("option");
+    defaultOption.value = "";
+    defaultOption.text = "全部細分類";
+    subkindSelect.add(defaultOption);
+
+    // 「全部」不顯示其他細分類
+    if (kind !== "全部" && subkindOptions[kind]) {
+      subkindOptions[kind].forEach(s => {
+        const option = document.createElement("option");
+        option.value = s;
+        option.text = s;
+        subkindSelect.add(option);
+      });
+    }
+  }
+
+  // 事件分類下拉事件
+  document.getElementById("kindFilter").addEventListener("change", function () {
+    const kind = this.value;
+    updateSubkindOptions(kind);
+    document.getElementById("subkindFilter").value = "";
+    fetchReportsAndRenderMarkers(kind, "");
+  });
+
+  // 細分類下拉事件
+  document.getElementById("subkindFilter").addEventListener("change", function () {
+    const kind = document.getElementById("kindFilter").value;
+    const subkind = this.value;
+    renderMarkers(kind, subkind);
+  });
+</script>
 
   <script async defer
     src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAUuPZMMJvgVWftmqVyzfX8mKTwMX4kA6o&callback=initMap">
