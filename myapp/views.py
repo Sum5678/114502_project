@@ -2429,6 +2429,27 @@ def delete_comment(request, post_id):
 
     return JsonResponse({'success': True, 'comments': comments})
 
+@require_POST
+@login_required
+def edit_comment(request, post_id, time):
+    import json
+    data = json.loads(request.body)
+    new_content = data.get("content", "").strip()
+    if not new_content:
+        return JsonResponse({"success": False, "error": "內容不能為空"})
+
+    post = get_object_or_404(ChatInteraction, pk=post_id)
+    comments = post.comment_list
+    for comment in comments:
+        if comment["time"] == time and str(comment["user_id"]) == str(request.user.id):
+            comment["content"] = new_content
+            post.comment_list = comments
+            post.save()
+            return JsonResponse({"success": True})
+
+    return JsonResponse({"success": False, "error": "沒有權限編輯這則留言"})
+
+
 
 from django.core.paginator import Paginator
 
