@@ -21,141 +21,45 @@
   <link href="{% static 'assets/css/main.css' %}" rel="stylesheet">
 
   <style>
-    body {
-      background-color: #fff;
-      padding-top: 100px;
-      font-family: "Microsoft JhengHei", sans-serif;
-    }
-    .form-container {
-      background: #fff;
-      padding: 25px 30px;
-      border: 1px solid #d9e8f4;
-      border-radius: 10px;
-      margin-top: 40px;
-    }
-    .section-title {
-      text-align: center;
-      margin-top: 20px;
-      margin-bottom: 30px;
-    }
-    .section-title h2 {
-      display: inline-block;
-      position: relative;
-      font-weight: 700;
-      font-size: 28px;
-      color: #033e6b;
-      padding: 0 20px;
-    }
-    .section-title h2::before,
-    .section-title h2::after {
-      content: "";
-      position: absolute;
-      top: 50%;
-      width: 60px;
-      height: 2px;
-      background: #0d6efd;
-    }
-    .section-title h2::before { left: -70px; }
-    .section-title h2::after { right: -70px; }
+    body { background-color:#fff; padding-top:100px; font-family:"Microsoft JhengHei", sans-serif; }
+    .form-container{ background:#fff; padding:25px 30px; border:1px solid #d9e8f4; border-radius:10px; margin-top:40px; }
+    .section-title{ text-align:center; margin-top:20px; margin-bottom:30px; }
+    .section-title h2{ display:inline-block; position:relative; font-weight:700; font-size:28px; color:#033e6b; padding:0 20px; }
+    .section-title h2::before,.section-title h2::after{ content:""; position:absolute; top:50%; width:60px; height:2px; background:#0d6efd; }
+    .section-title h2::before{ left:-70px; } .section-title h2::after{ right:-70px; }
+    .section-title p{ margin-top:10px; font-size:16px; color:#555; }
+    label{ margin-top:20px; font-weight:500; color:#033e6b; }
+    input, textarea, select{ width:100%; padding:12px; margin-top:8px; border:1.5px solid #c4ddf6; border-radius:6px; font-size:15px; background-color:#fff; }
+    .char-counter{ font-size:13px; text-align:right; color:#888; margin-top:4px; }
+    button{ margin-top:30px; width:100%; padding:14px; background-color:#63b3ed; color:#fff; font-weight:600; border:none; border-radius:6px; }
+    button:disabled{ background-color:#b5d9f6; cursor:not-allowed; }
+    .avatar-preview{ display:flex; align-items:center; gap:12px; margin-top:15px; }
+    .avatar-preview img{ width:58px; height:58px; border-radius:50%; border:2px solid #a7d8ff; background-color:#f0faff; object-fit:cover; }
+    .color-options{ display:flex; gap:12px; margin-top:10px; }
+    .color-swatch{ width:32px; height:32px; border-radius:50%; cursor:pointer; border:2px solid #cbdff1; }
+    .color-swatch.selected{ border-color:#4299e1; box-shadow:0 0 8px 1px #a8cdfd; }
+    #successMessage{ font-size:18px; background-color:#d1f7d6; border:1px solid #8ee2a6; border-radius:8px; padding:14px; color:#155724; display:none; opacity:0; transition:opacity .8s; text-align:center; margin-top:20px; }
 
-    .section-title p {
-      margin-top: 10px;
-      font-size: 16px;
-      color: #555;
-    }
-    label {
-      margin-top: 20px;
-      font-weight: 500;
-      color: #033e6b;
-    }
-    input, textarea, select {
-      width: 100%;
-      padding: 12px;
-      margin-top: 8px;
-      border: 1.5px solid #c4ddf6;
-      border-radius: 6px;
-      font-size: 15px;
-      background-color: #fff;
-    }
-    .char-counter {
-      font-size: 13px;
-      text-align: right;
-      color: #888;
-      margin-top: 4px;
-    }
-    button {
-      margin-top: 30px;
-      width: 100%;
-      padding: 14px;
-      background-color: #63b3ed;
-      color: #fff;
-      font-weight: 600;
-      border: none;
-      border-radius: 6px;
-    }
-    button:disabled {
-      background-color: #b5d9f6;
-      cursor: not-allowed;
-    }
-    .avatar-preview {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-top: 15px;
-    }
-    .avatar-preview img {
-      width: 58px;
-      height: 58px;
-      border-radius: 50%;
-      border: 2px solid #a7d8ff;
-      background-color: #f0faff;
-      object-fit: cover;
-    }
-    .color-options {
-      display: flex;
-      gap: 12px;
-      margin-top: 10px;
-    }
-    .color-swatch {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      cursor: pointer;
-      border: 2px solid #cbdff1;
-    }
-    .color-swatch.selected {
-      border-color: #4299e1;
-      box-shadow: 0 0 8px 1px #a8cdfd;
-    }
-    #successMessage {
-      font-size: 18px;
-      background-color: #d1f7d6;
-      border: 1px solid #8ee2a6;
-      border-radius: 8px;
-      padding: 14px;
-      color: #155724;
-      display: none;
-      opacity: 0;
-      transition: opacity 0.8s;
-      text-align: center;
-      margin-top: 20px;
-    }
+    /* === 對齊「發文身分」的 radio 與文字 === */
+    .form-check{ display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+    .form-check-input{ float:none; margin:0; width:18px; height:18px; }
+    .form-check-label{ margin:0; line-height:1.2; }
   </style>
 </head>
 <body>
 <header id="header" class="header d-flex align-items-center fixed-top">
   <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
     <a href="{% url 'home' %}" class="logo d-flex align-items-center me-auto me-xl-0">
-      <h1 class="sitename" style="color: #033e6b;">怪怪走開，護您安全</h1>
+      <h1 class="sitename" style="color:#033e6b;">怪怪走開，護您安全</h1>
     </a>
     <nav id="navmenu" class="navmenu">
-        <ul>
-          <li><a href="{% url 'home' %}#hero">主頁</a></li>
-          <li><a href="index.html#services">簡介及功能介紹</a></li>
-          <li><a href="{% url 'report' %}">填寫表單</a></li>
-          <li><a href="{% url 'business_upload' %}">商家填單</a></li>
-          <li><a href="{% url 'about' %}">個人資料設定</a></li>
-          <li><a href="{% url 'chatroom_page' %}">聊天室</a></li>
+      <ul>
+        <li><a href="{% url 'home' %}#hero">主頁</a></li>
+        <li><a href="index.html#services">簡介及功能介紹</a></li>
+        <li><a href="{% url 'report' %}">填寫表單</a></li>
+        <li><a href="{% url 'business_upload' %}">商家填單</a></li>
+        <li><a href="{% url 'about' %}">個人資料設定</a></li>
+        <li><a href="{% url 'chatroom_page' %}">聊天室</a></li>
         <li class="dropdown">
           <a href="#"><span>交流區</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
           <ul>
@@ -163,22 +67,19 @@
             <li><a href="{% url 'post_display' %}">貼文總覽</a></li>
           </ul>
         </li>
-          
-          <li class="dropdown"><a href="#"><span>地圖</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
-            <ul>
-              <li><a href="{% url 'map' %}">事件地圖</a></li>
-              <li><a href="{% url 'store_map' %}">商家地圖</a></li>
-            </ul> 
-          </li>
-          
-          <li><a href="{% url 'harassment_prevention' %}">防騷指南</a></li>
-
-        </ul>
-        <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
-      </nav>
+        <li class="dropdown"><a href="#"><span>地圖</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+          <ul>
+            <li><a href="{% url 'map' %}">事件地圖</a></li>
+            <li><a href="{% url 'store_map' %}">商家地圖</a></li>
+          </ul>
+        </li>
+        <li><a href="{% url 'harassment_prevention' %}">防騷指南</a></li>
+      </ul>
+      <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+    </nav>
     {% if request.user.is_authenticated %}
       <div class="dropdown">
-        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown" style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
+        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown" style="background-color:#63b3ed;color:white;border-radius:8px;padding:8px 20px;">
           {{ request.user.username }}
         </a>
         <ul class="dropdown-menu dropdown-menu-end">
@@ -187,7 +88,7 @@
       </div>
     {% else %}
       <div class="dropdown">
-        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown" style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
+        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown" style="background-color:#63b3ed;color:white;border-radius:8px;padding:8px 20px;">
           登入
         </a>
         <ul class="dropdown-menu dropdown-menu-end">
@@ -209,8 +110,8 @@
     <div class="form-container">
       <form id="postForm" method="post" action="{% url 'post' %}">
         {% csrf_token %}
-        <input type="hidden" name="nickname" value="匿名">
 
+        <!-- 選擇背景顏色 -->
         <label>選擇背景顏色</label>
         <div class="color-options">
           <div class="color-swatch" style="background:#f44336" onclick="setBgColor('f44336', this)"></div>
@@ -226,6 +127,7 @@
         </div>
         <input type="hidden" name="bgcolor" id="bgcolor" value="2196f3">
 
+        <!-- 選擇頭像風格 -->
         <label>選擇頭像風格</label>
         <select id="avatarStyle" name="avatar_style" onchange="updateAvatar()">
           <option value="avataaars">漫畫風</option>
@@ -238,12 +140,50 @@
           <option value="open-peeps">插畫風</option>
         </select>
 
+        <!-- 發文身分選擇 -->
+        <div class="mb-3">
+          <label class="form-label d-block">發文身分</label>
 
+          <div class="form-check mb-1">
+            <input class="form-check-input" type="radio" name="post_identity" id="identityNickname1"
+                   value="nickname1" {% if profile_nickname1 %}checked{% else %}disabled{% endif %}>
+            <label class="form-check-label" for="identityNickname1">
+              使用暱稱 1
+              {% if profile_nickname1 %}
+                ：<strong>{{ profile_nickname1 }}</strong>
+              {% else %}
+                ：<span class="text-muted">(未設定)</span>
+              {% endif %}
+            </label>
+          </div>
+
+          <div class="form-check mb-1">
+            <input class="form-check-input" type="radio" name="post_identity" id="identityNickname2"
+                   value="nickname2" {% if not profile_nickname1 and profile_nickname2 %}checked{% elif not profile_nickname2 %}disabled{% endif %}>
+            <label class="form-check-label" for="identityNickname2">
+              使用暱稱 2
+              {% if profile_nickname2 %}
+                ：<strong>{{ profile_nickname2 }}</strong>
+              {% else %}
+                ：<span class="text-muted">(未設定)</span>
+              {% endif %}
+            </label>
+          </div>
+
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="post_identity" id="identityAnonymous"
+                   value="anonymous" {% if not profile_nickname1 and not profile_nickname2 %}checked{% endif %}>
+            <label class="form-check-label" for="identityAnonymous">(匿名)</label>
+          </div>
+        </div>
+
+        <!-- 頭像 + 名稱預覽 -->
         <div class="avatar-preview">
           <img id="avatar" src="" alt="預覽頭像">
           <span id="nickname-label">匿名</span>
         </div>
 
+        <!-- 標題 / 內容 -->
         <label for="title">文章標題</label>
         <input type="text" id="title" name="title" placeholder="請輸入標題" required>
         <div class="char-counter" id="titleCounter">(0/50 字)</div>
@@ -264,8 +204,11 @@
   <p>&copy; 2025 怪怪走開，護您安全｜Append Template</p>
 </footer>
 
-<!-- 顯示成功訊息 + 自動送出 -->
 <script>
+  // 從後端帶入兩個暱稱
+  const nick1 = "{{ profile_nickname1|default_if_none:''|escapejs }}";
+  const nick2 = "{{ profile_nickname2|default_if_none:''|escapejs }}";
+
   let bgColor = "2196f3";
 
   function setBgColor(color, elem) {
@@ -276,8 +219,15 @@
     if (elem) elem.classList.add('selected');
   }
 
+  function getSelectedNickname() {
+    const v = document.querySelector('input[name="post_identity"]:checked')?.value || 'anonymous';
+    if (v === 'nickname1' && nick1) return nick1;
+    if (v === 'nickname2' && nick2) return nick2;
+    return "匿名";
+  }
+
   function updateAvatar() {
-    const nickname = "匿名";
+    const nickname = getSelectedNickname();
     const style = document.getElementById("avatarStyle").value;
     const avatarUrl = `https://api.dicebear.com/7.x/${style}/svg?seed=${encodeURIComponent(nickname)}&backgroundColor=${bgColor}`;
     document.getElementById("avatar").src = avatarUrl;
@@ -307,24 +257,20 @@
     updateAvatar();
     updateCharCount("title", "titleCounter", 50);
     updateCharCount("content", "contentCounter", 300);
+    // 切換身分時同步更新頭像/名稱
+    document.querySelectorAll('input[name="post_identity"]').forEach(r => {
+      r.addEventListener('change', updateAvatar);
+    });
   };
 
-  // ✅ 顯示「發文成功」訊息，並在 1.5 秒後送出表單
+  // 顯示「發文成功」訊息，1.5 秒後送出
   document.getElementById("postForm").addEventListener("submit", function (e) {
-    e.preventDefault();  // 阻止立即送出
-
+    e.preventDefault();
     const successBox = document.getElementById("successMessage");
     successBox.style.display = "block";
-    setTimeout(() => {
-      successBox.style.opacity = 1;
-    }, 50);
-
-    setTimeout(() => {
-      document.getElementById("postForm").submit();  // 1.5 秒後送出
-    }, 1500);
+    setTimeout(() => { successBox.style.opacity = 1; }, 50);
+    setTimeout(() => { document.getElementById("postForm").submit(); }, 1500);
   });
-
-
 </script>
 
 <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
