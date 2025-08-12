@@ -9,7 +9,6 @@
   <link href="{% static 'assets/vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet">
   <link href="{% static 'assets/css/main.css' %}" rel="stylesheet">
   <style>
-    /* 與列表頁一致的小樣式（若 main.css 已有，可忽略） */
     .save-top-right{position:absolute;top:12px;right:12px}
     .save-top-right button{background:rgba(255,255,255,.95);border:1px solid #e6f3fb;border-radius:999px;padding:6px 12px;font-size:14px;color:#033e6b;display:inline-flex;align-items:center;gap:6px;box-shadow:0 1px 3px rgba(0,0,0,.05);cursor:pointer}
     .save-top-right .bi-star-fill{color:#f0ad4e}
@@ -20,11 +19,10 @@
 <header id="header" class="header d-flex align-items-center fixed-top">
   <div class="container-fluid d-flex align-items-center justify-content-between">
     <a href="{% url 'post_display' %}"
-   class="btn btn-sm"
-   style="background-color: #63b3ed; color: white; border-radius: 6px;">
-  ← 返回貼文列表
-</a>
-
+       class="btn btn-sm"
+       style="background-color: #63b3ed; color: white; border-radius: 6px;">
+      ← 返回貼文列表
+    </a>
     <div class="ms-2 fw-bold text-primary">全部留言</div>
     <div></div>
   </div>
@@ -33,7 +31,7 @@
 <main class="main" style="margin-top: 80px;">
   <div class="container">
 
-    {# ====== 保留貼文外觀（與 post_display.html 同風格） ====== #}
+    {# ====== 貼文卡片 ====== #}
     <div class="card mb-4" style="border-left: 8px solid #{{ post.bgcolor }};">
       <div class="card-body position-relative">
 
@@ -75,7 +73,6 @@
         </div>
       </div>
     </div>
-    {# ====== /貼文外觀 ====== #}
 
     <!-- 留言總數 -->
     <div class="d-flex justify-content-between align-items-center mb-2">
@@ -90,12 +87,32 @@
             <div class="small text-muted">{{ c.nickname }} ・ {{ c.time }}</div>
             <div class="mt-1">{{ c.content|escape }}</div>
           </div>
+
           {% if request.user.is_authenticated and c.user_id|stringformat:"s" == request.user.id|stringformat:"s" %}
-            <button class="btn btn-sm btn-outline-danger delete-comment-btn"
-                    data-post-id="{{ post.interaction_id }}"
-                    data-time="{{ c.time }}">
-              刪除
+          <div class="dropdown">
+            <button class="btn btn-link text-dark p-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="bi bi-three-dots-vertical"></i>
             </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li>
+                <a class="dropdown-item text-primary edit-comment-btn"
+                   href="#"
+                   data-post-id="{{ post.interaction_id }}"
+                   data-time="{{ c.time }}"
+                   data-content="{{ c.content|escape }}">
+                  編輯
+                </a>
+              </li>
+              <li>
+                <a class="dropdown-item text-danger delete-comment-btn"
+                   href="#"
+                   data-post-id="{{ post.interaction_id }}"
+                   data-time="{{ c.time }}">
+                  刪除
+                </a>
+              </li>
+            </ul>
+          </div>
           {% endif %}
         </div>
       {% empty %}
@@ -108,9 +125,7 @@
       <nav aria-label="留言分頁" class="mb-3">
         <ul class="pagination">
           {% if page_obj.has_previous %}
-            <li class="page-item">
-              <a class="page-link" href="?page={{ page_obj.previous_page_number }}">上一頁</a>
-            </li>
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">上一頁</a></li>
           {% else %}
             <li class="page-item disabled"><span class="page-link">上一頁</span></li>
           {% endif %}
@@ -124,9 +139,7 @@
           {% endfor %}
 
           {% if page_obj.has_next %}
-            <li class="page-item">
-              <a class="page-link" href="?page={{ page_obj.next_page_number }}">下一頁</a>
-            </li>
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">下一頁</a></li>
           {% else %}
             <li class="page-item disabled"><span class="page-link">下一頁</span></li>
           {% endif %}
@@ -154,64 +167,69 @@
 
 <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
 <script>
-  // 收藏（AJAX）
+  // 收藏
   document.querySelectorAll('.save-form').forEach(form => {
     form.addEventListener('submit', function(e){
       e.preventDefault();
       const url = this.action;
       const icon = this.querySelector('button i');
-      fetch(url, {
-        method: 'POST',
-        body: new FormData(this),
-        headers: { 'X-Requested-With': 'XMLHttpRequest' }
-      }).then(r=>r.json()).then(data=>{
+      fetch(url, { method: 'POST', body: new FormData(this), headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+      .then(r=>r.json()).then(data=>{
         if (icon) {
-          const isFilled = icon.classList.contains('bi-star-fill');
-          icon.className = `bi ${isFilled ? 'bi-star' : 'bi-star-fill'}`;
+          icon.className = `bi ${icon.classList.contains('bi-star-fill') ? 'bi-star' : 'bi-star-fill'}`;
         }
       }).catch(()=>alert('收藏失敗，請稍後再試'));
     });
   });
 
-  // 新增留言：成功後重新整理，確保分頁/總數同步
+  // 新增留言
   document.getElementById('addCommentForm')?.addEventListener('submit', function(e) {
     e.preventDefault();
-    const form = this;
-    fetch(form.action, {
-      method: 'POST',
-      body: new FormData(form),
-      headers: { 'X-Requested-With': 'XMLHttpRequest' }
-    })
-    .then(async res => {
-      const data = await res.json().catch(()=> ({}));
-      if (!res.ok) throw new Error(data.error || '留言失敗，請稍後再試');
+    fetch(this.action, { method: 'POST', body: new FormData(this), headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+    .then(res => res.json())
+    .then(data => {
+      if (!data.success) throw new Error(data.error || '留言失敗');
       window.location.reload();
     })
-    .catch(err => alert(err.message || '留言失敗，請稍後再試'));
+    .catch(err => alert(err.message));
   });
 
   // 刪除留言
   document.querySelectorAll('.delete-comment-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
       if (!confirm('確定要刪除這則留言嗎？')) return;
-      const postId = this.dataset.postId;
-      const time = this.dataset.time;
-
-      fetch(`/post/${postId}/comment/delete/`, {
+      fetch(`/post/${this.dataset.postId}/comment/delete/`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'X-Requested-With': 'XMLHttpRequest',
-          'X-CSRFToken': getCookie('csrftoken'),
-        },
-        body: `time=${encodeURIComponent(time)}`
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': getCookie('csrftoken') },
+        body: `time=${encodeURIComponent(this.dataset.time)}`
       })
-      .then(async res => {
-        const data = await res.json().catch(()=> ({}));
-        if (!res.ok || !data.success) throw new Error(data.error || '刪除失敗');
+      .then(res => res.json())
+      .then(data => {
+        if (!data.success) throw new Error(data.error || '刪除失敗');
         window.location.reload();
       })
-      .catch(err => alert(err.message || '刪除失敗'));
+      .catch(err => alert(err.message));
+    });
+  });
+
+  // 編輯留言
+  document.querySelectorAll('.edit-comment-btn').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      const newContent = prompt('請輸入新的留言內容：', this.dataset.content);
+      if (newContent === null || newContent.trim() === '') return;
+      fetch(`/post/${this.dataset.postId}/comment/edit/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': getCookie('csrftoken') },
+        body: `time=${encodeURIComponent(this.dataset.time)}&content=${encodeURIComponent(newContent)}`
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (!data.success) throw new Error(data.error || '編輯失敗');
+        window.location.reload();
+      })
+      .catch(err => alert(err.message));
     });
   });
 
@@ -219,8 +237,8 @@
     let cookieValue = null;
     if (document.cookie && document.cookie !== '') {
       const cookies = document.cookie.split(';');
-      for (let i = 0; i < cookies.length; i++) {
-        const cookie = cookies[i].trim();
+      for (let cookie of cookies) {
+        cookie = cookie.trim();
         if (cookie.substring(0, name.length + 1) === (name + '=')) {
           cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
           break;

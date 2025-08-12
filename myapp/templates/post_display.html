@@ -273,11 +273,32 @@
         </div>
 
         {% if request.user.is_authenticated and c.user_id|stringformat:"s" == request.user.id|stringformat:"s" %}
-          <button class="btn btn-sm btn-outline-danger delete-comment-btn"
-                  data-post-id="{{ post.interaction_id }}"
-                  data-time="{{ c.time }}">
-            刪除
+          <!-- 三點選單 -->
+        <div class="dropdown">
+          <button class="btn btn-link text-muted p-0" type="button" id="commentMenu{{ forloop.counter }}" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-three-dots-vertical"></i>
           </button>
+          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="commentMenu{{ forloop.counter }}">
+            <li>
+              <a class="dropdown-item text-primary edit-comment-btn"
+                href="#"
+                data-post-id="{{ post.interaction_id }}"
+                data-time="{{ c.time }}"
+                data-content="{{ c.content|escapejs }}">
+                編輯
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item text-danger delete-comment-btn"
+                href="#"
+                data-post-id="{{ post.interaction_id }}"
+                data-time="{{ c.time }}">
+                刪除
+              </a>
+            </li>
+          </ul>
+
+          </div>
         {% endif %}
       </li>
     {% empty %}
@@ -310,6 +331,7 @@
   {% endif %}
 </div>
 <!-- /留言區 -->
+
 
 
         </div>
