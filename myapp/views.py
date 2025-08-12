@@ -1902,47 +1902,6 @@ def store_decide(request):
 
     
 #----------------使用者 事件地圖--------------
-# from django.http import JsonResponse
-# from .models import PemapAll
-
-# def approved_locations_api(request):
-#     approved = PemapAll.objects.filter(review_status='已通過')  # 只取審核通過的
-#     data = []
-
-#     for item in approved:
-#         data.append({
-#             'id': item.p_id,
-#             'title': item.display_name,
-#             'kind': item.kind,
-#             'reason': item.reason,
-#             'lat': item.latitude,
-#             'lng': item.longitude,
-#         })
-
-#     return JsonResponse(data, safe=False)
-
-
-
-from django.http import JsonResponse
-from .models import PemapAll
-
-# def approved_locations_api(request):
-#     approved = PemapWithSubkind.objects.filter(review_status='3')
-#     data = []
-#     for r in approved:
-#         data.append({
-#                         'id': r.p_id,
-#                         'display_name': r.display_name,
-#                         'kind': r.kind,
-#                         'subkind': r.subkind,
-#                         'reason': getattr(r, 'reason', ""),  # 避免沒有這欄位報錯
-#                         'latitude': r.latitude,
-#                         'longitude': r.longitude,
-#                         'time_created': r.time_created.strftime("%Y-%m-%d %H:%M"),
-#                         'img_url': r.img_url
-#                     })
-
-#     return JsonResponse(data, safe=False)
 def approved_locations_api(request):
     approved_p_ids = PemapAll.objects.filter(review_status='3').values_list('p_id', flat=True)
     approved = PemapWithSubkind.objects.filter(p_id__in=approved_p_ids)
@@ -1981,123 +1940,37 @@ from django.http import JsonResponse
 import json
 from .models import PemapWithSubkind, PemapAll
 
-# @csrf_exempt
+
+# 可以跑分類的,但是有億點久
 # def reports_with_subkind_json(request):
-#     if request.method == "POST":
-#         data = json.loads(request.body)
-#         kind = data.get("kind")
-#         subkind = data.get("subkind")
-#         north = data.get("north")
-#         east = data.get("east")
-#         south = data.get("south")
-#         west = data.get("west")
+#     approved_p_ids = PemapAll.objects.filter(review_status='3').values_list('p_id', flat=True)
+#     queryset = PemapWithSubkind.objects.filter(p_id__in=approved_p_ids)
 
-#         queryset = PemapWithSubkind.objects.all()
+#     results = []
+#     for item in queryset:
+#         try:
+#             pemap_detail = PemapAll.objects.get(p_id=item.p_id)
+#             reason = pemap_detail.reason or "無"
+#             time_created = pemap_detail.time_created.strftime("%Y-%m-%d %H:%M")
+#         except PemapAll.DoesNotExist:
+#             reason = "無"
+#             time_created = "未知"
 
-#         if kind and kind != "全部":
-#             queryset = queryset.filter(kind=kind)
-#         if subkind and subkind != "":
-#             queryset = queryset.filter(subkind=subkind)
+#         results.append({
+#             "p_id": item.p_id,
+#             "display_name": item.display_name,
+#             "kind": item.kind,
+#             "subkind": item.subkind,
+#             "latitude": item.latitude,
+#             "longitude": item.longitude,
+#             "address": item.address,
+#             "img_url": item.img_url,
+#             "time_created": time_created,
+#             "reason": reason,
+#         })
 
-#         if None not in (north, east, south, west):
-#             queryset = queryset.filter(
-#                 latitude__lte=north,
-#                 latitude__gte=south,
-#                 longitude__lte=east,
-#                 longitude__gte=west,
-#             )
+#     return JsonResponse(results, safe=False)
 
-#         results = []
-#         for item in queryset:
-#             try:
-#                 pemap_detail = PemapAll.objects.get(p_id=item.p_id)
-#                 reason = pemap_detail.reason
-#             except PemapAll.DoesNotExist:
-#                 reason = "無"
-
-#             results.append({
-#                 "p_id": item.p_id,
-#                 "display_name": item.display_name,
-#                 "kind": item.kind,
-#                 "subkind": item.subkind,
-#                 "latitude": item.latitude,
-#                 "longitude": item.longitude,
-#                 "address": item.address,
-#                 "img_url": item.img_url,
-#                 "time_created": item.time_created.strftime("%Y-%m-%d %H:%M"),
-#                 "reason": reason,
-#             })
-
-#         return JsonResponse(results, safe=False)
-#     else:
-#         return JsonResponse({"error": "POST method required"}, status=400)
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-import json
-from .models import PemapWithSubkind, PemapAll
-@csrf_exempt
-def reports_with_subkind_json(request):
-    if request.method == "POST":
-        data = json.loads(request.body)
-        kind = data.get("kind")
-        subkind = data.get("subkind")
-        north = data.get("north")
-        south = data.get("south")
-        east = data.get("east")
-        west = data.get("west")
-
-        # 先取出 review_status = '3' 的 p_id 清單
-        approved_p_ids = PemapAll.objects.filter(review_status='3').values_list('p_id', flat=True)
-
-        queryset = PemapWithSubkind.objects.filter(p_id__in=approved_p_ids)
-
-        if kind and kind != "全部":
-            queryset = queryset.filter(kind=kind)
-        if subkind and subkind != "":
-            queryset = queryset.filter(subkind=subkind)
-
-        if None not in (north, east, south, west):
-            queryset = queryset.filter(
-                latitude__lte=north,
-                latitude__gte=south,
-                longitude__lte=east,
-                longitude__gte=west,
-            )
-
-        results = []
-        for item in queryset:
-            try:
-                pemap_detail = PemapAll.objects.get(p_id=item.p_id)
-                reason = pemap_detail.reason or "無"
-                time_created = pemap_detail.time_created.strftime("%Y-%m-%d %H:%M")
-            except PemapAll.DoesNotExist:
-                reason = "無"
-                time_created = "未知"
-
-            results.append({
-                "p_id": item.p_id,
-                "display_name": item.display_name,
-                "kind": item.kind,
-                "subkind": item.subkind,
-                "latitude": item.latitude,
-                "longitude": item.longitude,
-                "address": item.address,
-                "img_url": item.img_url,
-                "time_created": time_created,
-                "reason": reason,
-            })
-
-        return JsonResponse(results, safe=False)
-    else:
-        return JsonResponse({"error": "POST method required"}, status=400)
-
-
-
-
-
-
-# def map_view(request):
-#     return render(request, '999map.html')
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -2123,6 +1996,41 @@ def map_view(request):
     return render(request, "999map.html", {
         "reports_json": reports_json
     })
+
+
+def reports_with_subkind_json(request):
+    # 篩選只審核通過的 p_id
+    approved_p_ids = list(PemapAll.objects.filter(review_status='3').values_list('p_id', flat=True))
+    
+    # 從 VIEW 取得資料
+    queryset = PemapWithSubkind.objects.filter(p_id__in=approved_p_ids)
+    
+    # 批次查詢完整詳細資料
+    pemap_all_map = {
+        p.p_id: p for p in PemapAll.objects.filter(p_id__in=approved_p_ids)
+    }
+    
+    results = []
+    for item in queryset:
+        detail = pemap_all_map.get(item.p_id)
+        reason = detail.reason if detail and detail.reason else "無"
+        time_created = detail.time_created.strftime("%Y-%m-%d %H:%M") if detail and detail.time_created else "未知"
+        
+        results.append({
+            "p_id": item.p_id,
+            "display_name": item.display_name,
+            "kind": item.kind,
+            "subkind": item.subkind,
+            "latitude": item.latitude,
+            "longitude": item.longitude,
+            "address": item.address,
+            "img_url": item.img_url,
+            "time_created": time_created,
+            "reason": reason,
+        })
+    
+    return JsonResponse(results, safe=False)
+
 
 
     
@@ -2638,174 +2546,13 @@ def admin_send_email(request, p_id):
 
 
 # views.py
-from rest_framework import viewsets
-from .models import PemapWithSubkind
-from .serializers import PemapWithSubkindSerializer
-
-class PemapWithSubkindViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = PemapWithSubkind.objects.all()
-    serializer_class = PemapWithSubkindSerializer
 
 
-# from django.http import JsonResponse
-# from .models import PemapWithSubkind
-
-# def reports_with_subkind_json(request):
-#     # 從資料庫取得所有帶有 kind / subkind 的事件
-#     data = list(PemapWithSubkind.objects.values())
-#     return JsonResponse(data, safe=False)
+# class PemapWithSubkindViewSet(viewsets.ReadOnlyModelViewSet):
+#     queryset = PemapWithSubkind.objects.all()
+#     serializer_class = PemapWithSubkindSerializer
 
 
-
-
-
-# @csrf_exempt
-# def reports_with_subkind_json(request):
-#     if request.method == 'POST':
-#         data = json.loads(request.body)
-#         kind = data.get('kind')
-#         subkind = data.get('subkind')
-
-#         # 用 VIEW 篩選
-#         queryset = PemapWithSubkind.objects.all()
-#         if kind and kind != "全部":
-#             queryset = queryset.filter(kind=kind)
-#         if subkind and subkind != "":
-#             queryset = queryset.filter(subkind=subkind)
-
-#         results = []
-#         for item in queryset:
-#             try:
-#                 # 用 p_id 從 PemapAll 拿 reason
-#                 pemap_detail = PemapAll.objects.get(p_id=item.p_id)
-#                 reason = pemap_detail.reason
-#             except PemapAll.DoesNotExist:
-#                 reason = "無"
-
-#             results.append({
-#                 "p_id": item.p_id,
-#                 "display_name": item.display_name,
-#                 "kind": item.kind,
-#                 "subkind": item.subkind,
-#                 "latitude": item.latitude,
-#                 "longitude": item.longitude,
-#                 "address": item.address,
-#                 "img_url": item.img_url,
-#                 "time_created": item.time_created,
-#                 "reason": reason,
-#             })
-
-#         return JsonResponse(results, safe=False)
-#     else:
-#         return JsonResponse({"error": "POST method required"}, status=400)
-
-
-# @csrf_exempt
-# def reports_with_subkind_json(request):
-#     if request.method == 'POST':
-#         data = json.loads(request.body)
-#         kind = data.get('kind')
-#         subkind = data.get('subkind')
-
-#         queryset = PemapWithSubkind.objects.all()
-#         if kind and kind != "全部":
-#             queryset = queryset.filter(kind=kind)
-#         if subkind and subkind != "":
-#             queryset = queryset.filter(subkind=subkind)
-
-#         north = data.get('north')
-#         south = data.get('south')
-#         east = data.get('east')
-#         west = data.get('west')
-
-#         if north is not None and south is not None and east is not None and west is not None:
-#             queryset = queryset.filter(
-#                 latitude__lte=north,
-#                 latitude__gte=south,
-#                 longitude__lte=east,
-#                 longitude__gte=west,
-#             )
-
-#         results = []
-#         for item in queryset:
-#             try:
-#                 pemap_detail = PemapAll.objects.get(p_id=item.p_id)
-#                 reason = pemap_detail.reason or "無"
-#                 time_created = pemap_detail.time_created.strftime("%Y-%m-%d %H:%M")
-#             except PemapAll.DoesNotExist:
-#                 reason = "無"
-#                 time_created = "未知"
-
-#             results.append({
-#                 "p_id": item.p_id,
-#                 "display_name": item.display_name,
-#                 "kind": item.kind,
-#                 "subkind": item.subkind,
-#                 "latitude": item.latitude,
-#                 "longitude": item.longitude,
-#                 "address": item.address,
-#                 "img_url": item.img_url,
-#                 "time_created": time_created,
-#                 "reason": reason,
-#             })
-
-#         return JsonResponse(results, safe=False)
-#     else:
-#         return JsonResponse({"error": "POST method required"}, status=400)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# @csrf_exempt
-# def reports_with_subkind_json(request):
-#     if request.method == "POST":
-#         data = json.loads(request.body)
-#         kind = data.get("kind")
-#         subkind = data.get("subkind")
-
-#         queryset = PemapWithSubkind.objects.all()
-#         if kind and kind != "全部":
-#             queryset = queryset.filter(kind=kind)
-#         if subkind and subkind != "":
-#             queryset = queryset.filter(subkind=subkind)
-
-#         results = []
-#         for item in queryset:
-#             try:
-#                 pemap_detail = PemapAll.objects.get(p_id=item.p_id)
-#                 reason = pemap_detail.reason or "無"
-#                 time_created = pemap_detail.time_created.strftime("%Y-%m-%d %H:%M")
-#             except PemapAll.DoesNotExist:
-#                 reason = "無"
-#                 time_created = "未知"
-
-#             results.append({
-#                 "p_id": item.p_id,
-#                 "display_name": item.display_name,
-#                 "kind": item.kind,
-#                 "subkind": item.subkind,
-#                 "latitude": item.latitude,
-#                 "longitude": item.longitude,
-#                 "address": item.address,
-#                 "img_url": item.img_url,
-#                 "time_created": time_created,
-#                 "reason": reason,
-#             })
-#         return JsonResponse(results, safe=False)
-#     return JsonResponse({"error": "POST method required"}, status=400)
 
 
 #------------------------聊天室---------------------

@@ -8,6 +8,348 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>事件地圖</title>
 
+  <!-- Favicons -->
+  <link href="{% static 'assets/img/paw_icon.png' %}" rel="icon" type="image/png" />
+  <link href="{% static 'assets/img/paw_icon.png' %}" rel="apple-touch-icon" />
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700|Nunito:300,400,600,700,800|Poppins:300,400,500,600,700" rel="stylesheet" />
+
+  <!-- Icon CDN -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/boxicons/2.1.0/css/boxicons.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css" rel="stylesheet" />
+
+  <!-- Vendor CSS -->
+  <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet" />
+  <link href="{% static 'assets/vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet" />
+  <link href="{% static 'assets/vendor/boxicons/css/boxicons.min.css' %}" rel="stylesheet" />
+  <link href="{% static 'assets/vendor/quill/quill.snow.css' %}" rel="stylesheet" />
+  <link href="{% static 'assets/vendor/quill/quill.bubble.css' %}" rel="stylesheet" />
+  <link href="{% static 'assets/vendor/simple-datatables/style.css' %}" rel="stylesheet" />
+
+  <!-- Template Main CSS File -->
+  <link href="{% static 'assets/css/main.css' %}" rel="stylesheet" />
+
+  <style>
+    #map {
+      width: 100%;
+      height: 600px;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+
+<body class="index-page">
+  <header id="header" class="header d-flex align-items-center fixed-top">
+    <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
+      <a href="index.html" class="logo d-flex align-items-center me-auto me-xl-0">
+        <h1 class="sitename">怪怪走開，護您安全</h1><span></span>
+      </a>
+      <nav id="navmenu" class="navmenu">
+        <ul>
+          <li><a href="{% url 'home' %}#hero">主頁</a></li>
+          <li><a href="index.html#services">簡介及功能介紹</a></li>
+          <li><a href="{% url 'report' %}">填寫表單</a></li>
+          <li><a href="{% url 'business_upload' %}">商家填單</a></li>
+          <li><a href="{% url 'post' %}#hero">我要發文</a></li>
+          <li class="dropdown">
+            <a href="#"><span>地圖</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+            <ul>
+              <li><a href="{% url 'map' %}">事件地圖</a></li>
+              <li><a href="{% url 'store_map' %}">商家地圖</a></li>
+            </ul>
+          </li>
+          <li><a href="{% url 'harassment_prevention' %}">防騷指南</a></li>
+          <li class="dropdown">
+            <a href="#"><span>Dropdown</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+            <ul>
+              <li><a href="#">Dropdown 1</a></li>
+              <li class="dropdown">
+                <a href="#"><span>Deep Dropdown</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+                <ul>
+                  <li><a href="#">Deep Dropdown 1</a></li>
+                  <li><a href="#">Deep Dropdown 2</a></li>
+                  <li><a href="#">Deep Dropdown 3</a></li>
+                  <li><a href="#">Deep Dropdown 4</a></li>
+                  <li><a href="#">Deep Dropdown 5</a></li>
+                </ul>
+              </li>
+              <li><a href="#">Dropdown 2</a></li>
+              <li><a href="#">Dropdown 3</a></li>
+              <li><a href="#">Dropdown 4</a></li>
+            </ul>
+          </li>
+          <li><a href="index.html#contact">Contact</a></li>
+        </ul>
+        <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+      </nav>
+      <div class="dropdown">
+        <a class="btn-getstarted dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"
+          style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">登入</a>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="{% url 'userlogin' %}">一般使用者登入</a></li>
+          <li><a class="dropdown-item" href="{% url 'admin_login' %}">管理員登入</a></li>
+        </ul>
+      </div>
+    </div>
+  </header>
+
+  <main class="main">
+
+    <section class="hero">
+      <img src="{% static 'assets/img/1.png' %}" alt="Hero Image" />
+    </section>
+
+    <section id="injury-map">
+      <header>
+        <div class="container my-3">
+          <label for="kindFilter" class="form-label">事件分類：</label>
+          <select id="kindFilter" class="form-select" style="max-width: 300px;">
+            <option value="全部">全部</option>
+            <option value="騷擾">騷擾</option>
+            <option value="打架">打架</option>
+            <option value="動物">動物</option>
+            <option value="環境髒亂">環境髒亂</option>
+          </select>
+
+          <label for="subkindFilter" class="form-label mt-3">細分類：</label>
+          <select id="subkindFilter" class="form-select" style="max-width: 300px;">
+            <option value="">全部細分類</option>
+          </select>
+        </div>
+
+        <div class="container">
+          <div id="map"></div>
+        </div>
+
+        <!-- 後端傳來的 JSON 資料 -->
+        <script id="reportData" type="application/json">
+          {{ reports_json|safe }}
+        </script>
+      </header>
+
+      <footer>
+        <p>&copy; 2025 動物關懷平台</p>
+      </footer>
+    </section>
+
+  </main>
+
+  <script>
+  // 細分類選項資料
+  const subkindOptions = {
+    "騷擾": ["推銷", "暴露狂", "跟蹤", "言語騷擾", "拍攝他人", "擋路糾纏", "其他"],
+    "打架": ["肢體衝突", "口角爭執", "幫派鬥毆", "攻擊路人", "其他"],
+    "動物": ["咬人", "無人看管寵物", "攻擊性動物", "受傷動物", "野生動物闖入", "其他"],
+    "環境髒亂": ["公共財物破壞", "可疑物品", "垃圾堆積", "噪音擾人", "惡臭", "噴漆塗鴉", "其他"]
+  };
+
+  let map;
+  let allMarkers = [];
+  let reports = [];
+
+  // icon 圖片 URL，用變數帶入確保 Django 模板能解析
+  const iconUrl = "{% static 'assets/img/paw_icon.png' %}";
+
+  // 初始化地圖
+  function initMap() {
+    map = new google.maps.Map(document.getElementById("map"), {
+      center: { lat: 25.033964, lng: 121.562321 },
+      zoom: 14
+    });
+
+    updateSubkindOptions("全部");
+    document.getElementById("subkindFilter").value = "";
+
+    fetchReportsAndRenderMarkers("全部", "");
+  }
+
+  // 從後端 API 取得報告資料並畫標記
+  function fetchReportsAndRenderMarkers(kind, subkind) {
+    fetch("{% url 'reports_with_subkind_json' %}")
+      .then(response => {
+        if (!response.ok) throw new Error("Network response was not ok");
+        return response.json();
+      })
+      .then(data => {
+        reports = data;
+        renderMarkers(kind, subkind);
+      })
+      .catch(error => {
+        console.error("fetch 錯誤:", error);
+      });
+  }
+
+  // 渲染地圖標記
+  function renderMarkers(kind, subkind) {
+    const kindLc = String(kind || "").trim().replace(/\s+/g, "").toLowerCase();
+    const subkindLc = String(subkind || "").trim().replace(/\s+/g, "").toLowerCase();
+
+    // 清除舊標記
+    allMarkers.forEach(m => m.setMap(null));
+    allMarkers = [];
+
+    // 過濾資料
+    const filtered = reports.filter(r => {
+      // 拆分 kind 字串，只取主分類 (左側)
+      const mainKind = String(r.kind || "").split("-")[0].trim().replace(/\s+/g, "").toLowerCase();
+      const rSubkind = String(r.subkind || "").trim().replace(/\s+/g, "").toLowerCase();
+
+      const isAllKind = (kindLc === "全部");
+      const isAllSubkind = (subkindLc === "");
+
+      const kindMatch = isAllKind || (mainKind === kindLc);
+      const subkindMatch = isAllSubkind || (rSubkind === subkindLc);
+
+      return kindMatch && subkindMatch;
+    });
+
+    if (filtered.length === 0) {
+      map.setCenter({ lat: 25.033964, lng: 121.562321 });
+      map.setZoom(14);
+      return;
+    }
+
+    const bounds = new google.maps.LatLngBounds();
+
+    filtered.forEach(r => {
+      if (typeof r.latitude === "number" && typeof r.longitude === "number") {
+        const marker = new google.maps.Marker({
+          position: { lat: r.latitude, lng: r.longitude },
+          map: map,
+          title: r.display_name || "未命名",
+          icon: {
+            url: iconUrl,
+            scaledSize: new google.maps.Size(30, 30),
+            origin: new google.maps.Point(0, 0),
+            anchor: new google.maps.Point(15, 15)
+          }
+        });
+
+        const infowindow = new google.maps.InfoWindow({
+          content: `<strong>${r.display_name}</strong><br>
+                    原因: ${r.reason || '無'}<br>
+                    時間: ${r.time_created || '未知'}`
+        });
+
+        marker.addListener("click", () => {
+          infowindow.open(map, marker);
+        });
+
+        allMarkers.push(marker);
+        bounds.extend(marker.getPosition());
+      } else {
+        console.warn("經緯度格式錯誤:", r);
+      }
+    });
+
+    map.fitBounds(bounds);
+  }
+
+  // 動態更新細分類下拉選單
+  function updateSubkindOptions(kind) {
+    const subkindSelect = document.getElementById("subkindFilter");
+    subkindSelect.innerHTML = "";
+
+    const defaultOption = document.createElement("option");
+    defaultOption.value = "";
+    defaultOption.text = "全部細分類";
+    subkindSelect.add(defaultOption);
+
+    // 「全部」不顯示其他細分類
+    if (kind !== "全部" && subkindOptions[kind]) {
+      subkindOptions[kind].forEach(s => {
+        const option = document.createElement("option");
+        option.value = s;
+        option.text = s;
+        subkindSelect.add(option);
+      });
+    }
+  }
+
+  // 事件分類下拉事件
+  document.getElementById("kindFilter").addEventListener("change", function () {
+    const kind = this.value;
+    updateSubkindOptions(kind);
+    document.getElementById("subkindFilter").value = "";
+    fetchReportsAndRenderMarkers(kind, "");
+  });
+
+  // 細分類下拉事件
+  document.getElementById("subkindFilter").addEventListener("change", function () {
+    const kind = document.getElementById("kindFilter").value;
+    const subkind = this.value;
+    renderMarkers(kind, subkind);
+  });
+</script>
+
+  <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAUuPZMMJvgVWftmqVyzfX8mKTwMX4kA6o&callback=initMap">
+  </script>
+
+  <footer id="footer" class="footer position-relative light-background">
+    <div class="container copyright text-center mt-4">
+      <p>© <span>Copyright</span> <strong class="sitename">Append</strong> <span>All Rights Reserved</span></p>
+      <div class="credits">
+        Designed by <a href="https://bootstrapmade.com/">BootstrapMade</a>
+      </div>
+    </div>
+    <div class="credits">
+      Icon by <a href="https://www.flaticon.com/free-icons/paw" title="paw icons">Freepik - Flaticon</a>
+    </div>
+  </footer>
+
+  <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i
+      class="bi bi-arrow-up-short"></i></a>
+  <div id="preloader"></div>
+
+  <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/php-email-form/validate.js' %}"></script>
+  <script src="{% static 'assets/vendor/aos/aos.js' %}"></script>
+  <script src="{% static 'assets/vendor/glightbox/js/glightbox.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/purecounter/purecounter_vanilla.js' %}"></script>
+  <script src="{% static 'assets/vendor/imagesloaded/imagesloaded.pkgd.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/isotope-layout/isotope.pkgd.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/swiper/swiper-bundle.min.js' %}"></script>
+  <script src="{% static 'assets/js/main.js' %}"></script>
+</body>
+
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- <!DOCTYPE html>
+{% load static %}
+
+<html lang="zh-Hant">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>事件地圖</title>
+
   <link href="{% static 'assets/img/paw_icon.png' %}" rel="icon" type="image/png" />
   <link href="{% static 'assets/img/paw_icon.png' %}" rel="apple-touch-icon" />
 
@@ -463,7 +805,7 @@
   <script src="{% static 'assets/js/main.js' %}"></script>
 </body>
 
-</html>
+</html> -->
 
 
 
