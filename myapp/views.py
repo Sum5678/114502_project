@@ -1942,34 +1942,7 @@ from .models import PemapWithSubkind, PemapAll
 
 
 # 可以跑分類的,但是有億點久
-# def reports_with_subkind_json(request):
-#     approved_p_ids = PemapAll.objects.filter(review_status='3').values_list('p_id', flat=True)
-#     queryset = PemapWithSubkind.objects.filter(p_id__in=approved_p_ids)
 
-#     results = []
-#     for item in queryset:
-#         try:
-#             pemap_detail = PemapAll.objects.get(p_id=item.p_id)
-#             reason = pemap_detail.reason or "無"
-#             time_created = pemap_detail.time_created.strftime("%Y-%m-%d %H:%M")
-#         except PemapAll.DoesNotExist:
-#             reason = "無"
-#             time_created = "未知"
-
-#         results.append({
-#             "p_id": item.p_id,
-#             "display_name": item.display_name,
-#             "kind": item.kind,
-#             "subkind": item.subkind,
-#             "latitude": item.latitude,
-#             "longitude": item.longitude,
-#             "address": item.address,
-#             "img_url": item.img_url,
-#             "time_created": time_created,
-#             "reason": reason,
-#         })
-
-#     return JsonResponse(results, safe=False)
 
 from django.shortcuts import render
 from django.http import JsonResponse
@@ -1997,38 +1970,30 @@ def map_view(request):
         "reports_json": reports_json
     })
 
-
+# 可以跑分類的,但是有億點久
 def reports_with_subkind_json(request):
-    # 篩選只審核通過的 p_id
-    approved_p_ids = list(PemapAll.objects.filter(review_status='3').values_list('p_id', flat=True))
-    
-    # 從 VIEW 取得資料
-    queryset = PemapWithSubkind.objects.filter(p_id__in=approved_p_ids)
-    
-    # 批次查詢完整詳細資料
-    pemap_all_map = {
-        p.p_id: p for p in PemapAll.objects.filter(p_id__in=approved_p_ids)
-    }
-    
+    queryset = PemapAll.objects.filter(review_status='3').values(
+        'p_id', 'display_name', 'kind', 'reason', 'address', 'latitude', 'longitude', 'img_url', 'time_created'
+    )
+
     results = []
     for item in queryset:
-        detail = pemap_all_map.get(item.p_id)
-        reason = detail.reason if detail and detail.reason else "無"
-        time_created = detail.time_created.strftime("%Y-%m-%d %H:%M") if detail and detail.time_created else "未知"
-        
+        kind_str = item['kind'] or ""
+        subkind = kind_str.split('-')[-1].strip() if '-' in kind_str else ""
+
         results.append({
-            "p_id": item.p_id,
-            "display_name": item.display_name,
-            "kind": item.kind,
-            "subkind": item.subkind,
-            "latitude": item.latitude,
-            "longitude": item.longitude,
-            "address": item.address,
-            "img_url": item.img_url,
-            "time_created": time_created,
-            "reason": reason,
+            "p_id": item['p_id'],
+            "display_name": item['display_name'],
+            "kind": kind_str,
+            "subkind": subkind,
+            "latitude": item['latitude'],
+            "longitude": item['longitude'],
+            "address": item['address'],
+            "img_url": item['img_url'],
+            "time_created": item['time_created'].strftime("%Y-%m-%d %H:%M") if item['time_created'] else "未知",
+            "reason": item['reason'] or "無",
         })
-    
+
     return JsonResponse(results, safe=False)
 
 

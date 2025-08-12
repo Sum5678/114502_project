@@ -147,22 +147,92 @@
   let map;
   let allMarkers = [];
   let reports = [];
+  let userMarker = null;
 
   // icon 圖片 URL，用變數帶入確保 Django 模板能解析
   const iconUrl = "{% static 'assets/img/paw_icon.png' %}";
 
   // 初始化地圖
+  // function initMap() {
+  //   map = new google.maps.Map(document.getElementById("map"), {
+  //     center: { lat: 25.033964, lng: 121.562321 },
+  //     zoom: 14
+  //   });
+
+  //   updateSubkindOptions("全部");
+  //   document.getElementById("subkindFilter").value = "";
+
+  //   fetchReportsAndRenderMarkers("全部", "");
+  // }
   function initMap() {
     map = new google.maps.Map(document.getElementById("map"), {
       center: { lat: 25.033964, lng: 121.562321 },
-      zoom: 14
+      zoom: 14,
     });
 
+    // 顯示初始事件標記...
     updateSubkindOptions("全部");
     document.getElementById("subkindFilter").value = "";
-
     fetchReportsAndRenderMarkers("全部", "");
+
+    // 啟動定位追蹤
+    trackUserLocation();
   }
+
+
+
+  function trackUserLocation() {
+    if (navigator.geolocation) {
+      // 先取得一次定位
+      navigator.geolocation.getCurrentPosition(
+        position => {
+          updateUserMarker(position.coords.latitude, position.coords.longitude);
+        },
+        error => {
+          console.warn("無法取得定位:", error.message);
+        }
+      );
+
+      // 每40秒更新一次位置
+      setInterval(() => {
+        navigator.geolocation.getCurrentPosition(
+          position => {
+            updateUserMarker(position.coords.latitude, position.coords.longitude);
+          },
+          error => {
+            console.warn("無法取得定位:", error.message);
+          }
+        );
+      }, 40000); // 40秒
+    } else {
+      console.warn("瀏覽器不支援地理位置服務");
+    }
+  }
+
+
+  function updateUserMarker(lat, lng) {
+    const pos = { lat: lat, lng: lng };
+
+    if (userMarker) {
+      userMarker.setPosition(pos);
+    } else {
+      userMarker = new google.maps.Marker({
+        position: pos,
+        map: map,
+        title: "您的位置",
+        icon: {
+          url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png", // 藍色定位點
+          scaledSize: new google.maps.Size(40, 40),
+        },
+        zIndex: 9999,
+      });
+    }
+
+    // 可選：將地圖中心移動到用戶位置（或註解掉）
+    // map.setCenter(pos);
+}
+
+
 
   // 從後端 API 取得報告資料並畫標記
   function fetchReportsAndRenderMarkers(kind, subkind) {
