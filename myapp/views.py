@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from .models import TaiwanRegion, PoliceAddress #資料表的
 from django.views.decorators.http import require_GET
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from .forms import AutoDialForm
 from django.views.decorators.csrf import csrf_exempt
 from .models import PemapAll
@@ -89,15 +89,13 @@ def admin_login_required(view_func):
 
 #教育網頁
 from .models import EducationPage
+from django.shortcuts import render, redirect, get_object_or_404
+from .education_forms import EducationPageUploadForm
 def education_page(request):
     pages = EducationPage.objects.all()
     return render(request, 'education_page.html', {'pages': pages})
 
 #教育網頁新增改刪
-from django.shortcuts import render, redirect, get_object_or_404
-from .models import EducationPage
-from .education_forms import EducationPageUploadForm
-
 @admin_login_required
 def education_list(request):
     pages = EducationPage.objects.all()
@@ -139,8 +137,6 @@ def education_delete(request, pk):
         return redirect('education_list')
     return redirect('education_delete_confirm', pk=pk)  # 若不是 POST，就導回確認頁
 
-from django.http import HttpResponse
-
 @admin_login_required
 def education_image(request, pk):
     page = get_object_or_404(EducationPage, pk=pk)
@@ -154,11 +150,9 @@ from django.shortcuts import render
 from .models import TaiwanRegion, PoliceAddress
 from django.forms.models import model_to_dict
 
-
 def nearest_police_view(request):
     country_city = request.GET.get('country_city')
     district_town = request.GET.get('district_town')
-
     countries = TaiwanRegion.objects.values_list('country_city', flat=True).distinct()
     districts = []
     police_data = []
@@ -196,15 +190,15 @@ def nearest_police_view(request):
 
 
 #縣市後端
-# regions/views.py
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import TaiwanRegion
 from .taiwan_regions_forms import TaiwanRegionForm
 
+@admin_login_required
 def taiwan_regions_admin(request):
     regions = TaiwanRegion.objects.all()
     return render(request, 'taiwan_regions_admin.html', {'regions': regions})
 
+@admin_login_required
 def taiwan_regions_add(request):
     if request.method == 'POST':
         form = TaiwanRegionForm(request.POST)
@@ -215,6 +209,7 @@ def taiwan_regions_add(request):
         form = TaiwanRegionForm()
     return render(request, 'taiwan_regions_add.html', {'form': form, 'action': '新增'})
 
+@admin_login_required
 def taiwan_regions_edit(request, id):
     region = get_object_or_404(TaiwanRegion, pk=id)
     if request.method == 'POST':
@@ -233,22 +228,19 @@ def taiwan_regions_delete(request, id):
         return redirect('taiwan_regions_admin')
 
 
-
 #警局地址後端
 from django.shortcuts import render, get_object_or_404, redirect
-from .models import PoliceAddress
 from .police_forms import PoliceAddressForm
-
-def police_address_list(request):
-    addresses = PoliceAddress.objects.all().order_by('precinct_name')
-    return render(request, 'police_address_admin.html', {'addresses': addresses})
-
-from django.shortcuts import render, redirect
-from .models import PoliceAddress
 from django.views.decorators.http import require_POST
 from django.urls import reverse
 from django.contrib import messages
 
+@admin_login_required
+def police_address_list(request):
+    addresses = PoliceAddress.objects.all().order_by('precinct_name')
+    return render(request, 'police_address_admin.html', {'addresses': addresses})
+
+@admin_login_required
 def police_address_add(request):
     if request.method == 'POST':
         precinct_name = request.POST.get('precinct_name')
@@ -257,7 +249,6 @@ def police_address_add(request):
         phone = request.POST.get('phone')
         point_x = request.POST.get('POINT_X')
         point_y = request.POST.get('POINT_Y')
-
         # 資料驗證可視需求加強
         if precinct_name and zipcode and address and phone and point_x and point_y:
             PoliceAddress.objects.create(
@@ -272,10 +263,9 @@ def police_address_add(request):
             return redirect('police_address_list')  # 替換為你列表頁的網址名稱
         else:
             messages.error(request, "所有欄位皆為必填，請確認填寫完整。")
-
     return render(request, 'police_address_add.html')
 
-
+@admin_login_required
 def police_address_edit(request, pk):
     address = get_object_or_404(PoliceAddress, pk=pk)
 
@@ -298,6 +288,7 @@ def police_address_delete(request, pk):
     addr = get_object_or_404(PoliceAddress, pk=pk)
     addr.delete()
     return redirect('police_address_list')  # 刪除後回到列表頁
+
 
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -2190,7 +2181,7 @@ from .models import ChatInteraction
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponseForbidden, JsonResponse, HttpResponseBadRequest
+from django.http import HttpResponseForbidden, JsonResponse
 from django.views.decorators.http import require_POST
 from django.db.models import Q
 import bleach
@@ -2231,25 +2222,26 @@ def post(request):
             message_content=clean_content,
             like_heart_count=0,
             liked_user_ids='[]',   # ❤️
-            saved_user_ids='[]',   # 🌟 新增：收藏 JSON 欄位初始值
+            saved_user_ids='[]',   # 🌟 收藏
+            comments='[]',         # 💬 留言
             created_at=timezone.now()
         )
-
         return redirect('post_display')
 
     return render(request, 'post.html')
 
 
-# 貼文展示（含關鍵字搜尋 + 將 JSON 欄位轉為 list 給模板）
+# 貼文展示
 def post_display(request):
     query = request.GET.get('q')
     if query:
         posts = ChatInteraction.objects.filter(
-            Q(title__icontains=query) |
-            Q(message_content__icontains=query)
+            Q(title__icontains=query) | Q(message_content__icontains=query)
         ).order_by('-created_at')
     else:
         posts = ChatInteraction.objects.all().order_by('-created_at')
+
+    user_id_str = str(request.user.id) if request.user.is_authenticated else None
 
     for post in posts:
         # liked
@@ -2257,6 +2249,8 @@ def post_display(request):
             liked_user_ids = json.loads(post.liked_user_ids or '[]')
         except json.JSONDecodeError:
             liked_user_ids = []
+        liked_user_ids = [str(x) for x in liked_user_ids]
+        post.is_liked = bool(user_id_str and (user_id_str in liked_user_ids))
         post.liked_user_list = liked_user_ids
 
         # saved
@@ -2264,12 +2258,20 @@ def post_display(request):
             saved_user_ids = json.loads(getattr(post, 'saved_user_ids', '[]') or '[]')
         except json.JSONDecodeError:
             saved_user_ids = []
+        saved_user_ids = [str(x) for x in saved_user_ids]
+        post.is_saved = bool(user_id_str and (user_id_str in saved_user_ids))
         post.saved_user_list = saved_user_ids
+
+        # comments
+        try:
+            post.comment_list = json.loads(getattr(post, 'comments', '[]') or '[]')
+        except json.JSONDecodeError:
+            post.comment_list = []
 
     return render(request, 'post_display.html', {'posts': posts})
 
 
-# 編輯貼文（只能編輯自己的）
+# 編輯貼文
 @login_required(login_url='/01userlogin/')
 def edit_post(request, post_id):
     post = get_object_or_404(ChatInteraction, pk=post_id)
@@ -2286,7 +2288,7 @@ def edit_post(request, post_id):
     return render(request, 'edit_post.html', {'post': post})
 
 
-# 刪除貼文（只能刪除自己的）
+# 刪除貼文
 @login_required(login_url='/01userlogin/')
 def delete_post(request, post_id):
     post = get_object_or_404(ChatInteraction, pk=post_id)
@@ -2300,7 +2302,7 @@ def delete_post(request, post_id):
     return render(request, 'delete_post_confirm.html', {'post': post})
 
 
-# ❤️ 愛心按讚（可收回）
+# ❤️ 按讚
 @require_POST
 @login_required(login_url='/01userlogin/')
 def like_post(request, post_id):
@@ -2312,39 +2314,36 @@ def like_post(request, post_id):
     except json.JSONDecodeError:
         liked_user_ids = []
 
+    liked_user_ids = list({str(x) for x in liked_user_ids})
+
     if user_id_str in liked_user_ids:
         liked_user_ids.remove(user_id_str)
-        post.like_heart_count = max((post.like_heart_count or 1) - 1, 0)
     else:
         liked_user_ids.append(user_id_str)
-        post.like_heart_count = (post.like_heart_count or 0) + 1
 
+    post.like_heart_count = len(liked_user_ids)
     post.liked_user_ids = json.dumps(liked_user_ids, ensure_ascii=False)
     post.save(update_fields=['like_heart_count', 'liked_user_ids'])
 
-    # 若要支援 AJAX，也可回傳 JSON，這裡先維持 redirect（和你原本一致）
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        return JsonResponse({
-            'liked': user_id_str in liked_user_ids,
-            'count': post.like_heart_count,
-        })
+        return JsonResponse({'liked': user_id_str in liked_user_ids, 'count': post.like_heart_count})
     return redirect('post_display')
 
 
-# 🌟 收藏（可收回）
+# 🌟 收藏
 @require_POST
 @login_required(login_url='/01userlogin/')
 def save_post(request, post_id):
     post = get_object_or_404(ChatInteraction, pk=post_id)
     user_id_str = str(request.user.id)
 
-    # 讀取 saved_user_ids JSON
     try:
         saved_user_ids = json.loads(getattr(post, 'saved_user_ids', '[]') or '[]')
     except json.JSONDecodeError:
         saved_user_ids = []
 
-    # 切換收藏狀態
+    saved_user_ids = list({str(x) for x in saved_user_ids})
+
     if user_id_str in saved_user_ids:
         saved_user_ids.remove(user_id_str)
         saved_state = False
@@ -2355,12 +2354,38 @@ def save_post(request, post_id):
     post.saved_user_ids = json.dumps(saved_user_ids, ensure_ascii=False)
     post.save(update_fields=['saved_user_ids'])
 
-    # AJAX 回應（你的前端 fetch 會帶 X-Requested-With）
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         return JsonResponse({'saved': saved_state})
-
-    # 非 AJAX 就導回列表
     return redirect('post_display')
+
+
+# 💬 新增留言
+@require_POST
+@login_required(login_url='/01userlogin/')
+def add_comment(request, post_id):
+    post = get_object_or_404(ChatInteraction, pk=post_id)
+    comment_text = request.POST.get('comment', '').strip()
+    user_id_str = str(request.user.id)
+
+    if not comment_text:
+        return JsonResponse({'error': '留言不能為空'}, status=400)
+
+    try:
+        comments = json.loads(getattr(post, 'comments', '[]') or '[]')
+    except json.JSONDecodeError:
+        comments = []
+
+    comments.append({
+        'user_id': user_id_str,
+        'nickname': request.user.username,
+        'content': comment_text,
+        'time': timezone.now().strftime("%Y-%m-%d %H:%M:%S")
+    })
+
+    post.comments = json.dumps(comments, ensure_ascii=False)
+    post.save(update_fields=['comments'])
+
+    return JsonResponse({'success': True, 'comments': comments})
 
 
 
