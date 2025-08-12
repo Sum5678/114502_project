@@ -266,7 +266,7 @@
   <ul class="list-unstyled mb-3" data-list>
     {# 只顯示前三則 #}
     {% for c in post.comment_list|slice:":3" %}
-      <li class="mb-2 border-bottom pb-2 d-flex justify-content-between align-items-start">
+      <li class="mb-2 border-bottom pb-2 position-relative">
         <div>
           <div class="small text-muted">{{ c.nickname }} ・ {{ c.time }}</div>
           <div class="mt-1">{{ c.content|escape }}</div>
@@ -274,30 +274,29 @@
 
         {% if request.user.is_authenticated and c.user_id|stringformat:"s" == request.user.id|stringformat:"s" %}
           <!-- 三點選單 -->
-        <div class="dropdown">
-          <button class="btn btn-link text-muted p-0" type="button" id="commentMenu{{ forloop.counter }}" data-bs-toggle="dropdown" aria-expanded="false">
-            <i class="bi bi-three-dots-vertical"></i>
-          </button>
-          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="commentMenu{{ forloop.counter }}">
-            <li>
-              <a class="dropdown-item text-primary edit-comment-btn"
-                href="#"
-                data-post-id="{{ post.interaction_id }}"
-                data-time="{{ c.time }}"
-                data-content="{{ c.content|escapejs }}">
-                編輯
-              </a>
-            </li>
-            <li>
-              <a class="dropdown-item text-danger delete-comment-btn"
-                href="#"
-                data-post-id="{{ post.interaction_id }}"
-                data-time="{{ c.time }}">
-                刪除
-              </a>
-            </li>
-          </ul>
-
+          <div class="dropdown position-absolute top-0 end-0">
+            <button class="btn btn-link text-muted p-0" type="button" id="commentMenu{{ forloop.counter }}" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="bi bi-three-dots-vertical"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="commentMenu{{ forloop.counter }}">
+              <li>
+                <a class="dropdown-item text-primary edit-comment-btn"
+                   href="#"
+                   data-post-id="{{ post.interaction_id }}"
+                   data-time="{{ c.time }}"
+                   data-content="{{ c.content|escapejs }}">
+                  <i class="bi bi-pencil-fill me-2"></i> 編輯
+                </a>
+              </li>
+              <li>
+                <a class="dropdown-item text-danger delete-comment-btn"
+                   href="#"
+                   data-post-id="{{ post.interaction_id }}"
+                   data-time="{{ c.time }}">
+                  <i class="bi bi-trash-fill me-2"></i> 刪除
+                </a>
+              </li>
+            </ul>
           </div>
         {% endif %}
       </li>
@@ -331,6 +330,7 @@
   {% endif %}
 </div>
 <!-- /留言區 -->
+
 
 
 
