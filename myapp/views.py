@@ -2367,25 +2367,97 @@ def add_comment(request, post_id):
     comment_text = request.POST.get('comment', '').strip()
     user_id_str = str(request.user.id)
 
+    # ✅ 必填檢查
     if not comment_text:
         return JsonResponse({'error': '留言不能為空'}, status=400)
 
+    # ✅ 清洗（不允許任何 HTML 標籤）
+    safe_text = bleach.clean(comment_text, tags=[], attributes={}, strip=True)
+
+    # ✅ 長度限制（與前端 maxlength=300 一致）
+    if len(safe_text) > 300:
+        return JsonResponse({'error': '留言超過 300 字上限'}, status=400)
+
+    # 取得既有留言
     try:
         comments = json.loads(getattr(post, 'comments', '[]') or '[]')
     except json.JSONDecodeError:
         comments = []
 
+    # 新增留言
+    comment_time = timezone.now().strftime("%Y-%m-%d %H:%M:%S")
     comments.append({
         'user_id': user_id_str,
-        'nickname': request.user.username,
-        'content': comment_text,
-        'time': timezone.now().strftime("%Y-%m-%d %H:%M:%S")
+        'nickname': "(匿名)",
+        'content': safe_text,
+        'time': comment_time
     })
 
     post.comments = json.dumps(comments, ensure_ascii=False)
     post.save(update_fields=['comments'])
 
     return JsonResponse({'success': True, 'comments': comments})
+
+
+# ❌ 刪除留言（用 user_id + time 判斷）
+@require_POST
+@login_required(login_url='/01userlogin/')
+def delete_comment(request, post_id):
+    post = get_object_or_404(ChatInteraction, pk=post_id)
+    comment_time = request.POST.get('time', '').strip()
+    user_id_str = str(request.user.id)
+
+    # ✅ 必填檢查
+    if not comment_time:
+        return JsonResponse({'error': '缺少留言時間'}, status=400)
+
+    # 取得既有留言
+    try:
+        comments = json.loads(getattr(post, 'comments', '[]') or '[]')
+    except json.JSONDecodeError:
+        comments = []
+
+    # 找出該使用者該時間的留言
+    target = next((c for c in comments if c.get('time') == comment_time and c.get('user_id') == user_id_str), None)
+    if not target:
+        return JsonResponse({'error': '留言不存在或你無權刪除'}, status=404)
+
+    # 移除留言
+    comments = [c for c in comments if not (c.get('time') == comment_time and c.get('user_id') == user_id_str)]
+    post.comments = json.dumps(comments, ensure_ascii=False)
+    post.save(update_fields=['comments'])
+
+    return JsonResponse({'success': True, 'comments': comments})
+
+
+from django.core.paginator import Paginator
+
+def post_comments(request, post_id):
+    post = get_object_or_404(ChatInteraction, pk=post_id)
+
+    # 取留言列表
+    try:
+        comments = json.loads(getattr(post, 'comments', '[]') or '[]')
+    except json.JSONDecodeError:
+        comments = []
+
+    # 分頁（每頁 10 則，可自行調整）
+    paginator = Paginator(comments, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(
+        request,
+        'post_comments.html',
+        {
+            'post': post,
+            'page_obj': page_obj,          # 當頁留言 list
+            'total_comments': len(comments)
+        }
+    )
+
+
+
 
 
 
