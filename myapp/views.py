@@ -3066,6 +3066,7 @@ def chatroom_page(request):
         user_profile = None
 
     favorites = FavoriteChatRoom.objects.filter(user=user_profile).select_related('chat_room') if user_profile else []
+    print('DEBUG: favorites exists:', favorites.exists())
 
     if user_profile:
         print('DEBUG: nickname1:', repr(user_profile.default_nickname1))
@@ -3075,7 +3076,8 @@ def chatroom_page(request):
 
     return render(request, 'chatroom.html', {
         'user_profile': user_profile,
-        'favorites':favorites
+        'favorites':favorites,
+        'is_fav': favorites.exists(),
     })
 
 

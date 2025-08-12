@@ -1,250 +1,4 @@
-{% load static %}
-
 <!DOCTYPE html>
-<html>
-<head>
-  <title>事件地圖</title>
-  <style>
-    #map { width: 100%; height: 600px; }
-    #nearby-alert {
-      position: fixed;
-      bottom: 10px; left: 10px;
-      background: #fff3cd;
-      padding: 10px;
-      border-radius: 5px;
-      display: none;
-      z-index: 999;
-    }
-  </style>
-</head>
-<body>
-
-<select id="kindFilter">
-  <option value="全部">全部</option>
-  <option value="騷擾">騷擾</option>
-  <option value="打架">打架</option>
-  <option value="動物">動物</option>
-  <option value="環境髒亂">環境髒亂</option>
-</select>
-
-<select id="subkindFilter">
-  <option value="">全部細分類</option>
-</select>
-
-<div id="map"></div>
-<div id="nearby-alert"></div>
-
-<script>
-  const subkindOptions = {
-    "騷擾": ["推銷", "暴露狂", "跟蹤", "言語騷擾", "拍攝他人", "擋路糾纏", "其他"],
-    "打架": ["肢體衝突", "口角爭執", "幫派鬥毆", "攻擊路人", "其他"],
-    "動物": ["咬人", "無人看管寵物", "攻擊性動物", "受傷動物", "野生動物闖入", "其他"],
-    "環境髒亂": ["公共財物破壞", "可疑物品", "垃圾堆積", "噪音擾人", "惡臭", "噴漆塗鴉", "其他"]
-  };
-
-  let map;
-  let allMarkers = [];
-  let reports = [];
-  let userMarker = null;
-  let initialCenterSet = false;
-
-  function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-      const cookies = document.cookie.split(';');
-      for (let c of cookies) {
-        c = c.trim();
-        if (c.startsWith(name + '=')) {
-          cookieValue = decodeURIComponent(c.substring(name.length + 1));
-          break;
-        }
-      }
-    }
-    return cookieValue;
-  }
-
-  function updateSubkindOptions(kind) {
-    const subkindSelect = document.getElementById("subkindFilter");
-    subkindSelect.innerHTML = '<option value="">全部細分類</option>';
-    if (kind !== "全部" && subkindOptions[kind]) {
-      subkindOptions[kind].forEach(s => {
-        const opt = document.createElement("option");
-        opt.value = s;
-        opt.text = s;
-        subkindSelect.add(opt);
-      });
-    }
-  }
-
-  function fetchReportsWithBounds() {
-    const bounds = map.getBounds();
-    if (!bounds) return;
-
-    const ne = bounds.getNorthEast();
-    const sw = bounds.getSouthWest();
-
-    const kind = document.getElementById("kindFilter").value;
-    const subkind = document.getElementById("subkindFilter").value;
-
-    fetch("{% url 'reports_with_subkind_json' %}", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": getCookie("csrftoken"),
-      },
-      body: JSON.stringify({
-        kind: kind,
-        subkind: subkind,
-        north: ne.lat(),
-        east: ne.lng(),
-        south: sw.lat(),
-        west: sw.lng(),
-      })
-    })
-    .then(res => res.json())
-    .then(data => {
-      reports = data;
-      renderMarkers();
-    })
-    .catch(err => console.error(err));
-  }
-
-  function renderMarkers() {
-    allMarkers.forEach(m => m.setMap(null));
-    allMarkers = [];
-
-    reports.forEach(r => {
-      if (typeof r.latitude === "number" && typeof r.longitude === "number") {
-        const marker = new google.maps.Marker({
-          position: { lat: r.latitude, lng: r.longitude },
-          map: map,
-          title: r.display_name,
-          icon: {
-            url: "{% static 'assets/img/paw_icon.png' %}",
-            scaledSize: new google.maps.Size(20, 20)
-          }
-        });
-
-        const infoContent = `
-          <b>${r.display_name}</b><br>
-          類型: ${r.kind} / ${r.subkind || '無'}<br>
-          原因: ${r.reason || '無'}<br>
-          時間: ${r.time_created || '未知'}<br>
-          ${r.img_url ? `<img src="${r.img_url}" style="width:100px;">` : ''}
-        `;
-
-        const infowindow = new google.maps.InfoWindow({ content: infoContent });
-
-        marker.addListener('click', () => infowindow.open(map, marker));
-
-        allMarkers.push(marker);
-      }
-    });
-  }
-
-  function getDistanceMeters(lat1, lng1, lat2, lng2) {
-    const R = 6371000;
-    const toRad = deg => deg * Math.PI / 180;
-    const dLat = toRad(lat2 - lat1);
-    const dLng = toRad(lng2 - lng1);
-    const a = Math.sin(dLat/2)**2 +
-              Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng/2)**2;
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
-  }
-
-  function showNearbyAlert(msg) {
-    const alertDiv = document.getElementById("nearby-alert");
-    alertDiv.textContent = msg;
-    alertDiv.style.display = "block";
-  }
-
-  function checkNearbyEvents(userLat, userLng) {
-    const nearbyEvents = reports.filter(r => {
-      if (typeof r.latitude === "number" && typeof r.longitude === "number") {
-        const dist = getDistanceMeters(userLat, userLng, r.latitude, r.longitude);
-        return dist <= 500;
-      }
-      return false;
-    });
-
-    if (nearbyEvents.length === 0) {
-      showNearbyAlert("您附近 500 公尺內沒有事件，看起來很安全 👍");
-    } else if (nearbyEvents.length > 5) {
-      showNearbyAlert(`您附近 500 公尺內有 ${nearbyEvents.length} 起事件，請注意安全！`);
-    } else {
-      showNearbyAlert(`您附近 500 公尺內有 ${nearbyEvents.length} 起事件`);
-    }
-  }
-
-  function promptNearbyEvents() {
-    if (!navigator.geolocation) {
-      console.warn("瀏覽器不支援地理定位");
-      return;
-    }
-
-    navigator.geolocation.watchPosition(
-      pos => {
-        const lat = pos.coords.latitude;
-        const lng = pos.coords.longitude;
-
-        checkNearbyEvents(lat, lng);
-
-        if (userMarker) userMarker.setMap(null);
-
-        userMarker = new google.maps.Marker({
-          position: { lat, lng },
-          map: map,
-          title: "您目前的位置",
-          icon: {
-            url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
-            scaledSize: new google.maps.Size(40, 40)
-          }
-        });
-
-        if (!initialCenterSet) {
-          map.setCenter({ lat, lng });
-          initialCenterSet = true;
-        }
-      },
-      err => console.warn("定位失敗:", err.message),
-      { enableHighAccuracy: true, maximumAge: 10000 }
-    );
-  }
-
-  function initMap() {
-    map = new google.maps.Map(document.getElementById("map"), {
-      center: { lat: 25.033964, lng: 121.562321 },
-      zoom: 14
-    });
-
-    updateSubkindOptions("全部");
-
-    // 篩選控件事件監聽
-    document.getElementById("kindFilter").addEventListener("change", e => {
-      updateSubkindOptions(e.target.value);
-      document.getElementById("subkindFilter").value = "";
-      fetchReportsWithBounds();
-    });
-
-    document.getElementById("subkindFilter").addEventListener("change", fetchReportsWithBounds);
-
-    map.addListener("idle", fetchReportsWithBounds);
-
-    promptNearbyEvents();
-  }
-</script>
-
-<script async defer
-  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAUuPZMMJvgVWftmqVyzfX8mKTwMX4kA6o&callback=initMap">
-</script>
-
-</body>
-</html>
-
-
-
-<!-- <!DOCTYPE html>
 {% load static %}
 
 <html lang="zh-Hant">
@@ -520,9 +274,9 @@
             }
           });
 
-          const imgHtml = r.img_url
-            ? `<br><img src="${r.img_url}" style="width:100px;height:auto;">`
-            : "";
+          // const imgHtml = r.img_url
+          //   ? `<br><img src="${r.img_url}" style="width:100px;height:auto;">`
+          //   : "";
 
           const infowindow = new google.maps.InfoWindow({
             content: `
@@ -679,7 +433,7 @@
 
   
   <script async defer
-    src="https://maps.googleapis.com/maps/api/js?key=c">
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAUuPZMMJvgVWftmqVyzfX8mKTwMX4kA6o&callback=initMap">
   </script>
 
   <footer id="footer" class="footer position-relative light-background">
@@ -709,7 +463,283 @@
   <script src="{% static 'assets/js/main.js' %}"></script>
 </body>
 
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- {% load static %}
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>事件地圖</title>
+  <style>
+    #map { width: 100%; height: 600px; }
+    #nearby-alert {
+      position: fixed;
+      bottom: 10px; left: 10px;
+      background: #fff3cd;
+      padding: 10px;
+      border-radius: 5px;
+      display: none;
+      z-index: 999;
+    }
+  </style>
+</head>
+<body>
+
+<select id="kindFilter">
+  <option value="全部">全部</option>
+  <option value="騷擾">騷擾</option>
+  <option value="打架">打架</option>
+  <option value="動物">動物</option>
+  <option value="環境髒亂">環境髒亂</option>
+</select>
+
+<select id="subkindFilter">
+  <option value="">全部細分類</option>
+</select>
+
+<div id="map"></div>
+<div id="nearby-alert"></div>
+
+<script>
+  const subkindOptions = {
+    "騷擾": ["推銷", "暴露狂", "跟蹤", "言語騷擾", "拍攝他人", "擋路糾纏", "其他"],
+    "打架": ["肢體衝突", "口角爭執", "幫派鬥毆", "攻擊路人", "其他"],
+    "動物": ["咬人", "無人看管寵物", "攻擊性動物", "受傷動物", "野生動物闖入", "其他"],
+    "環境髒亂": ["公共財物破壞", "可疑物品", "垃圾堆積", "噪音擾人", "惡臭", "噴漆塗鴉", "其他"]
+  };
+
+  let map;
+  let allMarkers = [];
+  let reports = [];
+  let userMarker = null;
+  let initialCenterSet = false;
+
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let c of cookies) {
+        c = c.trim();
+        if (c.startsWith(name + '=')) {
+          cookieValue = decodeURIComponent(c.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+
+  function updateSubkindOptions(kind) {
+    const subkindSelect = document.getElementById("subkindFilter");
+    subkindSelect.innerHTML = '<option value="">全部細分類</option>';
+    if (kind !== "全部" && subkindOptions[kind]) {
+      subkindOptions[kind].forEach(s => {
+        const opt = document.createElement("option");
+        opt.value = s;
+        opt.text = s;
+        subkindSelect.add(opt);
+      });
+    }
+  }
+
+  function fetchReportsWithBounds() {
+    const bounds = map.getBounds();
+    if (!bounds) return;
+
+    const ne = bounds.getNorthEast();
+    const sw = bounds.getSouthWest();
+
+    const kind = document.getElementById("kindFilter").value;
+    const subkind = document.getElementById("subkindFilter").value;
+
+    fetch("{% url 'reports_with_subkind_json' %}", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken"),
+      },
+      body: JSON.stringify({
+        kind: kind,
+        subkind: subkind,
+        north: ne.lat(),
+        east: ne.lng(),
+        south: sw.lat(),
+        west: sw.lng(),
+      })
+    })
+    .then(res => res.json())
+    .then(data => {
+      reports = data;
+      renderMarkers();
+    })
+    .catch(err => console.error(err));
+  }
+
+  function renderMarkers() {
+    allMarkers.forEach(m => m.setMap(null));
+    allMarkers = [];
+
+    reports.forEach(r => {
+      if (typeof r.latitude === "number" && typeof r.longitude === "number") {
+        const marker = new google.maps.Marker({
+          position: { lat: r.latitude, lng: r.longitude },
+          map: map,
+          title: r.display_name,
+          icon: {
+            url: "{% static 'assets/img/paw_icon.png' %}",
+            scaledSize: new google.maps.Size(20, 20)
+          }
+        });
+
+        const infoContent = `
+          <b>${r.display_name}</b><br>
+          類型: ${r.kind} / ${r.subkind || '無'}<br>
+          原因: ${r.reason || '無'}<br>
+          時間: ${r.time_created || '未知'}<br>
+          ${r.img_url ? `<img src="${r.img_url}" style="width:100px;">` : ''}
+        `;
+
+        const infowindow = new google.maps.InfoWindow({ content: infoContent });
+
+        marker.addListener('click', () => infowindow.open(map, marker));
+
+        allMarkers.push(marker);
+      }
+    });
+  }
+
+  function getDistanceMeters(lat1, lng1, lat2, lng2) {
+    const R = 6371000;
+    const toRad = deg => deg * Math.PI / 180;
+    const dLat = toRad(lat2 - lat1);
+    const dLng = toRad(lng2 - lng1);
+    const a = Math.sin(dLat/2)**2 +
+              Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng/2)**2;
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  }
+
+  function showNearbyAlert(msg) {
+    const alertDiv = document.getElementById("nearby-alert");
+    alertDiv.textContent = msg;
+    alertDiv.style.display = "block";
+  }
+
+  function checkNearbyEvents(userLat, userLng) {
+    const nearbyEvents = reports.filter(r => {
+      if (typeof r.latitude === "number" && typeof r.longitude === "number") {
+        const dist = getDistanceMeters(userLat, userLng, r.latitude, r.longitude);
+        return dist <= 500;
+      }
+      return false;
+    });
+
+    if (nearbyEvents.length === 0) {
+      showNearbyAlert("您附近 500 公尺內沒有事件，看起來很安全 👍");
+    } else if (nearbyEvents.length > 5) {
+      showNearbyAlert(`您附近 500 公尺內有 ${nearbyEvents.length} 起事件，請注意安全！`);
+    } else {
+      showNearbyAlert(`您附近 500 公尺內有 ${nearbyEvents.length} 起事件`);
+    }
+  }
+
+  function promptNearbyEvents() {
+    if (!navigator.geolocation) {
+      console.warn("瀏覽器不支援地理定位");
+      return;
+    }
+
+    navigator.geolocation.watchPosition(
+      pos => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+
+        checkNearbyEvents(lat, lng);
+
+        if (userMarker) userMarker.setMap(null);
+
+        userMarker = new google.maps.Marker({
+          position: { lat, lng },
+          map: map,
+          title: "您目前的位置",
+          icon: {
+            url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+            scaledSize: new google.maps.Size(40, 40)
+          }
+        });
+
+        if (!initialCenterSet) {
+          map.setCenter({ lat, lng });
+          initialCenterSet = true;
+        }
+      },
+      err => console.warn("定位失敗:", err.message),
+      { enableHighAccuracy: true, maximumAge: 10000 }
+    );
+  }
+
+  function initMap() {
+    map = new google.maps.Map(document.getElementById("map"), {
+      center: { lat: 25.033964, lng: 121.562321 },
+      zoom: 14
+    });
+
+    updateSubkindOptions("全部");
+
+    // 篩選控件事件監聽
+    document.getElementById("kindFilter").addEventListener("change", e => {
+      updateSubkindOptions(e.target.value);
+      document.getElementById("subkindFilter").value = "";
+      fetchReportsWithBounds();
+    });
+
+    document.getElementById("subkindFilter").addEventListener("change", fetchReportsWithBounds);
+
+    map.addListener("idle", fetchReportsWithBounds);
+
+    promptNearbyEvents();
+  }
+</script>
+
+<script async defer
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAUuPZMMJvgVWftmqVyzfX8mKTwMX4kA6o&callback=initMap">
+</script>
+
+</body>
 </html> -->
+
+
 
 
 

@@ -97,10 +97,15 @@
       <div class="section-title">
         <h2>商家上傳紀錄</h2>
         <p>以下是你上傳的商家資訊。</p>
+        <!-- 搜尋區塊 -->
+        <div class="input-group mb-3" style="max-width: 400px; margin: 0 auto;">
+          <input type="text" id="storeSearch" class="form-control" placeholder="輸入關鍵字搜尋...">
+          <button id="storeSearchBtn" class="btn btn-primary" type="button">搜尋</button>
+        </div>
       </div>
 
       <div class="table-responsive">
-        <table class="table table-bordered align-middle">
+        <table class="table table-bordered align-middle" id="storeTable">
           <thead>
             <tr>
               <th>#</th>
@@ -153,5 +158,29 @@
 <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
 <script src="{% static 'assets/vendor/aos/aos.js' %}"></script>
 <script src="{% static 'assets/js/main.js' %}"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const searchInput = document.getElementById("storeSearch");
+  const searchBtn = document.getElementById("storeSearchBtn");
+  const rows = document.querySelectorAll("#storeTable tbody tr");
+
+  console.log("找到的列數:", rows.length); // 確認有沒有抓到列
+
+  function filterStores() {
+    const keyword = searchInput.value.toLowerCase();
+    rows.forEach(row => {
+      row.style.display = row.innerText.toLowerCase().includes(keyword) ? "" : "none";
+    });
+  }
+
+  searchBtn.addEventListener("click", filterStores);
+  searchInput.addEventListener("keypress", function(e) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      filterStores();
+    }
+  });
+});
+</script>
 </body>
 </html>
