@@ -148,8 +148,11 @@
   let allMarkers = [];
   let reports = [];
   let userMarker = null;
-  let lastAlertPosition = null;  // 紀錄上次提醒位置
-const alertDistanceThreshold = 50; // 公尺，移動超過多少才提醒
+  let accuracyCircle = null;
+  let directionCone = null;
+  let lastAlertPosition = null;
+  const alertDistanceThreshold = 50; // 公尺，移動超過多少才提醒
+
 
   // icon 圖片 URL，用變數帶入確保 Django 模板能解析
   const iconUrl = "{% static 'assets/img/paw_icon.png' %}";
@@ -161,42 +164,64 @@ const alertDistanceThreshold = 50; // 公尺，移動超過多少才提醒
       zoom: 14,
     });
 
-    // 顯示初始事件標記...
     updateSubkindOptions("全部");
     document.getElementById("subkindFilter").value = "";
     fetchReportsAndRenderMarkers("全部", "");
 
-    // 啟動定位追蹤
-    trackUserLocation();
+    trackUserLocation();  // ✅ 一定要呼叫
   }
 
+
+
+  // function trackUserLocation() {
+  //   if (navigator.geolocation) {
+  //     // 先取得一次定位
+  //     navigator.geolocation.getCurrentPosition(
+  //       position => {
+  //         updateUserMarker(position.coords.latitude, position.coords.longitude);
+  //       },
+  //       error => {
+  //         console.warn("無法取得定位:", error.message);
+  //       }
+  //     );
+
+  //     // 每40秒更新一次位置
+  //     setInterval(() => {
+  //       navigator.geolocation.getCurrentPosition(
+  //         position => {
+  //           updateUserMarker(position.coords.latitude, position.coords.longitude);
+  //         },
+  //         error => {
+  //           console.warn("無法取得定位:", error.message);
+  //         }
+  //       );
+  //     }, 40000); // 40秒
+  //   } else {
+  //     console.warn("瀏覽器不支援地理位置服務");
+  //   }
+  // }
 
   function trackUserLocation() {
-    if (navigator.geolocation) {
-      // 先取得一次定位
-      navigator.geolocation.getCurrentPosition(
-        position => {
-          updateUserMarker(position.coords.latitude, position.coords.longitude);
-        },
-        error => {
-          console.warn("無法取得定位:", error.message);
-        }
-      );
-
-      // 每40秒更新一次位置
-      setInterval(() => {
-        navigator.geolocation.getCurrentPosition(
-          position => {
-            updateUserMarker(position.coords.latitude, position.coords.longitude);
-          },
-          error => {
-            console.warn("無法取得定位:", error.message);
-          }
-        );
-      }, 40000); // 40秒
-    } else {
+    if (!navigator.geolocation) {
       console.warn("瀏覽器不支援地理位置服務");
+      return;
     }
+
+    // 先取得一次位置
+    navigator.geolocation.getCurrentPosition(
+      position => updateUserLocation(position),
+      error => console.warn("無法取得定位:", error.message),
+      { enableHighAccuracy: true }
+    );
+
+    // 每 40 秒更新一次
+    setInterval(() => {
+      navigator.geolocation.getCurrentPosition(
+        position => updateUserLocation(position),
+        error => console.warn("無法取得定位:", error.message),
+        { enableHighAccuracy: true }
+      );
+    }, 40000);
   }
 
 
@@ -204,31 +229,66 @@ const alertDistanceThreshold = 50; // 公尺，移動超過多少才提醒
 
 
 
-  function updateUserMarker(lat, lng) {
+
+
+  function updateUserLocation(position) {
+    const lat = position.coords.latitude;
+    const lng = position.coords.longitude;
+    const heading = typeof position.coords.heading === 'number' ? position.coords.heading : 0;
+    const accuracy = Math.min(position.coords.accuracy || 30, 50);    
+    // 限制最大半徑避免過大範圍
+
     const pos = { lat: lat, lng: lng };
 
-    if (userMarker) {
-      userMarker.setPosition(pos);
-    } else {
+    if (!userMarker) {
       userMarker = new google.maps.Marker({
         position: pos,
         map: map,
         title: "您的位置",
         icon: {
           url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
-          scaledSize: new google.maps.Size(40, 40),
+          scaledSize: new google.maps.Size(40, 40)
         },
-        zIndex: 9999,
+        zIndex: 9999
       });
+
+
+      accuracyCircle = new google.maps.Circle({
+        strokeColor: '#4285F4',
+        strokeOpacity: 0.4,
+        strokeWeight: 1,
+        fillColor: '#4285F4',
+        fillOpacity: 0.15,
+        map: map,
+        center: pos,
+        radius: accuracy,
+        zIndex: 9998
+      });
+
+
+      directionCone = new google.maps.Polygon({
+        paths: calculateConePath(pos, heading, accuracy),
+        strokeColor: '#4285F4',
+        strokeOpacity: 0.6,
+        strokeWeight: 1,
+        fillColor: '#4285F4',
+        fillOpacity: 0.3,
+        map: map,
+        zIndex: 9997
+      });
+
+
+    } else {
+      userMarker.setPosition(pos);
+      accuracyCircle.setCenter(pos);
+      accuracyCircle.setRadius(accuracy);
+      directionCone.setPaths(calculateConePath(pos, heading, accuracy));
     }
 
-    // 判斷是否需要提醒
     if (!lastAlertPosition) {
-      // 第一次提醒
       checkNearbyEvents(lat, lng);
       lastAlertPosition = pos;
     } else {
-      // 計算與上次提醒距離
       const distFromLastAlert = getDistanceMeters(lat, lng, lastAlertPosition.lat, lastAlertPosition.lng);
       if (distFromLastAlert >= alertDistanceThreshold) {
         checkNearbyEvents(lat, lng);
@@ -236,9 +296,85 @@ const alertDistanceThreshold = 50; // 公尺，移動超過多少才提醒
       }
     }
 
-    // 可選：地圖跟著位置移動
     map.setCenter(pos);
   }
+
+
+
+
+  // 計算錐形多邊形的座標點（pos是中心點，heading是方向，accuracy決定大小）
+  function calculateConePath(pos, heading, accuracy) {
+    const coneLength = Math.min(accuracy * 2, 20); // 長度限制最高 20 公尺
+    const point1 = pos; // 錐形頂點
+    const point2 = destinationPoint(pos, heading - 30, coneLength);
+    const point3 = destinationPoint(pos, heading + 30, coneLength);
+    return [point1, point2, point3];
+  }
+
+
+
+  // 根據距離和方向計算新座標
+  function destinationPoint(start, bearing, distance) {
+    const R = 6378137; // 地球半徑（公尺）
+    const δ = distance / R;
+    const θ = bearing * (Math.PI / 180);
+    const φ1 = start.lat * (Math.PI / 180);
+    const λ1 = start.lng * (Math.PI / 180);
+
+    const φ2 = Math.asin(
+      Math.sin(φ1) * Math.cos(δ) + Math.cos(φ1) * Math.sin(δ) * Math.cos(θ)
+    );
+    const λ2 =
+      λ1 +
+      Math.atan2(
+        Math.sin(θ) * Math.sin(δ) * Math.cos(φ1),
+        Math.cos(δ) - Math.sin(φ1) * Math.sin(φ2)
+      );
+
+    return { lat: φ2 * (180 / Math.PI), lng: λ2 * (180 / Math.PI) };
+  }
+
+
+
+
+  // function updateUserMarker(lat, lng) {
+  //   const pos = { lat: lat, lng: lng };
+
+  //   if (userMarker) {
+  //     userMarker.setPosition(pos);
+  //   } else {
+  //     userMarker = new google.maps.Marker({
+  //       position: pos,
+  //       map: map,
+  //       title: "您的位置",
+  //       icon: {
+  //         url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+  //         scaledSize: new google.maps.Size(40, 40),
+  //       },
+  //       zIndex: 9999,
+  //     });
+  //   }
+
+  //   // 判斷是否需要提醒
+  //   if (!lastAlertPosition) {
+  //     // 第一次提醒
+  //     checkNearbyEvents(lat, lng);
+  //     lastAlertPosition = pos;
+  //   } else {
+  //     // 計算與上次提醒距離
+  //     const distFromLastAlert = getDistanceMeters(lat, lng, lastAlertPosition.lat, lastAlertPosition.lng);
+  //     if (distFromLastAlert >= alertDistanceThreshold) {
+  //       checkNearbyEvents(lat, lng);
+  //       lastAlertPosition = pos;
+  //     }
+  //   }
+
+  //   // 可選：地圖跟著位置移動
+  //   map.setCenter(pos);
+  // }
+
+
+
 
   // 從後端 API 取得報告資料並畫標記
   function fetchReportsAndRenderMarkers(kind, subkind) {
