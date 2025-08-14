@@ -274,26 +274,25 @@
     <div class="sidebar-container">
       <div class="sidebar-section">
         <h4 class="section-title">所有聊天室</h4>
+        <!-- <select id="popularSelect" class="form-select" aria-label="所有聊天室選擇">
+          <option value="" selected disabled>請選擇聊天室</option>
+        </select> -->
         <select id="popularSelect" class="form-select" aria-label="所有聊天室選擇">
           <option value="" selected disabled>請選擇聊天室</option>
-        </select>
-      </div>
-
-
-      <div class="sidebar-section">
-        <h4 class="section-title">熱門聊天室</h4>
-        <ul id="popularChatrooms">
           {% for room in popular_chatrooms %}
-            <li>
-              <a href="javascript:void(0)" onclick="openChatroom('{{ room.id }}')">
-                {{ room.city }} {{ room.district }}（{{ room.fav_count }}）
-              </a>
-              {% if forloop.counter <= 3 %} 🔥 {% endif %}
-            </li>
+            <option value="{{ room.id }}">
+              {{ room.city }} {{ room.district }} （收藏數：{{ room.fav_count }}）
+            </option>
           {% endfor %}
-        </ul>
+        </select>
+
       </div>
 
+
+      
+
+
+      
 
       <div class="sidebar-section">
         <h4 class="section-title">我的聊天室</h4>
@@ -402,21 +401,46 @@
       favoriteListContainer.innerHTML = '<p class="text-danger">聊天室資料載入失敗，請稍後再試</p>';
     });
 
+
+
+
+  // function renderPopularChatrooms() {
+  //   const popularSelect = document.getElementById('popularSelect');
+  //   popularSelect.innerHTML = '<option value="" selected disabled>請選擇熱門聊天室</option>';
+  //   const sorted = [...chatrooms].sort((a,b) => b.click_count - a.click_count);
+  //   sorted.forEach(room => {
+  //     const option = document.createElement('option');
+  //     option.value = room.id;
+  //     option.textContent = `${room.name}（收藏數：${room.click_count}）`;
+  //     popularSelect.appendChild(option);
+  //   });
+  //   popularSelect.onchange = () => {
+  //     const selectedId = parseInt(popularSelect.value);
+  //     if (!isNaN(selectedId)) openChatroom(selectedId);
+  //   };
+  // }
+
+
   function renderPopularChatrooms() {
-    const popularSelect = document.getElementById('popularSelect');
-    popularSelect.innerHTML = '<option value="" selected disabled>請選擇熱門聊天室</option>';
-    const sorted = [...chatrooms].sort((a,b) => b.click_count - a.click_count);
-    sorted.forEach(room => {
-      const option = document.createElement('option');
-      option.value = room.id;
-      option.textContent = `${room.name}（活躍度：${room.click_count}）`;
-      popularSelect.appendChild(option);
-    });
-    popularSelect.onchange = () => {
-      const selectedId = parseInt(popularSelect.value);
-      if (!isNaN(selectedId)) openChatroom(selectedId);
-    };
+      const popularSelect = document.getElementById('popularSelect');
+      popularSelect.innerHTML = '<option value="" selected disabled>請選擇熱門聊天室</option>';
+
+      // 依收藏數排序
+      const sorted = [...chatrooms].sort((a, b) => (b.fav_count || 0) - (a.fav_count || 0));
+
+      sorted.forEach(room => {
+        const option = document.createElement('option');
+        option.value = room.id;
+        option.textContent = `${room.name}（收藏數：${room.fav_count || 0}）`;
+        popularSelect.appendChild(option);
+      });
+
+      popularSelect.onchange = () => {
+        const selectedId = parseInt(popularSelect.value);
+        if (!isNaN(selectedId)) openChatroom(selectedId);
+      };
   }
+
 
   function renderUserChatrooms() {
     userChatroomsContainer.innerHTML = '';
