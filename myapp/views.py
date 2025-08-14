@@ -2704,6 +2704,9 @@ from django.contrib.auth.decorators import login_required
 from .models import ThisUserProfile, ChatRoom, FavoriteChatRoom
 
 # ------------- 查看收藏聊天室 -------------
+from django.db.models import Count
+import json
+
 @login_required
 def chatroom_view(request):
     try:
@@ -2715,11 +2718,40 @@ def chatroom_view(request):
 
     favorite_ids = [fav.chat_room.id for fav in favorites]
 
+    # 熱門聊天室（歷史收藏排行，前 10）
+    popular_chatrooms = (
+        ChatRoom.objects
+        .annotate(fav_count=Count('favorited_by_users'))  # 注意 related_name
+        .order_by('-fav_count')[:10]
+    )
+
     return render(request, 'chatroom.html', {
         'user_profile': user_profile,
         'favorites': favorites,
-        'favorite_chatroom_ids': json.dumps(favorite_ids),  # 前端用
+        'favorite_chatroom_ids': json.dumps(favorite_ids),
+        'popular_chatrooms': popular_chatrooms,  # 前端可用
     })
+
+
+
+
+
+# @login_required
+# def chatroom_view(request):
+#     try:
+#         user_profile = ThisUserProfile.objects.get(gmail=request.user.email)
+#         favorites = FavoriteChatRoom.objects.filter(user=user_profile).select_related('chat_room')
+#     except ThisUserProfile.DoesNotExist:
+#         user_profile = None
+#         favorites = []
+
+#     favorite_ids = [fav.chat_room.id for fav in favorites]
+
+#     return render(request, 'chatroom.html', {
+#         'user_profile': user_profile,
+#         'favorites': favorites,
+#         'favorite_chatroom_ids': json.dumps(favorite_ids),  # 前端用
+#     })
 
 
 # ------------- 加入收藏 -------------
@@ -2765,27 +2797,4 @@ def toggle_favorite(request):
         return JsonResponse({'status': 'added'})
 
 
-#收藏數
-from django.db.models import Count
 
-def active_chatrooms_by_fav(request):
-    chatrooms = (
-        ChatRoom.objects
-        .annotate(fav_count=Count('favorites'))
-        .order_by('-fav_count')
-    )
-    return render(request, 'active_chatrooms.html', {'chatrooms': chatrooms})
-
-
-from django.db.models import Count
-
-def chatroom_sidebar(request):
-    popular_chatrooms = (
-        ChatRoom.objects
-        .annotate(fav_count=Count('favorites'))
-        .order_by('-fav_count')[:10]  # 取前 10 名
-    )
-    return render(request, 'your_template.html', {
-        'popular_chatrooms': popular_chatrooms,
-        # 其他上下文...
-    })
