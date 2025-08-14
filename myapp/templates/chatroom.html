@@ -371,10 +371,12 @@
   const nicknameDisplay = document.getElementById('nicknameDisplay');
   const nicknameSelect = document.getElementById('nicknameSelect');
 
-  let chatrooms = [];
+  // let chatrooms = [];
   const favoriteChatrooms = new Set(JSON.parse('{{ favorite_chatroom_ids|default:"[]"|safe }}'));
   let currentRoomId = null;
   const userChatroomIds = new Set();
+
+  const chatrooms = JSON.parse('{{ chatrooms_json|escapejs }}');
 
   const chatWindow = document.getElementById('chatWindow');
   const chatInput = document.getElementById('chatInput');
@@ -425,13 +427,13 @@
       const popularSelect = document.getElementById('popularSelect');
       popularSelect.innerHTML = '<option value="" selected disabled>請選擇熱門聊天室</option>';
 
-      // 依收藏數排序
-      const sorted = [...chatrooms].sort((a, b) => (b.fav_count || 0) - (a.fav_count || 0));
+      // 依照收藏數從多到少排序
+      const sorted = [...chatrooms].sort((a,b) => b.fav_count - a.fav_count);
 
       sorted.forEach(room => {
         const option = document.createElement('option');
         option.value = room.id;
-        option.textContent = `${room.name}（收藏數：${room.fav_count || 0}）`;
+        option.textContent = `${room.city} ${room.district} 聊天室（收藏數：${room.fav_count}）`;
         popularSelect.appendChild(option);
       });
 
@@ -439,8 +441,12 @@
         const selectedId = parseInt(popularSelect.value);
         if (!isNaN(selectedId)) openChatroom(selectedId);
       };
-  }
+    }
 
+    // 初始化
+    document.addEventListener('DOMContentLoaded', () => {
+      renderPopularChatrooms();
+    });
 
   function renderUserChatrooms() {
     userChatroomsContainer.innerHTML = '';
