@@ -273,11 +273,27 @@
     <!-- 左側邊欄 -->
     <div class="sidebar-container">
       <div class="sidebar-section">
-        <h4 class="section-title">熱門聊天室</h4>
-        <select id="popularSelect" class="form-select" aria-label="熱門聊天室選擇">
-          <option value="" selected disabled>請選擇熱門聊天室</option>
+        <h4 class="section-title">所有聊天室</h4>
+        <select id="popularSelect" class="form-select" aria-label="所有聊天室選擇">
+          <option value="" selected disabled>請選擇聊天室</option>
         </select>
       </div>
+
+
+      <div class="sidebar-section">
+        <h4 class="section-title">熱門聊天室</h4>
+        <ul id="popularChatrooms">
+          {% for room in popular_chatrooms %}
+            <li>
+              <a href="javascript:void(0)" onclick="openChatroom('{{ room.id }}')">
+                {{ room.city }} {{ room.district }}（{{ room.fav_count }}）
+              </a>
+              {% if forloop.counter <= 3 %} 🔥 {% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+
 
       <div class="sidebar-section">
         <h4 class="section-title">我的聊天室</h4>
