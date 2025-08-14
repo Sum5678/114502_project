@@ -2715,26 +2715,6 @@ def chatroom_view(request):
         'favorite_chatroom_ids': favorite_ids,
     })
 
-# @login_required
-# def chatroom_view(request):
-#     user = request.user
-#     # user_gmail = user.username  # 這裡直接用 username 當 gmail
-#     # logging.warning(f"[chatroom_view] 目前登入帳號 username(當gmail): {user_gmail}")
-#     try:
-#         user_profile = ThisUserProfile.objects.get(gmail=user.username)
-#         favorites = FavoriteChatRoom.objects.filter(user=user_profile).select_related('chat_room')
-#     except ThisUserProfile.DoesNotExist:
-#         user_profile = None
-#         favorites = []
-
-#     favorite_chatroom_ids = [fav.chat_room.id for fav in favorites]
-
-#     return render(request, 'chatroom.html', {
-#         'user_profile': user_profile,
-#         'favorites': favorites,
-#         'favorite_chatroom_ids': favorite_chatroom_ids,
-#     })
-
 
 
 from django.shortcuts import get_object_or_404
@@ -2765,44 +2745,11 @@ def add_to_favorites(request):
     else:
         return JsonResponse({'status': 'exists', 'message': '已經收藏過了'})
 
-# from django.http import JsonResponse
-# from .models import ChatRoom
-
-# def chatrooms_api(request):
-#     chatrooms = ChatRoom.objects.all()
-#     data = []
-#     for room in chatrooms:
-#         data.append({
-#             'id': room.id,
-#             'name': room.name,
-#             'city': room.city,
-#             'district': room.district,
-#             'click_count': room.click_count,
-#         })
-#     return JsonResponse(data, safe=False)
-
 
 def chatrooms_api(request):
     data = list(ChatRoom.objects.values('id', 'code', 'city', 'district', 'click_count'))
     return JsonResponse(data, safe=False)
 
-
-
-# import json
-
-# @login_required
-# def chatroom_page(request):
-#     try:
-#         profile = ThisUserProfile.objects.get(gmail=request.user.email)
-#         favorites = FavoriteChatRoom.objects.filter(user=profile).values_list('chat_room_id', flat=True)
-#         favorite_ids = list(favorites)
-#     except ThisUserProfile.DoesNotExist:
-#         favorite_ids = []
-
-#     return render(request, 'chatroom.html', {
-#         'favorite_ids': json.dumps(favorite_ids),  # 一定要用 json.dumps 包成字串
-#         # 其他 context ...
-#     })
 
 @login_required
 def chatroom_page(request):
