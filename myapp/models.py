@@ -330,24 +330,6 @@ class ChatMessage(models.Model):
     class Meta:
         db_table = 'chat_messages'
 
-# class ChatMessage(models.Model):
-#     user = models.ForeignKey(
-#         'ThisUserProfile',
-#         on_delete=models.CASCADE,
-#         db_column='user_id',  # 指定外鍵欄位
-#         help_text="留言的使用者"
-#     )
-#     region = models.CharField(max_length=50, help_text="區域名稱")
-#     message = models.TextField()
-#     timestamp = models.DateTimeField(auto_now_add=True)
-
-#     class Meta:
-#         db_table = 'chat_messages'
-#         verbose_name = "聊天室訊息"
-#         verbose_name_plural = "聊天室訊息"
-
-#     def __str__(self):
-#         return f"{self.user} @ {self.region}: {self.message[:20]}"
 
 
 class FavoriteChatRoom(models.Model):
@@ -371,3 +353,23 @@ class FavoriteChatRoom(models.Model):
 
     def __str__(self):
         return f"{self.user.username} 收藏了 {self.chat_room}"
+    
+    # class ChatMessage(models.Model):
+#     user = models.ForeignKey(
+#         'ThisUserProfile',
+#         on_delete=models.CASCADE,
+#         db_column='user_id',  # 指定外鍵欄位
+#         help_text="留言的使用者"
+#     )
+#     region = models.CharField(max_length=50, help_text="區域名稱")
+#     message = models.TextField()
+#     timestamp = models.DateTimeField(auto_now_add=True)
+
+#     class Meta:
+#         db_table = 'chat_messages'
+#         verbose_name = "聊天室訊息"
+#         verbose_name_plural = "聊天室訊息"
+
+#     def __str__(self):
+#         return f"{self.user} @ {self.region}: {self.message[:20]}"
+
