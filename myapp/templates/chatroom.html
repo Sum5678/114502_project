@@ -366,17 +366,11 @@
 <script src="{% static 'assets/js/main.js' %}"></script>
 
 <script>
-  // 你的 JS 程式碼保持不變（功能完整且結構清晰）
-  // 只做必要的微調，例如提升可讀性與一致性
-  const nicknameDisplay = document.getElementById('nicknameDisplay');
-  const nicknameSelect = document.getElementById('nicknameSelect');
-
-  // let chatrooms = [];
-  const favoriteChatrooms = new Set(JSON.parse('{{ favorite_chatroom_ids|default:"[]"|safe }}'));
-  let currentRoomId = null;
-  const userChatroomIds = new Set();
-
+  // 從後端模板拿到聊天室資料
   const chatrooms = JSON.parse('{{ chatrooms_json|escapejs }}');
+  const favoriteChatrooms = new Set(JSON.parse('{{ favorite_chatroom_ids|escapejs }}'));
+  const userChatroomIds = new Set(); // 後續會加入聊天室時更新
+  let currentRoomId = null;
 
   const chatWindow = document.getElementById('chatWindow');
   const chatInput = document.getElementById('chatInput');
@@ -384,70 +378,36 @@
   const favoriteBtn = document.getElementById('favoriteBtn');
   const userChatroomsContainer = document.getElementById('userChatrooms');
   const favoriteListContainer = document.getElementById('favoriteList');
+  const nicknameSelect = document.getElementById('nicknameSelect');
+  const nicknameDisplay = document.getElementById('nicknameDisplay');
 
-  fetch("{% url 'chatrooms_api' %}")
-    .then(res => res.json())
-    .then(data => {
-      chatrooms = data.map(room => ({
-        id: room.id,
-        name: `${room.city} ${room.district} 聊天室`,
-        city: room.city,
-        district: room.district,
-        click_count: room.click_count || 0
-      }));
-      renderPopularChatrooms();
-      renderUserChatrooms();
-      renderFavoriteChatrooms();
-    })
-    .catch(() => {
-      favoriteListContainer.innerHTML = '<p class="text-danger">聊天室資料載入失敗，請稍後再試</p>';
-    });
+  // 初始化暱稱顯示
+  nicknameDisplay.textContent = nicknameSelect.value || '匿名';
+  nicknameSelect.addEventListener('change', function () {
+    const selected = nicknameSelect.value;
+    nicknameDisplay.textContent = selected || '匿名';
+    const link = nicknameSelect.options[nicknameSelect.selectedIndex]?.getAttribute('data-link');
+    if (link) window.open(link, '_blank');
+  });
 
-
-
-
-  // function renderPopularChatrooms() {
-  //   const popularSelect = document.getElementById('popularSelect');
-  //   popularSelect.innerHTML = '<option value="" selected disabled>請選擇熱門聊天室</option>';
-  //   const sorted = [...chatrooms].sort((a,b) => b.click_count - a.click_count);
-  //   sorted.forEach(room => {
-  //     const option = document.createElement('option');
-  //     option.value = room.id;
-  //     option.textContent = `${room.name}（收藏數：${room.click_count}）`;
-  //     popularSelect.appendChild(option);
-  //   });
-  //   popularSelect.onchange = () => {
-  //     const selectedId = parseInt(popularSelect.value);
-  //     if (!isNaN(selectedId)) openChatroom(selectedId);
-  //   };
-  // }
-
-
+  // 渲染熱門聊天室
   function renderPopularChatrooms() {
-      const popularSelect = document.getElementById('popularSelect');
-      popularSelect.innerHTML = '<option value="" selected disabled>請選擇熱門聊天室</option>';
-
-      // 依照收藏數從多到少排序
-      const sorted = [...chatrooms].sort((a,b) => b.fav_count - a.fav_count);
-
-      sorted.forEach(room => {
-        const option = document.createElement('option');
-        option.value = room.id;
-        option.textContent = `${room.city} ${room.district} 聊天室（收藏數：${room.fav_count}）`;
-        popularSelect.appendChild(option);
-      });
-
-      popularSelect.onchange = () => {
-        const selectedId = parseInt(popularSelect.value);
-        if (!isNaN(selectedId)) openChatroom(selectedId);
-      };
-    }
-
-    // 初始化
-    document.addEventListener('DOMContentLoaded', () => {
-      renderPopularChatrooms();
+    const popularSelect = document.getElementById('popularSelect');
+    popularSelect.innerHTML = '<option value="" selected disabled>請選擇熱門聊天室</option>';
+    const sorted = [...chatrooms].sort((a,b) => b.fav_count - a.fav_count);
+    sorted.forEach(room => {
+      const option = document.createElement('option');
+      option.value = room.id;
+      option.textContent = `${room.city} ${room.district} 聊天室（收藏數：${room.fav_count}）`;
+      popularSelect.appendChild(option);
     });
+    popularSelect.onchange = () => {
+      const selectedId = parseInt(popularSelect.value);
+      if (!isNaN(selectedId)) openChatroom(selectedId);
+    };
+  }
 
+  // 渲染我的聊天室
   function renderUserChatrooms() {
     userChatroomsContainer.innerHTML = '';
     if (userChatroomIds.size === 0) {
@@ -457,13 +417,14 @@
     chatrooms.filter(r => userChatroomIds.has(r.id)).forEach(room => {
       const div = document.createElement('div');
       div.className = 'chatroom-item';
-      div.textContent = room.name;
+      div.textContent = `${room.city} ${room.district} 聊天室`;
       div.setAttribute('data-id', room.id);
       div.onclick = () => openChatroom(room.id);
       userChatroomsContainer.appendChild(div);
     });
   }
 
+  // 渲染我的收藏聊天室
   function renderFavoriteChatrooms() {
     if (!favoriteListContainer) return;
     favoriteListContainer.innerHTML = '';
@@ -473,11 +434,12 @@
     }
     chatrooms.filter(r => favoriteChatrooms.has(r.id)).forEach(room => {
       const li = document.createElement('li');
-      li.innerHTML = `<a href="javascript:void(0)" data-id="${room.id}" onclick="openChatroom(${room.id})">${room.name}</a>`;
+      li.innerHTML = `<a href="javascript:void(0)" data-id="${room.id}" onclick="openChatroom(${room.id})">${room.city} ${room.district} 聊天室</a>`;
       favoriteListContainer.appendChild(li);
     });
   }
 
+  // 開啟聊天室
   function openChatroom(id) {
     currentRoomId = id;
     const room = chatrooms.find(r => r.id === id);
@@ -485,93 +447,53 @@
 
     highlightActiveChatroom(id);
 
+    // 從後端取得聊天室訊息
     fetch(`/chat/messages/${id}/`)
-      .then(res => {
-        if (!res.ok) throw new Error('API回傳錯誤');
-        return res.json();
-      })
+      .then(res => res.json())
       .then(messages => {
         renderMessages(messages);
-        document.getElementById('chatroomTitle').textContent = room.name;
+        document.getElementById('chatroomTitle').textContent = `${room.city} ${room.district} 聊天室`;
         chatroomBox.classList.remove('d-none');
         userChatroomIds.add(id);
         renderUserChatrooms();
         updateFavoriteBtn(id);
-        // renderFavoriteChatrooms(); // 第一次載入不要覆蓋後端渲染的 HTML
       })
-      .catch(() => {
-        alert('載入聊天室訊息失敗');
-      });
+      .catch(() => alert('載入聊天室訊息失敗'));
   }
 
+  // 標示目前聊天室
   function highlightActiveChatroom(id) {
     document.querySelectorAll('.chatroom-item').forEach(el => {
-      const elId = parseInt(el.getAttribute('data-id'));
-      el.classList.toggle('active', elId === id);
+      el.classList.toggle('active', parseInt(el.getAttribute('data-id')) === id);
     });
     if(favoriteListContainer){
       favoriteListContainer.querySelectorAll('a').forEach(a => {
-        const aId = parseInt(a.getAttribute('data-id'));
-        a.classList.toggle('active', aId === id);
+        a.classList.toggle('active', parseInt(a.getAttribute('data-id')) === id);
       });
     }
   }
 
-  // ...existing code...
+  // 渲染訊息
   function renderMessages(messages) {
     chatWindow.innerHTML = '';
-    if (messages.length === 0) {
+    if (!messages.length) {
       chatWindow.innerHTML = '<p class="text-muted">還沒有留言，快來發表第一則訊息！</p>';
       return;
     }
     messages.forEach(msg => {
-      // 只顯示 nickname，沒有就顯示「匿名」
-      const displayName = msg.nickname ? msg.nickname : '匿名';
       const p = document.createElement('p');
-      p.textContent = `${displayName}：${msg.message}`;
+      p.textContent = `${msg.nickname || '匿名'}：${msg.message}`;
       chatWindow.appendChild(p);
     });
     chatWindow.scrollTop = chatWindow.scrollHeight;
-
   }
 
-
-
-  document.addEventListener('DOMContentLoaded', function() {
-    const nicknameSelect = document.getElementById('nicknameSelect');
-    const nicknameDisplay = document.getElementById('nicknameDisplay');
-
-    if (nicknameSelect && nicknameDisplay) {
-      // 初始化顯示一次（避免 undefined）
-      nicknameDisplay.textContent = nicknameSelect.value === '' ? '匿名' : nicknameSelect.value;
-
-      nicknameSelect.addEventListener('change', function () {
-        const selectedNickname = nicknameSelect.value || '';
-        nicknameDisplay.textContent = selectedNickname === '' ? '匿名' : selectedNickname;
-
-        const selected = nicknameSelect.options[nicknameSelect.selectedIndex];
-        const link = selected.getAttribute('data-link');
-        if (link) {
-          // 跳轉到個人資料設定頁（新分頁）
-          window.open(link, '_blank');
-        }
-      });
-    }
-  });
-
-
-function sendMessage() {
-    const message = document.getElementById("chatInput").value.trim();
-    const nickname = document.getElementById("nicknameSelect").value;
-
-    if (!message) {
-      alert("訊息不能為空！");
-      return;
-    }
-    if (!currentRoomId) {
-      alert("請先選擇聊天室！");
-      return;
-    }
+  // 發送訊息
+  function sendMessage() {
+    const message = chatInput.value.trim();
+    const nickname = nicknameSelect.value || '匿名';
+    if (!message) return alert('訊息不能為空！');
+    if (!currentRoomId) return alert('請先選擇聊天室！');
 
     fetch(`/chat/send/${currentRoomId}/`, {
       method: 'POST',
@@ -579,53 +501,25 @@ function sendMessage() {
         'Content-Type': 'application/json',
         'X-CSRFToken': getCookie('csrftoken')
       },
-      body: JSON.stringify({
-        message: message,
-        nickname: nickname
-      })
+      body: JSON.stringify({ message, nickname })
     })
-    .then(response => response.json())
+    .then(res => res.json())
     .then(data => {
       if (data.status === 'ok') {
-        document.getElementById("chatInput").value = "";
-        // 直接顯示剛送出的訊息
+        chatInput.value = '';
         if (data.message) {
           const p = document.createElement('p');
-          const displayName = data.message.nickname || '匿名';
-          p.textContent = `${displayName}：${data.message.message}`;
+          p.textContent = `${data.message.nickname || '匿名'}：${data.message.message}`;
           chatWindow.appendChild(p);
           chatWindow.scrollTop = chatWindow.scrollHeight;
-        } else {
-          // 若沒有即時訊息，則重新載入全部訊息
-          openChatroom(currentRoomId);
-        }
-      } else {
-        alert("發送失敗：" + data.msg);
-      }
+        } else openChatroom(currentRoomId);
+      } else alert('發送失敗：' + data.msg);
     });
   }
 
-
-
-  function updateFavoriteBtn(id) {
-    if (favoriteChatrooms.has(id)) {
-      favoriteBtn.classList.add('favorited');
-      favoriteBtn.textContent = '⭐ 已收藏';
-      favoriteBtn.setAttribute('aria-pressed', 'true');
-    } else {
-      favoriteBtn.classList.remove('favorited');
-      favoriteBtn.textContent = '☆ 收藏';
-      favoriteBtn.setAttribute('aria-pressed', 'false');
-    }
-  }
-
-
+  // 收藏切換
   favoriteBtn.onclick = () => {
     if (!currentRoomId) return;
-
-    const formData = new FormData();
-    formData.append('room_id', currentRoomId);
-
     fetch("{% url 'toggle_favorite' %}", {
       method: 'POST',
       headers: {
@@ -634,63 +528,44 @@ function sendMessage() {
       },
       body: `room_id=${currentRoomId}`
     })
-
-
- 
-    .then(res => {
-      if (!res.ok) throw new Error('伺服器回應錯誤，狀態碼:' + res.status);
-      return res.json();
-    })
+    .then(res => res.json())
     .then(data => {
-      if (data.status === 'added') {
-        favoriteChatrooms.add(currentRoomId);
-      } else if (data.status === 'removed') {
-        favoriteChatrooms.delete(currentRoomId);
-      }
+      if (data.status === 'added') favoriteChatrooms.add(currentRoomId);
+      else if (data.status === 'removed') favoriteChatrooms.delete(currentRoomId);
       updateFavoriteBtn(currentRoomId);
       renderFavoriteChatrooms();
     })
     .catch(err => alert('切換收藏失敗: ' + err.message));
   };
 
-
-
-  function toggleFavorite(id) {
-    // 發送 API 更新收藏狀態...
-    fetch(`/toggle_favorite/${id}/`, { method: 'POST', headers: { 'X-CSRFToken': csrftoken } })
-      .then(res => res.json())
-      .then(data => {
-        favoriteChatrooms = data.favorites; // 從後端回傳最新收藏列表
-        renderFavoriteChatrooms(); // 這時才重新渲染
-      });
-  }
-
-
-
-  nicknameSelect.addEventListener('change', function () {
-      const selectedNickname = nicknameSelect.value;
-      nicknameDisplay.textContent = selectedNickname === 'anonymous' ? '匿名' : selectedNickname;
-  });
-
-  // 初始化顯示一次（避免 undefined）
-  nicknameDisplay.textContent = nicknameSelect.value === 'anonymous' ? '匿名' : nicknameSelect.value;
-
-
-  function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-      const cookies = document.cookie.split(';');
-      for (let cookie of cookies) {
-        cookie = cookie.trim();
-        if (cookie.substring(0, name.length + 1) === (name + '=')) {
-          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-          break;
-        }
-      }
+  // 更新收藏按鈕
+  function updateFavoriteBtn(id) {
+    if (favoriteChatrooms.has(id)) {
+      favoriteBtn.classList.add('favorited');
+      favoriteBtn.textContent = '⭐ 已收藏';
+      favoriteBtn.setAttribute('aria-pressed','true');
+    } else {
+      favoriteBtn.classList.remove('favorited');
+      favoriteBtn.textContent = '☆ 收藏';
+      favoriteBtn.setAttribute('aria-pressed','false');
     }
-    return cookieValue;
   }
+
+  // 取得 CSRF Cookie
+  function getCookie(name) {
+    const cookies = document.cookie.split(';').map(c => c.trim());
+    for (let cookie of cookies) {
+      if (cookie.startsWith(name + '=')) return decodeURIComponent(cookie.split('=')[1]);
+    }
+    return null;
+  }
+
+  // 初始化渲染
+  renderPopularChatrooms();
+  renderUserChatrooms();
+  renderFavoriteChatrooms();
 </script>
+
 
 </body>
 </html>
