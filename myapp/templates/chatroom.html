@@ -295,9 +295,17 @@
       
 
       <div class="sidebar-section">
-        <h4 class="section-title">我的聊天室</h4>
+        <h4 class="section-title">搜尋聊天室</h4>
+        <input 
+          type="text" 
+          id="chatroomSearchInput" 
+          class="form-control mb-2" 
+          placeholder="輸入地區或名稱搜尋..."
+          oninput="filterChatrooms()" 
+        />
         <div id="userChatrooms" class="user-chatrooms"></div>
       </div>
+
 
       <div class="sidebar-section favorites-section">
         <h4 class="section-title">我的收藏聊天室</h4>
@@ -559,6 +567,20 @@
     }
     return null;
   }
+
+
+
+  function filterChatrooms() {
+    const searchValue = document.getElementById('chatroomSearchInput').value.toLowerCase();
+    const chatroomContainer = document.getElementById('userChatrooms');
+    const chatroomItems = chatroomContainer.querySelectorAll('.chatroom-item'); // 假設每個聊天室加上 chatroom-item class
+    
+    chatroomItems.forEach(item => {
+      const text = item.textContent.toLowerCase();
+      item.style.display = text.includes(searchValue) ? '' : 'none';
+    });
+  }
+
 
   // 初始化渲染
   renderPopularChatrooms();
