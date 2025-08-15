@@ -2762,29 +2762,6 @@ def chatroom_view(request):
     })
 
 
-
-
-
-
-
-# @login_required
-# def chatroom_view(request):
-#     try:
-#         user_profile = ThisUserProfile.objects.get(gmail=request.user.email)
-#         favorites = FavoriteChatRoom.objects.filter(user=user_profile).select_related('chat_room')
-#     except ThisUserProfile.DoesNotExist:
-#         user_profile = None
-#         favorites = []
-
-#     favorite_ids = [fav.chat_room.id for fav in favorites]
-
-#     return render(request, 'chatroom.html', {
-#         'user_profile': user_profile,
-#         'favorites': favorites,
-#         'favorite_chatroom_ids': json.dumps(favorite_ids),  # 前端用
-#     })
-
-
 # ------------- 加入收藏 -------------
 @require_POST
 @login_required
