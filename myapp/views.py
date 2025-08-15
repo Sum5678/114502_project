@@ -2557,48 +2557,13 @@ def chatrooms_api(request):
 # views.py
 from .models import ChatMessage
 
-def chat_messages_api(request, room_id):
-    messages = ChatMessage.objects.filter(region=room_id).order_by('timestamp').values(
-        'id', 'user_id', 'message', 'timestamp'
-    )
-    return JsonResponse(list(messages), safe=False)
+# def chat_messages_api(request, room_id):
+#     messages = ChatMessage.objects.filter(region=room_id).order_by('timestamp').values(
+#         'id', 'user_id', 'message', 'timestamp'
+#     )
+#     return JsonResponse(list(messages), safe=False)
 
 
-# from django.views.decorators.csrf import csrf_exempt
-# from django.utils import timezone
-# import json
-
-# @csrf_exempt
-# def send_message_api(request, room_id):
-#     if request.method == 'POST':
-#         data = json.loads(request.body)
-#         message_text = data.get('message', '').strip()
-#         user = request.user if request.user.is_authenticated else None
-        
-#         if not message_text:
-#             return JsonResponse({'error': '訊息不能空白'}, status=400)
-
-#         ChatMessage.objects.create(
-#             user_id=user.id if user else None,
-#             region=room_id,
-#             message=message_text,
-#             timestamp=timezone.now()
-#         )
-
-#         # 點擊紀錄
-#         ChatRoom.objects.filter(id=room_id).update(
-#             click_count=F('click_count') + 1
-#         )
-
-#         ChatRoomClick.objects.create(
-#             user_id=user.id if user else None,
-#             region=room_id,
-#             ip_address=request.META.get('REMOTE_ADDR')
-#         )
-
-#         return JsonResponse({'status': 'ok'})
-
-# from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
 
@@ -2647,33 +2612,6 @@ def chat_send_api(request, room_id):
             return JsonResponse({'status': 'error', 'msg': str(e)})
     else:
         return JsonResponse({'status': 'error', 'msg': '只接受 POST'}, status=405)
-
-
-
-# def chat_send_api(request, room_id):
-#     if request.method == 'POST':
-#         data = json.loads(request.body)
-#         message = data.get('message')
-#         if not message:
-#             return JsonResponse({'status': 'error', 'msg': '訊息不能為空'})
-
-#         # 從登入 session 或自訂系統取出 this_user_profile.id
-#         user_id = request.session.get('my_user_id')
-#         if not user_id:
-#             return JsonResponse({'status': 'error', 'msg': '請先登入'})
-
-#         try:
-#             user_profile = ThisUserProfile.objects.get(id=user_id)
-#         except ThisUserProfile.DoesNotExist:
-#             return JsonResponse({'status': 'error', 'msg': '找不到使用者'})
-
-#         ChatMessage.objects.create(
-#             user=user_profile,  # ✅ 一定要是 ThisUserProfile 物件
-#             region=room_id,
-#             message=message
-#         )
-
-#         return JsonResponse({'status': 'success'})
 
 
 
@@ -2804,5 +2742,21 @@ def toggle_favorite(request):
         FavoriteChatRoom.objects.create(user=user_profile, chat_room=chat_room)
         return JsonResponse({'status': 'added'})
 
+# ------------查詢聊天室------------
+from django.http import JsonResponse
+from django.db.models import Q
+from .models import ChatRoom
 
+def search_chatrooms_api(request):
+    query = request.GET.get('q', '').strip()
+    chatrooms = ChatRoom.objects.all()
 
+    if query:
+        chatrooms = chatrooms.filter(
+            Q(city__icontains=query) |
+            Q(district__icontains=query)
+        )
+
+    # 回傳 JSON 給前端
+    data = list(chatrooms.values('id', 'city', 'district', 'click_count'))
+    return JsonResponse(data, safe=False)

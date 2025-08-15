@@ -571,15 +571,25 @@
 
 
   function filterChatrooms() {
-    const searchValue = document.getElementById('chatroomSearchInput').value.toLowerCase();
-    const chatroomContainer = document.getElementById('userChatrooms');
-    const chatroomItems = chatroomContainer.querySelectorAll('.chatroom-item'); // 假設每個聊天室加上 chatroom-item class
-    
-    chatroomItems.forEach(item => {
-      const text = item.textContent.toLowerCase();
-      item.style.display = text.includes(searchValue) ? '' : 'none';
-    });
+    const searchValue = document.getElementById('chatroomSearchInput').value.trim();
+
+    fetch(`/api/search_chatrooms/?q=${encodeURIComponent(searchValue)}`)
+      .then(res => res.json())
+      .then(data => {
+        const listContainer = document.getElementById('chatroomList');
+        listContainer.innerHTML = ''; // 清空舊的聊天室
+
+        data.forEach(room => {
+          const item = document.createElement('div');
+          item.className = 'chatroom-item';
+          item.textContent = `${room.city} - ${room.district}`;
+          item.onclick = () => openChatroom(room.id);
+          listContainer.appendChild(item);
+        });
+      })
+      .catch(err => console.error('搜尋聊天室失敗', err));
   }
+
 
 
   // 初始化渲染
