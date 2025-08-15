@@ -300,8 +300,7 @@
           type="text" 
           id="chatroomSearchInput" 
           class="form-control mb-2" 
-          placeholder="輸入地區或名稱搜尋..."
-          oninput="filterChatrooms()" 
+          placeholder="輸入縣市或行政區搜尋..." 
         />
         <div id="userChatrooms" class="user-chatrooms"></div>
       </div>
@@ -379,6 +378,7 @@
   const favoriteChatrooms = new Set(JSON.parse('{{ favorite_chatroom_ids|escapejs }}'));
   const userChatroomIds = new Set(); // 後續會加入聊天室時更新
   let currentRoomId = null;
+  
 
   const chatWindow = document.getElementById('chatWindow');
   const chatInput = document.getElementById('chatInput');
@@ -416,21 +416,35 @@
   }
 
   // 渲染我的聊天室
-  function renderUserChatrooms() {
+  function renderUserChatrooms(filter = '') {
     userChatroomsContainer.innerHTML = '';
-    if (userChatroomIds.size === 0) {
-      userChatroomsContainer.innerHTML = '<p class="text-muted">尚未加入任何聊天室</p>';
+    const filtered = chatrooms.filter(r => {
+      const text = (r.city + ' ' + r.district).toLowerCase();
+      return text.includes(filter.toLowerCase());
+    });
+
+    if (filtered.length === 0) {
+      userChatroomsContainer.innerHTML = '<p class="text-muted">沒有符合的聊天室</p>';
       return;
     }
-    chatrooms.filter(r => userChatroomIds.has(r.id)).forEach(room => {
+
+    filtered.forEach(room => {
       const div = document.createElement('div');
       div.className = 'chatroom-item';
-      div.textContent = `${room.city} ${room.district} 聊天室`;
+      div.textContent = `${room.city} ${room.district} 聊天室（收藏數：${room.fav_count}）`;
       div.setAttribute('data-id', room.id);
       div.onclick = () => openChatroom(room.id);
       userChatroomsContainer.appendChild(div);
     });
   }
+
+  // 即時搜尋
+  document.getElementById('chatroomSearchInput').addEventListener('input', function () {
+    renderUserChatrooms(this.value);
+  });
+
+  // 初始渲染
+  renderUserChatrooms();
 
   // 渲染我的收藏聊天室
   function renderFavoriteChatrooms() {
@@ -567,30 +581,6 @@
     }
     return null;
   }
-
-
-
-  function filterChatrooms() {
-    const searchValue = document.getElementById('chatroomSearchInput').value.trim();
-
-    fetch(`/api/search_chatrooms/?q=${encodeURIComponent(searchValue)}`)
-      .then(res => res.json())
-      .then(data => {
-        const listContainer = document.getElementById('chatroomList');
-        listContainer.innerHTML = ''; // 清空舊的聊天室
-
-        data.forEach(room => {
-          const item = document.createElement('div');
-          item.className = 'chatroom-item';
-          item.textContent = `${room.city} - ${room.district}`;
-          item.onclick = () => openChatroom(room.id);
-          listContainer.appendChild(item);
-        });
-      })
-      .catch(err => console.error('搜尋聊天室失敗', err));
-  }
-
-
 
   // 初始化渲染
   renderPopularChatrooms();

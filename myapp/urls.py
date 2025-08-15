@@ -151,7 +151,6 @@ urlpatterns = [
     path('toggle_favorite/', views.toggle_favorite, name='toggle_favorite'),
     path('chatrooms/', views.chatroom_view, name='chatroom_page'),
     path('api/reports.json', views.reports_with_subkind_json, name='reports_with_subkind_json'),
-    path('api/search_chatrooms/', views.search_chatrooms_api, name='search_chatrooms_api'),
 
 
 
