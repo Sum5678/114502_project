@@ -11,14 +11,18 @@ from django.views.generic import TemplateView
 urlpatterns = [
     # #思璇
     # path('chatrooms/', views.chatroom_map, name='chatroom_map'),
-    path(
-        'manifest.json',
-        TemplateView.as_view(template_name='manifest.json', content_type='application/json'),
-        name='manifest' 
-    ),
+    path('admin/', admin.site.urls),
+
+    # manifest.json 用 views.py 回傳
+    path('manifest.json', views.manifest, name='manifest'),
+
+    # service-worker.js 用 TemplateView 讀模板
     path(
         'service-worker.js',
-        TemplateView.as_view(template_name='service-worker.js', content_type='application/javascript'),
+        TemplateView.as_view(
+            template_name='service-worker.js',
+            content_type='application/javascript'
+        ),
         name='service-worker'
     ),
     path('api/submit_report/', views.submit_report, name='submit_report'),
