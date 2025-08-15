@@ -2549,23 +2549,13 @@ def admin_send_email(request, p_id):
 
 #------------------------聊天室---------------------
 from .models import ChatRoom
+from django.views.decorators.csrf import csrf_exempt
+import json
 
 def chatrooms_api(request):
     rooms = ChatRoom.objects.all().values('id', 'city', 'district', 'click_count')
     return JsonResponse(list(rooms), safe=False)
 
-# views.py
-from .models import ChatMessage
-
-# def chat_messages_api(request, room_id):
-#     messages = ChatMessage.objects.filter(region=room_id).order_by('timestamp').values(
-#         'id', 'user_id', 'message', 'timestamp'
-#     )
-#     return JsonResponse(list(messages), safe=False)
-
-
-from django.views.decorators.csrf import csrf_exempt
-import json
 
 # 取得聊天室訊息
 from .models import ChatMessage
@@ -2742,21 +2732,5 @@ def toggle_favorite(request):
         FavoriteChatRoom.objects.create(user=user_profile, chat_room=chat_room)
         return JsonResponse({'status': 'added'})
 
-# ------------查詢聊天室------------
-from django.http import JsonResponse
-from django.db.models import Q
-from .models import ChatRoom
 
-def search_chatrooms_api(request):
-    query = request.GET.get('q', '').strip()
-    chatrooms = ChatRoom.objects.all()
 
-    if query:
-        chatrooms = chatrooms.filter(
-            Q(city__icontains=query) |
-            Q(district__icontains=query)
-        )
-
-    # 回傳 JSON 給前端
-    data = list(chatrooms.values('id', 'city', 'district', 'click_count'))
-    return JsonResponse(data, safe=False)
