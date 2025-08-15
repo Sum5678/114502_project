@@ -1192,6 +1192,33 @@ from django.shortcuts import render
 
 def chatroom_map(request):
     return render(request, 'chatroom.html')  # HTML 檔名可自訂
+#------------PWA-------------------------
+from django.http import JsonResponse
+
+def manifest(request):
+    return JsonResponse({
+        "name": "怪怪走開護您安全",
+        "short_name": "護您安全",
+        "start_url": "/",
+        "display": "standalone",
+        "background_color": "#ffffff",
+        "theme_color": "#4a90e2",
+        "icons": [
+            {
+                "src": "/static/icons/icon-192.png",
+                "sizes": "192x192",
+                "type": "image/png"
+            },
+            {
+                "src": "/static/icons/icon-512.png",
+                "sizes": "512x512",
+                "type": "image/png"
+            }
+        ]
+    })
+
+
+
 
 
 ##測試資料能不能放到地圖上
