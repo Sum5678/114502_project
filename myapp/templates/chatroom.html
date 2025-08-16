@@ -469,6 +469,38 @@
     });
   }
 
+
+
+
+
+
+
+  function renderMessage(msg) {
+    const wrapper = document.createElement('div');
+    wrapper.classList.add('message-item', 'mb-2');
+
+    // 顯示暱稱 & 訊息
+    const text = document.createElement('span');
+    text.textContent = `${msg.nickname || '匿名'}：${msg.message}`;
+
+    // 回覆按鈕
+    const replyBtn = document.createElement('button');
+    replyBtn.textContent = '回覆';
+    replyBtn.classList.add('btn', 'btn-link', 'btn-sm', 'p-0', 'ms-2');
+    replyBtn.onclick = () => {
+      replyToMessageId = msg.id; // 紀錄要回覆哪則訊息（不一定要存 DB）
+      chatInput.value = `回覆「${msg.nickname || '匿名'}」: `;
+      chatInput.focus();
+    };
+
+    wrapper.appendChild(text);
+    wrapper.appendChild(replyBtn);
+
+    chatWindow.appendChild(wrapper);
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+  }
+
+
   // 開啟聊天室
   function openChatroom(id) {
     currentRoomId = id;
@@ -518,6 +550,61 @@
     chatWindow.scrollTop = chatWindow.scrollHeight;
   }
 
+
+
+  // 建立訊息
+  function addMessage(text, replyTo = null) {
+    const msgWrapper = document.createElement("div");
+    msgWrapper.classList.add("mb-2");
+
+    const msg = document.createElement("div");
+    msg.classList.add("p-2", "border", "rounded", "bg-white");
+
+    // 如果有回覆目標，加上引用框
+    if (replyTo) {
+      const quote = document.createElement("div");
+      quote.classList.add("small", "text-muted", "border-start", "ps-2", "mb-1");
+      quote.textContent = `回覆「${replyTo}」`;
+      msg.appendChild(quote);
+    }
+
+    // 主訊息
+    const msgText = document.createElement("span");
+    msgText.textContent = text;
+    msg.appendChild(msgText);
+
+    // 回覆按鈕
+    const replyBtn = document.createElement("button");
+    replyBtn.textContent = "回覆";
+    replyBtn.classList.add("btn", "btn-link", "btn-sm", "p-0", "ms-2");
+    replyBtn.onclick = () => {
+      replyTarget = text;
+      chatInput.placeholder = `回覆「${text}」...`;
+      chatInput.focus();
+    };
+
+    msg.appendChild(replyBtn);
+    msgWrapper.appendChild(msg);
+    chatWindow.appendChild(msgWrapper);
+
+    // 自動捲到最底
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+  }
+
+
+  let replyTarget = null; // { id: string, text: string }
+  // 點某則訊息的回覆按鈕
+  function setReply(targetId, targetText) {
+    replyTarget = { id: targetId, text: targetText };
+    chatInput.placeholder = `回覆「${targetText}」...`;
+    chatInput.focus();
+  }
+
+  // 建立唯一 ID（可用後端回傳的 id，這裡簡化用時間戳）
+  function generateId() {
+    return "msg-" + Date.now() + "-" + Math.floor(Math.random() * 1000);
+  }
+
   // 發送訊息
   function sendMessage() {
     const message = chatInput.value.trim();
@@ -537,16 +624,69 @@
     .then(data => {
       if (data.status === 'ok') {
         chatInput.value = '';
+        chatInput.placeholder = "輸入留言...";
+
         if (data.message) {
-          const p = document.createElement('p');
-          p.textContent = `${data.message.nickname || '匿名'}：${data.message.message}`;
-          chatWindow.appendChild(p);
+          // 產生本地訊息 ID
+          const msgId = generateId();
+
+          // 包裝訊息區塊
+          const wrapper = document.createElement("div");
+          wrapper.classList.add("mb-2");
+          wrapper.id = msgId;
+
+          const msg = document.createElement("div");
+          msg.classList.add("p-2", "border", "rounded", "bg-white");
+
+          // 如果有回覆目標，加上引用框
+          if (replyTarget) {
+            const quote = document.createElement("div");
+            quote.classList.add("small", "text-muted", "border-start", "ps-2", "mb-1");
+            quote.textContent = `回覆「${replyTarget.text}」`;
+            quote.style.cursor = "pointer";
+
+            // 點擊引用 → 捲到目標
+            quote.onclick = () => {
+              const target = document.getElementById(replyTarget.id);
+              if (target) {
+                target.scrollIntoView({ behavior: "smooth", block: "center" });
+                target.classList.add("bg-warning", "bg-opacity-25");
+                setTimeout(() => target.classList.remove("bg-warning", "bg-opacity-25"), 1500);
+              } else {
+                alert("找不到原始訊息（可能被清掉了）");
+              }
+            };
+
+            msg.appendChild(quote);
+          }
+
+          // 主內容
+          const main = document.createElement("span");
+          main.textContent = `${data.message.nickname || '匿名'}：${data.message.message}`;
+          msg.appendChild(main);
+
+          // 回覆按鈕
+          const replyBtn = document.createElement("button");
+          replyBtn.textContent = "回覆";
+          replyBtn.classList.add("btn", "btn-link", "btn-sm", "p-0", "ms-2");
+          replyBtn.onclick = () => setReply(msgId, data.message.message);
+          msg.appendChild(replyBtn);
+
+          wrapper.appendChild(msg);
+          chatWindow.appendChild(wrapper);
           chatWindow.scrollTop = chatWindow.scrollHeight;
-        } else openChatroom(currentRoomId);
-      } else alert('發送失敗：' + data.msg);
+        } else {
+          openChatroom(currentRoomId);
+        }
+
+        replyTarget = null; // reset
+      } else {
+        alert('發送失敗：' + data.msg);
+      }
     });
   }
 
+    
   // 收藏切換
   favoriteBtn.onclick = () => {
     if (!currentRoomId) return;
@@ -580,6 +720,9 @@
       favoriteBtn.setAttribute('aria-pressed','false');
     }
   }
+
+
+
 
   // 取得 CSRF Cookie
   function getCookie(name) {
