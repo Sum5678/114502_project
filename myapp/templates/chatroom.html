@@ -542,13 +542,37 @@
       chatWindow.innerHTML = '<p class="text-muted">還沒有留言，快來發表第一則訊息！</p>';
       return;
     }
+
     messages.forEach(msg => {
-      const p = document.createElement('p');
-      p.textContent = `${msg.nickname || '匿名'}：${msg.message}`;
-      chatWindow.appendChild(p);
+      const wrapper = document.createElement('div');
+      wrapper.classList.add('mb-2');
+      const msgId = "msg-" + Date.now() + "-" + Math.floor(Math.random()*1000);
+      wrapper.id = msgId;
+
+      const msgBox = document.createElement('div');
+      msgBox.classList.add('p-2', 'border', 'rounded', 'bg-white');
+
+      const main = document.createElement('span');
+      main.textContent = `${msg.nickname || '匿名'}：${msg.message}`;
+      msgBox.appendChild(main);
+
+      const replyBtn = document.createElement('button');
+      replyBtn.textContent = '回覆';
+      replyBtn.classList.add('btn', 'btn-link', 'btn-sm', 'p-0', 'ms-2');
+      replyBtn.onclick = () => {
+        replyTarget = { id: msgId, text: msg.message };
+        chatInput.placeholder = `回覆「${msg.message}」...`;
+        chatInput.focus();
+      };
+      msgBox.appendChild(replyBtn);
+
+      wrapper.appendChild(msgBox);
+      chatWindow.appendChild(wrapper);
     });
+
     chatWindow.scrollTop = chatWindow.scrollHeight;
   }
+
 
 
 
@@ -605,7 +629,9 @@
     return "msg-" + Date.now() + "-" + Math.floor(Math.random() * 1000);
   }
 
-  // 發送訊息
+ 
+
+  // 送出訊息
   function sendMessage() {
     const message = chatInput.value.trim();
     const nickname = nicknameSelect.value || '匿名';
@@ -622,91 +648,73 @@
     })
     .then(res => res.json())
     .then(data => {
-      if (data.status === 'ok') {
-        chatInput.value = '';
-        chatInput.placeholder = "輸入留言...";
-
-        if (data.message) {
-          // 產生本地訊息 ID
-          const msgId = generateId();
-
-          // 包裝訊息區塊
-          const wrapper = document.createElement("div");
-          wrapper.classList.add("mb-2");
-          wrapper.id = msgId;
-
-          const msg = document.createElement("div");
-          msg.classList.add("p-2", "border", "rounded", "bg-white");
-
-          // 如果有回覆目標，加上引用框
-          if (replyTarget) {
-            const quote = document.createElement("div");
-            quote.classList.add("small", "text-muted", "border-start", "ps-2", "mb-1");
-            quote.textContent = `回覆「${replyTarget.text}」`;
-            quote.style.cursor = "pointer";
-
-            // 點擊引用 → 捲到目標
-            quote.onclick = () => {
-              const target = document.getElementById(replyTarget.id);
-              if (target) {
-                target.scrollIntoView({ behavior: "smooth", block: "center" });
-                target.classList.add("bg-warning", "bg-opacity-25");
-                setTimeout(() => target.classList.remove("bg-warning", "bg-opacity-25"), 1500);
-              } else {
-                alert("找不到原始訊息（可能被清掉了）");
-              }
-            };
-
-            msg.appendChild(quote);
-          }
-
-          // 主內容
-          const main = document.createElement("span");
-          main.textContent = `${data.message.nickname || '匿名'}：${data.message.message}`;
-          msg.appendChild(main);
-
-          // 回覆按鈕
-          const replyBtn = document.createElement("button");
-          replyBtn.textContent = "回覆";
-          replyBtn.classList.add("btn", "btn-link", "btn-sm", "p-0", "ms-2");
-          replyBtn.onclick = () => setReply(msgId, data.message.message);
-          msg.appendChild(replyBtn);
-
-          wrapper.appendChild(msg);
-          chatWindow.appendChild(wrapper);
-          chatWindow.scrollTop = chatWindow.scrollHeight;
-        } else {
-          openChatroom(currentRoomId);
-        }
-
-        replyTarget = null; // reset
-      } else {
-        alert('發送失敗：' + data.msg);
+      if (data.status !== 'ok') {
+        return alert('發送失敗：' + data.msg);
       }
+
+      // 清空輸入框
+      chatInput.value = '';
+      chatInput.placeholder = "輸入留言...";
+
+      if (!data.message) {
+        openChatroom(currentRoomId);
+        replyTarget = null;
+        return;
+      }
+
+      // 產生訊息 DOM
+      const wrapper = document.createElement('div');
+      wrapper.classList.add('mb-2');
+      const msgId = "msg-" + Date.now() + "-" + Math.floor(Math.random()*1000);
+      wrapper.id = msgId;
+
+      const msgBox = document.createElement('div');
+      msgBox.classList.add('p-2', 'border', 'rounded', 'bg-white');
+
+      // 如果有回覆目標，加引用框
+      if (replyTarget) {
+        const quote = document.createElement('div');
+        quote.classList.add('small', 'text-muted', 'border-start', 'ps-2', 'mb-1');
+        quote.textContent = `回覆「${replyTarget.text}」`;
+        quote.style.cursor = 'pointer';
+
+        // 點擊引用 → 捲到目標
+        quote.onclick = () => {
+          const target = document.getElementById(replyTarget.id);
+          if (target) {
+            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            target.classList.add('bg-warning', 'bg-opacity-25');
+            setTimeout(() => target.classList.remove('bg-warning', 'bg-opacity-25'), 1500);
+          } else alert("找不到原始訊息");
+        };
+
+        msgBox.appendChild(quote);
+      }
+
+      // 主訊息
+      const main = document.createElement('span');
+      main.textContent = `${data.message.nickname || '匿名'}：${data.message.message}`;
+      msgBox.appendChild(main);
+
+      // 回覆按鈕
+      const replyBtn = document.createElement('button');
+      replyBtn.textContent = '回覆';
+      replyBtn.classList.add('btn', 'btn-link', 'btn-sm', 'p-0', 'ms-2');
+      replyBtn.onclick = () => {
+        replyTarget = { id: msgId, text: data.message.message };
+        chatInput.placeholder = `回覆「${data.message.message}」...`;
+        chatInput.focus();
+      };
+      msgBox.appendChild(replyBtn);
+
+      wrapper.appendChild(msgBox);
+      chatWindow.appendChild(wrapper);
+      chatWindow.scrollTop = chatWindow.scrollHeight;
+
+      replyTarget = null; // reset
     });
   }
 
-    
-  // 收藏切換
-  favoriteBtn.onclick = () => {
-    if (!currentRoomId) return;
-    fetch("{% url 'toggle_favorite' %}", {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'X-CSRFToken': getCookie('csrftoken'),
-      },
-      body: `room_id=${currentRoomId}`
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (data.status === 'added') favoriteChatrooms.add(currentRoomId);
-      else if (data.status === 'removed') favoriteChatrooms.delete(currentRoomId);
-      updateFavoriteBtn(currentRoomId);
-      renderFavoriteChatrooms();
-    })
-    .catch(err => alert('切換收藏失敗: ' + err.message));
-  };
 
   // 更新收藏按鈕
   function updateFavoriteBtn(id) {
