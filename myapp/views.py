@@ -289,6 +289,42 @@ def police_address_delete(request, pk):
     addr.delete()
     return redirect('police_address_list')  # 刪除後回到列表頁
 
+#用戶管理的東西
+from django.shortcuts import render, redirect, get_object_or_404
+from .models import ThisUserProfile
+from .forms import ThisUserProfileForm
+
+def user_list(request):
+    users = ThisUserProfile.objects.all()
+    return render(request, "user_admin_list.html", {"users": users})
+
+def user_create(request):
+    if request.method == "POST":
+        form = ThisUserProfileForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect("user_list")
+    else:
+        form = ThisUserProfileForm()
+    return render(request, "user_form.html", {"form": form, "title": "新增使用者"})
+
+def user_edit(request, pk):
+    user = get_object_or_404(ThisUserProfile, pk=pk)
+    if request.method == "POST":
+        form = ThisUserProfileForm(request.POST, instance=user)
+        if form.is_valid():
+            form.save()
+            return redirect("user_list")
+    else:
+        form = ThisUserProfileForm(instance=user)
+    return render(request, "user_form.html", {"form": form, "title": "編輯使用者"})
+
+def user_delete(request, pk):
+    user = get_object_or_404(ThisUserProfile, pk=pk)
+    if request.method == "POST":
+        user.delete()
+        return redirect("user_list")
+    return render(request, "user_confirm_delete.html", {"user": user})
 
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
