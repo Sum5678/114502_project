@@ -2113,13 +2113,18 @@ def store_data_api(request):
 #     return render(request, 'store_map.html')
 
 
-from .models import ChatInteraction, ThisUserProfile  # ← 加入 ThisUserProfile
-from django.utils import timezone
+# ------------ 交流區後端（整合版）------------
+from django.shortcuts import render, redirect, get_object_or_404
+from django.http import JsonResponse, HttpResponseForbidden
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect
-import bleach
+from django.views.decorators.http import require_POST
+from django.utils import timezone
+from django.db.models import Q
+
+from .models import ChatInteraction, ThisUserProfile  # 使用者檔案 + 貼文
 import json
-from urllib.parse import quote  # 給 dicebear seed 安全編碼
+import bleach
+from urllib.parse import quote  # dicebear seed 編碼，避免特殊字元
 
 ALLOWED_TAGS = ['a']
 ALLOWED_ATTRIBUTES = {'a': ['href', 'target', 'rel']}
@@ -2127,13 +2132,11 @@ ALLOWED_ATTRIBUTES = {'a': ['href', 'target', 'rel']}
 # 發文（可選用 暱稱1 / 暱稱2 / 匿名）
 @login_required(login_url='/01userlogin/')
 def post(request):
-    # 讀取個人資料設定中的兩個預設暱稱
     prof = ThisUserProfile.objects.filter(gmail=request.user.email).first()
     nick1 = (prof.default_nickname1 or "").strip() if prof else ""
     nick2 = (prof.default_nickname2 or "").strip() if prof else ""
 
     if request.method == 'POST':
-        # 由前端 radio 送上來：nickname1 / nickname2 / anonymous
         identity = request.POST.get('post_identity', 'anonymous')
         if identity == 'nickname1' and nick1:
             nickname = nick1
@@ -2144,18 +2147,17 @@ def post(request):
 
         bgcolor = request.POST.get('bgcolor')
         avatar_style = request.POST.get('avatar_style')
-        title = request.POST.get('title')
-        raw_content = request.POST.get('content')
+        title = request.POST.get('title') or ""
+        raw_content = request.POST.get('content') or ""
 
         clean_content = bleach.clean(
-            raw_content or "",
+            raw_content,
             tags=ALLOWED_TAGS,
             attributes=ALLOWED_ATTRIBUTES,
             protocols=['http', 'https'],
             strip=True
         )
 
-        # dicebear 的 seed 建議編碼，避免有空白或特殊字元
         seed = quote(nickname)
         avatar_url = f"https://api.dicebear.com/7.x/{avatar_style}/svg?seed={seed}&backgroundColor={bgcolor}"
 
@@ -2168,22 +2170,20 @@ def post(request):
             title=title,
             message_content=clean_content,
             like_heart_count=0,
-            liked_user_ids='[]',   # ❤️
-            saved_user_ids='[]',   # 🌟 收藏
-            comments='[]',         # 💬 留言
+            liked_user_ids='[]',
+            saved_user_ids='[]',
+            comments='[]',
             created_at=timezone.now()
         )
         return redirect('post_display')
 
-    # GET：把暱稱帶給模板，用於顯示與預設選項
     return render(request, 'post.html', {
         'profile_nickname1': nick1,
         'profile_nickname2': nick2,
     })
 
 
-
-# 貼文展示
+# 貼文展示（含搜尋、liked/saved/comment 標記 + 把暱稱帶給前端讓留言可選）
 def post_display(request):
     query = request.GET.get('q')
     if query:
@@ -2214,13 +2214,25 @@ def post_display(request):
         post.is_saved = bool(user_id_str and (user_id_str in saved_user_ids))
         post.saved_user_list = saved_user_ids
 
-        # comments
+        # comments（存文字 JSON，解析給模板用）
         try:
             post.comment_list = json.loads(getattr(post, 'comments', '[]') or '[]')
         except json.JSONDecodeError:
             post.comment_list = []
 
-    return render(request, 'post_display.html', {'posts': posts})
+    # 把暱稱1/2帶給模板（留言單選要用）
+    nick1 = ""
+    nick2 = ""
+    if request.user.is_authenticated:
+        prof = ThisUserProfile.objects.filter(gmail=request.user.email).first()
+        nick1 = (prof.default_nickname1 or "").strip() if prof else ""
+        nick2 = (prof.default_nickname2 or "").strip() if prof else ""
+
+    return render(request, 'post_display.html', {
+        'posts': posts,
+        'profile_nickname1': nick1,
+        'profile_nickname2': nick2,
+    })
 
 
 # 編輯貼文
@@ -2231,8 +2243,8 @@ def edit_post(request, post_id):
         return HttpResponseForbidden("⚠️ 你無權編輯這篇貼文。")
 
     if request.method == 'POST':
-        post.title = request.POST.get('title')
-        post.message_content = request.POST.get('content')
+        post.title = request.POST.get('title') or ""
+        post.message_content = request.POST.get('content') or ""
         post.created_at = timezone.now()
         post.save(update_fields=['title', 'message_content', 'created_at'])
         return redirect('post_display')
@@ -2311,36 +2323,45 @@ def save_post(request, post_id):
     return redirect('post_display')
 
 
-# 💬 新增留言
+# 💬 新增留言（支援 暱稱1／暱稱2／匿名）
 @require_POST
 @login_required(login_url='/01userlogin/')
 def add_comment(request, post_id):
     post = get_object_or_404(ChatInteraction, pk=post_id)
-    comment_text = request.POST.get('comment', '').strip()
+    comment_text = (request.POST.get('comment') or '').strip()
     user_id_str = str(request.user.id)
 
-    # ✅ 必填檢查
     if not comment_text:
         return JsonResponse({'error': '留言不能為空'}, status=400)
 
-    # ✅ 清洗（不允許任何 HTML 標籤）
+    # 留言不允許 HTML
     safe_text = bleach.clean(comment_text, tags=[], attributes={}, strip=True)
-
-    # ✅ 長度限制（與前端 maxlength=300 一致）
     if len(safe_text) > 300:
         return JsonResponse({'error': '留言超過 300 字上限'}, status=400)
 
-    # 取得既有留言
+    # 讀取個人暱稱
+    prof = ThisUserProfile.objects.filter(gmail=request.user.email).first()
+    nick1 = (prof.default_nickname1 or "").strip() if prof else ""
+    nick2 = (prof.default_nickname2 or "").strip() if prof else ""
+
+    identity = request.POST.get('comment_identity', 'anonymous')
+    if identity == 'nickname1' and nick1:
+        nickname = nick1
+    elif identity == 'nickname2' and nick2:
+        nickname = nick2
+    else:
+        nickname = "(匿名)"
+
+    # 取既有留言（存於文字欄位 comments 內，內容是 JSON 字串）
     try:
         comments = json.loads(getattr(post, 'comments', '[]') or '[]')
     except json.JSONDecodeError:
         comments = []
 
-    # 新增留言
     comment_time = timezone.now().strftime("%Y-%m-%d %H:%M:%S")
     comments.append({
         'user_id': user_id_str,
-        'nickname': "(匿名)",
+        'nickname': nickname,
         'content': safe_text,
         'time': comment_time
     })
@@ -2351,89 +2372,93 @@ def add_comment(request, post_id):
     return JsonResponse({'success': True, 'comments': comments})
 
 
-# ❌ 刪除留言（用 user_id + time 判斷）
+# ❌ 刪除留言（以 user_id + time 匹配）
 @require_POST
 @login_required(login_url='/01userlogin/')
 def delete_comment(request, post_id):
     post = get_object_or_404(ChatInteraction, pk=post_id)
-    comment_time = request.POST.get('time', '').strip()
+    comment_time = (request.POST.get('time') or '').strip()
     user_id_str = str(request.user.id)
 
-    # ✅ 必填檢查
     if not comment_time:
         return JsonResponse({'error': '缺少留言時間'}, status=400)
 
-    # 取得既有留言
     try:
         comments = json.loads(getattr(post, 'comments', '[]') or '[]')
     except json.JSONDecodeError:
         comments = []
 
-    # 找出該使用者該時間的留言
     target = next((c for c in comments if c.get('time') == comment_time and c.get('user_id') == user_id_str), None)
     if not target:
         return JsonResponse({'error': '留言不存在或你無權刪除'}, status=404)
 
-    # 移除留言
     comments = [c for c in comments if not (c.get('time') == comment_time and c.get('user_id') == user_id_str)]
     post.comments = json.dumps(comments, ensure_ascii=False)
     post.save(update_fields=['comments'])
 
     return JsonResponse({'success': True, 'comments': comments})
 
+
+# ✏️ 編輯留言（以 user_id + time 匹配）
 @require_POST
-@login_required
+@login_required(login_url='/01userlogin/')
 def edit_comment(request, post_id, time):
-    import json
-    data = json.loads(request.body)
-    new_content = data.get("content", "").strip()
+    post = get_object_or_404(ChatInteraction, pk=post_id)
+    try:
+        payload = json.loads(request.body.decode('utf-8'))
+    except json.JSONDecodeError:
+        return JsonResponse({"success": False, "error": "不合法的內容"})
+
+    new_content = (payload.get("content") or "").strip()
     if not new_content:
         return JsonResponse({"success": False, "error": "內容不能為空"})
 
-    post = get_object_or_404(ChatInteraction, pk=post_id)
-    comments = post.comment_list
-    for comment in comments:
-        if comment["time"] == time and str(comment["user_id"]) == str(request.user.id):
-            comment["content"] = new_content
-            post.comment_list = comments
-            post.save()
-            return JsonResponse({"success": True})
+    # 不允許 HTML
+    safe_text = bleach.clean(new_content, tags=[], attributes={}, strip=True)
+    if len(safe_text) > 300:
+        return JsonResponse({"success": False, "error": "留言超過 300 字上限"})
 
-    return JsonResponse({"success": False, "error": "沒有權限編輯這則留言"})
-
-
-
-from django.core.paginator import Paginator
-
-def post_comments(request, post_id):
-    post = get_object_or_404(ChatInteraction, pk=post_id)
-
-    # 取留言列表
     try:
         comments = json.loads(getattr(post, 'comments', '[]') or '[]')
     except json.JSONDecodeError:
         comments = []
 
-    # 分頁（每頁 10 則，可自行調整）
+    user_id_str = str(request.user.id)
+    updated = False
+    for c in comments:
+        if c.get("time") == time and str(c.get("user_id")) == user_id_str:
+            c["content"] = safe_text
+            updated = True
+            break
+
+    if not updated:
+        return JsonResponse({"success": False, "error": "沒有權限編輯這則留言"})
+
+    post.comments = json.dumps(comments, ensure_ascii=False)
+    post.save(update_fields=['comments'])
+    return JsonResponse({"success": True})
+
+
+# 查看全部留言（分頁）
+from django.core.paginator import Paginator
+def post_comments(request, post_id):
+    post = get_object_or_404(ChatInteraction, pk=post_id)
+
+    try:
+        comments = json.loads(getattr(post, 'comments', '[]') or '[]')
+    except json.JSONDecodeError:
+        comments = []
+
     paginator = Paginator(comments, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    return render(
-        request,
-        'post_comments.html',
-        {
-            'post': post,
-            'page_obj': page_obj,          # 當頁留言 list
-            'total_comments': len(comments)
-        }
-    )
-
-
-
-
-
-
+    return render(request, 'post_comments.html', {
+        'post': post,
+        'page_obj': page_obj,
+        'total_comments': len(comments),
+    })
+# ------------ /交流區後端（整合版）------------
 
 
 
