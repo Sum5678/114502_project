@@ -290,41 +290,58 @@ def police_address_delete(request, pk):
     return redirect('police_address_list')  # 刪除後回到列表頁
 
 #用戶管理的東西
-from django.shortcuts import render, redirect, get_object_or_404
-from .models import ThisUserProfile
-from .forms import ThisUserProfileForm
+from django.shortcuts import render, get_object_or_404, redirect
+from django.db.models import Q
+from .models import ThisUserProfile   # 假設你的 Model 名稱是 ThisUserProfile
+from django.utils import timezone
 
-def user_list(request):
-    users = ThisUserProfile.objects.all()
-    return render(request, "user_admin_list.html", {"users": users})
+# 使用者列表
+def user_admin_list(request):
+    users = ThisUserProfile.objects.all().order_by('-created_at')
+    return render(request, 'user_admin_list.html', {'users': users})
 
-def user_create(request):
-    if request.method == "POST":
-        form = ThisUserProfileForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect("user_list")
-    else:
-        form = ThisUserProfileForm()
-    return render(request, "user_form.html", {"form": form, "title": "新增使用者"})
+# 搜尋用戶
+def user_admin_search(request):
+    query = request.GET.get('q', '')
+    results = []
+    if query:
+        results = ThisUserProfile.objects.filter(
+            Q(username__icontains=query) |
+            Q(gmail__icontains=query) |
+            Q(default_nickname1__icontains=query) |
+            Q(default_nickname2__icontains=query)
+        )
+    return render(request, 'user_admin_list.html', {
+        'users': results,
+        'query': query,
+    })
 
-def user_edit(request, pk):
-    user = get_object_or_404(ThisUserProfile, pk=pk)
-    if request.method == "POST":
-        form = ThisUserProfileForm(request.POST, instance=user)
-        if form.is_valid():
-            form.save()
-            return redirect("user_list")
-    else:
-        form = ThisUserProfileForm(instance=user)
-    return render(request, "user_form.html", {"form": form, "title": "編輯使用者"})
+# 編輯用戶
+def user_admin_edit(request, user_id):
+    user = get_object_or_404(ThisUserProfile, id=user_id)
 
-def user_delete(request, pk):
-    user = get_object_or_404(ThisUserProfile, pk=pk)
-    if request.method == "POST":
+    if request.method == 'POST':
+        user.username = request.POST.get('username', user.username)
+        user.gmail = request.POST.get('gmail', user.gmail)
+        user.default_nickname1 = request.POST.get('default_nickname1', user.default_nickname1)
+        user.default_nickname2 = request.POST.get('default_nickname2', user.default_nickname2)
+        user.emergency_contact_phone = request.POST.get('emergency_contact_phone', user.emergency_contact_phone)
+        user.emergency_contact_gmail = request.POST.get('emergency_contact_gmail', user.emergency_contact_gmail)
+        user.default_message = request.POST.get('default_message', user.default_message)
+        user.self_intro = request.POST.get('self_intro', user.self_intro)
+        user.status_color = request.POST.get('status_color', user.status_color)
+        user.save()
+        return redirect('user_admin_list')
+
+    return render(request, 'user_admin_edit.html', {'user': user})
+
+# 刪除用戶
+def user_admin_delete(request, user_id):
+    user = get_object_or_404(ThisUserProfile, id=user_id)
+    if request.method == 'POST':
         user.delete()
-        return redirect("user_list")
-    return render(request, "user_confirm_delete.html", {"user": user})
+        return redirect('user_admin_list')
+    return render(request, 'user_admin_delete.html', {'user': user})
 
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
