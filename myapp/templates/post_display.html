@@ -16,93 +16,294 @@
   <link href="{% static 'assets/vendor/glightbox/css/glightbox.min.css' %}" rel="stylesheet">
   <link href="{% static 'assets/vendor/swiper/swiper-bundle.min.css' %}" rel="stylesheet">
   <link href="{% static 'assets/css/main.css' %}" rel="stylesheet">
- <style>
-    body { background-color: #fff; padding-top: 10px; font-family: "Microsoft JhengHei", sans-serif; }
-    .section-title { text-align: center; margin-top: 60px; margin-bottom: 30px; }
-    .section-title h2 { display: inline-block; position: relative; font-weight: 700; font-size: 28px; color: #033e6b; padding: 0 20px; }
-    .section-title h2::before, .section-title h2::after { content: ""; position: absolute; top: 50%; width: 60px; height: 2px; background: #0d6efd; }
-    .section-title h2::before { left: -70px; }
-    .section-title h2::after { right: -70px; }
-    .section-title p { margin-top: 10px; font-size: 16px; color: #555; }
-    .card { border-left: 8px solid #ccc; }
-    .card .card-body { background: #fff; border-radius: 6px; position: relative; }
-    .card .card-title { font-weight: 700; color: #033e6b; }
-    .card .card-text { color: #444; font-size: 15px; }
-    .meta { font-size: 13px; color: #888; }
-    .interaction-bar { border-top: 1px solid #ddd; border-bottom: 1px solid #ddd; padding: 8px 0; display: flex; justify-content: space-between; align-items: center; font-size: 14px; color: #555; }
-    .interaction-bar div { display: flex; align-items: center; gap: 8px; }
-    .interaction-actions { display: flex; justify-content: space-between; flex-wrap: wrap; align-items: center; padding-top: 8px; }
-    .interaction-actions-left, .interaction-actions-right { display: flex; gap: 24px; align-items: center; }
-    .interaction-actions button { background: none; border: none; color: #555; font-size: 15px; display: flex; align-items: center; gap: 6px; cursor: pointer; }
-    .interaction-actions .liked { color: #dc3545; font-weight: 700; }
+<style>
+  body {
+    background-color: #fff;
+    padding-top: 10px;
+    font-family: "Microsoft JhengHei", sans-serif;
+  }
 
-    /* 右上角收藏按鈕 */
-    .save-top-right { position: absolute; top: 12px; right: 12px; }
-    .save-top-right button {
-      background: rgba(255,255,255,0.95);
-      border: 1px solid #e6f3fb;
-      border-radius: 999px;
-      padding: 6px 12px;
-      font-size: 14px;
-      color: #033e6b;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-      cursor: pointer;
-    }
-    .save-top-right .bi-star-fill { color: #f0ad4e; }
+  .section-title {
+    text-align: center;
+    margin-top: 60px;
+    margin-bottom: 30px;
+  }
 
-    .btn-floating-post {
-      position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; background-color: #63b3ed; color: white;
-      border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 28px;
-      text-decoration: none; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 1000; transition: background-color 0.3s ease;
-    }
-    .btn-floating-post:hover { background-color: #4299e1; color: white; text-decoration: none; }
-    input[name="q"]::placeholder { color: #5a7ca9; }
-    input[name="q"]:focus { box-shadow: none; }
+  .section-title h2 {
+    display: inline-block;
+    position: relative;
+    font-weight: 700;
+    font-size: 28px;
+    color: #033e6b;
+    padding: 0 20px;
+  }
 
-    .nav-right-group { display: flex; align-items: center; gap: 10px; }
-    .scroll-top-nav {
-      background-color: transparent; color: #63b3ed; font-size: 20px; width: 36px; height: 36px; border-radius: 50%;
-      border: 2px solid #63b3ed; display: flex; justify-content: center; align-items: center; cursor: pointer;
-      z-index: 1050; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); transition: all 0.3s ease;
-    }
-    .scroll-top-nav:hover { background-color: #63b3ed; color: white; }
-    .scroll-top-wrapper { display: none; flex-direction: column; align-items: center; }
-    .scroll-top-text { font-size: 10px; color: #63b3ed; margin-top: 4px; }
-    @media (max-width: 991.98px) {
-      .nav-right-group { order: 1; margin-left: auto; }
-      .scroll-top-wrapper { align-items: center; }
-    }
+  .section-title h2::before,
+  .section-title h2::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    width: 60px;
+    height: 2px;
+    background: #0d6efd;
+  }
 
-    /* ===== 未登入提示 Modal：淺藍色系 ===== */
-    #authRequiredModal .modal-content {
-      border-radius: 14px;
-      border: none;
-      background-color: #f0faff; /* 淺藍底 */
-    }
-    #authRequiredModal .modal-body { color: #033e6b; }
-    #authRequiredModal h5 { color: #033e6b; font-weight: 700; }
-    #authRequiredModal p { color: #055a8c; }
+  .section-title h2::before { left: -70px; }
+  .section-title h2::after  { right: -70px; }
 
-    #authRequiredModal .modal-icon { color: #63b3ed; }
-    #authRequiredModal .btn-primary { background-color: #63b3ed; border-color: #63b3ed; }
-    #authRequiredModal .btn-primary:hover { background-color: #4299e1; border-color: #4299e1; }
-    #authRequiredModal .btn-outline-secondary { border-color: #a7e0ff; color: #033e6b; background-color: transparent; }
-    #authRequiredModal .btn-outline-secondary:hover { background-color: #e6f3fb; border-color: #63b3ed; color: #033e6b; }
+  .section-title p {
+    margin-top: 10px;
+    font-size: 16px;
+    color: #555;
+  }
 
-    /* 查看全部留言按鈕（淺藍色系） */
-    .btn-outline-primary {
-      color: #63b3ed; /* 文字顏色 */
-      border-color: #63b3ed; /* 邊框顏色 */
-    }
-    .btn-outline-primary:hover {
-      color: #fff; /* 滑過時文字變白 */
-      background-color: #63b3ed; /* 滑過時背景色 */
-      border-color: #63b3ed;
-    }
+  .card { border-left: 8px solid #ccc; }
+
+  .card .card-body {
+    background: #fff;
+    border-radius: 6px;
+    position: relative;
+  }
+
+  .card .card-title {
+    font-weight: 700;
+    color: #033e6b;
+  }
+
+  .card .card-text {
+    color: #444;
+    font-size: 15px;
+  }
+
+  .meta {
+    font-size: 13px;
+    color: #888;
+  }
+
+  .interaction-bar {
+    border-top: 1px solid #ddd;
+    border-bottom: 1px solid #ddd;
+    padding: 8px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+    color: #555;
+  }
+
+  .interaction-bar div {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .interaction-actions {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    align-items: center;
+    padding-top: 8px;
+  }
+
+  .interaction-actions-left,
+  .interaction-actions-right {
+    display: flex;
+    gap: 24px;
+    align-items: center;
+  }
+
+  .interaction-actions button {
+    background: none;
+    border: none;
+    color: #555;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+  }
+
+  .interaction-actions .liked {
+    color: #dc3545;
+    font-weight: 700;
+  }
+
+  /* 右上角收藏按鈕 */
+  .save-top-right {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+  }
+
+  .save-top-right button {
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid #e6f3fb;
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 14px;
+    color: #033e6b;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    cursor: pointer;
+  }
+
+  .save-top-right .bi-star-fill { color: #f0ad4e; }
+
+  .btn-floating-post {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 60px;
+    height: 60px;
+    background-color: #63b3ed;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 28px;
+    text-decoration: none;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    transition: background-color 0.3s ease;
+  }
+
+  .btn-floating-post:hover {
+    background-color: #4299e1;
+    color: white;
+    text-decoration: none;
+  }
+
+  input[name="q"]::placeholder { color: #5a7ca9; }
+  input[name="q"]:focus       { box-shadow: none; }
+
+  .nav-right-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .scroll-top-nav {
+    background-color: transparent;
+    color: #63b3ed;
+    font-size: 20px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2px solid #63b3ed;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    z-index: 1050;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+  }
+
+  .scroll-top-nav:hover {
+    background-color: #63b3ed;
+    color: white;
+  }
+
+  .scroll-top-wrapper {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .scroll-top-text {
+    font-size: 10px;
+    color: #63b3ed;
+    margin-top: 4px;
+  }
+
+  @media (max-width: 991.98px) {
+    .nav-right-group { order: 1; margin-left: auto; }
+    .scroll-top-wrapper { align-items: center; }
+  }
+
+  /* 未登入提示 Modal：淺藍色系 */
+  #authRequiredModal .modal-content {
+    border-radius: 14px;
+    border: none;
+    background-color: #f0faff; /* 淺藍底 */
+  }
+
+  #authRequiredModal .modal-body { color: #033e6b; }
+
+  #authRequiredModal h5 {
+    color: #033e6b;
+    font-weight: 700;
+  }
+
+  #authRequiredModal p { color: #055a8c; }
+
+  #authRequiredModal .modal-icon { color: #63b3ed; }
+
+  #authRequiredModal .btn-primary {
+    background-color: #63b3ed;
+    border-color: #63b3ed;
+  }
+
+  #authRequiredModal .btn-primary:hover {
+    background-color: #4299e1;
+    border-color: #4299e1;
+  }
+
+  #authRequiredModal .btn-outline-secondary {
+    border-color: #a7e0ff;
+    color: #033e6b;
+    background-color: transparent;
+  }
+
+  #authRequiredModal .btn-outline-secondary:hover {
+    background-color: #e6f3fb;
+    border-color: #63b3ed;
+    color: #033e6b;
+  }
+
+  /* 查看全部留言按鈕（淺藍色系） */
+  .btn-outline-primary {
+    color: #63b3ed;
+    border-color: #63b3ed;
+  }
+
+  .btn-outline-primary:hover {
+    color: #fff;
+    background-color: #63b3ed;
+    border-color: #63b3ed;
+  }
+
+  /* 身分選擇：膠囊 Segmented 風格 */
+  .identity-group .btn {
+    border-color: #a7e0ff;
+    color: #033e6b;
+    background: #f0faff;
+    padding: 4px 10px;
+    border-radius: 999px !important;
+  }
+
+  .identity-group .btn:hover { background: #e6f3fb; }
+
+  .identity-group .btn-check:checked + .btn {
+    background: #63b3ed;
+    color: #fff;
+    border-color: #63b3ed;
+  }
+
+  .identity-label {
+    font-size: 12px;
+    color: #5a7ca9;
+    margin-right: 8px;
+  }
+
+  @media (max-width: 576px) {
+    .identity-group { gap: 6px; }
+  }
 </style>
+
 
 </head>
 <body>
@@ -334,43 +535,49 @@
           data-post-id="{{ post.interaction_id }}">
       {% csrf_token %}
 
-      <!-- ✅ 新增：留言身分選擇（與「我要發文」一致） -->
-      <div class="mb-2 d-flex flex-wrap align-items-center" style="gap:14px;">
-        <span class="small text-muted">以誰的身分留言：</span>
+      <!-- ✅ 身分選擇：膠囊 Segmented（Bootstrap btn-check） -->
+<div class="d-flex align-items-center flex-wrap mb-2" style="gap:10px;">
+  <span class="identity-label">以誰的身分留言：</span>
 
-        <div class="form-check" style="display:flex;align-items:center;gap:6px;margin:0;">
-          <input class="form-check-input" type="radio" name="comment_identity" value="nickname1"
-                 {% if profile_nickname1 %}checked{% else %}disabled{% endif %}>
-          <label class="form-check-label small">
-            暱稱 1
-            {% if profile_nickname1 %}
-              ：<strong>{{ profile_nickname1 }}</strong>
-            {% else %}
-              ：<span class="text-muted">(未設定)</span>
-            {% endif %}
-          </label>
-        </div>
+  <div class="btn-group btn-group-sm identity-group flex-wrap" role="group" aria-label="留言身分">
+    {# 計算預設勾選邏輯：有暱稱1就勾1；不然有暱稱2就勾2；否則匿名 #}
+    {% with has1=profile_nickname1|length has2=profile_nickname2|length %}
+      {# 暱稱1 #}
+      <input type="radio" class="btn-check"
+             name="comment_identity"
+             id="ci1-{{ post.interaction_id }}"
+             value="nickname1"
+             {% if has1 %}{% if has1 %}checked{% endif %}{% else %}disabled{% endif %}>
+      <label class="btn" for="ci1-{{ post.interaction_id }}">
+        <i class="bi bi-person-badge"></i>
+        暱稱 1{% if has1 %}：{{ profile_nickname1 }}{% else %}（未設定）{% endif %}
+      </label>
 
-        <div class="form-check" style="display:flex;align-items:center;gap:6px;margin:0;">
-          <input class="form-check-input" type="radio" name="comment_identity" value="nickname2"
-                 {% if not profile_nickname1 and profile_nickname2 %}checked{% elif not profile_nickname2 %}disabled{% endif %}>
-          <label class="form-check-label small">
-            暱稱 2
-            {% if profile_nickname2 %}
-              ：<strong>{{ profile_nickname2 }}</strong>
-            {% else %}
-              ：<span class="text-muted">(未設定)</span>
-            {% endif %}
-          </label>
-        </div>
+      {# 暱稱2 #}
+      <input type="radio" class="btn-check"
+             name="comment_identity"
+             id="ci2-{{ post.interaction_id }}"
+             value="nickname2"
+             {% if not has1 and has2 %}checked{% endif %}
+             {% if not has2 %}disabled{% endif %}>
+      <label class="btn" for="ci2-{{ post.interaction_id }}">
+        <i class="bi bi-person-badge"></i>
+        暱稱 2{% if has2 %}：{{ profile_nickname2 }}{% else %}（未設定）{% endif %}
+      </label>
 
-        <div class="form-check" style="display:flex;align-items:center;gap:6px;margin:0;">
-          <input class="form-check-input" type="radio" name="comment_identity" value="anonymous"
-                 {% if not profile_nickname1 and not profile_nickname2 %}checked{% endif %}>
-          <label class="form-check-label small">(匿名)</label>
-        </div>
-      </div>
-      <!-- /新增 -->
+      {# 匿名 #}
+      <input type="radio" class="btn-check"
+             name="comment_identity"
+             id="ciA-{{ post.interaction_id }}"
+             value="anonymous"
+             {% if not has1 and not has2 %}checked{% endif %}>
+      <label class="btn" for="ciA-{{ post.interaction_id }}">
+        <i class="bi bi-incognito"></i> (匿名)
+      </label>
+    {% endwith %}
+  </div>
+</div>
+
 
       <div class="input-group mt-2">
         <input type="text" name="comment" class="form-control" placeholder="寫點什麼…" maxlength="300" required>
