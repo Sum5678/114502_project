@@ -49,10 +49,10 @@ urlpatterns = [
     path('admin/', admin.site.urls),
 
     #用戶管理的部分
-    path('users/', views.user_list, name='user_admin_list'),
-    #path("users/create/", views.user_create, name="user_create"),
-    path("users/<int:pk>/edit/", views.user_edit, name="user_edit"),
-    path("users/<int:pk>/delete/", views.user_delete, name="user_delete"),    
+    path('users/', views.user_admin_list, name='user_admin_list'),
+    path('search/', views.user_admin_search, name='user_admin_search'),
+    path('edit/<int:user_id>/', views.user_admin_edit, name='user_admin_edit'),
+    path('delete/<int:user_id>/', views.user_admin_delete, name='user_admin_delete'),
 
     #台灣縣市和行政區/最近警局/教育網頁的部分
     path('harassment_prevention/', views.harassment_prevention, name='harassment_prevention'),
