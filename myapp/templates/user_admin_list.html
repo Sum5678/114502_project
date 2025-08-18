@@ -2,62 +2,203 @@
 {% load static %}
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8">
-  <title>使用者管理</title>
-  <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>使用者管理系統</title>
+
+  <link href="{% static 'assets/img/favicon.png' %}" rel="icon" />
+  <link href="{% static 'assets/img/apple-touch-icon.png' %}" rel="apple-touch-icon" />
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700|Nunito:300,400,600,700,800|Poppins:300,400,500,600,700" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/boxicons/2.1.0/css/boxicons.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css" rel="stylesheet" />
+  <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet" />
+  <link href="{% static 'assets/vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet" />
+  <link href="{% static 'assets/css/main.css' %}" rel="stylesheet" />
+
+  <style>
+    a.btn-custom,
+    button.btn-custom {
+      background-color: #4caf50;
+      color: white;
+      border-radius: 4px;
+      padding: 6px 12px;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      display: inline-block;
+    }
+    a.btn-custom:hover,
+    button.btn-custom:hover {
+      background-color: #45a049;
+      color: white;
+      text-decoration: none;
+    }
+    a.btn-delete,
+    button.btn-delete {
+      background-color: #f44336;
+      color: white;
+      border-radius: 4px;
+      padding: 6px 12px;
+      border: none;
+      cursor: pointer;
+      display: inline-block;
+      text-decoration: none;
+    }
+    a.btn-delete:hover,
+    button.btn-delete:hover {
+      background-color: #c0392b;
+      color: white;
+      text-decoration: none;
+    }
+  </style>
 </head>
-<body class="p-4">
 
-  <h2 class="mb-4">使用者管理</h2>
+<body class="index-page">
+  <header id="header" class="header d-flex align-items-center fixed-top">
+    <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
+      <a href="{% url 'admin_index' %}" class="logo d-flex flex-column align-items-start me-auto me-xl-0">
+        <h1 class="sitename">台灣地區管理系統</h1>
+      </a>
 
-  <!-- 搜尋 -->
-  <form method="get" action="{% url 'user_admin_search' %}" class="mb-3 d-flex">
-    <input type="text" name="q" class="form-control me-2" placeholder="搜尋用戶 (帳號、信箱、暱稱)">
-    <button type="submit" class="btn btn-primary">搜尋</button>
-  </form>
+      <nav id="navmenu" class="navmenu">
+        <ul>
+          <li><a href="{% url 'admin_index' %}#hero" class="active">管理員主頁</a></li>
+          <li><a href="{% url 'admin_interview' %}">管理員自我介紹</a></li>
+          <li class="dropdown"><a href="#"><span>清單審核</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+            <ul>
+              <li><a href="{% url 'pemap_judge' %}">事件清單審核</a></li>
+              <li><a href="{% url 'store_judge' %}">商家清單審核</a></li>
+            </ul>
+          </li>
+          <li class="dropdown"><a href="#"><span>我的審核紀錄</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+            <ul>
+              <li><a href="{% url 'admin_decide' %}">事件審核紀錄</a></li>
+              <li><a href="{% url 'store_decide' %}">商家審核紀錄</a></li>
+            </ul>
+          </li>
+          <li class="dropdown"><a href="#"><span>管理工具</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+            <ul>
+              <li><a href="{% url 'user_admin_list' %}">用戶管理</a></li>
+              <li><a href="{% url 'education_list' %}">教育網頁管理</a></li>
+              <li><a href="{% url 'taiwan_regions_admin' %}">台灣縣市管理</a></li>
+              <li><a href="{% url 'police_address_list' %}">最近警局管理</a></li>
+            </ul>
+          </li>
+        </ul>
+        <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+      </nav>
+      <a class="btn-getstarted" href="{% url 'admin_logout' %}">登出</a>
+    </div>
+  </header>
 
-  <!-- 使用者列表 -->
-  <table class="table table-bordered table-striped">
-    <thead class="table-dark">
-      <tr>
-        <th>ID</th>
-        <th>帳號</th>
-        <th>Email</th>
-        <th>暱稱1</th>
-        <th>暱稱2</th>
-        <th>緊急聯絡電話</th>
-        <th>緊急聯絡Email</th>
-        <th>狀態顏色</th>
-        <th>建立時間</th>
-        <th>操作</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for user in users %}
-      <tr>
-        <td>{{ user.id }}</td>
-        <td>{{ user.username }}</td>
-        <td>{{ user.gmail }}</td>
-        <td>{{ user.default_nickname1 }}</td>
-        <td>{{ user.default_nickname2 }}</td>
-        <td>{{ user.emergency_contact_phone }}</td>
-        <td>{{ user.emergency_contact_gmail }}</td>
-        <td>
-          <span style="color: {{ user.status_color }};">{{ user.status_color }}</span>
-        </td>
-        <td>{{ user.created_at|date:"Y-m-d H:i" }}</td>
-        <td>
-          <a href="{% url 'user_admin_edit' user.id %}" class="btn btn-sm btn-warning">編輯</a>
-          <a href="{% url 'user_admin_delete' user.id %}" class="btn btn-sm btn-danger">刪除</a>
-        </td>
-      </tr>
-      {% empty %}
-      <tr>
-        <td colspan="10" class="text-center">沒有找到任何使用者</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  <main class="main">
+        <section class="hero">
+      <img src="{% static 'assets/img/1.png' %}" alt="Hero Image">
+    </section>
+    <section class="section light-background">
+      <div class="container" data-aos="fade-up">
+        <div class="main-content bg-white p-4 shadow rounded">
+          <h2 class="mb-4">用戶管理</h2>
 
+          <!-- 搜尋功能 -->
+          <form method="get" action="{% url 'user_admin_search' %}" class="mb-3 d-flex">
+            <input type="text" name="q" class="form-control me-2" placeholder="搜尋使用者名稱、信箱或暱稱">
+            <button type="submit" class="btn btn-custom">搜尋</button>
+          </form>
+
+          <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle text-center">
+              <thead class="table-primary">
+                <tr>
+                  <th>ID</th>
+                  <th>使用者名稱</th>
+                  <th>Gmail</th>
+                  <th>暱稱1</th>
+                  <th>暱稱2</th>
+                  <th>緊急聯絡電話</th>
+                  <th>緊急聯絡Gmail</th>
+                  <th>預設訊息</th>
+                  <th>自我介紹</th>
+                  <th>創建時間</th>
+                  <th>使用者圖片</th>
+                  <th>狀態顏色</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for user in users %}
+                <tr>
+                  <td>{{ user.id }}</td>
+                  <td>{{ user.username }}</td>
+                  <td>{{ user.gmail }}</td>
+                  <td>{{ user.default_nickname1 }}</td>
+                  <td>{{ user.default_nickname2 }}</td>
+                  <td>{{ user.emergency_contact_phone }}</td>
+                  <td>{{ user.emergency_contact_gmail }}</td>
+                  <td>{{ user.default_message }}</td>
+                  <td>{{ user.self_intro }}</td>
+                  <td>{{ user.created_at }}</td>
+                  <td>
+                    {% if user.user_images %}
+                      <img src="{{ user.user_images }}" alt="User Image" width="50" height="50">
+                    {% else %}
+                      -
+                    {% endif %}
+                  </td>
+                  <td>{{ user.status_color }}</td>
+                  <td>
+                    <a href="{% url 'user_admin_edit' user.id %}" class="btn btn-custom btn-sm">編輯</a>
+                    <button type="button" class="btn btn-delete btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal{{ user.id }}">
+                      刪除
+                    </button>
+
+                    <!-- 刪除 Modal -->
+                    <div class="modal fade" id="deleteModal{{ user.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ user.id }}" aria-hidden="true">
+                      <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                          <form method="post" action="{% url 'user_admin_delete' user.id %}">
+                            {% csrf_token %}
+                            <div class="modal-header">
+                              <h5 class="modal-title" id="deleteModalLabel{{ user.id }}">⚠️ 系統提示</h5>
+                              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body text-start">
+                              你確定要刪除以下使用者嗎？
+                              <ul>
+                                <li><strong>名稱：</strong>{{ user.username }}</li>
+                                <li><strong>Gmail：</strong>{{ user.gmail }}</li>
+                              </ul>
+                            </div>
+                            <div class="modal-footer">
+                              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                              <button type="submit" class="btn btn-danger">確認刪除</button>
+                            </div>
+                          </form>
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="13">目前沒有使用者資料</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer position-relative light-background">
+    <div class="container text-center mt-4">
+      <p>© 2025 台灣地區管理系統. All Rights Reserved.</p>
+    </div>
+  </footer>
+
+  <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+  <script src="{% static 'assets/js/main.js' %}"></script>
 </body>
 </html>

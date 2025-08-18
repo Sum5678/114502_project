@@ -297,7 +297,7 @@ from django.utils import timezone
 
 # 使用者列表
 def user_admin_list(request):
-    users = ThisUserProfile.objects.all().order_by('-created_at')
+    users = ThisUserProfile.objects.all().order_by('id') #id由小到大
     return render(request, 'user_admin_list.html', {'users': users})
 
 # 搜尋用戶
