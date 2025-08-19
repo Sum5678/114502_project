@@ -2642,12 +2642,14 @@ def chat_messages_api(request, room_id):
     if request.method == 'GET':
         messages = ChatMessage.objects.filter(region=room_id).order_by('timestamp')
         data = [{
-            'nickname': msg.nickname,  # 這裡加上 nickname
+            'id': msg.id,
+            'nickname': msg.nickname,
             'user_id': msg.user.username if msg.user else '匿名',
             'message': msg.message,
             'timestamp': msg.timestamp.strftime('%Y-%m-%d %H:%M:%S')
         } for msg in messages]
         return JsonResponse(data, safe=False)
+
 
 # 發送訊息（POST）
 from django.http import JsonResponse
@@ -2657,29 +2659,44 @@ from .models import ChatMessage, ThisUserProfile
 from django.contrib.auth.decorators import login_required
 
 @login_required
+@csrf_exempt
 def chat_send_api(request, room_id):
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            message = data.get('message')
-            if not message:
-                return JsonResponse({'status': 'error', 'msg': '訊息不能為空'})
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'msg': '僅接受 POST'}, status=405)
 
-            # 找到 ThisUserProfile
-            user_profile = ThisUserProfile.objects.get(gmail=request.user.email)
+    try:
+        data = json.loads(request.body)
+    except Exception:
+        return JsonResponse({'status': 'error', 'msg': '資料格式錯誤'})
 
-            ChatMessage.objects.create(
-                user=user_profile,
-                region=str(room_id),
-                message=message
-            )
-            return JsonResponse({'status': 'success'})
-        except ThisUserProfile.DoesNotExist:
-            return JsonResponse({'status': 'error', 'msg': '請先至個人資料設定填寫email'})
-        except Exception as e:
-            return JsonResponse({'status': 'error', 'msg': str(e)})
-    else:
-        return JsonResponse({'status': 'error', 'msg': '只接受 POST'}, status=405)
+    message_text = data.get('message', '').strip()
+    nickname = data.get('nickname', '').strip()
+
+    if not message_text:
+        return JsonResponse({'status': 'error', 'msg': '訊息不可為空'})
+
+    try:
+        user_profile = ThisUserProfile.objects.get(gmail=request.user.email)
+    except ThisUserProfile.DoesNotExist:
+        return JsonResponse({'status': 'error', 'msg': '找不到使用者資料'})
+
+    chat_msg = ChatMessage.objects.create(
+        user=user_profile,
+        region=room_id,   # ⚠️ 建議之後改成 chat_room ForeignKey
+        message=message_text,
+        nickname=nickname if nickname else None
+    )
+
+    return JsonResponse({
+        'status': 'ok',
+        'message': {
+            'id': chat_msg.id,  # 前端回覆引用時比較好用
+            'nickname': chat_msg.nickname,
+            'user_id': chat_msg.user.username,
+            'message': chat_msg.message,
+            'timestamp': chat_msg.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+        }
+    })
 
 
 
