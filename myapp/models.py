@@ -324,11 +324,25 @@ class ChatMessage(models.Model):
     )
     region = models.CharField(max_length=50, help_text="區域名稱")
     message = models.TextField()
-    nickname = models.CharField(max_length=100, blank=True, null=True)  # ✅ 加這行！
+    nickname = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(auto_now_add=True)
+
+    # ✅ 新增回覆功能
+    reply_to = models.ForeignKey(
+        'self',
+        null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name='replies'
+    )
 
     class Meta:
         db_table = 'chat_messages'
+
+    def __str__(self):
+        if self.reply_to:
+            return f"{self.nickname or self.user.username} 回覆 {self.reply_to.id}: {self.message[:20]}"
+        return f"{self.nickname or self.user.username}: {self.message[:20]}"
+
 
 
 

@@ -297,7 +297,7 @@ from django.utils import timezone
 
 # 使用者列表
 def user_admin_list(request):
-    users = ThisUserProfile.objects.all().order_by('id') #id由小到大
+    users = ThisUserProfile.objects.all().order_by('-created_at')
     return render(request, 'user_admin_list.html', {'users': users})
 
 # 搜尋用戶
@@ -2646,57 +2646,37 @@ def chat_messages_api(request, room_id):
             'nickname': msg.nickname,
             'user_id': msg.user.username if msg.user else '匿名',
             'message': msg.message,
+            'reply_to_id': msg.reply_to.id if msg.reply_to else None,
+            'reply_to_text': msg.reply_to.message if msg.reply_to else None,
             'timestamp': msg.timestamp.strftime('%Y-%m-%d %H:%M:%S')
         } for msg in messages]
         return JsonResponse(data, safe=False)
 
 
-# 發送訊息（POST）
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-import json
-from .models import ChatMessage, ThisUserProfile
-from django.contrib.auth.decorators import login_required
-
 @login_required
-@csrf_exempt
 def chat_send_api(request, room_id):
-    if request.method != 'POST':
-        return JsonResponse({'status': 'error', 'msg': '僅接受 POST'}, status=405)
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            message = data.get('message')
+            if not message:
+                return JsonResponse({'status': 'error', 'msg': '訊息不能為空'})
 
-    try:
-        data = json.loads(request.body)
-    except Exception:
-        return JsonResponse({'status': 'error', 'msg': '資料格式錯誤'})
+            # 找到 ThisUserProfile
+            user_profile = ThisUserProfile.objects.get(gmail=request.user.email)
 
-    message_text = data.get('message', '').strip()
-    nickname = data.get('nickname', '').strip()
-
-    if not message_text:
-        return JsonResponse({'status': 'error', 'msg': '訊息不可為空'})
-
-    try:
-        user_profile = ThisUserProfile.objects.get(gmail=request.user.email)
-    except ThisUserProfile.DoesNotExist:
-        return JsonResponse({'status': 'error', 'msg': '找不到使用者資料'})
-
-    chat_msg = ChatMessage.objects.create(
-        user=user_profile,
-        region=room_id,   # ⚠️ 建議之後改成 chat_room ForeignKey
-        message=message_text,
-        nickname=nickname if nickname else None
-    )
-
-    return JsonResponse({
-        'status': 'ok',
-        'message': {
-            'id': chat_msg.id,  # 前端回覆引用時比較好用
-            'nickname': chat_msg.nickname,
-            'user_id': chat_msg.user.username,
-            'message': chat_msg.message,
-            'timestamp': chat_msg.timestamp.strftime('%Y-%m-%d %H:%M:%S')
-        }
-    })
+            ChatMessage.objects.create(
+                user=user_profile,
+                region=str(room_id),
+                message=message
+            )
+            return JsonResponse({'status': 'success'})
+        except ThisUserProfile.DoesNotExist:
+            return JsonResponse({'status': 'error', 'msg': '請先至個人資料設定填寫email'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'msg': str(e)})
+    else:
+        return JsonResponse({'status': 'error', 'msg': '只接受 POST'}, status=405)
 
 
 
@@ -2716,6 +2696,7 @@ def send_message(request, room_id):
 
         message_text = data.get('message')
         nickname = data.get('nickname', '').strip()
+        reply_to_id = data.get('reply_to_id')
 
         if not message_text:
             return JsonResponse({'status': 'error', 'msg': '訊息不可為空'})
@@ -2725,24 +2706,35 @@ def send_message(request, room_id):
         except ThisUserProfile.DoesNotExist:
             return JsonResponse({'status': 'error', 'msg': '找不到使用者資料'})
 
+        reply_to_msg = None
+        if reply_to_id:
+            try:
+                reply_to_msg = ChatMessage.objects.get(id=reply_to_id)
+            except ChatMessage.DoesNotExist:
+                pass  # 若找不到就忽略
+
         chat_msg = ChatMessage.objects.create(
             user=user_profile,
             region=room_id,
             message=message_text,
-            nickname=nickname if nickname else None
+            nickname=nickname if nickname else None,
+            reply_to=reply_to_msg
         )
 
-        # 回傳剛送出的訊息內容（含 nickname）
         return JsonResponse({
             'status': 'ok',
             'message': {
+                'id': chat_msg.id,
                 'nickname': chat_msg.nickname,
                 'message': chat_msg.message,
+                'reply_to_id': reply_to_msg.id if reply_to_msg else None,
+                'reply_to_text': reply_to_msg.message if reply_to_msg else None,
                 'timestamp': chat_msg.timestamp.strftime('%Y-%m-%d %H:%M:%S')
             }
         })
 
     return JsonResponse({'status': 'error', 'msg': '僅接受 POST'})
+
 
 
 #---------看自己收藏的聊天室---------------
