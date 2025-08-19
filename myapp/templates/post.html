@@ -44,6 +44,39 @@
     .form-check{ display:flex; align-items:center; gap:8px; margin-bottom:8px; }
     .form-check-input{ float:none; margin:0; width:18px; height:18px; }
     .form-check-label{ margin:0; line-height:1.2; }
+
+    .identity-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.identity-group .btn {
+  border: 1px solid #a7e0ff;
+  color: #033e6b;
+  background: #f0faff;
+  padding: 6px 14px;
+  border-radius: 999px !important; /* 膠囊感 */
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.identity-group .btn:hover {
+  background: #e6f3fb;
+}
+
+.identity-group .btn-check:checked + .btn {
+  background: #63b3ed;
+  color: #fff;
+  border-color: #63b3ed;
+  font-weight: bold;
+}
+
+.identity-group .btn i {
+  margin-right: 4px;
+}
+
   </style>
 </head>
 <body>
@@ -140,42 +173,34 @@
           <option value="open-peeps">插畫風</option>
         </select>
 
-        <!-- 發文身分選擇 -->
-        <div class="mb-3">
-          <label class="form-label d-block">發文身分</label>
+<!-- 發文身分選擇 -->
+<div class="mb-3">
+  <label class="form-label d-block">發文身分</label>
 
-          <div class="form-check mb-1">
-            <input class="form-check-input" type="radio" name="post_identity" id="identityNickname1"
-                   value="nickname1" {% if profile_nickname1 %}checked{% else %}disabled{% endif %}>
-            <label class="form-check-label" for="identityNickname1">
-              使用暱稱 1
-              {% if profile_nickname1 %}
-                ：<strong>{{ profile_nickname1 }}</strong>
-              {% else %}
-                ：<span class="text-muted">(未設定)</span>
-              {% endif %}
-            </label>
-          </div>
+  <div class="d-flex flex-wrap identity-group">
+    <!-- 暱稱1 -->
+    <input type="radio" class="btn-check" name="post_identity" id="identityNickname1"
+           value="nickname1" {% if profile_nickname1 %}checked{% else %}disabled{% endif %}>
+    <label class="btn" for="identityNickname1">
+      <i class="bi bi-person-badge"></i>
+      暱稱 1{% if profile_nickname1 %}：{{ profile_nickname1 }}{% else %}（未設定）{% endif %}
+    </label>
 
-          <div class="form-check mb-1">
-            <input class="form-check-input" type="radio" name="post_identity" id="identityNickname2"
-                   value="nickname2" {% if not profile_nickname1 and profile_nickname2 %}checked{% elif not profile_nickname2 %}disabled{% endif %}>
-            <label class="form-check-label" for="identityNickname2">
-              使用暱稱 2
-              {% if profile_nickname2 %}
-                ：<strong>{{ profile_nickname2 }}</strong>
-              {% else %}
-                ：<span class="text-muted">(未設定)</span>
-              {% endif %}
-            </label>
-          </div>
+    <!-- 暱稱2 -->
+    <input type="radio" class="btn-check" name="post_identity" id="identityNickname2"
+           value="nickname2" {% if not profile_nickname1 and profile_nickname2 %}checked{% elif not profile_nickname2 %}disabled{% endif %}>
+    <label class="btn" for="identityNickname2">
+      <i class="bi bi-person-badge"></i>
+      暱稱 2{% if profile_nickname2 %}：{{ profile_nickname2 }}{% else %}（未設定）{% endif %}
+    </label>
 
-          <div class="form-check">
-            <input class="form-check-input" type="radio" name="post_identity" id="identityAnonymous"
-                   value="anonymous" {% if not profile_nickname1 and not profile_nickname2 %}checked{% endif %}>
-            <label class="form-check-label" for="identityAnonymous">(匿名)</label>
-          </div>
-        </div>
+    <!-- 匿名 -->
+    <input type="radio" class="btn-check" name="post_identity" id="identityAnonymous"
+           value="anonymous" {% if not profile_nickname1 and not profile_nickname2 %}checked{% endif %}>
+    <label class="btn" for="identityAnonymous"><i class="bi bi-incognito"></i> 匿名</label>
+  </div>
+</div>
+
 
         <!-- 頭像 + 名稱預覽 -->
         <div class="avatar-preview">
