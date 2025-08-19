@@ -303,12 +303,28 @@
     .identity-group { gap: 6px; }
   }
 
-  /* ===== 我的收藏區塊 ===== */
-  #saved-posts .saved-scroll { overflow: auto; }
-  @media (min-width: 992px) {
-    #saved-posts .saved-scroll { max-height: 380px; }
-  }
-  .ring-highlight { outline: 2px solid rgba(13,110,253,.6); transition: outline 1.2s ease; }
+ /* 收藏區塊淺藍 header */
+.bg-light-blue {
+  background: #e6f3fb;
+  color: #033e6b;
+  border-bottom: 1px solid #d0e9fa;
+}
+
+/* 收藏卡片 hover 效果 */
+.hover-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border-radius: 12px;
+}
+.hover-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 18px rgba(99, 179, 237, 0.25);
+}
+
+/* 收藏區塊的滾動限制 */
+@media (min-width: 992px) {
+  #saved-posts .saved-scroll { max-height: 400px; overflow-y: auto; }
+}
+
 </style>
 
 
@@ -403,57 +419,61 @@
         </div>
       </form>
 
-      {# ===================== 我的收藏（新增區塊） ===================== #}
-      {% if request.user.is_authenticated %}
-      <section id="saved-posts" class="container mb-4 px-0">
-        <div class="d-flex align-items-center justify-content-between mb-2">
-          <h2 class="h5 m-0">🌟 我的收藏</h2>
-          <button class="btn btn-outline-secondary btn-sm d-lg-none"
-                  type="button"
-                  data-bs-toggle="collapse"
-                  data-bs-target="#savedPostsCollapse"
-                  aria-expanded="true"
-                  aria-controls="savedPostsCollapse">
-            展開 / 收合
-          </button>
+      {# ===================== 我的收藏（新版設計） ===================== #}
+{% if request.user.is_authenticated %}
+<section id="saved-posts" class="container mb-5 px-0">
+  <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+    <div class="card-header d-flex align-items-center bg-light-blue">
+      <i class="bi bi-stars me-2 text-primary fs-5"></i>
+      <h2 class="h5 m-0 fw-bold text-primary">我的收藏</h2>
+      <button class="btn btn-sm btn-outline-primary ms-auto d-lg-none"
+              type="button"
+              data-bs-toggle="collapse"
+              data-bs-target="#savedPostsCollapse"
+              aria-expanded="true"
+              aria-controls="savedPostsCollapse">
+        展開 / 收合
+      </button>
+    </div>
+
+    <div id="savedPostsCollapse" class="collapse show d-lg-block">
+      <div class="card-body saved-scroll p-3">
+        <div id="savedEmpty" class="text-center text-muted py-4" style="display:none;">
+          <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+          你目前尚未收藏任何貼文
         </div>
 
-        <div id="savedPostsCollapse" class="collapse show d-lg-block">
-          <div class="card shadow-sm border-0">
-            <div class="card-body p-0">
-              <div class="saved-scroll">
-                <ul class="list-group list-group-flush" id="savedPostsList">
-                  {% with uid=request.user.id|stringformat:"s" %}
-                    {% for post in posts %}
-                      {% if post.is_saved or uid in post.saved_user_list %}
-                        <li class="list-group-item d-flex align-items-start gap-2" data-saved="1" data-post-id="{{ post.interaction_id }}">
-                          <i class="bi bi-star-fill"></i>
-                          <div class="flex-grow-1">
-                            <div class="fw-semibold text-truncate" title="{{ post.title }}">{{ post.title }}</div>
-                            <div class="small text-muted">
-                              由 {{ post.nickname|default:"(匿名)" }} ・ {{ post.created_at|date:"Y-m-d H:i" }}
-                            </div>
-                            <div class="mt-2 d-flex gap-2">
-                              <a class="btn btn-sm btn-primary saved-jump"
-                                 href="#"
-                                 data-target-id="post-{{ post.interaction_id }}">前往貼文</a>
-                            </div>
-                          </div>
-                        </li>
-                      {% endif %}
-                    {% endfor %}
-                  {% endwith %}
-                </ul>
-
-                <div id="savedEmpty" class="p-4 text-center text-muted" style="display:none;">
-                  你目前尚未收藏任何貼文。
+        <div class="row g-3" id="savedPostsList">
+          {% with uid=request.user.id|stringformat:"s" %}
+            {% for post in posts %}
+              {% if post.is_saved or uid in post.saved_user_list %}
+              <div class="col-12 col-md-6" data-saved="1" data-post-id="{{ post.interaction_id }}">
+                <div class="card h-100 border-0 shadow-sm hover-card">
+                  <div class="card-body d-flex flex-column">
+                    <h6 class="fw-bold text-dark mb-2 text-truncate">
+                      <i class="bi bi-star-fill text-warning me-1"></i> {{ post.title }}
+                    </h6>
+                    <p class="small text-muted mb-3">
+                      由 {{ post.nickname|default:"(匿名)" }} ・ {{ post.created_at|date:"Y-m-d H:i" }}
+                    </p>
+                    <a class="btn btn-sm btn-primary mt-auto align-self-start saved-jump"
+                       href="#"
+                       data-target-id="post-{{ post.interaction_id }}">
+                      前往貼文
+                    </a>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
+              {% endif %}
+            {% endfor %}
+          {% endwith %}
         </div>
-      </section>
-      {% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+{% endif %}
+
       {# ===================== /我的收藏 ===================== #}
 
       {% for post in posts %}
