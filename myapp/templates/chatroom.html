@@ -559,21 +559,45 @@
     messages.forEach(msg => {
       const wrapper = document.createElement('div');
       wrapper.classList.add('mb-2');
-      const msgId = "msg-" + Date.now() + "-" + Math.floor(Math.random()*1000);
-      wrapper.id = msgId;
+      wrapper.id = "msg-" + msg.id;  // 使用後端訊息 ID
 
       const msgBox = document.createElement('div');
       msgBox.classList.add('p-2', 'border', 'rounded', 'bg-white');
 
+      // 如果訊息是回覆別人，先渲染引用
+      if (msg.reply_to_text) {
+        const quote = document.createElement('div');
+        quote.classList.add('small', 'text-muted', 'border-start', 'ps-2', 'mb-1');
+        quote.textContent = `回覆「${msg.reply_to_text}」`;
+        quote.style.cursor = 'pointer';
+
+        // 點擊引用 → 捲到原始訊息
+        quote.onclick = () => {
+          const target = document.getElementById("msg-" + msg.reply_to_id);
+          if (target) {
+            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            target.classList.add('bg-warning', 'bg-opacity-25');
+            setTimeout(() => target.classList.remove('bg-warning', 'bg-opacity-25'), 1500);
+          } else alert("找不到原始訊息");
+        };
+
+        msgBox.appendChild(quote);
+      }
+
+      // 主訊息
       const main = document.createElement('span');
       main.textContent = `${msg.nickname || '匿名'}：${msg.message}`;
       msgBox.appendChild(main);
 
+      // 回覆按鈕
       const replyBtn = document.createElement('button');
       replyBtn.textContent = '回覆';
       replyBtn.classList.add('btn', 'btn-link', 'btn-sm', 'p-0', 'ms-2');
       replyBtn.onclick = () => {
-        replyTarget = { id: msgId, text: msg.message };
+        replyTarget = {
+          id_in_db: msg.id,
+          text: msg.message
+        };
         chatInput.placeholder = `回覆「${msg.message}」...`;
         chatInput.focus();
       };
@@ -585,6 +609,7 @@
 
     chatWindow.scrollTop = chatWindow.scrollHeight;
   }
+
 
 
 
@@ -651,13 +676,21 @@
     if (!message) return alert('訊息不能為空！');
     if (!currentRoomId) return alert('請先選擇聊天室！');
 
+    // 準備要送的資料
+    const payload = {
+      message: message,
+      nickname: nickname,
+      reply_to_id: replyTarget ? replyTarget.id_in_db : null,   // 送後端訊息 ID
+      reply_to_text: replyTarget ? replyTarget.text : null      // 送後端回覆文字
+    };
+
     fetch(`/chat/send/${currentRoomId}/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'X-CSRFToken': getCookie('csrftoken')
       },
-      body: JSON.stringify({ message, nickname })
+      body: JSON.stringify(payload)
     })
     .then(res => res.json())
     .then(data => {
@@ -678,22 +711,21 @@
       // 產生訊息 DOM
       const wrapper = document.createElement('div');
       wrapper.classList.add('mb-2');
-      const msgId = "msg-" + Date.now() + "-" + Math.floor(Math.random()*1000);
-      wrapper.id = msgId;
+      wrapper.id = "msg-" + data.message.id;  // 用後端回傳的訊息 ID
 
       const msgBox = document.createElement('div');
       msgBox.classList.add('p-2', 'border', 'rounded', 'bg-white');
 
       // 如果有回覆目標，加引用框
-      if (replyTarget) {
+      if (data.message.reply_to_text) {
         const quote = document.createElement('div');
         quote.classList.add('small', 'text-muted', 'border-start', 'ps-2', 'mb-1');
-        quote.textContent = `回覆「${replyTarget.text}」`;
+        quote.textContent = `回覆「${data.message.reply_to_text}」`;
         quote.style.cursor = 'pointer';
 
         // 點擊引用 → 捲到目標
         quote.onclick = () => {
-          const target = document.getElementById(replyTarget.id);
+          const target = document.getElementById("msg-" + data.message.reply_to_id);
           if (target) {
             target.scrollIntoView({ behavior: 'smooth', block: 'center' });
             target.classList.add('bg-warning', 'bg-opacity-25');
@@ -714,7 +746,10 @@
       replyBtn.textContent = '回覆';
       replyBtn.classList.add('btn', 'btn-link', 'btn-sm', 'p-0', 'ms-2');
       replyBtn.onclick = () => {
-        replyTarget = { id: msgId, text: data.message.message };
+        replyTarget = {
+          id_in_db: data.message.id,   // 記錄後端訊息 ID
+          text: data.message.message
+        };
         chatInput.placeholder = `回覆「${data.message.message}」...`;
         chatInput.focus();
       };
@@ -727,6 +762,7 @@
       replyTarget = null; // reset
     });
   }
+
 
 
   // 更新收藏按鈕
