@@ -3,73 +3,81 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8">
-  <title>編輯使用者</title>
-  <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+  <title>編輯使用者狀態顏色</title>
+  <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet" />
 </head>
 <body>
-<div class="container mt-5">
-  <h2 class="text-center mb-4">編輯使用者</h2>
-  <form method="POST" enctype="multipart/form-data" class="shadow p-4 rounded bg-light">
-    {% csrf_token %}
-    
-    <div class="mb-3">
-      <label class="form-label">使用者名稱</label>
-      <input type="text" name="username" class="form-control" value="{{ user.username }}">
-    </div>
+  <div class="container mt-5">
+    <h2 class="text-center mb-4">編輯使用者資料</h2>
 
-    <div class="mb-3">
-      <label class="form-label">Gmail</label>
-      <input type="email" name="gmail" class="form-control" value="{{ user.gmail }}">
-    </div>
+    <form method="post" class="shadow p-4 bg-light rounded">
+      {% csrf_token %}
 
-    <div class="mb-3">
-      <label class="form-label">預設暱稱 1</label>
-      <input type="text" name="default_nickname1" class="form-control" value="{{ user.default_nickname1 }}">
-    </div>
+      <!-- 其他欄位唯讀 -->
+      <div class="mb-3">
+        <label class="form-label">使用者 ID</label>
+        <input type="text" class="form-control" value="{{ user.id }}" readonly>
+      </div>
 
-    <div class="mb-3">
-      <label class="form-label">預設暱稱 2</label>
-      <input type="text" name="default_nickname2" class="form-control" value="{{ user.default_nickname2 }}">
-    </div>
+      <div class="mb-3">
+        <label class="form-label">使用者名稱</label>
+        <input type="text" class="form-control" value="{{ user.username }}" readonly>
+      </div>
 
-    <div class="mb-3">
-      <label class="form-label">緊急聯絡電話</label>
-      <input type="text" name="emergency_contact_phone" class="form-control" value="{{ user.emergency_contact_phone }}">
-    </div>
+      <div class="mb-3">
+        <label class="form-label">Gmail</label>
+        <input type="text" class="form-control" value="{{ user.gmail }}" readonly>
+      </div>
 
-    <div class="mb-3">
-      <label class="form-label">緊急聯絡 Gmail</label>
-      <input type="email" name="emergency_contact_gmail" class="form-control" value="{{ user.emergency_contact_gmail }}">
-    </div>
+      <div class="mb-3">
+        <label class="form-label">預設暱稱 1</label>
+        <input type="text" class="form-control" value="{{ user.default_nickname1 }}" readonly>
+      </div>
 
-    <div class="mb-3">
-      <label class="form-label">預設訊息</label>
-      <textarea name="default_message" class="form-control">{{ user.default_message }}</textarea>
-    </div>
+      <div class="mb-3">
+        <label class="form-label">預設暱稱 2</label>
+        <input type="text" class="form-control" value="{{ user.default_nickname2 }}" readonly>
+      </div>
 
-    <div class="mb-3">
-      <label class="form-label">自我介紹</label>
-      <textarea name="self_intro" class="form-control">{{ user.self_intro }}</textarea>
-    </div>
+      <div class="mb-3">
+        <label class="form-label">緊急聯絡電話</label>
+        <input type="text" class="form-control" value="{{ user.emergency_contact_phone }}" readonly>
+      </div>
 
-    <div class="mb-3">
-      <label class="form-label">狀態顏色</label>
-      <input type="text" name="status_color" class="form-control" value="{{ user.status_color }}">
-    </div>
+      <div class="mb-3">
+        <label class="form-label">緊急聯絡 Gmail</label>
+        <input type="text" class="form-control" value="{{ user.emergency_contact_gmail }}" readonly>
+      </div>
 
-    <div class="mb-3">
-      <label class="form-label">使用者圖片</label>
-      {% if user.user_images %}
-        <div class="mb-2">
-          <img src="{{ user.user_images.url }}" alt="User Image" class="img-thumbnail" style="max-width: 150px;">
-        </div>
-      {% endif %}
-      <input type="file" name="user_images" class="form-control">
-    </div>
+      <div class="mb-3">
+        <label class="form-label">預設訊息</label>
+        <textarea class="form-control" rows="2" readonly>{{ user.default_message }}</textarea>
+      </div>
 
-    <button type="submit" class="btn btn-primary">更新</button>
-    <a href="{% url 'user_admin_list' %}" class="btn btn-secondary">取消</a>
-  </form>
-</div>
+      <div class="mb-3">
+        <label class="form-label">自我介紹</label>
+        <textarea class="form-control" rows="2" readonly>{{ user.self_intro }}</textarea>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">建立時間</label>
+        <input type="text" class="form-control" value="{{ user.created_at }}" readonly>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">使用者圖片</label>
+        <textarea class="form-control" rows="2" readonly>{{ user.user_images }}</textarea>
+      </div>
+
+      <!-- 唯一可編輯的欄位 -->
+      <div class="mb-3">
+        <label class="form-label">狀態顏色</label>
+        <input type="text" class="form-control" name="status_color" value="{{ user.status_color }}">
+      </div>
+
+      <button type="submit" class="btn btn-primary">儲存</button>
+      <a href="{% url 'user_admin_list' %}" class="btn btn-secondary">返回</a>
+    </form>
+  </div>
 </body>
 </html>
