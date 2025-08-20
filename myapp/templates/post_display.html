@@ -89,6 +89,83 @@
   .saved-item-card{ border:1px solid #eef5ff; border-radius:12px; transition:transform .15s ease, box-shadow .15s ease; }
   .saved-item-card:hover{ transform:translateY(-2px); box-shadow:0 6px 18px rgba(99,179,237,.18); }
   .ring-highlight{ outline:2px solid rgba(13,110,253,.6); transition:outline 1.2s ease; }
+
+  /* ===== 我的收藏 Offcanvas ===== */
+:root{
+  --sb-1:#f5faff;   /* 背景淺藍 */
+  --sb-2:#eaf5ff;   /* header 漸層起點 */
+  --sb-3:#63b3ed;   /* 主藍 */
+  --sb-4:#2f8be6;   /* 深藍 */
+  --ink:#033e6b;    /* 文字藍 */
+}
+
+.offcanvas-saved{
+  width:min(520px,96vw);
+  background:var(--sb-1);
+}
+
+/* Sticky header + 漸層 */
+.saved-header{
+  position:sticky; top:0; z-index:2;
+  background:linear-gradient(180deg,var(--sb-2) 0%, #dff0ff 100%);
+  border-bottom:1px solid #cfe5ff;
+  border-top-left-radius:0.5rem; border-top-right-radius:0.5rem;
+}
+.saved-header .title{ display:flex; align-items:center; gap:.6rem; color:var(--ink); }
+.saved-header .title .star-wrap{
+  display:inline-grid; place-items:center;
+  width:36px; height:36px; border-radius:50%;
+  background:#ffffff; box-shadow:0 2px 8px rgba(47,139,230,.15);
+}
+.saved-header .title i{ color:#f0ad4e; }
+.btn-close.modern{ filter:saturate(0) opacity(.65); }
+.btn-close.modern:hover{ filter:none; }
+
+/* 內容區 */
+#savedOffcanvas .offcanvas-body{ background:var(--sb-1); }
+.saved-list{ padding:.5rem 0 0; }
+
+/* 卡片 */
+.saved-item-card{
+  border:1px solid #e1efff;
+  border-radius:16px;
+  background:#fff;
+  padding:14px 16px;
+  box-shadow:0 8px 24px rgba(3,62,107,.06);
+  transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+}
+.saved-item-card:hover{
+  transform:translateY(-2px);
+  box-shadow:0 12px 28px rgba(3,62,107,.12);
+  border-color:#cfe2ff;
+}
+.saved-item-card .meta{ color:#5a7ca9; }
+
+/* 行動按鈕 */
+.saved-item-card .btn-primary{
+  background:linear-gradient(180deg,var(--sb-3),var(--sb-4));
+  border:none;
+  box-shadow:0 6px 16px rgba(47,139,230,.25);
+}
+.saved-item-card .btn-primary:hover{
+  filter:brightness(1.05); transform:translateY(-1px);
+}
+
+/* 空狀態 */
+#savedOffcanvas .empty{ color:#6c87a1; }
+#savedOffcanvas .empty i{ color:#9ec7f3; }
+
+/* 捲軸美化（僅 Offcanvas 內） */
+#savedOffcanvas ::-webkit-scrollbar{ width:10px; }
+#savedOffcanvas ::-webkit-scrollbar-track{ background:transparent; }
+#savedOffcanvas ::-webkit-scrollbar-thumb{
+  background:linear-gradient(180deg,#cfe5ff,#b7d7ff); border-radius:8px;
+}
+
+/* 讓觸發按鈕的星星微動（可留可不留） */
+.saved-trigger .bi-star-fill{ transition:transform .15s ease; }
+.saved-trigger:hover .bi-star-fill{ transform:scale(1.05); }
+
 </style>
 </head>
 <body>
@@ -183,10 +260,11 @@
                 data-bs-toggle="offcanvas"
                 data-bs-target="#savedOffcanvas"
                 aria-controls="savedOffcanvas">
-          <i class="bi bi-stars"></i>
+          <i class="bi bi-star-fill text-warning me-1"></i>
           我的收藏
           <span class="badge rounded-pill saved-badge ms-1" id="savedCount">0</span>
         </button>
+
         {% endif %}
       </form>
 
@@ -195,7 +273,8 @@
       <div class="offcanvas offcanvas-end offcanvas-saved" tabindex="-1" id="savedOffcanvas" aria-labelledby="savedOffcanvasLabel">
         <div class="offcanvas-header" style="background:#e6f3fb;">
           <h5 class="offcanvas-title fw-bold text-primary" id="savedOffcanvasLabel">
-            <i class="bi bi-stars me-2"></i>我的收藏
+          <i class="bi bi-star-fill me-2 text-warning"></i>我的收藏
+
           </h5>
           <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
         </div>
