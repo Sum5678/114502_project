@@ -302,6 +302,29 @@
   @media (max-width: 576px) {
     .identity-group { gap: 6px; }
   }
+
+ /* 收藏區塊淺藍 header */
+.bg-light-blue {
+  background: #e6f3fb;
+  color: #033e6b;
+  border-bottom: 1px solid #d0e9fa;
+}
+
+/* 收藏卡片 hover 效果 */
+.hover-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border-radius: 12px;
+}
+.hover-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 18px rgba(99, 179, 237, 0.25);
+}
+
+/* 收藏區塊的滾動限制 */
+@media (min-width: 992px) {
+  #saved-posts .saved-scroll { max-height: 400px; overflow-y: auto; }
+}
+
 </style>
 
 
@@ -396,8 +419,65 @@
         </div>
       </form>
 
+      {# ===================== 我的收藏（新版設計） ===================== #}
+{% if request.user.is_authenticated %}
+<section id="saved-posts" class="container mb-5 px-0">
+  <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+    <div class="card-header d-flex align-items-center bg-light-blue">
+      <i class="bi bi-stars me-2 text-primary fs-5"></i>
+      <h2 class="h5 m-0 fw-bold text-primary">我的收藏</h2>
+      <button class="btn btn-sm btn-outline-primary ms-auto d-lg-none"
+              type="button"
+              data-bs-toggle="collapse"
+              data-bs-target="#savedPostsCollapse"
+              aria-expanded="true"
+              aria-controls="savedPostsCollapse">
+        展開 / 收合
+      </button>
+    </div>
+
+    <div id="savedPostsCollapse" class="collapse show d-lg-block">
+      <div class="card-body saved-scroll p-3">
+        <div id="savedEmpty" class="text-center text-muted py-4" style="display:none;">
+          <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+          你目前尚未收藏任何貼文
+        </div>
+
+        <div class="row g-3" id="savedPostsList">
+          {% with uid=request.user.id|stringformat:"s" %}
+            {% for post in posts %}
+              {% if post.is_saved or uid in post.saved_user_list %}
+              <div class="col-12 col-md-6" data-saved="1" data-post-id="{{ post.interaction_id }}">
+                <div class="card h-100 border-0 shadow-sm hover-card">
+                  <div class="card-body d-flex flex-column">
+                    <h6 class="fw-bold text-dark mb-2 text-truncate">
+                      <i class="bi bi-star-fill text-warning me-1"></i> {{ post.title }}
+                    </h6>
+                    <p class="small text-muted mb-3">
+                      由 {{ post.nickname|default:"(匿名)" }} ・ {{ post.created_at|date:"Y-m-d H:i" }}
+                    </p>
+                    <a class="btn btn-sm btn-primary mt-auto align-self-start saved-jump"
+                       href="#"
+                       data-target-id="post-{{ post.interaction_id }}">
+                      前往貼文
+                    </a>
+                  </div>
+                </div>
+              </div>
+              {% endif %}
+            {% endfor %}
+          {% endwith %}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+      {# ===================== /我的收藏 ===================== #}
+
       {% for post in posts %}
-      <div class="card mb-4" style="border-left: 8px solid #{{ post.bgcolor }};">
+      <div class="card mb-4" id="post-{{ post.interaction_id }}" style="border-left: 8px solid #{{ post.bgcolor }};">
         <div class="card-body">
           <!-- 收藏 -->
           {% if request.user.is_authenticated %}
@@ -460,7 +540,6 @@
               <button type="button" class="btn-comment" data-post-id="{{ post.interaction_id }}">
                 <i class="bi bi-chat-dots"></i> 留言（{{ post.comment_list|length }}）
               </button>
-
 
               <!-- 📤 分享 -->
               <button type="button" class="btn-share" data-post-id="{{ post.interaction_id }}">
@@ -735,6 +814,7 @@
         const url = this.action;
         const formData = new FormData(this);
         const icon = this.querySelector('button i');
+        const postId = this.dataset.postId;
 
         fetch(url, {
           method: 'POST',
@@ -745,6 +825,40 @@
           if (response.ok) {
             const isFilled = icon.classList.contains('bi-star-fill');
             icon.className = `bi ${isFilled ? 'bi-star' : 'bi-star-fill'}`;
+
+            // 動態更新「我的收藏」清單
+            const savedList = document.getElementById('savedPostsList');
+            const empty = document.getElementById('savedEmpty');
+            if (savedList) {
+              const existing = savedList.querySelector(`[data-post-id="${postId}"]`);
+              if (isFilled && existing) {
+                // 取消收藏 -> 從清單移除
+                existing.remove();
+              } else if (!isFilled && !existing) {
+                // 新增收藏 -> 追加一筆（用卡片上的資料）
+                const card = this.closest('.card-body');
+                const title = card.querySelector('.card-title')?.textContent?.trim() || `#${postId}`;
+                const nick = card.querySelector('.meta')?.textContent?.split('・')[0]?.trim() || '(匿名)';
+                const li = document.createElement('li');
+                li.className = 'list-group-item d-flex align-items-start gap-2';
+                li.setAttribute('data-saved', '1');
+                li.setAttribute('data-post-id', postId);
+                li.innerHTML = `
+                  <i class="bi bi-star-fill"></i>
+                  <div class="flex-grow-1">
+                    <div class="fw-semibold text-truncate" title="${title}">${title}</div>
+                    <div class="small text-muted">由 ${nick}</div>
+                    <div class="mt-2 d-flex gap-2">
+                      <a class="btn btn-sm btn-primary saved-jump" href="#" data-target-id="post-${postId}">前往貼文</a>
+                    </div>
+                  </div>`;
+                savedList.appendChild(li);
+              }
+
+              // 空狀態顯示/隱藏
+              const hasSaved = savedList.querySelector('[data-saved="1"]');
+              if (empty) empty.style.display = hasSaved ? 'none' : 'block';
+            }
           }
         })
         .catch(() => {
@@ -848,6 +962,31 @@
       });
     });
     /* ====== /留言展開/送出 ====== */
+
+    // ===== 我的收藏：空狀態與平滑捲動 =====
+    (function () {
+      const list = document.getElementById('savedPostsList');
+      const empty = document.getElementById('savedEmpty');
+
+      if (list) {
+        const hasSaved = list.querySelector('[data-saved="1"]');
+        if (!hasSaved && empty) empty.style.display = 'block';
+
+        list.addEventListener('click', function (e) {
+          const btn = e.target.closest('.saved-jump');
+          if (!btn) return;
+          e.preventDefault();
+          const targetId = btn.getAttribute('data-target-id');
+          const el = document.getElementById(targetId);
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            el.classList.add('ring-highlight');
+            setTimeout(() => el.classList.remove('ring-highlight'), 1200);
+          }
+        });
+      }
+    })();
+    // ===== /我的收藏 =====
   });
   // 刪除留言
 document.querySelectorAll('.delete-comment-btn').forEach(btn => {
