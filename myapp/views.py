@@ -320,20 +320,13 @@ def user_admin_search(request):
 def user_admin_edit(request, user_id):
     user = get_object_or_404(ThisUserProfile, id=user_id)
 
-    if request.method == 'POST':
-        user.username = request.POST.get('username', user.username)
-        user.gmail = request.POST.get('gmail', user.gmail)
-        user.default_nickname1 = request.POST.get('default_nickname1', user.default_nickname1)
-        user.default_nickname2 = request.POST.get('default_nickname2', user.default_nickname2)
-        user.emergency_contact_phone = request.POST.get('emergency_contact_phone', user.emergency_contact_phone)
-        user.emergency_contact_gmail = request.POST.get('emergency_contact_gmail', user.emergency_contact_gmail)
-        user.default_message = request.POST.get('default_message', user.default_message)
-        user.self_intro = request.POST.get('self_intro', user.self_intro)
-        user.status_color = request.POST.get('status_color', user.status_color)
+    if request.method == "POST":
+        status_color = request.POST.get("status_color")
+        user.status_color = status_color
         user.save()
-        return redirect('user_admin_list')
+        return redirect("user_admin_list")
 
-    return render(request, 'user_admin_edit.html', {'user': user})
+    return render(request, "user_admin_edit.html", {"user": user})
 
 # 刪除用戶
 def user_admin_delete(request, user_id):
