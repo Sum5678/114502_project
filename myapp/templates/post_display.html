@@ -16,6 +16,14 @@
   <link href="{% static 'assets/vendor/glightbox/css/glightbox.min.css' %}" rel="stylesheet">
   <link href="{% static 'assets/vendor/swiper/swiper-bundle.min.css' %}" rel="stylesheet">
   <link href="{% static 'assets/css/main.css' %}" rel="stylesheet">
+
+  <!-- 關閉瀏覽器捲動還原，避免刷新回到舊位置 -->
+  <script>
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'manual';
+    }
+  </script>
+
 <style>
   body {
     background-color: #fff;
@@ -337,13 +345,13 @@
     transition: outline 1.2s ease;
   }
 
-  /* ===== 我的收藏 Offcanvas ===== */
+  /* ===== 我的收藏 Offcanvas（現代藍） ===== */
   :root{
-    --sb-1:#f5faff;   /* 背景淺藍 */
-    --sb-2:#eaf5ff;   /* header 漸層起點 */
-    --sb-3:#63b3ed;   /* 主藍 */
-    --sb-4:#2f8be6;   /* 深藍 */
-    --ink:#033e6b;    /* 文字藍 */
+    --sb-1:#f5faff;
+    --sb-2:#eaf5ff;
+    --sb-3:#63b3ed;
+    --sb-4:#2f8be6;
+    --ink:#033e6b;
   }
 
   .offcanvas-saved{
@@ -351,7 +359,6 @@
     background: var(--sb-1);
   }
 
-  /* Sticky header + 漸層 */
   .saved-header{
     position: sticky;
     top: 0;
@@ -384,11 +391,9 @@
   .btn-close.modern { filter: saturate(0) opacity(.65); }
   .btn-close.modern:hover { filter: none; }
 
-  /* 內容區 */
   #savedOffcanvas .offcanvas-body { background: var(--sb-1); }
   .saved-list { padding: .5rem 0 0; }
 
-  /* 卡片（覆蓋：現代風） */
   .saved-item-card{
     border: 1px solid #e1efff;
     border-radius: 16px;
@@ -406,7 +411,6 @@
 
   .saved-item-card .meta { color: #5a7ca9; }
 
-  /* 行動按鈕 */
   .saved-item-card .btn-primary{
     background: linear-gradient(180deg, var(--sb-3), var(--sb-4));
     border: none;
@@ -418,11 +422,9 @@
     transform: translateY(-1px);
   }
 
-  /* 空狀態 */
   #savedOffcanvas .empty { color: #6c87a1; }
   #savedOffcanvas .empty i { color: #9ec7f3; }
 
-  /* 捲軸美化（僅 Offcanvas 內） */
   #savedOffcanvas ::-webkit-scrollbar { width: 10px; }
   #savedOffcanvas ::-webkit-scrollbar-track { background: transparent; }
   #savedOffcanvas ::-webkit-scrollbar-thumb{
@@ -430,11 +432,9 @@
     border-radius: 8px;
   }
 
-  /* 讓觸發按鈕的星星微動（可留可不留） */
   .saved-trigger .bi-star-fill { transition: transform .15s ease; }
   .saved-trigger:hover .bi-star-fill { transform: scale(1.05); }
 </style>
-
 </head>
 <body>
 <header id="header" class="header d-flex align-items-center fixed-top">
@@ -501,7 +501,6 @@
     </div>
   </div>
 </header>
-<script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
 
 <main class="main">
   <section class="post-list mt-5" id="post-list-section">
@@ -522,7 +521,6 @@
           <button type="submit" class="btn" style="background-color:#63b3ed; color:#fff; border:none;">搜尋</button>
         </div>
         {% if request.user.is_authenticated %}
-        <!-- 觸發 Offcanvas 的小按鈕（不佔版面） -->
         <button type="button"
                 class="btn saved-trigger ms-2"
                 data-bs-toggle="offcanvas"
@@ -532,7 +530,6 @@
           我的收藏
           <span class="badge rounded-pill saved-badge ms-1" id="savedCount">0</span>
         </button>
-
         {% endif %}
       </form>
 
@@ -541,8 +538,7 @@
       <div class="offcanvas offcanvas-end offcanvas-saved" tabindex="-1" id="savedOffcanvas" aria-labelledby="savedOffcanvasLabel">
         <div class="offcanvas-header" style="background:#e6f3fb;">
           <h5 class="offcanvas-title fw-bold text-primary" id="savedOffcanvasLabel">
-          <i class="bi bi-star-fill me-2 text-warning"></i>我的收藏
-
+            <i class="bi bi-star-fill me-2 text-warning"></i>我的收藏
           </h5>
           <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
         </div>
@@ -564,10 +560,9 @@
                         <div class="fw-bold text-truncate" title="{{ post.title }}">{{ post.title }}</div>
                         <div class="small text-muted mb-2">由 {{ post.nickname|default:"(匿名)" }} ・ {{ post.created_at|date:"Y-m-d H:i" }}</div>
                         <button type="button"
-                          class="btn btn-sm btn-primary saved-jump"
-                          data-bs-dismiss="offcanvas"
-                          data-target-id="post-{{ post.interaction_id }}">前往貼文</button>
-
+                                class="btn btn-sm btn-primary saved-jump"
+                                data-bs-dismiss="offcanvas"
+                                data-target-id="post-{{ post.interaction_id }}">前往貼文</button>
                       </div>
                     </div>
                   </div>
@@ -621,7 +616,7 @@
             </div>
           </div>
 
-          <!-- 互動按鈕（新增留言 & 分享） -->
+          <!-- 互動按鈕 -->
           <div class="interaction-actions">
             <div class="interaction-actions-left">
               {% if request.user.is_authenticated %}
@@ -709,7 +704,6 @@
                     class="comment-form"
                     data-post-id="{{ post.interaction_id }}">
                 {% csrf_token %}
-
                 <div class="d-flex align-items-center flex-wrap mb-2" style="gap:10px;">
                   <span class="identity-label">以誰的身分留言：</span>
                   <div class="btn-group btn-group-sm identity-group flex-wrap" role="group" aria-label="留言身分">
@@ -789,12 +783,14 @@
   </div>
 </div>
 
+<!-- JS 放在底部，避免重複載入 -->
 <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
 <script src="{% static 'assets/vendor/aos/aos.js' %}"></script>
 <script src="{% static 'assets/vendor/glightbox/js/glightbox.min.js' %}"></script>
 <script src="{% static 'assets/vendor/purecounter/purecounter_vanilla.js' %}"></script>
 <script src="{% static 'assets/vendor/swiper/swiper-bundle.min.js' %}"></script>
 <script src="{% static 'assets/js/main.js' %}"></script>
+
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   // 查看更多/關閉詳情
@@ -872,7 +868,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (isFilled && existing) {
               existing.remove();   // 取消收藏
             } else if (!isFilled && !existing) {
-              // 新增收藏 -> 用卡片資料建一筆
+              // 新增收藏
               const card = this.closest('.card-body');
               const title = card.querySelector('.card-title')?.textContent?.trim() || `#${postId}`;
               const meta = card.querySelector('.meta')?.textContent || '';
@@ -887,8 +883,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     <div class="flex-grow-1">
                       <div class="fw-bold text-truncate" title="${title}">${title}</div>
                       <div class="small text-muted mb-2">${meta}</div>
-                      <a class="btn btn-sm btn-primary saved-jump" href="#"
-                         data-bs-dismiss="offcanvas" data-target-id="post-${postId}">前往貼文</a>
+                      <button type="button" class="btn btn-sm btn-primary saved-jump"
+                              data-bs-dismiss="offcanvas" data-target-id="post-${postId}">前往貼文</button>
                     </div>
                   </div>
                 </div>`;
@@ -964,70 +960,60 @@ document.addEventListener('DOMContentLoaded', function () {
   });
   /* ====== /留言展開/送出 ====== */
 
-  // ---- 讓「前往貼文」不會先跳到頂，再在 offcanvas 關閉後才平滑捲到目標 ----
-(function () {
-  const list = document.getElementById('savedPostsList');
-  const empty = document.getElementById('savedEmpty');
-  const ocEl = document.getElementById('savedOffcanvas');
-  if (!list) return;
+  // 「前往貼文」：關閉 Offcanvas 後再平滑捲到目標（不改網址、不加 hash）
+  (function () {
+    const list = document.getElementById('savedPostsList');
+    const empty = document.getElementById('savedEmpty');
+    const ocEl = document.getElementById('savedOffcanvas');
+    if (!list) return;
 
-  // 初始：空狀態與數量
-  const hasSaved = list.querySelector('[data-saved="1"]');
-  if (!hasSaved && empty) empty.style.display = 'block';
-  updateSavedCount();
+    const hasSaved = list.querySelector('[data-saved="1"]');
+    if (!hasSaved && empty) empty.style.display = 'block';
+    updateSavedCount();
 
-  let pendingTargetId = null;
+    let pendingTargetId = null;
 
-  // 點擊「前往貼文」
-  list.addEventListener('click', function (e) {
-    const btn = e.target.closest('.saved-jump');
-    if (!btn) return;
-    e.preventDefault(); // 阻止 a 的預設跳頂行為
+    list.addEventListener('click', function (e) {
+      const btn = e.target.closest('.saved-jump');
+      if (!btn) return;
+      e.preventDefault();
 
-    pendingTargetId = btn.getAttribute('data-target-id');
+      pendingTargetId = btn.getAttribute('data-target-id');
 
-    // 關閉 offcanvas 後再捲動（避免動畫期間定位被影響）
-    const ocInstance = bootstrap.Offcanvas.getInstance(ocEl);
-    if (ocEl && ocEl.classList.contains('show') && ocInstance) {
-      ocInstance.hide();
-    } else {
-      scrollToPost(pendingTargetId);
-      pendingTargetId = null;
+      const ocInstance = bootstrap.Offcanvas.getInstance(ocEl);
+      if (ocEl && ocEl.classList.contains('show') && ocInstance) {
+        ocInstance.hide();
+      } else {
+        scrollToPost(pendingTargetId);
+        pendingTargetId = null;
+      }
+    });
+
+    ocEl?.addEventListener('hidden.bs.offcanvas', () => {
+      if (pendingTargetId) {
+        scrollToPost(pendingTargetId);
+        pendingTargetId = null;
+      }
+    });
+
+    function scrollToPost(targetId) {
+      const el = document.getElementById(targetId);
+      if (!el) return;
+
+      const headerH = document.getElementById('header')?.offsetHeight || 0;
+      const y = el.getBoundingClientRect().top + window.pageYOffset - headerH - 8;
+
+      window.scrollTo({ top: y, behavior: 'smooth' });
+      el.classList.add('ring-highlight');
+      setTimeout(() => el.classList.remove('ring-highlight'), 1500);
     }
-  });
 
-  // 等 offcanvas 完全關閉再捲動
-  ocEl?.addEventListener('hidden.bs.offcanvas', () => {
-    if (pendingTargetId) {
-      scrollToPost(pendingTargetId);
-      pendingTargetId = null;
+    function updateSavedCount() {
+      const count = list ? list.querySelectorAll('[data-saved="1"]').length : 0;
+      const badge = document.getElementById('savedCount');
+      if (badge) badge.textContent = count;
     }
-  });
-
-  function scrollToPost(targetId) {
-    const el = document.getElementById(targetId);
-    if (!el) return;
-
-    // 考慮 fixed header 高度，避免被蓋住
-    const headerH = document.getElementById('header')?.offsetHeight || 0;
-    const y = el.getBoundingClientRect().top + window.pageYOffset - headerH - 8;
-
-    window.scrollTo({ top: y, behavior: 'smooth' });
-
-    // 設定網址 hash，但不觸發跳躍（replaceState 不會捲動）
-    history.replaceState(null, '', `#${targetId}`);
-
-    // 高亮一下
-    el.classList.add('ring-highlight');
-    setTimeout(() => el.classList.remove('ring-highlight'), 1500);
-  }
-
-  function updateSavedCount() {
-    const count = list ? list.querySelectorAll('[data-saved="1"]').length : 0;
-    const badge = document.getElementById('savedCount');
-    if (badge) badge.textContent = count;
-  }
-})();
+  })();
 
   // 刪除留言
   document.querySelectorAll('.delete-comment-btn').forEach(btn => {
@@ -1102,7 +1088,36 @@ document.querySelectorAll('.btn-share').forEach(btn => {
     }
   });
 });
+</script>
 
+<!-- 刷新/返回時強制回頂，並清掉 hash（避免自動錨點） -->
+<script>
+(function () {
+  const nav = performance.getEntriesByType && performance.getEntriesByType('navigation')[0];
+  const isReload = nav ? nav.type === 'reload'
+                       : (performance.navigation && performance.navigation.type === 1);
+
+  if (isReload) {
+    if (location.hash) {
+      history.replaceState(null, '', location.pathname + location.search);
+    }
+    window.scrollTo(0, 0);
+    document.body.scrollTop = 0;
+    document.documentElement.scrollTop = 0;
+  }
+
+  // 從 bfcache 回來（iOS/Safari 常見）
+  window.addEventListener('pageshow', function (e) {
+    if (e.persisted) {
+      if (location.hash) {
+        history.replaceState(null, '', location.pathname + location.search);
+      }
+      window.scrollTo(0, 0);
+      document.body.scrollTop = 0;
+      document.documentElement.scrollTop = 0;
+    }
+  });
+})();
 </script>
 </body>
 </html>
