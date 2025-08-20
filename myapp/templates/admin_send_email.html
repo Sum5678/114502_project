@@ -43,8 +43,18 @@
 
                 <div class="mb-3">
                   <label for="message" class="form-label">內容</label>
-                  <textarea class="form-control" id="message" name="message" rows="6" required>您好，您的報告經過審核後未通過...</textarea>
+                  <textarea class="form-control" id="message" name="message" rows="10" required>
+                您好，您提交的「{{ item.display_name }}」報告經過審核後未通過。
+
+                您當時的報告內容如下：
+                --------------------------------
+                {{ user_reason }}
+                --------------------------------
+
+                如有疑問，請再聯絡我們。
+                  </textarea>
                 </div>
+
 
                 <button type="submit" class="btn btn-primary w-100">寄送郵件</button>
               </form>

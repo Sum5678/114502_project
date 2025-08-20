@@ -2526,41 +2526,20 @@ def post_comments(request, post_id):
 
 
 #------------事件表單拒絕後傳送-------
-# from django.core.mail import send_mail
-# from django.http import HttpResponse
-
-# @login_required
-# def admin_send_email(request):
-#     p_id = request.GET.get('p_id')
-#     item = PemapAll.objects.filter(p_id=p_id).first()
-#     if not item:
-#         return HttpResponse("找不到該筆資料", status=404)
-
-#     if request.method == 'POST':
-#         to_email = item.poster_gmail
-#         subject = request.POST.get('subject', '關於您的報告審核結果')
-#         message = request.POST.get('message', '')
-
-#         # 寄信 (請先設定好 Django EMAIL 設定)
-#         try:
-#             send_mail(subject, message, '你的發信地址@example.com', [to_email])
-#             return HttpResponse("郵件已寄出")
-#         except Exception as e:
-#             return HttpResponse(f"寄信失敗: {str(e)}")
-
-#     return render(request, 'admin_send_email.html', {
-#         'item': item,
-#         'to_email': item.poster_gmail,
-#     })
-
 from django.shortcuts import render, get_object_or_404
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.core.mail import send_mail
 from django.http import HttpResponse
 
+# from django.shortcuts import redirect, get_object_or_404
+# from django.contrib.auth.decorators import login_required
+# from django.core.mail import send_mail
+# from django.http import HttpResponse
+# from .models import PemapAll
+
 # # @login_required
-# def admin_send_email(request, p_id):  # p_id 從路徑參數取得
+# def admin_send_email(request, p_id):
 #     item = get_object_or_404(PemapAll, p_id=p_id)
 
 #     if request.method == 'POST':
@@ -2570,7 +2549,8 @@ from django.http import HttpResponse
 
 #         try:
 #             send_mail(subject, message, '你的發信地址@example.com', [to_email])
-#             return HttpResponse("郵件已寄出")
+#             # 寄信成功後，跳轉到管理員審核列表頁
+#             return redirect('admin_decide')
 #         except Exception as e:
 #             return HttpResponse(f"寄信失敗: {str(e)}")
 
@@ -2578,11 +2558,7 @@ from django.http import HttpResponse
 #         'item': item,
 #         'to_email': item.poster_gmail,
 #     })
-from django.shortcuts import redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from django.core.mail import send_mail
-from django.http import HttpResponse
-from .models import PemapAll
+
 
 # @login_required
 def admin_send_email(request, p_id):
@@ -2594,17 +2570,18 @@ def admin_send_email(request, p_id):
         message = request.POST.get('message', '')
 
         try:
-            send_mail(subject, message, '你的發信地址@example.com', [to_email])
-            # 寄信成功後，跳轉到管理員審核列表頁
+            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [to_email])
+            messages.success(request, "信件已成功寄出！")
             return redirect('admin_decide')
         except Exception as e:
-            return HttpResponse(f"寄信失敗: {str(e)}")
+            messages.error(request, f"寄信失敗: {str(e)}")
+            return redirect('admin_send_email', p_id=p_id)
 
     return render(request, 'admin_send_email.html', {
         'item': item,
         'to_email': item.poster_gmail,
+        'user_reason': item.reason,   # 把使用者當初的輸入傳給模板
     })
-
 
 
 
