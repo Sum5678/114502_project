@@ -14,18 +14,17 @@
       <form method="POST">
         {% csrf_token %}
         <!-- User Image -->
-        <div class="mb-3">
-          <!--用戶圖片-->
-          <div class="text-center">
-            {% if user.user_images %}
+        <div class="text-center">
+          {% if user.user_images %}
+            <div style="display: inline-block; padding: 5px; border: 5px solid {{ user.status_color|default:'#ccc' }}; border-radius: 50%;">
               <img src="{{ user.user_images }}" 
                   alt="User Image" 
-                  class="rounded-circle border shadow-sm" 
+                  class="rounded-circle shadow-sm" 
                   style="width: 200px; height: 200px; object-fit: cover;">
-            {% else %}
-              <p class="text-muted">尚未上傳圖片</p>
-            {% endif %}
-          </div>
+            </div>
+          {% else %}
+            <p class="text-muted">尚未上傳圖片</p>
+          {% endif %}
         </div>
 
         <!-- 其他資訊 (唯讀) -->
