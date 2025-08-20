@@ -563,10 +563,11 @@
                       <div class="flex-grow-1">
                         <div class="fw-bold text-truncate" title="{{ post.title }}">{{ post.title }}</div>
                         <div class="small text-muted mb-2">由 {{ post.nickname|default:"(匿名)" }} ・ {{ post.created_at|date:"Y-m-d H:i" }}</div>
-                        <a class="btn btn-sm btn-primary saved-jump"
-                           href="#"
-                           data-bs-dismiss="offcanvas"
-                           data-target-id="post-{{ post.interaction_id }}">前往貼文</a>
+                        <button type="button"
+                          class="btn btn-sm btn-primary saved-jump"
+                          data-bs-dismiss="offcanvas"
+                          data-target-id="post-{{ post.interaction_id }}">前往貼文</button>
+
                       </div>
                     </div>
                   </div>
@@ -963,36 +964,70 @@ document.addEventListener('DOMContentLoaded', function () {
   });
   /* ====== /留言展開/送出 ====== */
 
-  // Offcanvas：空狀態 & 平滑捲動 & 初始數量
-  (function () {
-    const list = document.getElementById('savedPostsList');
-    const empty = document.getElementById('savedEmpty');
-    if (!list) return;
+  // ---- 讓「前往貼文」不會先跳到頂，再在 offcanvas 關閉後才平滑捲到目標 ----
+(function () {
+  const list = document.getElementById('savedPostsList');
+  const empty = document.getElementById('savedEmpty');
+  const ocEl = document.getElementById('savedOffcanvas');
+  if (!list) return;
 
-    const hasSaved = list.querySelector('[data-saved="1"]');
-    if (!hasSaved && empty) empty.style.display = 'block';
-    updateSavedCount();
+  // 初始：空狀態與數量
+  const hasSaved = list.querySelector('[data-saved="1"]');
+  if (!hasSaved && empty) empty.style.display = 'block';
+  updateSavedCount();
 
-    list.addEventListener('click', function (e) {
-      const btn = e.target.closest('.saved-jump');
-      if (!btn) return;
-      e.preventDefault();
-      const targetId = btn.getAttribute('data-target-id');
-      const el = document.getElementById(targetId);
-      if (el) {
-        el.scrollIntoView({ behavior:'smooth', block:'start' });
-        el.classList.add('ring-highlight');
-        setTimeout(() => el.classList.remove('ring-highlight'), 1200);
-      }
-    });
-  })();
+  let pendingTargetId = null;
 
-  function updateSavedCount(){
-    const list = document.getElementById('savedPostsList');
+  // 點擊「前往貼文」
+  list.addEventListener('click', function (e) {
+    const btn = e.target.closest('.saved-jump');
+    if (!btn) return;
+    e.preventDefault(); // 阻止 a 的預設跳頂行為
+
+    pendingTargetId = btn.getAttribute('data-target-id');
+
+    // 關閉 offcanvas 後再捲動（避免動畫期間定位被影響）
+    const ocInstance = bootstrap.Offcanvas.getInstance(ocEl);
+    if (ocEl && ocEl.classList.contains('show') && ocInstance) {
+      ocInstance.hide();
+    } else {
+      scrollToPost(pendingTargetId);
+      pendingTargetId = null;
+    }
+  });
+
+  // 等 offcanvas 完全關閉再捲動
+  ocEl?.addEventListener('hidden.bs.offcanvas', () => {
+    if (pendingTargetId) {
+      scrollToPost(pendingTargetId);
+      pendingTargetId = null;
+    }
+  });
+
+  function scrollToPost(targetId) {
+    const el = document.getElementById(targetId);
+    if (!el) return;
+
+    // 考慮 fixed header 高度，避免被蓋住
+    const headerH = document.getElementById('header')?.offsetHeight || 0;
+    const y = el.getBoundingClientRect().top + window.pageYOffset - headerH - 8;
+
+    window.scrollTo({ top: y, behavior: 'smooth' });
+
+    // 設定網址 hash，但不觸發跳躍（replaceState 不會捲動）
+    history.replaceState(null, '', `#${targetId}`);
+
+    // 高亮一下
+    el.classList.add('ring-highlight');
+    setTimeout(() => el.classList.remove('ring-highlight'), 1500);
+  }
+
+  function updateSavedCount() {
     const count = list ? list.querySelectorAll('[data-saved="1"]').length : 0;
     const badge = document.getElementById('savedCount');
     if (badge) badge.textContent = count;
   }
+})();
 
   // 刪除留言
   document.querySelectorAll('.delete-comment-btn').forEach(btn => {
@@ -1067,6 +1102,7 @@ document.querySelectorAll('.btn-share').forEach(btn => {
     }
   });
 });
+
 </script>
 </body>
 </html>
