@@ -145,7 +145,17 @@
                       -
                     {% endif %}
                   </td>
-                  <td>{{ user.status_color }}</td>
+                  <td>
+                    {% if user.status_color == "#63b3ed" %}
+                      <span class="badge rounded-pill" style="background-color: #63b3ed; color: white;">正常</span>
+                    {% elif user.status_color == "#f2e57e" %}
+                      <span class="badge rounded-pill" style="background-color: #f2e57e; color: black;">警示</span>
+                    {% elif user.status_color == "#f76579" %}
+                      <span class="badge rounded-pill" style="background-color: #f76579; color: white;">危險</span>
+                    {% else %}
+                      <span class="badge rounded-pill" style="background-color: #9e9e9e;">未知</span>
+                    {% endif %}
+                  </td>
                   <td>
                     <a href="{% url 'user_admin_edit' user.id %}" class="btn btn-custom btn-sm">編輯</a>
                     <button type="button" class="btn btn-delete btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal{{ user.id }}">
