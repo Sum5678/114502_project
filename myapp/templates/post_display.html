@@ -17,423 +17,95 @@
   <link href="{% static 'assets/vendor/swiper/swiper-bundle.min.css' %}" rel="stylesheet">
   <link href="{% static 'assets/css/main.css' %}" rel="stylesheet">
 
-  <!-- 關閉瀏覽器捲動還原，避免刷新回到舊位置 -->
+  <!-- 停用瀏覽器捲動還原，避免刷新回到舊位置 -->
   <script>
-    if ('scrollRestoration' in history) {
-      history.scrollRestoration = 'manual';
-    }
+    if ('scrollRestoration' in history) { history.scrollRestoration = 'manual'; }
   </script>
 
 <style>
-  body {
-    background-color: #fff;
-    padding-top: 10px;
-    font-family: "Microsoft JhengHei", sans-serif;
-  }
+  body { background-color:#fff; padding-top:10px; font-family:"Microsoft JhengHei",sans-serif; }
 
-  .section-title {
-    text-align: center;
-    margin-top: 60px;
-    margin-bottom: 30px;
-  }
+  .section-title{ text-align:center; margin-top:60px; margin-bottom:30px; }
+  .section-title h2{ display:inline-block; position:relative; font-weight:700; font-size:28px; color:#033e6b; padding:0 20px; }
+  .section-title h2::before,.section-title h2::after{ content:""; position:absolute; top:50%; width:60px; height:2px; background:#0d6efd; }
+  .section-title h2::before{ left:-70px; } .section-title h2::after{ right:-70px; }
+  .section-title p{ margin-top:10px; font-size:16px; color:#555; }
 
-  .section-title h2 {
-    display: inline-block;
-    position: relative;
-    font-weight: 700;
-    font-size: 28px;
-    color: #033e6b;
-    padding: 0 20px;
-  }
+  .card{ border-left:8px solid #ccc; }
+  .card .card-body{ background:#fff; border-radius:6px; position:relative; }
+  .card .card-title{ font-weight:700; color:#033e6b; }
+  .card .card-text{ color:#444; font-size:15px; }
+  .meta{ font-size:13px; color:#888; }
 
-  .section-title h2::before,
-  .section-title h2::after {
-    content: "";
-    position: absolute;
-    top: 50%;
-    width: 60px;
-    height: 2px;
-    background: #0d6efd;
-  }
+  .interaction-bar{ border-top:1px solid #ddd; border-bottom:1px solid #ddd; padding:8px 0; display:flex; justify-content:space-between; align-items:center; font-size:14px; color:#555; }
+  .interaction-bar div{ display:flex; align-items:center; gap:8px; }
 
-  .section-title h2::before { left: -70px; }
-  .section-title h2::after  { right: -70px; }
-
-  .section-title p {
-    margin-top: 10px;
-    font-size: 16px;
-    color: #555;
-  }
-
-  .card { border-left: 8px solid #ccc; }
-
-  .card .card-body {
-    background: #fff;
-    border-radius: 6px;
-    position: relative;
-  }
-
-  .card .card-title {
-    font-weight: 700;
-    color: #033e6b;
-  }
-
-  .card .card-text {
-    color: #444;
-    font-size: 15px;
-  }
-
-  .meta {
-    font-size: 13px;
-    color: #888;
-  }
-
-  .interaction-bar {
-    border-top: 1px solid #ddd;
-    border-bottom: 1px solid #ddd;
-    padding: 8px 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 14px;
-    color: #555;
-  }
-
-  .interaction-bar div {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .interaction-actions {
-    display: flex;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    align-items: center;
-    padding-top: 8px;
-  }
-
-  .interaction-actions-left,
-  .interaction-actions-right {
-    display: flex;
-    gap: 24px;
-    align-items: center;
-  }
-
-  .interaction-actions button {
-    background: none;
-    border: none;
-    color: #555;
-    font-size: 15px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    cursor: pointer;
-  }
-
-  .interaction-actions .liked {
-    color: #dc3545;
-    font-weight: 700;
-  }
+  .interaction-actions{ display:flex; justify-content:space-between; flex-wrap:wrap; align-items:center; padding-top:8px; }
+  .interaction-actions-left,.interaction-actions-right{ display:flex; gap:24px; align-items:center; }
+  .interaction-actions button{ background:none; border:none; color:#555; font-size:15px; display:flex; align-items:center; gap:6px; cursor:pointer; }
+  .interaction-actions .liked{ color:#dc3545; font-weight:700; }
 
   /* 卡片右上收藏按鈕 */
-  .save-top-right {
-    position: absolute;
-    top: 12px;
-    right: 12px;
+  .save-top-right{ position:absolute; top:12px; right:12px; }
+  .save-top-right button{
+    background:rgba(255,255,255,.95); border:1px solid #e6f3fb; border-radius:999px;
+    padding:6px 12px; font-size:14px; color:#033e6b; display:inline-flex; align-items:center; gap:6px;
+    box-shadow:0 1px 3px rgba(0,0,0,.05); cursor:pointer;
   }
+  .save-top-right .bi-star-fill{ color:#f0ad4e; }
 
-  .save-top-right button {
-    background: rgba(255, 255, 255, 0.95);
-    border: 1px solid #e6f3fb;
-    border-radius: 999px;
-    padding: 6px 12px;
-    font-size: 14px;
-    color: #033e6b;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    cursor: pointer;
-  }
+  .btn-floating-post{ position:fixed; bottom:30px; right:30px; width:60px; height:60px; background-color:#63b3ed; color:#fff; border-radius:50%; display:flex; justify-content:center; align-items:center; font-size:28px; text-decoration:none; box-shadow:0 4px 10px rgba(0,0,0,.3); z-index:1000; transition:background-color .3s ease; }
+  .btn-floating-post:hover{ background-color:#4299e1; color:#fff; text-decoration:none; }
 
-  .save-top-right .bi-star-fill { color: #f0ad4e; }
+  input[name="q"]::placeholder{ color:#5a7ca9; } input[name="q"]:focus{ box-shadow:none; }
 
-  .btn-floating-post {
-    position: fixed;
-    bottom: 30px;
-    right: 30px;
-    width: 60px;
-    height: 60px;
-    background-color: #63b3ed;
-    color: #fff;
-    border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 28px;
-    text-decoration: none;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-    z-index: 1000;
-    transition: background-color 0.3s ease;
-  }
-
-  .btn-floating-post:hover {
-    background-color: #4299e1;
-    color: #fff;
-    text-decoration: none;
-  }
-
-  input[name="q"]::placeholder { color: #5a7ca9; }
-  input[name="q"]:focus       { box-shadow: none; }
-
-  .nav-right-group {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .scroll-top-nav {
-    background: transparent;
-    color: #63b3ed;
-    font-size: 20px;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    border: 2px solid #63b3ed;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-    z-index: 1050;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
-  }
-
-  .scroll-top-nav:hover {
-    background: #63b3ed;
-    color: #fff;
-  }
-
-  .scroll-top-wrapper {
-    display: none;
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .scroll-top-text {
-    font-size: 10px;
-    color: #63b3ed;
-    margin-top: 4px;
-  }
-
-  @media (max-width: 991.98px) {
-    .nav-right-group { order: 1; margin-left: auto; }
-    .scroll-top-wrapper { align-items: center; }
-  }
+  .nav-right-group{ display:flex; align-items:center; gap:10px; }
+  .scroll-top-nav{ background:transparent; color:#63b3ed; font-size:20px; width:36px; height:36px; border-radius:50%; border:2px solid #63b3ed; display:flex; justify-content:center; align-items:center; cursor:pointer; z-index:1050; box-shadow:0 2px 6px rgba(0,0,0,.1); transition:all .3s ease; }
+  .scroll-top-nav:hover{ background:#63b3ed; color:#fff; }
+  .scroll-top-wrapper{ display:none; flex-direction:column; align-items:center; }
+  .scroll-top-text{ font-size:10px; color:#63b3ed; margin-top:4px; }
+  @media (max-width:991.98px){ .nav-right-group{ order:1; margin-left:auto; } .scroll-top-wrapper{ align-items:center; } }
 
   /* 未登入 Modal 淺藍系 */
-  #authRequiredModal .modal-content {
-    border-radius: 14px;
-    border: none;
-    background: #f0faff;
-  }
+  #authRequiredModal .modal-content{ border-radius:14px; border:none; background:#f0faff; }
+  #authRequiredModal .modal-body{ color:#033e6b; } #authRequiredModal h5{ color:#033e6b; font-weight:700; }
+  #authRequiredModal p{ color:#055a8c; } #authRequiredModal .modal-icon{ color:#63b3ed; }
+  #authRequiredModal .btn-primary{ background:#63b3ed; border-color:#63b3ed; } #authRequiredModal .btn-primary:hover{ background:#4299e1; border-color:#4299e1; }
+  #authRequiredModal .btn-outline-secondary{ border-color:#a7e0ff; color:#033e6b; background:transparent; }
+  #authRequiredModal .btn-outline-secondary:hover{ background:#e6f3fb; border-color:#63b3ed; color:#033e6b; }
 
-  #authRequiredModal .modal-body { color: #033e6b; }
-
-  #authRequiredModal h5 {
-    color: #033e6b;
-    font-weight: 700;
-  }
-
-  #authRequiredModal p { color: #055a8c; }
-  #authRequiredModal .modal-icon { color: #63b3ed; }
-
-  #authRequiredModal .btn-primary {
-    background: #63b3ed;
-    border-color: #63b3ed;
-  }
-
-  #authRequiredModal .btn-primary:hover {
-    background: #4299e1;
-    border-color: #4299e1;
-  }
-
-  #authRequiredModal .btn-outline-secondary {
-    border-color: #a7e0ff;
-    color: #033e6b;
-    background: transparent;
-  }
-
-  #authRequiredModal .btn-outline-secondary:hover {
-    background: #e6f3fb;
-    border-color: #63b3ed;
-    color: #033e6b;
-  }
-
-  .btn-outline-primary {
-    color: #63b3ed;
-    border-color: #63b3ed;
-  }
-
-  .btn-outline-primary:hover {
-    color: #fff;
-    background: #63b3ed;
-    border-color: #63b3ed;
-  }
+  .btn-outline-primary{ color:#63b3ed; border-color:#63b3ed; }
+  .btn-outline-primary:hover{ color:#fff; background:#63b3ed; border-color:#63b3ed; }
 
   /* 身分 Segmented */
-  .identity-group .btn {
-    border-color: #a7e0ff;
-    color: #033e6b;
-    background: #f0faff;
-    padding: 4px 10px;
-    border-radius: 999px !important;
-  }
+  .identity-group .btn{ border-color:#a7e0ff; color:#033e6b; background:#f0faff; padding:4px 10px; border-radius:999px!important; }
+  .identity-group .btn:hover{ background:#e6f3fb; }
+  .identity-group .btn-check:checked + .btn{ background:#63b3ed; color:#fff; border-color:#63b3ed; }
+  .identity-label{ font-size:12px; color:#5a7ca9; margin-right:8px; }
+  @media (max-width:576px){ .identity-group{ gap:6px; } }
 
-  .identity-group .btn:hover { background: #e6f3fb; }
-
-  .identity-group .btn-check:checked + .btn {
-    background: #63b3ed;
-    color: #fff;
-    border-color: #63b3ed;
-  }
-
-  .identity-label {
-    font-size: 12px;
-    color: #5a7ca9;
-    margin-right: 8px;
-  }
-
-  @media (max-width: 576px) {
-    .identity-group { gap: 6px; }
-  }
-
-  /* ===== 我的收藏：Offcanvas（不占版面） ===== */
-  .saved-trigger{
-    --bs-btn-padding-y: .375rem;
-    --bs-btn-padding-x: .75rem;
-    --bs-btn-font-size: .875rem;
-    background: #e6f3fb;
-    color: #036;
-    border: 1px solid #cfe8fb;
-    border-radius: 999px;
-    display: inline-flex;
-    align-items: center;
-    gap: .4rem;
-  }
-
-  .saved-trigger:hover { background: #d8eefc; color: #024; }
-
-  .saved-badge { background: #63b3ed; }
-
-  .offcanvas-saved { width: min(520px, 96vw); }
-
-  .saved-item-card {
-    border: 1px solid #eef5ff;
-    border-radius: 12px;
-    transition: transform .15s ease, box-shadow .15s ease;
-  }
-
-  .saved-item-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 18px rgba(99, 179, 237, .18);
-  }
-
-  .ring-highlight {
-    outline: 2px solid rgba(13, 110, 253, .6);
-    transition: outline 1.2s ease;
-  }
-
-  /* ===== 我的收藏 Offcanvas（現代藍） ===== */
+  /* ===== 共同：側欄樣式與卡片 ===== */
   :root{
-    --sb-1:#f5faff;
-    --sb-2:#eaf5ff;
-    --sb-3:#63b3ed;
-    --sb-4:#2f8be6;
-    --ink:#033e6b;
+    --sb-1:#f5faff; --sb-2:#eaf5ff; --sb-3:#63b3ed; --sb-4:#2f8be6; --ink:#033e6b;
   }
+  .offcanvas-saved, .offcanvas-liked{ width:min(520px,96vw); background:var(--sb-1); }
+  .saved-item-card{ border:1px solid #e1efff; border-radius:16px; background:#fff; padding:14px 16px;
+    box-shadow:0 8px 24px rgba(3,62,107,.06); transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease; }
+  .saved-item-card:hover{ transform:translateY(-2px); box-shadow:0 12px 28px rgba(3,62,107,.12); border-color:#cfe2ff; }
+  .saved-item-card .meta{ color:#5a7ca9; }
+  .saved-item-card .btn-primary{ background:linear-gradient(180deg,var(--sb-3),var(--sb-4)); border:none; box-shadow:0 6px 16px rgba(47,139,230,.25); }
+  .saved-item-card .btn-primary:hover{ filter:brightness(1.05); transform:translateY(-1px); }
+  .ring-highlight{ outline:2px solid rgba(13,110,253,.6); transition:outline 1.2s ease; }
 
-  .offcanvas-saved{
-    width: min(520px, 96vw);
-    background: var(--sb-1);
+  /* 觸發鈕（收藏/按讚共用外觀） */
+  .saved-trigger, .liked-trigger{
+    --bs-btn-padding-y:.375rem; --bs-btn-padding-x:.75rem; --bs-btn-font-size:.875rem;
+    background:#e6f3fb; color:#036; border:1px solid #cfe8fb; border-radius:999px; display:inline-flex; align-items:center; gap:.4rem;
   }
-
-  .saved-header{
-    position: sticky;
-    top: 0;
-    z-index: 2;
-    background: linear-gradient(180deg, var(--sb-2) 0%, #dff0ff 100%);
-    border-bottom: 1px solid #cfe5ff;
-    border-top-left-radius: .5rem;
-    border-top-right-radius: .5rem;
-  }
-
-  .saved-header .title{
-    display: flex;
-    align-items: center;
-    gap: .6rem;
-    color: var(--ink);
-  }
-
-  .saved-header .title .star-wrap{
-    display: inline-grid;
-    place-items: center;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: #ffffff;
-    box-shadow: 0 2px 8px rgba(47, 139, 230, .15);
-  }
-
-  .saved-header .title i { color: #f0ad4e; }
-
-  .btn-close.modern { filter: saturate(0) opacity(.65); }
-  .btn-close.modern:hover { filter: none; }
-
-  #savedOffcanvas .offcanvas-body { background: var(--sb-1); }
-  .saved-list { padding: .5rem 0 0; }
-
-  .saved-item-card{
-    border: 1px solid #e1efff;
-    border-radius: 16px;
-    background: #fff;
-    padding: 14px 16px;
-    box-shadow: 0 8px 24px rgba(3, 62, 107, .06);
-    transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
-  }
-
-  .saved-item-card:hover{
-    transform: translateY(-2px);
-    box-shadow: 0 12px 28px rgba(3, 62, 107, .12);
-    border-color: #cfe2ff;
-  }
-
-  .saved-item-card .meta { color: #5a7ca9; }
-
-  .saved-item-card .btn-primary{
-    background: linear-gradient(180deg, var(--sb-3), var(--sb-4));
-    border: none;
-    box-shadow: 0 6px 16px rgba(47, 139, 230, .25);
-  }
-
-  .saved-item-card .btn-primary:hover{
-    filter: brightness(1.05);
-    transform: translateY(-1px);
-  }
-
-  #savedOffcanvas .empty { color: #6c87a1; }
-  #savedOffcanvas .empty i { color: #9ec7f3; }
-
-  #savedOffcanvas ::-webkit-scrollbar { width: 10px; }
-  #savedOffcanvas ::-webkit-scrollbar-track { background: transparent; }
-  #savedOffcanvas ::-webkit-scrollbar-thumb{
-    background: linear-gradient(180deg, #cfe5ff, #b7d7ff);
-    border-radius: 8px;
-  }
-
-  .saved-trigger .bi-star-fill { transition: transform .15s ease; }
-  .saved-trigger:hover .bi-star-fill { transform: scale(1.05); }
+  .saved-trigger:hover, .liked-trigger:hover{ background:#d8eefc; color:#024; }
+  .saved-badge, .liked-badge{ background:#63b3ed; }
+  .saved-trigger .bi-star-fill{ transition:transform .15s ease; }
+  .saved-trigger:hover .bi-star-fill{ transform:scale(1.05); }
 </style>
 </head>
 <body>
@@ -520,16 +192,26 @@
                  style="border:none; background-color:#f0faff; color:#033e6b; font-size:15px;">
           <button type="submit" class="btn" style="background-color:#63b3ed; color:#fff; border:none;">搜尋</button>
         </div>
+
         {% if request.user.is_authenticated %}
-        <button type="button"
-                class="btn saved-trigger ms-2"
-                data-bs-toggle="offcanvas"
-                data-bs-target="#savedOffcanvas"
-                aria-controls="savedOffcanvas">
-          <i class="bi bi-star-fill text-warning me-1"></i>
-          我的收藏
-          <span class="badge rounded-pill saved-badge ms-1" id="savedCount">0</span>
-        </button>
+          <!-- 我的收藏 -->
+          <button type="button" class="btn saved-trigger ms-2"
+                  data-bs-toggle="offcanvas"
+                  data-bs-target="#savedOffcanvas"
+                  aria-controls="savedOffcanvas">
+            <i class="bi bi-star-fill text-warning me-1"></i>
+            我的收藏
+            <span class="badge rounded-pill saved-badge ms-1" id="savedCount">0</span>
+          </button>
+          <!-- 我按讚的內容 -->
+          <button type="button" class="btn liked-trigger ms-2"
+                  data-bs-toggle="offcanvas"
+                  data-bs-target="#likedOffcanvas"
+                  aria-controls="likedOffcanvas">
+            <i class="bi bi-heart-fill text-danger me-1"></i>
+            我按讚的內容
+            <span class="badge rounded-pill liked-badge ms-1" id="likedCount">0</span>
+          </button>
         {% endif %}
       </form>
 
@@ -559,10 +241,8 @@
                       <div class="flex-grow-1">
                         <div class="fw-bold text-truncate" title="{{ post.title }}">{{ post.title }}</div>
                         <div class="small text-muted mb-2">由 {{ post.nickname|default:"(匿名)" }} ・ {{ post.created_at|date:"Y-m-d H:i" }}</div>
-                        <button type="button"
-                                class="btn btn-sm btn-primary saved-jump"
-                                data-bs-dismiss="offcanvas"
-                                data-target-id="post-{{ post.interaction_id }}">前往貼文</button>
+                        <button type="button" class="btn btn-sm btn-primary saved-jump"
+                                data-bs-dismiss="offcanvas" data-target-id="post-{{ post.interaction_id }}">前往貼文</button>
                       </div>
                     </div>
                   </div>
@@ -570,6 +250,42 @@
                 {% endif %}
               {% endfor %}
             {% endwith %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Offcanvas：我按讚的內容 -->
+      <div class="offcanvas offcanvas-end offcanvas-liked" tabindex="-1" id="likedOffcanvas" aria-labelledby="likedOffcanvasLabel">
+        <div class="offcanvas-header" style="background:#e6f3fb;">
+          <h5 class="offcanvas-title fw-bold text-primary" id="likedOffcanvasLabel">
+            <i class="bi bi-heart-fill me-2 text-danger"></i>我按讚的內容
+          </h5>
+          <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body">
+          <div id="likedEmpty" class="text-center text-muted py-4" style="display:none;">
+            <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+            你目前尚未按讚任何貼文
+          </div>
+
+          <div class="row g-3" id="likedPostsList">
+            {% for post in posts %}
+              {% if post.is_liked %}
+              <div class="col-12" data-liked="1" data-post-id="{{ post.interaction_id }}">
+                <div class="p-3 saved-item-card">
+                  <div class="d-flex align-items-start">
+                    <i class="bi bi-heart-fill text-danger me-2 mt-1"></i>
+                    <div class="flex-grow-1">
+                      <div class="fw-bold text-truncate" title="{{ post.title }}">{{ post.title }}</div>
+                      <div class="small text-muted mb-2">由 {{ post.nickname|default:"(匿名)" }} ・ {{ post.created_at|date:"Y-m-d H:i" }}</div>
+                      <button type="button" class="btn btn-sm btn-primary liked-jump"
+                              data-bs-dismiss="offcanvas" data-target-id="post-{{ post.interaction_id }}">前往貼文</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {% endif %}
+            {% endfor %}
           </div>
         </div>
       </div>
@@ -648,7 +364,7 @@
             {% endif %}
           </div>
 
-          <!-- 💬 留言區（預設隱藏，按「留言」展開） -->
+          <!-- 💬 留言區 -->
           <div class="comments mt-3" id="comments-{{ post.interaction_id }}" style="display:none;">
             <div class="mb-2 text-primary fw-bold">共有 {{ post.comment_list|length }} 則留言</div>
             <ul class="list-unstyled mb-3" data-list>
@@ -783,7 +499,7 @@
   </div>
 </div>
 
-<!-- JS 放在底部，避免重複載入 -->
+<!-- JS -->
 <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
 <script src="{% static 'assets/vendor/aos/aos.js' %}"></script>
 <script src="{% static 'assets/vendor/glightbox/js/glightbox.min.js' %}"></script>
@@ -793,6 +509,20 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+  // ===== 小工具：更新徽章數 =====
+  function updateSavedCount(){
+    const list = document.getElementById('savedPostsList');
+    const count = list ? list.querySelectorAll('[data-saved="1"]').length : 0;
+    const badge = document.getElementById('savedCount');
+    if (badge) badge.textContent = count;
+  }
+  function updateLikedCount(){
+    const list = document.getElementById('likedPostsList');
+    const count = list ? list.querySelectorAll('[data-liked="1"]').length : 0;
+    const badge = document.getElementById('likedCount');
+    if (badge) badge.textContent = count;
+  }
+
   // 查看更多/關閉詳情
   document.querySelectorAll('.toggle-more').forEach(link => {
     link.addEventListener('click', function (e) {
@@ -822,6 +552,7 @@ document.addEventListener('DOMContentLoaded', function () {
       const url = this.action;
       const formData = new FormData(this);
       const button = this.querySelector('button');
+      const postId = this.dataset.postId;
 
       fetch(url, { method:'POST', body:formData, headers:{ 'X-Requested-With':'XMLHttpRequest' }})
       .then(response => {
@@ -839,6 +570,41 @@ document.addEventListener('DOMContentLoaded', function () {
             let count = parseInt(countText.replace(/\D/g, '')) || 0;
             count = isLiked ? count + 1 : Math.max(count - 1, 0);
             countSpan.innerHTML = `<i class="bi ${isLiked ? 'bi-heart-fill text-danger' : 'bi-heart'}"></i> ${count}`;
+          }
+
+          // 同步「我按讚的內容」清單
+          const likedList = document.getElementById('likedPostsList');
+          const likedEmpty = document.getElementById('likedEmpty');
+          if (likedList) {
+            const existing = likedList.querySelector(`[data-post-id="${postId}"]`);
+            if (!isLiked && existing) {
+              // 收回愛心 -> 從清單移除
+              existing.remove();
+            } else if (isLiked && !existing) {
+              // 新增到按讚清單
+              const title = card.querySelector('.card-title')?.textContent?.trim() || `#${postId}`;
+              const meta = card.querySelector('.meta')?.textContent || '';
+              const col = document.createElement('div');
+              col.className = 'col-12';
+              col.setAttribute('data-liked','1');
+              col.setAttribute('data-post-id', postId);
+              col.innerHTML = `
+                <div class="p-3 saved-item-card">
+                  <div class="d-flex align-items-start">
+                    <i class="bi bi-heart-fill text-danger me-2 mt-1"></i>
+                    <div class="flex-grow-1">
+                      <div class="fw-bold text-truncate" title="${title}">${title}</div>
+                      <div class="small text-muted mb-2">${meta}</div>
+                      <button type="button" class="btn btn-sm btn-primary liked-jump"
+                              data-bs-dismiss="offcanvas" data-target-id="post-${postId}">前往貼文</button>
+                    </div>
+                  </div>
+                </div>`;
+              likedList.appendChild(col);
+            }
+            const hasLiked = likedList.querySelector('[data-liked="1"]');
+            if (likedEmpty) likedEmpty.style.display = hasLiked ? 'none' : 'block';
+            updateLikedCount();
           }
         }
       })
@@ -960,7 +726,7 @@ document.addEventListener('DOMContentLoaded', function () {
   });
   /* ====== /留言展開/送出 ====== */
 
-  // 「前往貼文」：關閉 Offcanvas 後再平滑捲到目標（不改網址、不加 hash）
+  // ---- 「前往貼文」：收藏側欄 ----
   (function () {
     const list = document.getElementById('savedPostsList');
     const empty = document.getElementById('savedEmpty');
@@ -977,9 +743,7 @@ document.addEventListener('DOMContentLoaded', function () {
       const btn = e.target.closest('.saved-jump');
       if (!btn) return;
       e.preventDefault();
-
       pendingTargetId = btn.getAttribute('data-target-id');
-
       const ocInstance = bootstrap.Offcanvas.getInstance(ocEl);
       if (ocEl && ocEl.classList.contains('show') && ocInstance) {
         ocInstance.hide();
@@ -995,27 +759,55 @@ document.addEventListener('DOMContentLoaded', function () {
         pendingTargetId = null;
       }
     });
-
-    function scrollToPost(targetId) {
-      const el = document.getElementById(targetId);
-      if (!el) return;
-
-      const headerH = document.getElementById('header')?.offsetHeight || 0;
-      const y = el.getBoundingClientRect().top + window.pageYOffset - headerH - 8;
-
-      window.scrollTo({ top: y, behavior: 'smooth' });
-      el.classList.add('ring-highlight');
-      setTimeout(() => el.classList.remove('ring-highlight'), 1500);
-    }
-
-    function updateSavedCount() {
-      const count = list ? list.querySelectorAll('[data-saved="1"]').length : 0;
-      const badge = document.getElementById('savedCount');
-      if (badge) badge.textContent = count;
-    }
   })();
 
-  // 刪除留言
+  // ---- 「前往貼文」：按讚側欄 ----
+  (function () {
+    const list = document.getElementById('likedPostsList');
+    const empty = document.getElementById('likedEmpty');
+    const ocEl = document.getElementById('likedOffcanvas');
+    if (!list) return;
+
+    const hasLiked = list.querySelector('[data-liked="1"]');
+    if (!hasLiked && empty) empty.style.display = 'block';
+    updateLikedCount();
+
+    let pendingTargetId = null;
+
+    list.addEventListener('click', function (e) {
+      const btn = e.target.closest('.liked-jump');
+      if (!btn) return;
+      e.preventDefault();
+      pendingTargetId = btn.getAttribute('data-target-id');
+      const ocInstance = bootstrap.Offcanvas.getInstance(ocEl);
+      if (ocEl && ocEl.classList.contains('show') && ocInstance) {
+        ocInstance.hide();
+      } else {
+        scrollToPost(pendingTargetId);
+        pendingTargetId = null;
+      }
+    });
+
+    ocEl?.addEventListener('hidden.bs.offcanvas', () => {
+      if (pendingTargetId) {
+        scrollToPost(pendingTargetId);
+        pendingTargetId = null;
+      }
+    });
+  })();
+
+  // 共用：平滑捲到貼文（避開 fixed header）
+  function scrollToPost(targetId) {
+    const el = document.getElementById(targetId);
+    if (!el) return;
+    const headerH = document.getElementById('header')?.offsetHeight || 0;
+    const y = el.getBoundingClientRect().top + window.pageYOffset - headerH - 8;
+    window.scrollTo({ top: y, behavior: 'smooth' });
+    el.classList.add('ring-highlight');
+    setTimeout(() => el.classList.remove('ring-highlight'), 1500);
+  }
+
+  // 刪除/編輯留言（原有邏輯）
   document.querySelectorAll('.delete-comment-btn').forEach(btn => {
     btn.addEventListener('click', function() {
       if (!confirm('確定要刪除這則留言嗎？')) return;
@@ -1031,7 +823,6 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
-  // 編輯留言
   let currentPostId = null, currentTime = null;
   const editModalEl = document.getElementById('editCommentModal');
   if (editModalEl){
@@ -1106,7 +897,6 @@ document.querySelectorAll('.btn-share').forEach(btn => {
     document.documentElement.scrollTop = 0;
   }
 
-  // 從 bfcache 回來（iOS/Safari 常見）
   window.addEventListener('pageshow', function (e) {
     if (e.persisted) {
       if (location.hash) {
