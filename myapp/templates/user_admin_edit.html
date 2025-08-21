@@ -16,7 +16,9 @@
         <!-- User Image -->
         <div class="text-center">
           {% if user.user_images %}
-            <div style="display: inline-block; padding: 5px; border: 5px solid {{ user.status_color|default:'#ccc' }}; border-radius: 50%;">
+            <div id="user-image-border" 
+                class="d-inline-block rounded-circle" 
+                style="border: 5px solid {{ user.status_color }};">
               <img src="{{ user.user_images }}" 
                   alt="User Image" 
                   class="rounded-circle shadow-sm" 
@@ -28,7 +30,6 @@
         </div>
 
         <!-- 其他資訊 (唯讀) -->
-                 <!-- ID -->
         <div class="mb-3">
           <label class="form-label">用戶 ID</label>
           <input type="text" class="form-control" value="{{ user.id }}" readonly>
@@ -80,9 +81,9 @@
         </div>
 
         <!-- 可編輯狀態顏色 -->
-        <div class="mb-3">
+        <div class="mb-3 mt-3">
           <label class="form-label">狀態顏色</label>
-          <select class="form-select" name="status_color">
+          <select class="form-select" name="status_color" id="status-select">
             <option value="#63b3ed" {% if user.status_color == "#63b3ed" %}selected{% endif %}>正常</option>
             <option value="#f2e57e" {% if user.status_color == "#f2e57e" %}selected{% endif %}>警示</option>
             <option value="#f76579" {% if user.status_color == "#f76579" %}selected{% endif %}>危險</option>
@@ -96,5 +97,15 @@
       </form>
     </div>
   </div>
+
+  <script>
+    // 監聽下拉式選單變化，改變外框顏色
+    document.getElementById('status-select').addEventListener('change', function () {
+      var borderDiv = document.getElementById('user-image-border');
+      if (borderDiv) {
+        borderDiv.style.borderColor = this.value;
+      }
+    });
+  </script>
 </body>
 </html>
