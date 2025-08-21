@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404, redirect
 from .models import TaiwanRegion, PoliceAddress #資料表的
 from django.views.decorators.http import require_GET
 from django.http import JsonResponse, HttpResponse
@@ -72,7 +72,6 @@ def education_page(request):
 
 
 #禮品真的東西(主要是讓下面東西管理的東西要先登入才能編輯)
-from django.shortcuts import redirect
 from functools import wraps
 
 def admin_login_required(view_func):
@@ -89,8 +88,8 @@ def admin_login_required(view_func):
 
 #教育網頁
 from .models import EducationPage
-from django.shortcuts import render, redirect, get_object_or_404
 from .education_forms import EducationPageUploadForm
+
 def education_page(request):
     pages = EducationPage.objects.all()
     return render(request, 'education_page.html', {'pages': pages})
@@ -146,7 +145,6 @@ def education_image(request, pk):
 
 
 #最近警局
-from django.shortcuts import render
 from .models import TaiwanRegion, PoliceAddress
 from django.forms.models import model_to_dict
 
@@ -190,7 +188,6 @@ def nearest_police_view(request):
 
 
 #縣市後端
-from django.shortcuts import render, redirect, get_object_or_404
 from .taiwan_regions_forms import TaiwanRegionForm
 
 @admin_login_required
@@ -229,7 +226,6 @@ def taiwan_regions_delete(request, id):
 
 
 #警局地址後端
-from django.shortcuts import render, get_object_or_404, redirect
 from .police_forms import PoliceAddressForm
 from django.views.decorators.http import require_POST
 from django.urls import reverse
@@ -290,14 +286,14 @@ def police_address_delete(request, pk):
     return redirect('police_address_list')  # 刪除後回到列表頁
 
 #用戶管理的東西
-from django.shortcuts import render, get_object_or_404, redirect
 from django.db.models import Q
 from .models import ThisUserProfile   # 假設你的 Model 名稱是 ThisUserProfile
 from django.utils import timezone
 
 # 使用者列表
+@admin_login_required
 def user_admin_list(request):
-    users = ThisUserProfile.objects.all().order_by('-created_at')
+    users = ThisUserProfile.objects.all().order_by('id')
     return render(request, 'user_admin_list.html', {'users': users})
 
 # 搜尋用戶
@@ -317,6 +313,7 @@ def user_admin_search(request):
     })
 
 # 編輯用戶
+@admin_login_required
 def user_admin_edit(request, user_id):
     user = get_object_or_404(ThisUserProfile, id=user_id)
 
@@ -331,10 +328,9 @@ def user_admin_edit(request, user_id):
 # 刪除用戶
 def user_admin_delete(request, user_id):
     user = get_object_or_404(ThisUserProfile, id=user_id)
-    if request.method == 'POST':
-        user.delete()
-        return redirect('user_admin_list')
-    return render(request, 'user_admin_delete.html', {'user': user})
+    user.delete()
+    return redirect('user_admin_list')
+
 
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
