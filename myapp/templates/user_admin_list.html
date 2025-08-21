@@ -92,7 +92,7 @@
   </header>
 
   <main class="main">
-        <section class="hero">
+    <section class="hero">
       <img src="{% static 'assets/img/1.png' %}" alt="Hero Image">
     </section>
     <section class="section light-background">
@@ -140,10 +140,8 @@
                   <td>{{ user.created_at }}</td>
                   <td>
                     {% if user.user_images %}
-                      <img src="{{ user.user_images }}" alt="User Image" width="50" height="50">
-                    {% else %}
-                      -
-                    {% endif %}
+                      
+                    {% else %}-{% endif %}
                   </td>
                   <td>
                     {% if user.status_color == "#63b3ed" %}
@@ -164,7 +162,7 @@
 
                     <!-- 刪除 Modal -->
                     <div class="modal fade" id="deleteModal{{ user.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ user.id }}" aria-hidden="true">
-                      <div class="modal-dialog modal-dialog-centered">
+                      <div class="modal-dialog modal-dialog-centered modal-lg">
                         <div class="modal-content">
                           <form method="post" action="{% url 'user_admin_delete' user.id %}">
                             {% csrf_token %}
@@ -173,10 +171,37 @@
                               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
                             <div class="modal-body text-start">
-                              你確定要刪除以下使用者嗎？
-                              <ul>
-                                <li><strong>名稱：</strong>{{ user.username }}</li>
+                              <p>你確定要刪除以下使用者嗎？</p>
+
+                              <div class="text-center my-3">
+                                {% if user.user_images %}
+                                  <div class="d-inline-block rounded-circle" style="border: 5px solid {{ user.status_color }}; padding: 3px;">
+                                    <img src="{{ user.user_images }}" alt="User Image" class="rounded-circle shadow-sm" style="width: 100px; height: 100px; object-fit: cover;">
+                                  </div>
+                                {% else %}
+                                  <p class="text-muted">尚未上傳圖片</p>
+                                {% endif %}
+                              </div>
+
+                              <ul class="list-unstyled mt-3">
+                                <li><strong>ID：</strong>{{ user.id }}</li>
+                                <li><strong>使用者名稱：</strong>{{ user.username }}</li>
                                 <li><strong>Gmail：</strong>{{ user.gmail }}</li>
+                                <li><strong>暱稱1：</strong>{{ user.default_nickname1 }}</li>
+                                <li><strong>暱稱2：</strong>{{ user.default_nickname2 }}</li>
+                                <li><strong>緊急聯絡電話：</strong>{{ user.emergency_contact_phone }}</li>
+                                <li><strong>緊急聯絡Gmail：</strong>{{ user.emergency_contact_gmail }}</li>
+                                <li><strong>預設訊息：</strong>{{ user.default_message }}</li>
+                                <li><strong>自我介紹：</strong>{{ user.self_intro }}</li>
+                                <li><strong>建立時間：</strong>{{ user.created_at }}</li>
+                                <li>
+                                  <strong>狀態：</strong>
+                                  {% if user.status_color == "#63b3ed" %} 正常
+                                  {% elif user.status_color == "#f2e57e" %} 警示
+                                  {% elif user.status_color == "#f76579" %} 危險
+                                  {% else %} 未知
+                                  {% endif %}
+                                </li>
                               </ul>
                             </div>
                             <div class="modal-footer">
