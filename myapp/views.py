@@ -2608,12 +2608,13 @@ def chatrooms_api(request):
 # 取得聊天室訊息
 from .models import ChatMessage
 
+# 取得聊天室訊息
 def chat_messages_api(request, room_id):
     if request.method == 'GET':
         messages = ChatMessage.objects.filter(region=room_id).order_by('timestamp')
         data = [{
             'id': msg.id,
-            'nickname': msg.nickname,
+            'nickname': msg.nickname or msg.user.username,
             'user_id': msg.user.username if msg.user else '匿名',
             'message': msg.message,
             'reply_to_id': msg.reply_to.id if msg.reply_to else None,
@@ -2622,6 +2623,7 @@ def chat_messages_api(request, room_id):
             'status_color': msg.user.status_color if msg.user else '#000000'
         } for msg in messages]
         return JsonResponse(data, safe=False)
+
 
 
 

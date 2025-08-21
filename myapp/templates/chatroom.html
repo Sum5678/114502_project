@@ -559,30 +559,27 @@
     messages.forEach(msg => {
       const wrapper = document.createElement('div');
       wrapper.classList.add('mb-2');
-      wrapper.id = "msg-" + msg.id;
+      const msgId = "msg-" + Date.now() + "-" + Math.floor(Math.random()*1000);
+      wrapper.id = msgId;
 
       const msgBox = document.createElement('div');
       msgBox.classList.add('p-2', 'border', 'rounded', 'bg-white');
 
-      // 如果是回覆訊息，加引用框
-      if (msg.reply_to_text) {
-        const quote = document.createElement('div');
-        quote.classList.add('small', 'text-muted', 'border-start', 'ps-2', 'mb-1');
-        quote.textContent = `回覆「${msg.reply_to_text}」`;
-        msgBox.appendChild(quote);
-      }
+      // ✅ 暱稱顯示顏色
+      const nicknameSpan = document.createElement('span');
+      nicknameSpan.textContent = (msg.nickname || '匿名') + '：';
+      nicknameSpan.style.color = msg.status_color || '#000000';
+      msgBox.appendChild(nicknameSpan);
 
-      // 主訊息
-      const main = document.createElement('span');
-      main.textContent = `${msg.nickname || '匿名'}：${msg.message}`;
-      msgBox.appendChild(main);
+      const textSpan = document.createElement('span');
+      textSpan.textContent = msg.message;
+      msgBox.appendChild(textSpan);
 
-      // 回覆按鈕
       const replyBtn = document.createElement('button');
       replyBtn.textContent = '回覆';
       replyBtn.classList.add('btn', 'btn-link', 'btn-sm', 'p-0', 'ms-2');
       replyBtn.onclick = () => {
-        replyTarget = { id_in_db: msg.id, text: msg.message };
+        replyTarget = { id: msgId, text: msg.message };
         chatInput.placeholder = `回覆「${msg.message}」...`;
         chatInput.focus();
       };
@@ -594,7 +591,6 @@
 
     chatWindow.scrollTop = chatWindow.scrollHeight;
   }
-
 
   
 // 送出訊息
