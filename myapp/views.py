@@ -2618,9 +2618,11 @@ def chat_messages_api(request, room_id):
             'message': msg.message,
             'reply_to_id': msg.reply_to.id if msg.reply_to else None,
             'reply_to_text': msg.reply_to.message if msg.reply_to else None,
-            'timestamp': msg.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+            'timestamp': msg.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+            'status_color': msg.user.status_color if msg.user else '#000000'
         } for msg in messages]
         return JsonResponse(data, safe=False)
+
 
 
 @login_required
@@ -2635,12 +2637,22 @@ def chat_send_api(request, room_id):
             # 找到 ThisUserProfile
             user_profile = ThisUserProfile.objects.get(gmail=request.user.email)
 
-            ChatMessage.objects.create(
+            chat_msg = ChatMessage.objects.create(
                 user=user_profile,
                 region=str(room_id),
                 message=message
             )
-            return JsonResponse({'status': 'success'})
+
+            return JsonResponse({
+                'status': 'success',
+                'message': {
+                    'id': chat_msg.id,
+                    'nickname': chat_msg.nickname,
+                    'message': chat_msg.message,
+                    'timestamp': chat_msg.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+                    'status_color': user_profile.status_color
+                }
+            })
         except ThisUserProfile.DoesNotExist:
             return JsonResponse({'status': 'error', 'msg': '請先至個人資料設定填寫email'})
         except Exception as e:
@@ -2681,7 +2693,7 @@ def send_message(request, room_id):
             try:
                 reply_to_msg = ChatMessage.objects.get(id=reply_to_id)
             except ChatMessage.DoesNotExist:
-                pass  # 若找不到就忽略
+                pass
 
         chat_msg = ChatMessage.objects.create(
             user=user_profile,
@@ -2699,11 +2711,13 @@ def send_message(request, room_id):
                 'message': chat_msg.message,
                 'reply_to_id': reply_to_msg.id if reply_to_msg else None,
                 'reply_to_text': reply_to_msg.message if reply_to_msg else None,
-                'timestamp': chat_msg.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+                'timestamp': chat_msg.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+                'status_color': user_profile.status_color
             }
         })
 
     return JsonResponse({'status': 'error', 'msg': '僅接受 POST'})
+
 
 
 
