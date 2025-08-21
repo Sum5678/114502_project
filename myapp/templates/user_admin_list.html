@@ -140,7 +140,9 @@
                   <td>{{ user.created_at }}</td>
                   <td>
                     {% if user.user_images %}
-                      
+                      <div class="d-inline-block rounded-circle" style="border: 3px solid {{ user.status_color }}; padding: 2px;">
+                        <img src="{{ user.user_images }}" alt="User Image" class="rounded-circle shadow-sm" style="width: 50px; height: 50px; object-fit: cover;">
+                      </div>
                     {% else %}-{% endif %}
                   </td>
                   <td>
