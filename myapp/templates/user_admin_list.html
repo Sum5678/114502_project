@@ -164,7 +164,7 @@
 
                     <!-- 刪除 Modal -->
                     <div class="modal fade" id="deleteModal{{ user.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ user.id }}" aria-hidden="true">
-                      <div class="modal-dialog modal-dialog-centered modal-lg">
+                      <div class="modal-dialog modal-dialog-centered modal-md">
                         <div class="modal-content">
                           <form method="post" action="{% url 'user_admin_delete' user.id %}">
                             {% csrf_token %}
@@ -173,31 +173,27 @@
                               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
                             <div class="modal-body text-start">
-                              <p>你確定要刪除以下使用者嗎？</p>
+                              <p>你確定要刪除以下使用者資料嗎？</p>
 
-                              <div class="text-center my-3">
+                                <!-- 使用者圖片：不放在 ul 裡，這樣就沒有 • -->
+                              <div class="mb-2">
+                                <strong>使用者圖片：</strong><br>
                                 {% if user.user_images %}
-                                  <div class="d-inline-block rounded-circle" style="border: 5px solid {{ user.status_color }}; padding: 3px;">
-                                    <img src="{{ user.user_images }}" alt="User Image" class="rounded-circle shadow-sm" style="width: 100px; height: 100px; object-fit: cover;">
-                                  </div>
+                                  <img src="{{ user.user_images }}" alt="User Image" class="img-thumbnail" style="max-width: 120px; border-radius: 8px;">
                                 {% else %}
-                                  <p class="text-muted">尚未上傳圖片</p>
+                                  <span class="text-muted">尚未上傳圖片</span>
                                 {% endif %}
                               </div>
 
-                              <ul class="list-unstyled mt-3">
-                                <li><strong>ID：</strong>{{ user.id }}</li>
-                                <li><strong>使用者名稱：</strong>{{ user.username }}</li>
-                                <li><strong>Gmail：</strong>{{ user.gmail }}</li>
-                                <li><strong>暱稱1：</strong>{{ user.default_nickname1 }}</li>
-                                <li><strong>暱稱2：</strong>{{ user.default_nickname2 }}</li>
+                              <ul class="mt-3">
                                 <li><strong>緊急聯絡電話：</strong>{{ user.emergency_contact_phone }}</li>
                                 <li><strong>緊急聯絡Gmail：</strong>{{ user.emergency_contact_gmail }}</li>
                                 <li><strong>預設訊息：</strong>{{ user.default_message }}</li>
                                 <li><strong>自我介紹：</strong>{{ user.self_intro }}</li>
                                 <li><strong>建立時間：</strong>{{ user.created_at }}</li>
                                 <li>
-                                  <strong>狀態：</strong>
+                                  <strong>狀態顏色：</strong>
+                                  <span style="display:inline-block; width:20px; height:20px; background-color: {{ user.status_color }}; border-radius: 4px; vertical-align: middle; margin-right: 5px;"></span>
                                   {% if user.status_color == "#63b3ed" %} 正常
                                   {% elif user.status_color == "#f2e57e" %} 警示
                                   {% elif user.status_color == "#f76579" %} 危險
