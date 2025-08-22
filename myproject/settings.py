@@ -35,6 +35,7 @@ ALLOWED_HOSTS = ["*"]
 # Application definition
 
 INSTALLED_APPS = [
+    'pwa',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -240,3 +241,22 @@ ALLOWED_TAGS = ['a']
 ALLOWED_ATTRIBUTES = {
     'a': ['href', 'target', 'rel']
 }
+
+#PWA
+PWA_APP_NAME = '怪怪走開護您安全'
+PWA_APP_DESCRIPTION = "Django as a PWA"
+PWA_APP_THEME_COLOR = '#033e6b'
+PWA_APP_BACKGROUND_COLOR = '#ffffff'
+PWA_APP_DISPLAY = 'standalone'
+PWA_APP_SCOPE = '/'
+PWA_APP_START_URL = '/'
+PWA_APP_ICONS = [
+    {
+        'src': '/static/icons/icon-192x192.png?v=2',
+        'sizes': '192x192'
+    },
+    {
+        'src': '/static/icons/icon-512x512.png?v=2',
+        'sizes': '512x512'
+    }
+]
