@@ -11,6 +11,7 @@ from django.views.generic import TemplateView
 urlpatterns = [
     # #思璇
     # path('chatrooms/', views.chatroom_map, name='chatroom_map'),
+    path('', include('pwa.urls')),  # PWA support
     path('admin/', admin.site.urls),
 
     # manifest.json 用 views.py 回傳
