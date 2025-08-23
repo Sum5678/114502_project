@@ -1,28 +1,142 @@
 <!DOCTYPE html>
 {% load static %}
 <html lang="zh-Hant">
+
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>編輯用戶狀態</title>
-  <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
-</head>
-<body>
-  <div class="container mt-5">
-    <h2 class="mb-4 text-center">編輯用戶狀態顏色</h2>
 
-    <div class="card shadow p-4">
-      <form method="POST">
+  <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet" />
+  <link href="{% static 'assets/vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet" />
+  <link href="{% static 'assets/css/main.css' %}" rel="stylesheet" />
+
+  <style>
+    .main-content {
+      max-width: 750px;
+      margin: 100px auto 50px;
+      background-color: white;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    h2.form-title {
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+
+    form .form-control, form .form-select, form textarea {
+      width: 100%;
+      max-width: 600px;
+      margin-bottom: 12px;
+      padding: 6px;
+      font-size: 1rem;
+    }
+
+    button, a.btn {
+      min-width: 100px;
+      border-radius: 4px;
+    }
+
+    button.btn-primary {
+      background-color: #4CAF50;
+      border: none;
+      color: white;
+      padding: 8px 16px;
+    }
+
+    button.btn-primary:hover {
+      background-color: #45a049;
+    }
+
+    a.btn-secondary {
+      text-decoration: none;
+      background-color: #6c757d;
+      color: white;
+      padding: 8px 16px;
+    }
+
+    a.btn-secondary:hover {
+      background-color: #5a6268;
+    }
+
+    #user-image-border {
+      display: inline-block;
+      border-width: 5px;
+      border-style: solid;
+      border-radius: 50%;
+    }
+
+    #user-image-border img {
+      width: 200px;
+      height: 200px;
+      object-fit: cover;
+      border-radius: 50%;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+
+<body class="index-page">
+
+  <!-- Header -->
+  <header id="header" class="header d-flex align-items-center fixed-top">
+    <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
+      <a href="{% url 'admin_index' %}" class="logo d-flex flex-column align-items-start me-auto me-xl-0">
+        <h1 class="sitename">台灣地區管理系統</h1>
+      </a>
+
+      <nav id="navmenu" class="navmenu">
+        <ul>
+          <li><a href="{% url 'admin_index' %}">管理員主頁</a></li>
+          <li><a href="{% url 'admin_interview' %}">管理員自我介紹</a></li>
+          <li><a href="{% url 'show_judge_page' %}">審核表單</a></li>
+          <li class="dropdown"><a href="#"><span>清單審核</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+            <ul>
+              <li><a href="{% url 'pemap_judge' %}">事件清單審核</a></li>
+              <li><a href="{% url 'store_judge' %}">商家清單審核</a></li>
+            </ul>
+          </li>
+          <li class="dropdown"><a href="#"><span>我的審核紀錄</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+            <ul>
+              <li><a href="{% url 'admin_decide' %}">事件審核紀錄</a></li>
+              <li><a href="{% url 'store_decide' %}">商家審核紀錄</a></li>
+            </ul>
+          </li>
+          <li class="dropdown"><a href="#"><span>管理工具</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+            <ul>
+              <li><a href="{% url 'education_list' %}">教育網頁管理</a></li>
+              <li><a href="{% url 'taiwan_regions_admin' %}">台灣縣市管理</a></li>
+              <li><a href="{% url 'police_address_list' %}">最近警局管理</a></li>
+            </ul>
+          </li>
+        </ul>
+        <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+      </nav>
+
+      <a class="btn-getstarted" href="{% url 'admin_logout' %}">登出</a>
+    </div>
+  </header>
+
+  <!-- Hero 圖 -->
+  <section class="hero">
+    <img src="{% static 'assets/img/1.png' %}" alt="Hero Image" class="img-fluid w-100">
+  </section>
+
+  <!-- 表單內容 -->
+  <main class="main">
+    <div class="main-content" id="main-content" data-aos="fade-up">
+      <h2 class="form-title">編輯用戶狀態顏色</h2>
+
+      <form method="POST" class="mx-auto">
         {% csrf_token %}
+
         <!-- User Image -->
-        <div class="text-center">
+        <div class="text-center mb-3">
           {% if user.user_images %}
-            <div id="user-image-border" 
-                class="d-inline-block rounded-circle" 
-                style="border: 5px solid {{ user.status_color }};">
-              <img src="{{ user.user_images }}" 
-                  alt="User Image" 
-                  class="rounded-circle shadow-sm" 
-                  style="width: 200px; height: 200px; object-fit: cover;">
+            <div id="user-image-border" style="border-color: {{ user.status_color }};">
+              <img src="{{ user.user_images }}" alt="User Image">
             </div>
           {% else %}
             <p class="text-muted">尚未上傳圖片</p>
@@ -30,55 +144,16 @@
         </div>
 
         <!-- 其他資訊 (唯讀) -->
-        <div class="mb-3">
-          <label class="form-label">用戶 ID</label>
-          <input type="text" class="form-control" value="{{ user.id }}" readonly>
-        </div>
-
-        <div class="mb-3">
-          <label class="form-label">使用者名稱</label>
-          <input type="text" class="form-control" value="{{ user.username }}" readonly>
-        </div>
-
-        <div class="mb-3">
-          <label class="form-label">Gmail</label>
-          <input type="text" class="form-control" value="{{ user.gmail }}" readonly>
-        </div>
-
-        <div class="mb-3">
-          <label class="form-label">預設暱稱1</label>
-          <input type="text" class="form-control" value="{{ user.default_nickname1 }}" readonly>
-        </div>
-
-        <div class="mb-3">
-          <label class="form-label">預設暱稱2</label>
-          <input type="text" class="form-control" value="{{ user.default_nickname2 }}" readonly>
-        </div>
-
-        <div class="mb-3">
-          <label class="form-label">緊急聯絡電話</label>
-          <input type="text" class="form-control" value="{{ user.emergency_contact_phone }}" readonly>
-        </div>
-
-        <div class="mb-3">
-          <label class="form-label">緊急聯絡 Gmail</label>
-          <input type="text" class="form-control" value="{{ user.emergency_contact_gmail }}" readonly>
-        </div>
-
-        <div class="mb-3">
-          <label class="form-label">預設訊息</label>
-          <textarea class="form-control" rows="2" readonly>{{ user.default_message }}</textarea>
-        </div>
-
-        <div class="mb-3">
-          <label class="form-label">自我介紹</label>
-          <textarea class="form-control" rows="3" readonly>{{ user.self_intro }}</textarea>
-        </div>
-
-        <div class="mb-3">
-          <label class="form-label">建立時間</label>
-          <input type="text" class="form-control" value="{{ user.created_at }}" readonly>
-        </div>
+        <div class="mb-3"><label class="form-label">用戶 ID</label><input type="text" class="form-control" value="{{ user.id }}" readonly></div>
+        <div class="mb-3"><label class="form-label">使用者名稱</label><input type="text" class="form-control" value="{{ user.username }}" readonly></div>
+        <div class="mb-3"><label class="form-label">Gmail</label><input type="text" class="form-control" value="{{ user.gmail }}" readonly></div>
+        <div class="mb-3"><label class="form-label">預設暱稱1</label><input type="text" class="form-control" value="{{ user.default_nickname1 }}" readonly></div>
+        <div class="mb-3"><label class="form-label">預設暱稱2</label><input type="text" class="form-control" value="{{ user.default_nickname2 }}" readonly></div>
+        <div class="mb-3"><label class="form-label">緊急聯絡電話</label><input type="text" class="form-control" value="{{ user.emergency_contact_phone }}" readonly></div>
+        <div class="mb-3"><label class="form-label">緊急聯絡 Gmail</label><input type="text" class="form-control" value="{{ user.emergency_contact_gmail }}" readonly></div>
+        <div class="mb-3"><label class="form-label">預設訊息</label><textarea class="form-control" rows="2" readonly>{{ user.default_message }}</textarea></div>
+        <div class="mb-3"><label class="form-label">自我介紹</label><textarea class="form-control" rows="3" readonly>{{ user.self_intro }}</textarea></div>
+        <div class="mb-3"><label class="form-label">建立時間</label><input type="text" class="form-control" value="{{ user.created_at }}" readonly></div>
 
         <!-- 可編輯狀態顏色 -->
         <div class="mb-3 mt-3">
@@ -90,22 +165,28 @@
           </select>
         </div>
 
-        <div class="d-flex justify-content-between">
+        <!-- 按鈕區 -->
+        <div class="d-flex justify-content-between mt-4">
           <a href="{% url 'user_admin_list' %}" class="btn btn-secondary">返回</a>
           <button type="submit" class="btn btn-primary">儲存</button>
         </div>
       </form>
     </div>
-  </div>
+  </main>
+
+  <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/aos/aos.js' %}"></script>
+  <script src="{% static 'assets/js/main.js' %}"></script>
 
   <script>
-    // 監聽下拉式選單變化，改變外框顏色
-    document.getElementById('status-select').addEventListener('change', function () {
-      var borderDiv = document.getElementById('user-image-border');
-      if (borderDiv) {
-        borderDiv.style.borderColor = this.value;
-      }
+    document.addEventListener('DOMContentLoaded', function () {
+      // 下拉式選單改變圖片邊框顏色
+      document.getElementById('status-select').addEventListener('change', function () {
+        var borderDiv = document.getElementById('user-image-border');
+        if (borderDiv) borderDiv.style.borderColor = this.value;
+      });
     });
   </script>
+
 </body>
 </html>
