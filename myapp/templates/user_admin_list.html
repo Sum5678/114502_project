@@ -111,8 +111,8 @@
               <thead class="table-primary">
                 <tr>
                   <th>ID</th>
-                  <th>使用者名稱</th>
-                  <th>Gmail</th>
+                  <th>用戶名稱</th>
+                  <th>用戶Gmail</th>
                   <th>暱稱1</th>
                   <th>暱稱2</th>
                   <th>緊急聯絡電話</th>
@@ -174,18 +174,22 @@
                             </div>
                             <div class="modal-body text-start">
                               <p>你確定要刪除以下使用者資料嗎？</p>
-
-                                <!-- 使用者圖片：不放在 ul 裡，這樣就沒有 • -->
-                              <div class="mb-2">
-                                <strong>使用者圖片：</strong><br>
+                              <div class="mb-2 text-center">
                                 {% if user.user_images %}
-                                  <img src="{{ user.user_images }}" alt="User Image" class="img-thumbnail" style="max-width: 120px; border-radius: 8px;">
+                                  <div class="d-inline-block rounded-circle" style="border: 3px solid {{ user.status_color }}; padding: 2px;">
+                                    <img src="{{ user.user_images }}" alt="User Image"
+                                        class="rounded-circle shadow-sm"
+                                        style="width: 80px; height: 80px; object-fit: cover;">
+                                  </div>
                                 {% else %}
                                   <span class="text-muted">尚未上傳圖片</span>
                                 {% endif %}
                               </div>
 
                               <ul class="mt-3">
+                                <li><strong>用戶名稱：</strong>{{ user.username }}</li>
+                                <li><strong>用戶Gmail：</strong>{{ user.gmail }}</li>
+                                <li><strong>暱稱1：</strong>{{ user.default_nickname1 }}</li><li><strong>暱稱2：</strong>{{ user.default_nickname2 }}</li>
                                 <li><strong>緊急聯絡電話：</strong>{{ user.emergency_contact_phone }}</li>
                                 <li><strong>緊急聯絡Gmail：</strong>{{ user.emergency_contact_gmail }}</li>
                                 <li><strong>預設訊息：</strong>{{ user.default_message }}</li>
