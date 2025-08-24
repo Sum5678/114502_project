@@ -36,6 +36,45 @@
       height: 600px;
       border-radius: 8px;
     }
+
+
+    #searchContainer {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      z-index: 10;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 10px 15px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      font-family: 'Open Sans', sans-serif;
+    }
+
+    #searchContainer input {
+      width: 250px;
+      padding: 6px 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    #searchContainer button {
+      background-color: #4285F4;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    #searchContainer button:hover {
+      background-color: #357AE8;
+    }
+
   </style>
 </head>
 
@@ -95,6 +134,10 @@
 
     <section id="injury-map">
       <header>
+
+        
+
+
         <div class="container my-3">
           <label for="kindFilter" class="form-label">事件分類：</label>
           <select id="kindFilter" class="form-select" style="max-width: 300px;">
@@ -110,6 +153,20 @@
             <option value="">全部細分類</option>
           </select>
         </div>
+
+        <div class="map-wrapper" style="position: relative; width: 100%; height: 600px; border-radius: 8px; margin-bottom: 20px;">
+    
+          <div id="map" style="width: 100%; height: 100%;"></div>
+
+          <div id="searchContainer">
+            <input id="searchInput" type="text" placeholder="輸入地點..." />
+            <button id="navigateBtn">導航</button>
+          </div>
+
+        </div>
+
+        
+
 
         <div class="container">
           <div id="map"></div>
@@ -145,6 +202,11 @@
   let directionCone = null;
   let lastAlertPosition = null;
   const alertDistanceThreshold = 50; // 公尺，移動超過多少才提醒
+  const dangerDistance = 100; // ✅ 事件避開半徑
+
+  // 路線規劃服務
+  let directionsService;
+  let directionsRenderer;
 
 
   // icon 圖片 URL，用變數帶入確保 Django 模板能解析
@@ -157,12 +219,109 @@
       zoom: 14,
     });
 
+    // 初始化路線規劃器
+    directionsService = new google.maps.DirectionsService();
+    directionsRenderer = new google.maps.DirectionsRenderer({
+      map: map,
+      suppressMarkers: false
+    });
+
     updateSubkindOptions("全部");
     document.getElementById("subkindFilter").value = "";
     fetchReportsAndRenderMarkers("全部", "");
 
-    trackUserLocation();  // ✅ 一定要呼叫
+    trackUserLocation();
+
+    // 點擊地圖選目的地
+    map.addListener("click", function(e) {
+      const destination = { lat: e.latLng.lat(), lng: e.latLng.lng() };
+      calculateAndDisplaySafeRoute(destination);
+    });
+
+    // 導航按鈕事件
+    document.getElementById("navigateBtn").addEventListener("click", () => {
+      const input = document.getElementById("searchInput").value.trim();
+      if (!input) {
+        alert("請輸入地點");
+        return;
+      }
+      if (!userMarker) {
+        alert("尚未取得使用者位置");
+        return;
+      }
+
+      const geocoder = new google.maps.Geocoder();
+      geocoder.geocode({ address: input }, (results, status) => {
+        if (status === "OK" && results[0] && results[0].geometry) {
+          const destination = results[0].geometry.location;
+          map.panTo(destination);
+          map.setZoom(15);
+
+          calculateAndDisplaySafeRoute({
+            lat: destination.lat(),
+            lng: destination.lng()
+          });
+        } else {
+          alert("找不到這個地點，請確認輸入正確");
+        }
+      });
+    });
   }
+
+
+
+  // 規劃安全路線
+  function calculateAndDisplaySafeRoute(destination) {
+    if (!userMarker) {
+      alert("尚未取得使用者位置");
+      return;
+    }
+
+    const origin = userMarker.getPosition();
+
+    directionsService.route(
+      {
+        origin: origin,
+        destination: destination,
+        travelMode: google.maps.TravelMode.WALKING,
+        provideRouteAlternatives: true
+      },
+      (response, status) => {
+        if (status === "OK") {
+          const safeRoute = response.routes.find(route => !isRouteDangerous(route));
+
+          if (safeRoute) {
+            directionsRenderer.setDirections({ routes: [safeRoute] });
+          } else {
+            alert("⚠ 找不到避開事件 100 公尺的安全路線，將顯示最近的一條");
+            directionsRenderer.setDirections(response);
+          }
+        } else {
+          console.error("Directions request failed due to " + status);
+        }
+      }
+    );
+  }
+
+  // 判斷路線是否經過事件 100 公尺內
+  function isRouteDangerous(route) {
+    if (!reports || reports.length === 0) return false;
+
+    const path = route.overview_path; // LatLng[]
+    for (let i = 0; i < path.length; i++) {
+      const point = path[i];
+      for (let r of reports) {
+        if (typeof r.latitude === "number" && typeof r.longitude === "number") {
+          const dist = getDistanceMeters(point.lat(), point.lng(), r.latitude, r.longitude);
+          if (dist <= dangerDistance) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
 
   function trackUserLocation() {
     if (!navigator.geolocation) {
@@ -450,7 +609,47 @@
   }
 
 
+  // 拖移搜尋框
+  const searchContainer = document.getElementById("searchContainer");
 
+  let isDragging = false;
+  let offsetX = 0;
+  let offsetY = 0;
+
+  searchContainer.addEventListener("mousedown", (e) => {
+    isDragging = true;
+    // 記錄滑鼠點擊位置與元素左上角的距離
+    offsetX = e.clientX - searchContainer.offsetLeft;
+    offsetY = e.clientY - searchContainer.offsetTop;
+    searchContainer.style.cursor = "grabbing";
+  });
+
+  document.addEventListener("mousemove", (e) => {
+    if (isDragging) {
+      let left = e.clientX - offsetX;
+      let top = e.clientY - offsetY;
+
+      // 限制拖動不超出地圖區域
+      const mapRect = document.getElementById("map").getBoundingClientRect();
+      const containerRect = searchContainer.getBoundingClientRect();
+
+      if (left < mapRect.left) left = mapRect.left;
+      if (top < mapRect.top) top = mapRect.top;
+      if (left + containerRect.width > mapRect.right) left = mapRect.right - containerRect.width;
+      if (top + containerRect.height > mapRect.bottom) top = mapRect.bottom - containerRect.height;
+
+      searchContainer.style.left = left - mapRect.left + "px";
+      searchContainer.style.top = top - mapRect.top + "px";
+    }
+  });
+
+  document.addEventListener("mouseup", () => {
+    isDragging = false;
+    searchContainer.style.cursor = "grab";
+  });
+
+  // 初始化鼠標樣式
+  searchContainer.style.cursor = "grab";
 
 
 
