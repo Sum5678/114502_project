@@ -201,7 +201,8 @@
   let accuracyCircle = null;
   let directionCone = null;
   let lastAlertPosition = null;
-  const alertDistanceThreshold = 50; // 公尺，移動超過多少才提醒
+  let lastPosition = null;
+  const alertDistanceThreshold = 50; // 公尺，移動超過才檢查附近事件
   const dangerDistance = 100; // ✅ 事件避開半徑
 
   // 路線規劃服務
