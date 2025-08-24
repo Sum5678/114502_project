@@ -2201,6 +2201,11 @@ def post_display(request):
 
     user_id_str = str(request.user.id) if request.user.is_authenticated else None
 
+    # ★ 新增：三個個人清單（收藏 / 按讚 / 我留言過）
+    my_saved_posts = []
+    my_liked_posts = []
+    my_commented_posts = []
+
     for post in posts:
         # liked
         try:
@@ -2226,6 +2231,14 @@ def post_display(request):
         except json.JSONDecodeError:
             post.comment_list = []
 
+        # ★ 新增：塞進三個清單（沿用現有判斷結果，不改你原本邏輯）
+        if post.is_saved:
+            my_saved_posts.append(post)
+        if post.is_liked:
+            my_liked_posts.append(post)
+        if user_id_str and any(str(c.get('user_id')) == user_id_str for c in post.comment_list):
+            my_commented_posts.append(post)
+
     # 把暱稱1/2帶給模板（留言單選要用）
     nick1 = ""
     nick2 = ""
@@ -2234,11 +2247,21 @@ def post_display(request):
         nick1 = (prof.default_nickname1 or "").strip() if prof else ""
         nick2 = (prof.default_nickname2 or "").strip() if prof else ""
 
-    return render(request, 'post_display.html', {
+    # ★ 新增：把三個清單放進 context（僅登入時提供）
+    context = {
         'posts': posts,
         'profile_nickname1': nick1,
         'profile_nickname2': nick2,
-    })
+    }
+    if request.user.is_authenticated:
+        context.update({
+            'my_saved_posts': my_saved_posts,
+            'my_liked_posts': my_liked_posts,
+            'my_commented_posts': my_commented_posts,
+            'uid': user_id_str,  # 若模板有需要用到 uid 字串
+        })
+
+    return render(request, 'post_display.html', context)
 
 
 # 編輯貼文
@@ -2465,6 +2488,7 @@ def post_comments(request, post_id):
         'total_comments': len(comments),
     })
 # ------------ /交流區後端（整合版）------------
+
 
 
 
