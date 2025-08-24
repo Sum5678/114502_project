@@ -164,37 +164,6 @@
     trackUserLocation();  // ✅ 一定要呼叫
   }
 
-
-
-  // function trackUserLocation() {
-  //   if (navigator.geolocation) {
-  //     // 先取得一次定位
-  //     navigator.geolocation.getCurrentPosition(
-  //       position => {
-  //         updateUserMarker(position.coords.latitude, position.coords.longitude);
-  //       },
-  //       error => {
-  //         console.warn("無法取得定位:", error.message);
-  //       }
-  //     );
-
-  //     // 每40秒更新一次位置
-  //     setInterval(() => {
-  //       navigator.geolocation.getCurrentPosition(
-  //         position => {
-  //           updateUserMarker(position.coords.latitude, position.coords.longitude);
-  //         },
-  //         error => {
-  //           console.warn("無法取得定位:", error.message);
-  //         }
-  //       );
-  //     }, 40000); // 40秒
-  //   } else {
-  //     console.warn("瀏覽器不支援地理位置服務");
-  //   }
-  // }
-  
-
   function trackUserLocation() {
     if (!navigator.geolocation) {
       console.warn("瀏覽器不支援地理位置服務");
@@ -327,46 +296,6 @@
 
     return { lat: φ2 * (180 / Math.PI), lng: λ2 * (180 / Math.PI) };
   }
-
-
-
-
-  // function updateUserMarker(lat, lng) {
-  //   const pos = { lat: lat, lng: lng };
-
-  //   if (userMarker) {
-  //     userMarker.setPosition(pos);
-  //   } else {
-  //     userMarker = new google.maps.Marker({
-  //       position: pos,
-  //       map: map,
-  //       title: "您的位置",
-  //       icon: {
-  //         url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
-  //         scaledSize: new google.maps.Size(40, 40),
-  //       },
-  //       zIndex: 9999,
-  //     });
-  //   }
-
-  //   // 判斷是否需要提醒
-  //   if (!lastAlertPosition) {
-  //     // 第一次提醒
-  //     checkNearbyEvents(lat, lng);
-  //     lastAlertPosition = pos;
-  //   } else {
-  //     // 計算與上次提醒距離
-  //     const distFromLastAlert = getDistanceMeters(lat, lng, lastAlertPosition.lat, lastAlertPosition.lng);
-  //     if (distFromLastAlert >= alertDistanceThreshold) {
-  //       checkNearbyEvents(lat, lng);
-  //       lastAlertPosition = pos;
-  //     }
-  //   }
-
-  //   // 可選：地圖跟著位置移動
-  //   map.setCenter(pos);
-  // }
-
 
 
 
