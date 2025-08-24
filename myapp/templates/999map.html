@@ -206,6 +206,8 @@
   let allMarkers=[], reports=[];
   const alertDistanceThreshold=50, dangerDistance=100;
   let directionsService, directionsRenderer;
+  let searchMarkers = [];
+
 
   // 圖標
   const iconUrl = "{% static 'assets/img/paw_icon.png' %}";
@@ -232,19 +234,53 @@
     });
 
     // 搜尋導航
-    document.getElementById("navigateBtn").addEventListener("click", ()=>{
-      const input=document.getElementById("searchInput").value.trim();
-      if(!input){ alert("請輸入地點"); return; }
-      if(!userMarker){ alert("尚未取得使用者位置"); return; }
+    document.getElementById("navigateBtn").addEventListener("click", () => {
+      const input = document.getElementById("searchInput").value.trim();
+      if (!input) { alert("請輸入地點"); return; }
+      if (!userMarker) { alert("尚未取得使用者位置"); return; }
 
-      new google.maps.Geocoder().geocode({address:input}, (results,status)=>{
-        if(status==="OK" && results[0] && results[0].geometry){
-          const dest=results[0].geometry.location;
-          map.panTo(dest); map.setZoom(15);
-          calculateAndDisplaySafeRoute({lat:dest.lat(), lng:dest.lng()});
-        }else alert("找不到這個地點，請確認輸入正確");
+      const service = new google.maps.places.PlacesService(map);
+
+      service.textSearch({
+        location: userMarker.getPosition(), // 使用者位置為中心
+        radius: 2000,                       // 搜尋範圍 2 公里
+        query: input                         // 搜尋字串，例如「牛肉麵」
+      }, (results, status) => {
+        if (status === google.maps.places.PlacesServiceStatus.OK && results.length > 0) {
+          // 先清除原本導航路線和搜尋結果標記
+          directionsRenderer.setDirections({ routes: [] });
+          allMarkers.forEach(m => m.setMap(null));
+          allMarkers = [];
+
+          const bounds = new google.maps.LatLngBounds();
+
+          results.forEach(place => {
+            if (!place.geometry || !place.geometry.location) return;
+
+            const marker = new google.maps.Marker({
+              map: map,
+              position: place.geometry.location,
+              title: place.name
+            });
+
+            const infowindow = new google.maps.InfoWindow({
+              content: `<strong>${place.name}</strong><br>${place.formatted_address || ''}`
+            });
+
+            marker.addListener("click", () => infowindow.open(map, marker));
+
+            allMarkers.push(marker);
+            bounds.extend(marker.getPosition());
+          });
+
+          map.fitBounds(bounds);
+        } else {
+          alert("找不到這個地點，請確認輸入正確");
+        }
       });
     });
+
+
   }
 
   // ---------------------- 使用者定位 ----------------------
