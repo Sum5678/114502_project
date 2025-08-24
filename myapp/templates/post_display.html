@@ -85,10 +85,8 @@
   @media (max-width:576px){ .identity-group{ gap:6px; } }
 
   /* ===== 共同：側欄樣式與卡片 ===== */
-  :root{
-    --sb-1:#f5faff; --sb-2:#eaf5ff; --sb-3:#63b3ed; --sb-4:#2f8be6; --ink:#033e6b;
-  }
-  .offcanvas-saved, .offcanvas-liked{ width:min(520px,96vw); background:var(--sb-1); }
+  :root{ --sb-1:#f5faff; --sb-2:#eaf5ff; --sb-3:#63b3ed; --sb-4:#2f8be6; --ink:#033e6b; }
+  .offcanvas-saved, .offcanvas-liked, .offcanvas-commented{ width:min(520px,96vw); background:var(--sb-1); }
   .saved-item-card{ border:1px solid #e1efff; border-radius:16px; background:#fff; padding:14px 16px;
     box-shadow:0 8px 24px rgba(3,62,107,.06); transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease; }
   .saved-item-card:hover{ transform:translateY(-2px); box-shadow:0 12px 28px rgba(3,62,107,.12); border-color:#cfe2ff; }
@@ -97,15 +95,18 @@
   .saved-item-card .btn-primary:hover{ filter:brightness(1.05); transform:translateY(-1px); }
   .ring-highlight{ outline:2px solid rgba(13,110,253,.6); transition:outline 1.2s ease; }
 
-  /* 觸發鈕（收藏/按讚共用外觀） */
-  .saved-trigger, .liked-trigger{
+  /* 觸發鈕（收藏/按讚/留言 共用外觀） */
+  .saved-trigger, .liked-trigger, .commented-trigger{
     --bs-btn-padding-y:.375rem; --bs-btn-padding-x:.75rem; --bs-btn-font-size:.875rem;
     background:#e6f3fb; color:#036; border:1px solid #cfe8fb; border-radius:999px; display:inline-flex; align-items:center; gap:.4rem;
   }
-  .saved-trigger:hover, .liked-trigger:hover{ background:#d8eefc; color:#024; }
-  .saved-badge, .liked-badge{ background:#63b3ed; }
-  .saved-trigger .bi-star-fill{ transition:transform .15s ease; }
-  .saved-trigger:hover .bi-star-fill{ transform:scale(1.05); }
+  .saved-trigger:hover, .liked-trigger:hover, .commented-trigger:hover{ background:#d8eefc; color:#024; }
+  .saved-badge, .liked-badge, .commented-badge{ background:#63b3ed; }
+  .saved-trigger .bi-star-fill{ transition:transform .15s ease; } .saved-trigger:hover .bi-star-fill{ transform:scale(1.05); }
+
+  /* 我 的 留 言：小樣式 */
+  .my-comment-title{ color:#0d6efd; font-weight:700; font-size:0.95rem; }
+  .my-comment-list .time{ color:#6b7280; font-size:.85rem; }
 </style>
 </head>
 <body>
@@ -115,31 +116,31 @@
       <h1 class="sitename" style="color: #033e6b;">怪怪走開，護您安全</h1>
     </a>
 
-    <nav id="navmenu" class="navmenu">
-      <ul>
-        <li><a href="{% url 'home' %}#hero">主頁</a></li>
-        <li><a href="index.html#services">簡介及功能介紹</a></li>
-        <li><a href="{% url 'report' %}">填寫表單</a></li>
-        <li><a href="{% url 'business_upload' %}">商家填單</a></li>
-        <li><a href="{% url 'about' %}">個人資料設定</a></li>
-        <li><a href="{% url 'chatroom_page' %}">聊天室</a></li>
-        <li class="dropdown">
-          <a href="#"><span>交流區</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
-          <ul>
-            <li><a href="{% url 'post' %}#hero">我要發文</a></li>
-            <li><a href="{% url 'post_display' %}">貼文總覽</a></li>
-          </ul>
-        </li>
-        <li class="dropdown">
-          <a href="#"><span>地圖</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
-          <ul>
-            <li><a href="{% url 'map' %}">事件地圖</a></li>
-            <li><a href="{% url 'store_map' %}">商家地圖</a></li>
-          </ul>
-        </li>
-        <li><a href="{% url 'harassment_prevention' %}">防騷指南</a></li>
-      </ul>
-    </nav>
+  <nav id="navmenu" class="navmenu">
+    <ul>
+      <li><a href="{% url 'home' %}#hero">主頁</a></li>
+      <li><a href="index.html#services">簡介及功能介紹</a></li>
+      <li><a href="{% url 'report' %}">填寫表單</a></li>
+      <li><a href="{% url 'business_upload' %}">商家填單</a></li>
+      <li><a href="{% url 'about' %}">個人資料設定</a></li>
+      <li><a href="{% url 'chatroom_page' %}">聊天室</a></li>
+      <li class="dropdown">
+        <a href="#"><span>交流區</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+        <ul>
+          <li><a href="{% url 'post' %}#hero">我要發文</a></li>
+          <li><a href="{% url 'post_display' %}">貼文總覽</a></li>
+        </ul>
+      </li>
+      <li class="dropdown">
+        <a href="#"><span>地圖</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+        <ul>
+          <li><a href="{% url 'map' %}">事件地圖</a></li>
+          <li><a href="{% url 'store_map' %}">商家地圖</a></li>
+        </ul>
+      </li>
+      <li><a href="{% url 'harassment_prevention' %}">防騷指南</a></li>
+    </ul>
+  </nav>
 
     <div class="nav-right-group">
       <div class="scroll-top-wrapper" id="scrollTopWrapper">
@@ -203,14 +204,25 @@
             我的收藏
             <span class="badge rounded-pill saved-badge ms-1" id="savedCount">0</span>
           </button>
-          <!-- 我按讚的貼文 -->
+
+          <!-- 我的讚 -->
           <button type="button" class="btn liked-trigger ms-2"
                   data-bs-toggle="offcanvas"
                   data-bs-target="#likedOffcanvas"
                   aria-controls="likedOffcanvas">
             <i class="bi bi-heart-fill text-danger me-1"></i>
-            我按讚的貼文
+            我的讚
             <span class="badge rounded-pill liked-badge ms-1" id="likedCount">0</span>
+          </button>
+
+          <!-- 我的留言 -->
+          <button type="button" class="btn commented-trigger ms-2"
+                  data-bs-toggle="offcanvas"
+                  data-bs-target="#commentedOffcanvas"
+                  aria-controls="commentedOffcanvas">
+            <i class="bi bi-chat-dots-fill me-1"></i>
+            我的留言
+            <span class="badge rounded-pill commented-badge ms-1" id="commentedCount">0</span>
           </button>
         {% endif %}
       </form>
@@ -225,52 +237,47 @@
           <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
         </div>
         <div class="offcanvas-body">
-          <div id="savedEmpty" class="text-center text-muted py-4" style="display:none;">
+          <div id="savedEmpty" class="text-center text-muted py-4" {% if my_saved_posts %}style="display:none;"{% endif %}>
             <i class="bi bi-inbox fs-2 d-block mb-2"></i>
             你目前尚未收藏任何貼文
           </div>
 
           <div class="row g-3" id="savedPostsList">
-            {% with uid=request.user.id|stringformat:"s" %}
-              {% for post in posts %}
-                {% if post.is_saved or uid in post.saved_user_list %}
-                <div class="col-12" data-saved="1" data-post-id="{{ post.interaction_id }}">
-                  <div class="p-3 saved-item-card">
-                    <div class="d-flex align-items-start">
-                      <i class="bi bi-star-fill text-warning me-2 mt-1"></i>
-                      <div class="flex-grow-1">
-                        <div class="fw-bold text-truncate" title="{{ post.title }}">{{ post.title }}</div>
-                        <div class="small text-muted mb-2">由 {{ post.nickname|default:"(匿名)" }} ・ {{ post.created_at|date:"Y-m-d H:i" }}</div>
-                        <button type="button" class="btn btn-sm btn-primary saved-jump"
-                                data-bs-dismiss="offcanvas" data-target-id="post-{{ post.interaction_id }}">前往貼文</button>
-                      </div>
+            {% for post in my_saved_posts %}
+              <div class="col-12" data-saved="1" data-post-id="{{ post.interaction_id }}">
+                <div class="p-3 saved-item-card">
+                  <div class="d-flex align-items-start">
+                    <i class="bi bi-star-fill text-warning me-2 mt-1"></i>
+                    <div class="flex-grow-1">
+                      <div class="fw-bold text-truncate" title="{{ post.title }}">{{ post.title }}</div>
+                      <div class="small text-muted mb-2">由 {{ post.nickname|default:"(匿名)" }} ・ {{ post.created_at|date:"Y-m-d H:i" }}</div>
+                      <button type="button" class="btn btn-sm btn-primary saved-jump"
+                              data-bs-dismiss="offcanvas" data-target-id="post-{{ post.interaction_id }}">前往貼文</button>
                     </div>
                   </div>
                 </div>
-                {% endif %}
-              {% endfor %}
-            {% endwith %}
+              </div>
+            {% endfor %}
           </div>
         </div>
       </div>
 
-      <!-- Offcanvas：我按讚的貼文 -->
+      <!-- Offcanvas：我的讚 -->
       <div class="offcanvas offcanvas-end offcanvas-liked" tabindex="-1" id="likedOffcanvas" aria-labelledby="likedOffcanvasLabel">
         <div class="offcanvas-header" style="background:#e6f3fb;">
           <h5 class="offcanvas-title fw-bold text-primary" id="likedOffcanvasLabel">
-            <i class="bi bi-heart-fill me-2 text-danger"></i>我按讚的貼文
+            <i class="bi bi-heart-fill me-2 text-danger"></i>我的讚
           </h5>
           <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
         </div>
         <div class="offcanvas-body">
-          <div id="likedEmpty" class="text-center text-muted py-4" style="display:none;">
+          <div id="likedEmpty" class="text-center text-muted py-4" {% if my_liked_posts %}style="display:none;"{% endif %}>
             <i class="bi bi-inbox fs-2 d-block mb-2"></i>
             你目前尚未按讚任何貼文
           </div>
 
           <div class="row g-3" id="likedPostsList">
-            {% for post in posts %}
-              {% if post.is_liked %}
+            {% for post in my_liked_posts %}
               <div class="col-12" data-liked="1" data-post-id="{{ post.interaction_id }}">
                 <div class="p-3 saved-item-card">
                   <div class="d-flex align-items-start">
@@ -284,7 +291,54 @@
                   </div>
                 </div>
               </div>
-              {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Offcanvas：我的留言（顯示該貼文裡我發過的留言） -->
+      <div class="offcanvas offcanvas-end offcanvas-commented" tabindex="-1" id="commentedOffcanvas" aria-labelledby="commentedOffcanvasLabel">
+        <div class="offcanvas-header" style="background:#e6f3fb;">
+          <h5 class="offcanvas-title fw-bold text-primary" id="commentedOffcanvasLabel">
+            <i class="bi bi-chat-dots-fill me-2"></i>我的留言
+          </h5>
+          <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body">
+          <div id="commentedEmpty" class="text-center text-muted py-4" {% if my_commented_posts %}style="display:none;"{% endif %}>
+            <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+            你目前尚未留言任何貼文
+          </div>
+
+          <div class="row g-3" id="commentedPostsList">
+            {% for post in my_commented_posts %}
+              <div class="col-12" data-commented="1" data-post-id="{{ post.interaction_id }}">
+                <div class="p-3 saved-item-card">
+                  <div class="d-flex align-items-start">
+                    <i class="bi bi-chat-dots-fill me-2 mt-1"></i>
+                    <div class="flex-grow-1">
+                      <div class="fw-bold text-truncate" title="{{ post.title }}">{{ post.title }}</div>
+                      <div class="small text-muted mb-2">由 {{ post.nickname|default:"(匿名)" }} ・ {{ post.created_at|date:"Y-m-d H:i" }}</div>
+
+                      <!-- 我在這篇的留言清單 -->
+                      <div class="my-comment-title mb-1">我的留言：</div>
+                      <ul class="list-unstyled small mb-2 my-comment-list" data-post-id="{{ post.interaction_id }}">
+                        {% for c in post.comment_list %}
+                          {% if c.user_id|stringformat:"s" == request.user.id|stringformat:"s" %}
+                            <li class="mb-2">
+                              <div class="time">{{ c.time }}</div>
+                              <div class="mt-1">{{ c.content|escape }}</div>
+                            </li>
+                          {% endif %}
+                        {% endfor %}
+                      </ul>
+
+                      <button type="button" class="btn btn-sm btn-primary commented-jump"
+                              data-bs-dismiss="offcanvas" data-target-id="post-{{ post.interaction_id }}">前往貼文</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
             {% endfor %}
           </div>
         </div>
@@ -421,7 +475,7 @@
                     data-post-id="{{ post.interaction_id }}">
                 {% csrf_token %}
                 <div class="d-flex align-items-center flex-wrap mb-2" style="gap:10px;">
-                  <span class="identity-label">選擇身分留言：</span>
+                  <span class="identity-label">以誰的身分留言：</span>
                   <div class="btn-group btn-group-sm identity-group flex-wrap" role="group" aria-label="留言身分">
                     {% with has1=profile_nickname1|length has2=profile_nickname2|length %}
                       <input type="radio" class="btn-check" name="comment_identity" id="ci1-{{ post.interaction_id }}" value="nickname1" {% if has1 %}{% if has1 %}checked{% endif %}{% else %}disabled{% endif %}>
@@ -522,6 +576,12 @@ document.addEventListener('DOMContentLoaded', function () {
     const badge = document.getElementById('likedCount');
     if (badge) badge.textContent = count;
   }
+  function updateCommentedCount(){
+    const list = document.getElementById('commentedPostsList');
+    const count = list ? list.querySelectorAll('[data-commented="1"]').length : 0;
+    const badge = document.getElementById('commentedCount');
+    if (badge) badge.textContent = count;
+  }
 
   // 查看更多/關閉詳情
   document.querySelectorAll('.toggle-more').forEach(link => {
@@ -545,7 +605,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
-  // 愛心（登入）
+  // 愛心（登入）— 同步主卡片 + 「我的讚」清單
   document.querySelectorAll('.like-form').forEach(form => {
     form.addEventListener('submit', function (e) {
       e.preventDefault();
@@ -572,16 +632,14 @@ document.addEventListener('DOMContentLoaded', function () {
             countSpan.innerHTML = `<i class="bi ${isLiked ? 'bi-heart-fill text-danger' : 'bi-heart'}"></i> ${count}`;
           }
 
-          // 同步「我按讚的內容」清單
+          // 同步「我的讚」清單
           const likedList = document.getElementById('likedPostsList');
           const likedEmpty = document.getElementById('likedEmpty');
           if (likedList) {
             const existing = likedList.querySelector(`[data-post-id="${postId}"]`);
             if (!isLiked && existing) {
-              // 收回愛心 -> 從清單移除
               existing.remove();
             } else if (isLiked && !existing) {
-              // 新增到按讚清單
               const title = card.querySelector('.card-title')?.textContent?.trim() || `#${postId}`;
               const meta = card.querySelector('.meta')?.textContent || '';
               const col = document.createElement('div');
@@ -612,7 +670,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
-  // 收藏（登入）— 同步 Offcanvas 清單與數量
+  // 收藏（登入）— 同步「我的收藏」清單
   document.querySelectorAll('.save-form').forEach(form => {
     form.addEventListener('submit', function (e) {
       e.preventDefault();
@@ -700,6 +758,7 @@ document.addEventListener('DOMContentLoaded', function () {
       const url = this.action;
       const formData = new FormData(this);
       const csrfToken = this.querySelector('input[name="csrfmiddlewaretoken"]')?.value || '';
+      const postId = this.dataset.postId;
 
       fetch(url, {
         method:'POST',
@@ -720,6 +779,55 @@ document.addEventListener('DOMContentLoaded', function () {
           li.innerHTML = `<div class="small text-muted">${c.nickname} ・ ${c.time}</div><div class="mt-1">${c.content}</div>`;
           list.appendChild(li);
         });
+
+        // === 新增：同步「我的留言」清單，並把留言內容放進去 ===
+        const commentedList = document.getElementById('commentedPostsList');
+        const commentedEmpty = document.getElementById('commentedEmpty');
+        if (commentedList) {
+          const latest = (data.comments || [])[ (data.comments || []).length - 1 ];
+          let cardCol = commentedList.querySelector(`[data-post-id="${postId}"]`);
+
+          // 若沒有該貼文卡，先建立一張
+          if (!cardCol) {
+            const card = this.closest('.card-body');
+            const title = card.querySelector('.card-title')?.textContent?.trim() || `#${postId}`;
+            const meta = card.querySelector('.meta')?.textContent || '';
+            cardCol = document.createElement('div');
+            cardCol.className = 'col-12';
+            cardCol.setAttribute('data-commented','1');
+            cardCol.setAttribute('data-post-id', postId);
+            cardCol.innerHTML = `
+              <div class="p-3 saved-item-card">
+                <div class="d-flex align-items-start">
+                  <i class="bi bi-chat-dots-fill me-2 mt-1"></i>
+                  <div class="flex-grow-1">
+                    <div class="fw-bold text-truncate" title="${title}">${title}</div>
+                    <div class="small text-muted mb-2">${meta}</div>
+                    <div class="my-comment-title mb-1">我的留言：</div>
+                    <ul class="list-unstyled small mb-2 my-comment-list" data-post-id="${postId}"></ul>
+                    <button type="button" class="btn btn-sm btn-primary commented-jump"
+                            data-bs-dismiss="offcanvas" data-target-id="post-${postId}">前往貼文</button>
+                  </div>
+                </div>
+              </div>`;
+            commentedList.appendChild(cardCol);
+          }
+
+          // 把最新留言加到該卡片的留言清單
+          const ul = commentedList.querySelector(`.my-comment-list[data-post-id="${postId}"]`);
+          if (ul && latest) {
+            const li = document.createElement('li');
+            li.className = 'mb-2';
+            const t = document.createElement('div'); t.className = 'time'; t.textContent = latest.time || '';
+            const c = document.createElement('div'); c.className = 'mt-1'; c.textContent = latest.content || '';
+            li.appendChild(t); li.appendChild(c);
+            ul.appendChild(li);
+          }
+
+          const hasC = commentedList.querySelector('[data-commented="1"]');
+          if (commentedEmpty) commentedEmpty.style.display = hasC ? 'none' : 'block';
+          updateCommentedCount();
+        }
       })
       .catch(err => alert(err.message || '留言失敗，請稍後再試'));
     });
@@ -733,12 +841,10 @@ document.addEventListener('DOMContentLoaded', function () {
     const ocEl = document.getElementById('savedOffcanvas');
     if (!list) return;
 
-    const hasSaved = list.querySelector('[data-saved="1"]');
-    if (!hasSaved && empty) empty.style.display = 'block';
     updateSavedCount();
+    if (!list.querySelector('[data-saved="1"]') && empty) empty.style.display = 'block';
 
     let pendingTargetId = null;
-
     list.addEventListener('click', function (e) {
       const btn = e.target.closest('.saved-jump');
       if (!btn) return;
@@ -748,32 +854,25 @@ document.addEventListener('DOMContentLoaded', function () {
       if (ocEl && ocEl.classList.contains('show') && ocInstance) {
         ocInstance.hide();
       } else {
-        scrollToPost(pendingTargetId);
-        pendingTargetId = null;
+        scrollToPost(pendingTargetId); pendingTargetId = null;
       }
     });
-
     ocEl?.addEventListener('hidden.bs.offcanvas', () => {
-      if (pendingTargetId) {
-        scrollToPost(pendingTargetId);
-        pendingTargetId = null;
-      }
+      if (pendingTargetId) { scrollToPost(pendingTargetId); pendingTargetId = null; }
     });
   })();
 
-  // ---- 「前往貼文」：按讚側欄 ----
+  // ---- 「前往貼文」：我的讚側欄 ----
   (function () {
     const list = document.getElementById('likedPostsList');
     const empty = document.getElementById('likedEmpty');
     const ocEl = document.getElementById('likedOffcanvas');
     if (!list) return;
 
-    const hasLiked = list.querySelector('[data-liked="1"]');
-    if (!hasLiked && empty) empty.style.display = 'block';
     updateLikedCount();
+    if (!list.querySelector('[data-liked="1"]') && empty) empty.style.display = 'block';
 
     let pendingTargetId = null;
-
     list.addEventListener('click', function (e) {
       const btn = e.target.closest('.liked-jump');
       if (!btn) return;
@@ -783,16 +882,39 @@ document.addEventListener('DOMContentLoaded', function () {
       if (ocEl && ocEl.classList.contains('show') && ocInstance) {
         ocInstance.hide();
       } else {
-        scrollToPost(pendingTargetId);
-        pendingTargetId = null;
+        scrollToPost(pendingTargetId); pendingTargetId = null;
       }
     });
-
     ocEl?.addEventListener('hidden.bs.offcanvas', () => {
-      if (pendingTargetId) {
-        scrollToPost(pendingTargetId);
-        pendingTargetId = null;
+      if (pendingTargetId) { scrollToPost(pendingTargetId); pendingTargetId = null; }
+    });
+  })();
+
+  // ---- 「前往貼文」：我的留言側欄 ----
+  (function () {
+    const list = document.getElementById('commentedPostsList');
+    const empty = document.getElementById('commentedEmpty');
+    const ocEl = document.getElementById('commentedOffcanvas');
+    if (!list) return;
+
+    updateCommentedCount();
+    if (!list.querySelector('[data-commented="1"]') && empty) empty.style.display = 'block';
+
+    let pendingTargetId = null;
+    list.addEventListener('click', function (e) {
+      const btn = e.target.closest('.commented-jump');
+      if (!btn) return;
+      e.preventDefault();
+      pendingTargetId = btn.getAttribute('data-target-id');
+      const ocInstance = bootstrap.Offcanvas.getInstance(ocEl);
+      if (ocEl && ocEl.classList.contains('show') && ocInstance) {
+        ocInstance.hide();
+      } else {
+        scrollToPost(pendingTargetId); pendingTargetId = null;
       }
+    });
+    ocEl?.addEventListener('hidden.bs.offcanvas', () => {
+      if (pendingTargetId) { scrollToPost(pendingTargetId); pendingTargetId = null; }
     });
   })();
 
@@ -807,7 +929,7 @@ document.addEventListener('DOMContentLoaded', function () {
     setTimeout(() => el.classList.remove('ring-highlight'), 1500);
   }
 
-  // 刪除/編輯留言（原有邏輯）
+  // 刪除留言
   document.querySelectorAll('.delete-comment-btn').forEach(btn => {
     btn.addEventListener('click', function() {
       if (!confirm('確定要刪除這則留言嗎？')) return;
@@ -823,6 +945,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
+  // 編輯留言
   let currentPostId = null, currentTime = null;
   const editModalEl = document.getElementById('editCommentModal');
   if (editModalEl){
