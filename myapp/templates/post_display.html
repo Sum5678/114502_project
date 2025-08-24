@@ -421,7 +421,7 @@
                     data-post-id="{{ post.interaction_id }}">
                 {% csrf_token %}
                 <div class="d-flex align-items-center flex-wrap mb-2" style="gap:10px;">
-                  <span class="identity-label">以誰的身分留言：</span>
+                  <span class="identity-label">選擇身分留言：</span>
                   <div class="btn-group btn-group-sm identity-group flex-wrap" role="group" aria-label="留言身分">
                     {% with has1=profile_nickname1|length has2=profile_nickname2|length %}
                       <input type="radio" class="btn-check" name="comment_identity" id="ci1-{{ post.interaction_id }}" value="nickname1" {% if has1 %}{% if has1 %}checked{% endif %}{% else %}disabled{% endif %}>
