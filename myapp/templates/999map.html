@@ -163,6 +163,10 @@
             <button id="navigateBtn">導航</button>
           </div>
 
+          <div id="routeInfo" style="position:absolute; bottom:15px; left:15px; z-index:10; background:rgba(255,255,255,0.9); padding:10px 15px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.3); font-family:'Open Sans', sans-serif;">
+            <span id="routeText">路線資訊會顯示在這裡</span>
+          </div>
+
         </div>
 
         
@@ -180,13 +184,15 @@
 
       <footer>
         <p>&copy; 2025 動物關懷平台</p>
+       
+
       </footer>
     </section>
 
   </main>
 
   <script>
-  // 細分類選項資料
+  // ---------------------- 細分類資料 ----------------------
   const subkindOptions = {
     "騷擾": ["推銷", "暴露狂", "跟蹤", "言語騷擾", "拍攝他人", "擋路糾纏", "其他"],
     "打架": ["肢體衝突", "口角爭執", "幫派鬥毆", "攻擊路人", "其他"],
@@ -194,471 +200,201 @@
     "環境髒亂": ["公共財物破壞", "可疑物品", "垃圾堆積", "噪音擾人", "惡臭", "噴漆塗鴉", "其他"]
   };
 
-  let map;
-  let allMarkers = [];
-  let reports = [];
-  let userMarker = null;
-  let accuracyCircle = null;
-  let directionCone = null;
-  let lastAlertPosition = null;
-  let lastPosition = null;
-  const alertDistanceThreshold = 50; // 公尺，移動超過才檢查附近事件
-  const dangerDistance = 100; // ✅ 事件避開半徑
+  // ---------------------- 全域變數 ----------------------
+  let map, userMarker=null, accuracyCircle=null, directionCone=null;
+  let lastPosition=null, lastAlertPosition=null;
+  let allMarkers=[], reports=[];
+  const alertDistanceThreshold=50, dangerDistance=100;
+  let directionsService, directionsRenderer;
 
-  // 路線規劃服務
-  let directionsService;
-  let directionsRenderer;
-
-
-  // icon 圖片 URL，用變數帶入確保 Django 模板能解析
+  // 圖標
   const iconUrl = "{% static 'assets/img/paw_icon.png' %}";
 
-  // 初始化地圖
-  function initMap() {
+  // ---------------------- 初始化地圖 ----------------------
+  function initMap(){
     map = new google.maps.Map(document.getElementById("map"), {
-      center: { lat: 25.033964, lng: 121.562321 },
-      zoom: 14,
+      center: {lat:25.033964,lng:121.562321},
+      zoom: 14
     });
 
-    // 初始化路線規劃器
     directionsService = new google.maps.DirectionsService();
-    directionsRenderer = new google.maps.DirectionsRenderer({
-      map: map,
-      suppressMarkers: false
-    });
+    directionsRenderer = new google.maps.DirectionsRenderer({map: map, suppressMarkers:false});
 
     updateSubkindOptions("全部");
-    document.getElementById("subkindFilter").value = "";
-    fetchReportsAndRenderMarkers("全部", "");
+    document.getElementById("subkindFilter").value="";
+    fetchReportsAndRenderMarkers("全部","");
 
     trackUserLocation();
 
-    // 點擊地圖選目的地
-    map.addListener("click", function(e) {
-      const destination = { lat: e.latLng.lat(), lng: e.latLng.lng() };
-      calculateAndDisplaySafeRoute(destination);
+    // 點擊地圖規劃路線
+    map.addListener("click", e=>{
+      calculateAndDisplaySafeRoute({lat:e.latLng.lat(), lng:e.latLng.lng()});
     });
 
-    // 導航按鈕事件
-    document.getElementById("navigateBtn").addEventListener("click", () => {
-      const input = document.getElementById("searchInput").value.trim();
-      if (!input) {
-        alert("請輸入地點");
-        return;
-      }
-      if (!userMarker) {
-        alert("尚未取得使用者位置");
-        return;
-      }
+    // 搜尋導航
+    document.getElementById("navigateBtn").addEventListener("click", ()=>{
+      const input=document.getElementById("searchInput").value.trim();
+      if(!input){ alert("請輸入地點"); return; }
+      if(!userMarker){ alert("尚未取得使用者位置"); return; }
 
-      const geocoder = new google.maps.Geocoder();
-      geocoder.geocode({ address: input }, (results, status) => {
-        if (status === "OK" && results[0] && results[0].geometry) {
-          const destination = results[0].geometry.location;
-          map.panTo(destination);
-          map.setZoom(15);
-
-          calculateAndDisplaySafeRoute({
-            lat: destination.lat(),
-            lng: destination.lng()
-          });
-        } else {
-          alert("找不到這個地點，請確認輸入正確");
-        }
+      new google.maps.Geocoder().geocode({address:input}, (results,status)=>{
+        if(status==="OK" && results[0] && results[0].geometry){
+          const dest=results[0].geometry.location;
+          map.panTo(dest); map.setZoom(15);
+          calculateAndDisplaySafeRoute({lat:dest.lat(), lng:dest.lng()});
+        }else alert("找不到這個地點，請確認輸入正確");
       });
     });
   }
 
+  // ---------------------- 使用者定位 ----------------------
+  function trackUserLocation(){
+    if(!navigator.geolocation){ console.warn("瀏覽器不支援地理位置服務"); return; }
 
-
-  // 規劃安全路線
-  function calculateAndDisplaySafeRoute(destination) {
-    if (!userMarker) {
-      alert("尚未取得使用者位置");
-      return;
-    }
-
-    const origin = userMarker.getPosition();
-
-    directionsService.route(
-      {
-        origin: origin,
-        destination: destination,
-        travelMode: google.maps.TravelMode.WALKING,
-        provideRouteAlternatives: true
-      },
-      (response, status) => {
-        if (status === "OK") {
-          const safeRoute = response.routes.find(route => !isRouteDangerous(route));
-
-          if (safeRoute) {
-            directionsRenderer.setDirections({ routes: [safeRoute] });
-          } else {
-            alert("⚠ 找不到避開事件 100 公尺的安全路線，將顯示最近的一條");
-            directionsRenderer.setDirections(response);
-          }
-        } else {
-          console.error("Directions request failed due to " + status);
-        }
-      }
-    );
+    navigator.geolocation.getCurrentPosition(handleNewPosition, e=>console.warn(e.message), {enableHighAccuracy:true});
+    setInterval(()=>navigator.geolocation.getCurrentPosition(handleNewPosition, e=>console.warn(e.message), {enableHighAccuracy:true}), 40000);
   }
 
-  // 判斷路線是否經過事件 100 公尺內
-  function isRouteDangerous(route) {
-    if (!reports || reports.length === 0) return false;
+  function handleNewPosition(position){
+    const lat=position.coords.latitude, lng=position.coords.longitude;
 
-    const path = route.overview_path; // LatLng[]
-    for (let i = 0; i < path.length; i++) {
-      const point = path[i];
-      for (let r of reports) {
-        if (typeof r.latitude === "number" && typeof r.longitude === "number") {
-          const dist = getDistanceMeters(point.lat(), point.lng(), r.latitude, r.longitude);
-          if (dist <= dangerDistance) {
-            return true;
-          }
-        }
-      }
+    if(!lastPosition){ updateUserLocation(position); lastPosition={lat,lng}; }
+    else if(getDistanceMeters(lat,lng,lastPosition.lat,lastPosition.lng)>=alertDistanceThreshold){
+      updateUserLocation(position); lastPosition={lat,lng};
     }
-    return false;
   }
 
+  function updateUserLocation(position){
+    const lat=position.coords.latitude, lng=position.coords.longitude;
+    const heading=(typeof position.coords.heading==="number")?position.coords.heading:0;
+    const accuracy=Math.min(position.coords.accuracy||30,50);
+    const pos={lat,lng};
 
-  function trackUserLocation() {
-    if (!navigator.geolocation) {
-      console.warn("瀏覽器不支援地理位置服務");
-      return;
-    }
-
-    // 先取得一次位置
-    navigator.geolocation.getCurrentPosition(
-      position => updateUserLocation(position),
-      error => console.warn("無法取得定位:", error.message),
-      { enableHighAccuracy: true }
-    );
-
-    // 每 40 秒更新一次
-    setInterval(() => {
-      navigator.geolocation.getCurrentPosition(
-        position => updateUserLocation(position),
-        error => console.warn("無法取得定位:", error.message),
-        { enableHighAccuracy: true }
-      );
-    }, 40000);
-  }
-
-
-
-
-
-
-
-
-  function updateUserLocation(position) {
-    const lat = position.coords.latitude;
-    const lng = position.coords.longitude;
-    const heading = typeof position.coords.heading === 'number' ? position.coords.heading : 0;
-    const accuracy = Math.min(position.coords.accuracy || 30, 50);    
-    // 限制最大半徑避免過大範圍
-
-    const pos = { lat: lat, lng: lng };
-
-    if (!userMarker) {
-      userMarker = new google.maps.Marker({
-        position: pos,
-        map: map,
-        title: "您的位置",
-        icon: {
-          url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
-          scaledSize: new google.maps.Size(40, 40)
-        },
-        zIndex: 9999
-      });
-
-
-      accuracyCircle = new google.maps.Circle({
-        strokeColor: '#4285F4',
-        strokeOpacity: 0.4,
-        strokeWeight: 1,
-        fillColor: '#4285F4',
-        fillOpacity: 0.15,
-        map: map,
-        center: pos,
-        radius: accuracy,
-        zIndex: 9998
-      });
-
-
-      directionCone = new google.maps.Polygon({
-        paths: calculateConePath(pos, heading, accuracy),
-        strokeColor: '#4285F4',
-        strokeOpacity: 0.6,
-        strokeWeight: 1,
-        fillColor: '#4285F4',
-        fillOpacity: 0.3,
-        map: map,
-        zIndex: 9997
-      });
-
-
-    } else {
+    if(!userMarker){
+      userMarker=new google.maps.Marker({position:pos,map:map,title:"您的位置",icon:{url:"https://maps.google.com/mapfiles/ms/icons/blue-dot.png",scaledSize:new google.maps.Size(40,40)}, zIndex:9999});
+      accuracyCircle=new google.maps.Circle({map:map, center:pos, radius:accuracy, strokeColor:'#4285F4', strokeOpacity:0.4, strokeWeight:1, fillColor:'#4285F4', fillOpacity:0.15, zIndex:9998});
+      directionCone=new google.maps.Polygon({map:map, paths:calculateConePath(pos,heading,accuracy), strokeColor:'#4285F4', strokeOpacity:0.6, strokeWeight:1, fillColor:'#4285F4', fillOpacity:0.3, zIndex:9997});
+      checkNearbyEvents(lat,lng); lastAlertPosition=pos;
+    }else{
       userMarker.setPosition(pos);
-      accuracyCircle.setCenter(pos);
-      accuracyCircle.setRadius(accuracy);
-      directionCone.setPaths(calculateConePath(pos, heading, accuracy));
-    }
-
-    if (!lastAlertPosition) {
-      checkNearbyEvents(lat, lng);
-      lastAlertPosition = pos;
-    } else {
-      const distFromLastAlert = getDistanceMeters(lat, lng, lastAlertPosition.lat, lastAlertPosition.lng);
-      if (distFromLastAlert >= alertDistanceThreshold) {
-        checkNearbyEvents(lat, lng);
-        lastAlertPosition = pos;
+      accuracyCircle.setCenter(pos); accuracyCircle.setRadius(accuracy);
+      directionCone.setPaths(calculateConePath(pos,heading,accuracy));
+      if(!lastAlertPosition || getDistanceMeters(lat,lng,lastAlertPosition.lat,lastAlertPosition.lng)>=alertDistanceThreshold){
+        checkNearbyEvents(lat,lng); lastAlertPosition=pos;
       }
     }
-
     map.setCenter(pos);
   }
 
+  // ---------------------- 路線規劃 ----------------------
+  function calculateAndDisplaySafeRoute(destination){
+    if(!userMarker){ alert("尚未取得使用者位置"); return; }
+    const origin=userMarker.getPosition();
 
-
-
-  // 計算錐形多邊形的座標點（pos是中心點，heading是方向，accuracy決定大小）
-  function calculateConePath(pos, heading, accuracy) {
-    const coneLength = Math.min(accuracy * 2, 20); // 長度限制最高 20 公尺
-    const point1 = pos; // 錐形頂點
-    const point2 = destinationPoint(pos, heading - 30, coneLength);
-    const point3 = destinationPoint(pos, heading + 30, coneLength);
-    return [point1, point2, point3];
+    directionsService.route({origin,destination,travelMode:google.maps.TravelMode.WALKING,provideRouteAlternatives:true}, (response,status)=>{
+      if(status==="OK"){
+        const safeRoute=response.routes.find(r=>!isRouteDangerous(r));
+        if(safeRoute){ directionsRenderer.setDirections({routes:[safeRoute]}); displayRouteInfo(safeRoute);}
+        else{ alert("⚠ 找不到避開事件 100 公尺的安全路線，將顯示最近的一條"); directionsRenderer.setDirections(response); displayRouteInfo(response.routes[0]);}
+      }else console.error("Directions request failed: "+status);
+    });
   }
 
-
-
-  // 根據距離和方向計算新座標
-  function destinationPoint(start, bearing, distance) {
-    const R = 6378137; // 地球半徑（公尺）
-    const δ = distance / R;
-    const θ = bearing * (Math.PI / 180);
-    const φ1 = start.lat * (Math.PI / 180);
-    const λ1 = start.lng * (Math.PI / 180);
-
-    const φ2 = Math.asin(
-      Math.sin(φ1) * Math.cos(δ) + Math.cos(φ1) * Math.sin(δ) * Math.cos(θ)
-    );
-    const λ2 =
-      λ1 +
-      Math.atan2(
-        Math.sin(θ) * Math.sin(δ) * Math.cos(φ1),
-        Math.cos(δ) - Math.sin(φ1) * Math.sin(φ2)
-      );
-
-    return { lat: φ2 * (180 / Math.PI), lng: λ2 * (180 / Math.PI) };
+  function isRouteDangerous(route){
+    if(!reports || reports.length===0) return false;
+    return route.overview_path.some(p=>reports.some(r=>typeof r.latitude==="number" && typeof r.longitude==="number" && getDistanceMeters(p.lat(),p.lng(),r.latitude,r.longitude)<=dangerDistance));
   }
 
-
-
-  // 從後端 API 取得報告資料並畫標記
-  function fetchReportsAndRenderMarkers(kind, subkind) {
-    fetch("{% url 'reports_with_subkind_json' %}")
-      .then(response => {
-        if (!response.ok) throw new Error("Network response was not ok");
-        return response.json();
-      })
-      .then(data => {
-        reports = data;
-        renderMarkers(kind, subkind);
-      })
-      .catch(error => {
-        console.error("fetch 錯誤:", error);
-      });
+  function displayRouteInfo(route){
+    if(!route) return;
+    let totalDistance=0, totalDuration=0;
+    route.legs.forEach(l=>{ totalDistance+=l.distance.value; totalDuration+=l.duration.value; });
+    document.getElementById("routeText").innerText=`距離: ${(totalDistance/1000).toFixed(2)} 公里，預估步行時間: ${Math.round(totalDuration/60)} 分鐘`;
   }
 
-  // 渲染地圖標記
-  function renderMarkers(kind, subkind) {
-    const kindLc = String(kind || "").trim().replace(/\s+/g, "").toLowerCase();
-    const subkindLc = String(subkind || "").trim().replace(/\s+/g, "").toLowerCase();
+  // ---------------------- 計算錐形 ----------------------
+  function calculateConePath(pos,heading,accuracy){
+    const coneLength=Math.min(accuracy*2,20);
+    return [pos,destinationPoint(pos,heading-30,coneLength),destinationPoint(pos,heading+30,coneLength)];
+  }
+  function destinationPoint(start,bearing,distance){
+    const R=6378137, δ=distance/R, θ=bearing*Math.PI/180, φ1=start.lat*Math.PI/180, λ1=start.lng*Math.PI/180;
+    const φ2=Math.asin(Math.sin(φ1)*Math.cos(δ)+Math.cos(φ1)*Math.sin(δ)*Math.cos(θ));
+    const λ2=λ1+Math.atan2(Math.sin(θ)*Math.sin(δ)*Math.cos(φ1), Math.cos(δ)-Math.sin(φ1)*Math.sin(φ2));
+    return {lat:φ2*180/Math.PI, lng:λ2*180/Math.PI};
+  }
 
-    // 清除舊標記
-    allMarkers.forEach(m => m.setMap(null));
-    allMarkers = [];
+  // ---------------------- 事件標記 ----------------------
+  function fetchReportsAndRenderMarkers(kind,subkind){
+    fetch("{% url 'reports_with_subkind_json' %}").then(r=>r.ok?r.json():Promise.reject("Network error")).then(data=>{reports=data; renderMarkers(kind,subkind);}).catch(e=>console.error("fetch 錯誤:",e));
+  }
 
-    // 過濾資料
-    const filtered = reports.filter(r => {
-      // 拆分 kind 字串，只取主分類 (左側)
-      const mainKind = String(r.kind || "").split("-")[0].trim().replace(/\s+/g, "").toLowerCase();
-      const rSubkind = String(r.subkind || "").trim().replace(/\s+/g, "").toLowerCase();
+  function renderMarkers(kind,subkind){
+    allMarkers.forEach(m=>m.setMap(null)); allMarkers=[];
+    const kindLc=String(kind||"").trim().replace(/\s+/g,"").toLowerCase();
+    const subkindLc=String(subkind||"").trim().replace(/\s+/g,"").toLowerCase();
 
-      const isAllKind = (kindLc === "全部");
-      const isAllSubkind = (subkindLc === "");
-
-      const kindMatch = isAllKind || (mainKind === kindLc);
-      const subkindMatch = isAllSubkind || (rSubkind === subkindLc);
-
-      return kindMatch && subkindMatch;
+    const filtered=reports.filter(r=>{
+      const mainKind=String(r.kind||"").split("-")[0].trim().replace(/\s+/g,"").toLowerCase();
+      const rSubkind=String(r.subkind||"").trim().replace(/\s+/g,"").toLowerCase();
+      return (kindLc==="全部"||mainKind===kindLc) && (subkindLc===""||rSubkind===subkindLc);
     });
 
-    if (filtered.length === 0) {
-      map.setCenter({ lat: 25.033964, lng: 121.562321 });
-      map.setZoom(14);
-      return;
-    }
+    if(filtered.length===0){ map.setCenter({lat:25.033964,lng:121.562321}); map.setZoom(14); return; }
+    const bounds=new google.maps.LatLngBounds();
 
-    const bounds = new google.maps.LatLngBounds();
-
-    filtered.forEach(r => {
-      if (typeof r.latitude === "number" && typeof r.longitude === "number") {
-        const marker = new google.maps.Marker({
-          position: { lat: r.latitude, lng: r.longitude },
-          map: map,
-          title: r.display_name || "未命名",
-          icon: {
-            url: iconUrl,
-            scaledSize: new google.maps.Size(30, 30),
-            origin: new google.maps.Point(0, 0),
-            anchor: new google.maps.Point(15, 15)
-          }
-        });
-
-        const infowindow = new google.maps.InfoWindow({
-          content: `<strong>${r.display_name}</strong><br>
-                    原因: ${r.reason || '無'}<br>
-                    時間: ${r.time_created || '未知'}`
-        });
-
-        marker.addListener("click", () => {
-          infowindow.open(map, marker);
-        });
-
-        allMarkers.push(marker);
-        bounds.extend(marker.getPosition());
-      } else {
-        console.warn("經緯度格式錯誤:", r);
+    filtered.forEach(r=>{
+      if(typeof r.latitude==="number" && typeof r.longitude==="number"){
+        const marker=new google.maps.Marker({position:{lat:r.latitude,lng:r.longitude},map,map,title:r.display_name||"未命名",icon:{url:iconUrl,scaledSize:new google.maps.Size(30,30),origin:new google.maps.Point(0,0),anchor:new google.maps.Point(15,15)}});
+        const infowindow=new google.maps.InfoWindow({content:`<strong>${r.display_name}</strong><br>原因: ${r.reason||'無'}<br>時間: ${r.time_created||'未知'}`});
+        marker.addListener("click",()=>infowindow.open(map,marker));
+        allMarkers.push(marker); bounds.extend(marker.getPosition());
       }
     });
 
     map.fitBounds(bounds);
   }
 
-  // 動態更新細分類下拉選單
-  function updateSubkindOptions(kind) {
-    const subkindSelect = document.getElementById("subkindFilter");
-    subkindSelect.innerHTML = "";
-
-    const defaultOption = document.createElement("option");
-    defaultOption.value = "";
-    defaultOption.text = "全部細分類";
-    subkindSelect.add(defaultOption);
-
-    // 「全部」不顯示其他細分類
-    if (kind !== "全部" && subkindOptions[kind]) {
-      subkindOptions[kind].forEach(s => {
-        const option = document.createElement("option");
-        option.value = s;
-        option.text = s;
-        subkindSelect.add(option);
-      });
-    }
+  // ---------------------- 細分類下拉 ----------------------
+  function updateSubkindOptions(kind){
+    const subkindSelect=document.getElementById("subkindFilter");
+    subkindSelect.innerHTML="";
+    const defaultOption=document.createElement("option"); defaultOption.value=""; defaultOption.text="全部細分類"; subkindSelect.add(defaultOption);
+    if(kind!=="全部" && subkindOptions[kind]) subkindOptions[kind].forEach(s=>{const o=document.createElement("option"); o.value=s;o.text=s;subkindSelect.add(o);});
   }
 
-  // 事件分類下拉事件
-  document.getElementById("kindFilter").addEventListener("change", function () {
-    const kind = this.value;
-    updateSubkindOptions(kind);
-    document.getElementById("subkindFilter").value = "";
-    fetchReportsAndRenderMarkers(kind, "");
+  document.getElementById("kindFilter").addEventListener("change", function(){
+    const kind=this.value; updateSubkindOptions(kind); document.getElementById("subkindFilter").value=""; fetchReportsAndRenderMarkers(kind,"");
+  });
+  document.getElementById("subkindFilter").addEventListener("change", function(){
+    const kind=document.getElementById("kindFilter").value, subkind=this.value;
+    renderMarkers(kind,subkind);
   });
 
-  // 細分類下拉事件
-  document.getElementById("subkindFilter").addEventListener("change", function () {
-    const kind = document.getElementById("kindFilter").value;
-    const subkind = this.value;
-    renderMarkers(kind, subkind);
-  });
-
-  // 距離計算
-  function getDistanceMeters(lat1, lng1, lat2, lng2) {
-    const R = 6371000;
-    const toRad = deg => deg * Math.PI / 180;
-    const dLat = toRad(lat2 - lat1);
-    const dLng = toRad(lng2 - lng1);
-    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-              Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-              Math.sin(dLng/2) * Math.sin(dLng/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c;
+  // ---------------------- 距離計算 ----------------------
+  function getDistanceMeters(lat1,lng1,lat2,lng2){
+    const R=6371000, toRad=d=>d*Math.PI/180, dLat=toRad(lat2-lat1), dLng=toRad(lng2-lng1);
+    const a=Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLng/2)**2;
+    return 2*R*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
   }
 
-  // 檢查附近事件
-  function checkNearbyEvents(userLat, userLng) {
-    const nearbyEvents = reports.filter(r => {
-      if (typeof r.latitude === "number" && typeof r.longitude === "number") {
-        const dist = getDistanceMeters(userLat, userLng, r.latitude, r.longitude);
-        return dist <= 500;
-      }
-      return false;
-    });
-
-    if (nearbyEvents.length === 0) {
-      alert("您附近 500 公尺內沒有事件，看起來很安全 👍");
-    } else if (nearbyEvents.length > 5) {
-      alert(`您附近 500 公尺內有 ${nearbyEvents.length} 起事件，請注意安全！`);
-    } else {
-      alert(`您附近 500 公尺內有 ${nearbyEvents.length} 起事件`);
-    }
+  // ---------------------- 附近事件檢查 ----------------------
+  function checkNearbyEvents(userLat,userLng){
+    const nearby=reports.filter(r=>typeof r.latitude==="number" && typeof r.longitude==="number" && getDistanceMeters(userLat,userLng,r.latitude,r.longitude)<=500);
+    if(nearby.length===0) alert("您附近 500 公尺內沒有事件 👍");
+    else if(nearby.length>5) alert(`您附近 500 公尺內有 ${nearby.length} 起事件，請注意安全！`);
+    else alert(`您附近 500 公尺內有 ${nearby.length} 起事件`);
   }
 
+  // ---------------------- 拖移搜尋框 ----------------------
+  const searchContainer=document.getElementById("searchContainer");
+  let isDragging=false, offsetX=0, offsetY=0;
+  searchContainer.addEventListener("mousedown", e=>{isDragging=true; offsetX=e.clientX-searchContainer.offsetLeft; offsetY=e.clientY-searchContainer.offsetTop; searchContainer.style.cursor="grabbing";});
+  document.addEventListener("mousemove", e=>{if(isDragging){let left=e.clientX-offsetX,top=e.clientY-offsetY; const mapRect=document.getElementById("map").getBoundingClientRect(); const containerRect=searchContainer.getBoundingClientRect(); if(left<mapRect.left) left=mapRect.left; if(top<mapRect.top) top=mapRect.top; if(left+containerRect.width>mapRect.right) left=mapRect.right-containerRect.width; if(top+containerRect.height>mapRect.bottom) top=mapRect.bottom-containerRect.height; searchContainer.style.left=(left-mapRect.left)+"px"; searchContainer.style.top=(top-mapRect.top)+"px";}});
+  document.addEventListener("mouseup", ()=>{isDragging=false; searchContainer.style.cursor="grab";});
+  searchContainer.style.cursor="grab";
+  </script>
 
-  // 拖移搜尋框
-  const searchContainer = document.getElementById("searchContainer");
-
-  let isDragging = false;
-  let offsetX = 0;
-  let offsetY = 0;
-
-  searchContainer.addEventListener("mousedown", (e) => {
-    isDragging = true;
-    // 記錄滑鼠點擊位置與元素左上角的距離
-    offsetX = e.clientX - searchContainer.offsetLeft;
-    offsetY = e.clientY - searchContainer.offsetTop;
-    searchContainer.style.cursor = "grabbing";
-  });
-
-  document.addEventListener("mousemove", (e) => {
-    if (isDragging) {
-      let left = e.clientX - offsetX;
-      let top = e.clientY - offsetY;
-
-      // 限制拖動不超出地圖區域
-      const mapRect = document.getElementById("map").getBoundingClientRect();
-      const containerRect = searchContainer.getBoundingClientRect();
-
-      if (left < mapRect.left) left = mapRect.left;
-      if (top < mapRect.top) top = mapRect.top;
-      if (left + containerRect.width > mapRect.right) left = mapRect.right - containerRect.width;
-      if (top + containerRect.height > mapRect.bottom) top = mapRect.bottom - containerRect.height;
-
-      searchContainer.style.left = left - mapRect.left + "px";
-      searchContainer.style.top = top - mapRect.top + "px";
-    }
-  });
-
-  document.addEventListener("mouseup", () => {
-    isDragging = false;
-    searchContainer.style.cursor = "grab";
-  });
-
-  // 初始化鼠標樣式
-  searchContainer.style.cursor = "grab";
-
-
-
-
-
-
-
-</script>
 
   <script async defer
     src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAUuPZMMJvgVWftmqVyzfX8mKTwMX4kA6o&callback=initMap">
