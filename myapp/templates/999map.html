@@ -233,17 +233,16 @@
       calculateAndDisplaySafeRoute({lat:e.latLng.lat(), lng:e.latLng.lng()});
     });
 
-    // 搜尋導航
-    // ---------------------- 搜尋導航 ----------------------
-    document.getElementById("navigateBtn").addEventListener("click", () => {
+
+    // ---------------------- 搜尋導航（Routes API 版本） ----------------------
+    document.getElementById("navigateBtn").addEventListener("click", async () => {
       const input = document.getElementById("searchInput").value.trim();
       if (!input) { alert("請輸入地點"); return; }
       if (!userMarker) { alert("尚未取得使用者位置"); return; }
 
       const service = new google.maps.places.PlacesService(map);
-      service.textSearch({ query: input, location: userMarker.getPosition(), radius: 3000 }, (results, status) => {
+      service.textSearch({ query: input, location: userMarker.getPosition(), radius: 3000 }, async (results, status) => {
         if (status === google.maps.places.PlacesServiceStatus.OK && results.length > 0) {
-
           // 清除舊搜尋標記
           searchMarkers.forEach(m => m.setMap(null));
           searchMarkers = [];
@@ -275,7 +274,7 @@
             const navBtn = document.createElement("button");
             navBtn.textContent = "導航到這裡";
             navBtn.style.marginTop = "5px";
-            navBtn.addEventListener("click", () => {
+            navBtn.addEventListener("click", async () => {
               if (!userMarker) { alert("尚未取得使用者位置"); return; }
 
               const destination = {
@@ -283,34 +282,10 @@
                 lng: place.geometry.location.lng()
               };
 
-              directionsService.route({
-                origin: userMarker.getPosition(),
-                destination: destination,
-                travelMode: google.maps.TravelMode.WALKING,
-                provideRouteAlternatives: true
-              }, (response, status) => {
-                if (status === "OK") {
-                  let safeRoute = response.routes.find(r => !isRouteDangerous(r));
-                  if (!safeRoute) {
-                    alert("⚠ 找不到避開事件 100 公尺的安全路線，將顯示最近的一條");
-                    safeRoute = response.routes[0];
-                  }
-
-                  directionsRenderer.setDirections({ routes: [safeRoute] });
-                  displayRouteInfo(safeRoute);
-
-                  // 自動縮放到路線範圍
-                  const bounds = new google.maps.LatLngBounds();
-                  safeRoute.overview_path.forEach(p => bounds.extend(p));
-                  map.fitBounds(bounds);
-                } else {
-                  console.error("Directions request failed: " + status);
-                }
-              });
+              await calculateRouteWithRoutesAPI(destination);
             });
 
             content.appendChild(navBtn);
-
             const infowindow = new google.maps.InfoWindow({ content });
             marker.addListener("click", () => infowindow.open(map, marker));
 
@@ -324,6 +299,7 @@
         }
       });
     });
+
   }
 
 
@@ -365,6 +341,83 @@
     }
     map.setCenter(pos);
   }
+
+  // ---------------------- Routes API 路線規劃 ----------------------
+  async function calculateRouteWithRoutesAPI(destination) {
+    if (!userMarker) { alert("尚未取得使用者位置"); return; }
+
+    const origin = userMarker.getPosition();
+    const url = "https://routes.googleapis.com/directions/v2:computeRoutes?key=YOUR_API_KEY"; // 替換成你的 API Key
+
+    const body = {
+      origin: { latitude: origin.lat(), longitude: origin.lng() },
+      destination: { latitude: destination.lat, longitude: destination.lng },
+      travelMode: "WALKING",
+      routingPreference: "TRAFFIC_AWARE_OPTIMAL",
+      computeAlternativeRoutes: true
+    };
+
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      if (!data.routes || data.routes.length === 0) {
+        alert("找不到路線");
+        return;
+      }
+
+      // 找到安全路線（避開事件 100 公尺）
+      let safeRoute = data.routes.find(r => !isRouteDangerousRoutesAPI(r));
+      if (!safeRoute) {
+        alert("⚠ 找不到避開事件 100 公尺的安全路線，將顯示最近的一條");
+        safeRoute = data.routes[0];
+      }
+
+      renderRouteOnMap(safeRoute);
+      displayRouteInfoRoutesAPI(safeRoute);
+    } catch (e) {
+      console.error("Routes API 錯誤:", e);
+      alert("路線規劃失敗，請稍後再試");
+    }
+  }
+  
+
+
+
+
+
+  // ---------------------- 安全路線判斷 ----------------------
+  function isRouteDangerousRoutesAPI(route) {
+    if (!reports || reports.length === 0 || !route.polyline || route.polyline.length === 0) return false;
+    const path = google.maps.geometry.encoding.decodePath(route.polyline[0].encodedPolyline);
+    return path.some(p => reports.some(r => typeof r.latitude === "number" && typeof r.longitude === "number" && getDistanceMeters(p.lat(), p.lng(), r.latitude, r.longitude) <= dangerDistance));
+  }
+
+
+
+
+  // ---------------------- 路線渲染 ----------------------
+  function renderRouteOnMap(route) {
+    if (window.routePolyline) window.routePolyline.setMap(null);
+    const path = google.maps.geometry.encoding.decodePath(route.polyline[0].encodedPolyline);
+    window.routePolyline = new google.maps.Polyline({
+      path,
+      map,
+      strokeColor: "#4285F4",
+      strokeOpacity: 0.8,
+      strokeWeight: 5
+    });
+    const bounds = new google.maps.LatLngBounds();
+    path.forEach(p => bounds.extend(p));
+    map.fitBounds(bounds);
+  }
+
+
+
+
 
   // ---------------------- 路線規劃 ----------------------
   function calculateAndDisplaySafeRoute(destination){
@@ -477,7 +530,7 @@
 
 
   <script async defer
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAUuPZMMJvgVWftmqVyzfX8mKTwMX4kA6o&libraries=places&callback=initMap">
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAUuPZMMJvgVWftmqVyzfX8mKTwMX4kA6o&libraries=places,geometry&callback=initMap">
   </script>
 
   <footer id="footer" class="footer position-relative light-background">
