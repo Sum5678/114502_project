@@ -103,6 +103,10 @@
   .saved-trigger:hover, .liked-trigger:hover, .commented-trigger:hover{ background:#d8eefc; color:#024; }
   .saved-badge, .liked-badge, .commented-badge{ background:#63b3ed; }
   .saved-trigger .bi-star-fill{ transition:transform .15s ease; } .saved-trigger:hover .bi-star-fill{ transform:scale(1.05); }
+
+  /* 我 的 留 言：小樣式 */
+  .my-comment-title{ color:#0d6efd; font-weight:700; font-size:0.95rem; }
+  .my-comment-list .time{ color:#6b7280; font-size:.85rem; }
 </style>
 </head>
 <body>
@@ -112,31 +116,31 @@
       <h1 class="sitename" style="color: #033e6b;">怪怪走開，護您安全</h1>
     </a>
 
-    <nav id="navmenu" class="navmenu">
-      <ul>
-        <li><a href="{% url 'home' %}#hero">主頁</a></li>
-        <li><a href="index.html#services">簡介及功能介紹</a></li>
-        <li><a href="{% url 'report' %}">填寫表單</a></li>
-        <li><a href="{% url 'business_upload' %}">商家填單</a></li>
-        <li><a href="{% url 'about' %}">個人資料設定</a></li>
-        <li><a href="{% url 'chatroom_page' %}">聊天室</a></li>
-        <li class="dropdown">
-          <a href="#"><span>交流區</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
-          <ul>
-            <li><a href="{% url 'post' %}#hero">我要發文</a></li>
-            <li><a href="{% url 'post_display' %}">貼文總覽</a></li>
-          </ul>
-        </li>
-        <li class="dropdown">
-          <a href="#"><span>地圖</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
-          <ul>
-            <li><a href="{% url 'map' %}">事件地圖</a></li>
-            <li><a href="{% url 'store_map' %}">商家地圖</a></li>
-          </ul>
-        </li>
-        <li><a href="{% url 'harassment_prevention' %}">防騷指南</a></li>
-      </ul>
-    </nav>
+  <nav id="navmenu" class="navmenu">
+    <ul>
+      <li><a href="{% url 'home' %}#hero">主頁</a></li>
+      <li><a href="index.html#services">簡介及功能介紹</a></li>
+      <li><a href="{% url 'report' %}">填寫表單</a></li>
+      <li><a href="{% url 'business_upload' %}">商家填單</a></li>
+      <li><a href="{% url 'about' %}">個人資料設定</a></li>
+      <li><a href="{% url 'chatroom_page' %}">聊天室</a></li>
+      <li class="dropdown">
+        <a href="#"><span>交流區</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+        <ul>
+          <li><a href="{% url 'post' %}#hero">我要發文</a></li>
+          <li><a href="{% url 'post_display' %}">貼文總覽</a></li>
+        </ul>
+      </li>
+      <li class="dropdown">
+        <a href="#"><span>地圖</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+        <ul>
+          <li><a href="{% url 'map' %}">事件地圖</a></li>
+          <li><a href="{% url 'store_map' %}">商家地圖</a></li>
+        </ul>
+      </li>
+      <li><a href="{% url 'harassment_prevention' %}">防騷指南</a></li>
+    </ul>
+  </nav>
 
     <div class="nav-right-group">
       <div class="scroll-top-wrapper" id="scrollTopWrapper">
@@ -292,7 +296,7 @@
         </div>
       </div>
 
-      <!-- Offcanvas：我的留言 -->
+      <!-- Offcanvas：我的留言（顯示該貼文裡我發過的留言） -->
       <div class="offcanvas offcanvas-end offcanvas-commented" tabindex="-1" id="commentedOffcanvas" aria-labelledby="commentedOffcanvasLabel">
         <div class="offcanvas-header" style="background:#e6f3fb;">
           <h5 class="offcanvas-title fw-bold text-primary" id="commentedOffcanvasLabel">
@@ -315,6 +319,20 @@
                     <div class="flex-grow-1">
                       <div class="fw-bold text-truncate" title="{{ post.title }}">{{ post.title }}</div>
                       <div class="small text-muted mb-2">由 {{ post.nickname|default:"(匿名)" }} ・ {{ post.created_at|date:"Y-m-d H:i" }}</div>
+
+                      <!-- 我在這篇的留言清單 -->
+                      <div class="my-comment-title mb-1">我的留言：</div>
+                      <ul class="list-unstyled small mb-2 my-comment-list" data-post-id="{{ post.interaction_id }}">
+                        {% for c in post.comment_list %}
+                          {% if c.user_id|stringformat:"s" == request.user.id|stringformat:"s" %}
+                            <li class="mb-2">
+                              <div class="time">{{ c.time }}</div>
+                              <div class="mt-1">{{ c.content|escape }}</div>
+                            </li>
+                          {% endif %}
+                        {% endfor %}
+                      </ul>
+
                       <button type="button" class="btn btn-sm btn-primary commented-jump"
                               data-bs-dismiss="offcanvas" data-target-id="post-{{ post.interaction_id }}">前往貼文</button>
                     </div>
@@ -762,33 +780,50 @@ document.addEventListener('DOMContentLoaded', function () {
           list.appendChild(li);
         });
 
-        // 新增：同步「我的留言」清單
+        // === 新增：同步「我的留言」清單，並把留言內容放進去 ===
         const commentedList = document.getElementById('commentedPostsList');
         const commentedEmpty = document.getElementById('commentedEmpty');
         if (commentedList) {
-          const existing = commentedList.querySelector(`[data-post-id="${postId}"]`);
-          if (!existing) {
+          const latest = (data.comments || [])[ (data.comments || []).length - 1 ];
+          let cardCol = commentedList.querySelector(`[data-post-id="${postId}"]`);
+
+          // 若沒有該貼文卡，先建立一張
+          if (!cardCol) {
             const card = this.closest('.card-body');
             const title = card.querySelector('.card-title')?.textContent?.trim() || `#${postId}`;
             const meta = card.querySelector('.meta')?.textContent || '';
-            const col = document.createElement('div');
-            col.className = 'col-12';
-            col.setAttribute('data-commented','1');
-            col.setAttribute('data-post-id', postId);
-            col.innerHTML = `
+            cardCol = document.createElement('div');
+            cardCol.className = 'col-12';
+            cardCol.setAttribute('data-commented','1');
+            cardCol.setAttribute('data-post-id', postId);
+            cardCol.innerHTML = `
               <div class="p-3 saved-item-card">
                 <div class="d-flex align-items-start">
                   <i class="bi bi-chat-dots-fill me-2 mt-1"></i>
                   <div class="flex-grow-1">
                     <div class="fw-bold text-truncate" title="${title}">${title}</div>
                     <div class="small text-muted mb-2">${meta}</div>
+                    <div class="my-comment-title mb-1">我的留言：</div>
+                    <ul class="list-unstyled small mb-2 my-comment-list" data-post-id="${postId}"></ul>
                     <button type="button" class="btn btn-sm btn-primary commented-jump"
                             data-bs-dismiss="offcanvas" data-target-id="post-${postId}">前往貼文</button>
                   </div>
                 </div>
               </div>`;
-            commentedList.appendChild(col);
+            commentedList.appendChild(cardCol);
           }
+
+          // 把最新留言加到該卡片的留言清單
+          const ul = commentedList.querySelector(`.my-comment-list[data-post-id="${postId}"]`);
+          if (ul && latest) {
+            const li = document.createElement('li');
+            li.className = 'mb-2';
+            const t = document.createElement('div'); t.className = 'time'; t.textContent = latest.time || '';
+            const c = document.createElement('div'); c.className = 'mt-1'; c.textContent = latest.content || '';
+            li.appendChild(t); li.appendChild(c);
+            ul.appendChild(li);
+          }
+
           const hasC = commentedList.querySelector('[data-commented="1"]');
           if (commentedEmpty) commentedEmpty.style.display = hasC ? 'none' : 'block';
           updateCommentedCount();
