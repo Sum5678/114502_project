@@ -277,11 +277,38 @@
             navBtn.style.marginTop = "5px";
             navBtn.addEventListener("click", () => {
               if (!userMarker) { alert("尚未取得使用者位置"); return; }
-              calculateAndDisplaySafeRoute({
+
+              const destination = {
                 lat: place.geometry.location.lat(),
                 lng: place.geometry.location.lng()
+              };
+
+              directionsService.route({
+                origin: userMarker.getPosition(),
+                destination: destination,
+                travelMode: google.maps.TravelMode.WALKING,
+                provideRouteAlternatives: true
+              }, (response, status) => {
+                if (status === "OK") {
+                  let safeRoute = response.routes.find(r => !isRouteDangerous(r));
+                  if (!safeRoute) {
+                    alert("⚠ 找不到避開事件 100 公尺的安全路線，將顯示最近的一條");
+                    safeRoute = response.routes[0];
+                  }
+
+                  directionsRenderer.setDirections({ routes: [safeRoute] });
+                  displayRouteInfo(safeRoute);
+
+                  // 自動縮放到路線範圍
+                  const bounds = new google.maps.LatLngBounds();
+                  safeRoute.overview_path.forEach(p => bounds.extend(p));
+                  map.fitBounds(bounds);
+                } else {
+                  console.error("Directions request failed: " + status);
+                }
               });
             });
+
             content.appendChild(navBtn);
 
             const infowindow = new google.maps.InfoWindow({ content });
