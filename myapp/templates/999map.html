@@ -234,23 +234,19 @@
     });
 
     // 搜尋導航
+    // ---------------------- 搜尋導航 ----------------------
     document.getElementById("navigateBtn").addEventListener("click", () => {
       const input = document.getElementById("searchInput").value.trim();
       if (!input) { alert("請輸入地點"); return; }
       if (!userMarker) { alert("尚未取得使用者位置"); return; }
 
       const service = new google.maps.places.PlacesService(map);
-
-      service.textSearch({
-        location: userMarker.getPosition(), // 使用者位置為中心
-        radius: 2000,                       // 搜尋範圍 2 公里
-        query: input                         // 搜尋字串
-      }, (results, status) => {
+      service.textSearch({ query: input, location: userMarker.getPosition(), radius: 3000 }, (results, status) => {
         if (status === google.maps.places.PlacesServiceStatus.OK && results.length > 0) {
-          // 清除原本導航路線和舊標記
-          directionsRenderer.setDirections({ routes: [] });
-          allMarkers.forEach(m => m.setMap(null));
-          allMarkers = [];
+
+          // 清除舊搜尋標記
+          searchMarkers.forEach(m => m.setMap(null));
+          searchMarkers = [];
 
           const bounds = new google.maps.LatLngBounds();
 
@@ -263,32 +259,46 @@
               title: place.name
             });
 
-            const infowindow = new google.maps.InfoWindow({
-              content: `<strong>${place.name}</strong><br>${place.formatted_address || ''}`
-            });
+            const content = document.createElement("div");
+            const nameEl = document.createElement("strong");
+            nameEl.textContent = place.name;
+            content.appendChild(nameEl);
+            content.appendChild(document.createElement("br"));
 
-            // 點選標記 → 自動規劃安全路線
-            marker.addListener("click", () => {
-              infowindow.open(map, marker);
+            if (place.formatted_address) {
+              const addrEl = document.createElement("span");
+              addrEl.textContent = place.formatted_address;
+              content.appendChild(addrEl);
+              content.appendChild(document.createElement("br"));
+            }
+
+            const navBtn = document.createElement("button");
+            navBtn.textContent = "導航到這裡";
+            navBtn.style.marginTop = "5px";
+            navBtn.addEventListener("click", () => {
+              if (!userMarker) { alert("尚未取得使用者位置"); return; }
               calculateAndDisplaySafeRoute({
                 lat: place.geometry.location.lat(),
                 lng: place.geometry.location.lng()
               });
             });
+            content.appendChild(navBtn);
 
-            allMarkers.push(marker);
+            const infowindow = new google.maps.InfoWindow({ content });
+            marker.addListener("click", () => infowindow.open(map, marker));
+
+            searchMarkers.push(marker);
             bounds.extend(marker.getPosition());
           });
 
           map.fitBounds(bounds);
         } else {
-          alert("找不到這個地點，請確認輸入正確");
+          alert("找不到相關地點，請確認輸入正確");
         }
       });
     });
-
-
   }
+
 
   // ---------------------- 使用者定位 ----------------------
   function trackUserLocation(){
@@ -440,7 +450,7 @@
 
 
   <script async defer
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAUuPZMMJvgVWftmqVyzfX8mKTwMX4kA6o&callback=initMap">
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAUuPZMMJvgVWftmqVyzfX8mKTwMX4kA6o&libraries=places&callback=initMap">
   </script>
 
   <footer id="footer" class="footer position-relative light-background">
