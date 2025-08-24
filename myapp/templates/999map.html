@@ -244,10 +244,10 @@
       service.textSearch({
         location: userMarker.getPosition(), // 使用者位置為中心
         radius: 2000,                       // 搜尋範圍 2 公里
-        query: input                         // 搜尋字串，例如「牛肉麵」
+        query: input                         // 搜尋字串
       }, (results, status) => {
         if (status === google.maps.places.PlacesServiceStatus.OK && results.length > 0) {
-          // 先清除原本導航路線和搜尋結果標記
+          // 清除原本導航路線和舊標記
           directionsRenderer.setDirections({ routes: [] });
           allMarkers.forEach(m => m.setMap(null));
           allMarkers = [];
@@ -267,7 +267,14 @@
               content: `<strong>${place.name}</strong><br>${place.formatted_address || ''}`
             });
 
-            marker.addListener("click", () => infowindow.open(map, marker));
+            // 點選標記 → 自動規劃安全路線
+            marker.addListener("click", () => {
+              infowindow.open(map, marker);
+              calculateAndDisplaySafeRoute({
+                lat: place.geometry.location.lat(),
+                lng: place.geometry.location.lng()
+              });
+            });
 
             allMarkers.push(marker);
             bounds.extend(marker.getPosition());
