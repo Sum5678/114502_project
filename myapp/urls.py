@@ -130,6 +130,8 @@ urlpatterns = [
     path('this_user_profile/update/', views.update_user_profile, name='update_user_profile'),
     path('this_user_profile/', views.this_user_profile_redirect, name='this_user_profile'),
     path('user_data/', views.user_data_view, name='user_data'),  #   非第一次登入看資料頁
+    path("user/<int:pk>/", views.public_profile, name="public_profile"), #給別人看的
+
 
     path('profile/', views.profile, name='profile'),
 

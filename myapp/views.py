@@ -2836,3 +2836,13 @@ def toggle_favorite(request):
 
 
 
+
+
+# ----------------看別人的--------------------------
+
+def public_profile(request, pk):
+    user = get_object_or_404(User, pk=pk)
+    profile = get_object_or_404(Profile, user=user)
+    return render(request, "public_profile.html", {"profile": profile})
+
+
