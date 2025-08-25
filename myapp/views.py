@@ -2752,34 +2752,43 @@ from django.contrib.auth.decorators import login_required
 from .models import ThisUserProfile, ChatRoom, FavoriteChatRoom
 
 # ------------- 查看收藏聊天室 -------------
+from django.contrib import messages
 from django.shortcuts import render
 from django.db.models import Count
 import json
 
 def chatroom_view(request):
-    # 取得使用者收藏聊天室
+    if not request.user.is_authenticated:
+        messages.error(request, "請先登入才能使用聊天室")
+        return render(request, "chatroom.html", {
+            "user_profile": None,
+            "favorites": [],
+            "favorite_chatroom_ids": "[]",
+            "chatrooms_json": "[]",
+        })
+
+    # 已登入，正常流程
     try:
         user_profile = ThisUserProfile.objects.get(gmail=request.user.email)
         favorites = FavoriteChatRoom.objects.filter(user=user_profile).select_related('chat_room')
+        favorite_ids = [fav.chat_room.id for fav in favorites]
     except ThisUserProfile.DoesNotExist:
         user_profile = None
         favorites = []
+        favorite_ids = []
+        messages.warning(request, "找不到您的使用者資料，部分功能可能無法使用")
 
-    favorite_ids = [fav.chat_room.id for fav in favorites]
-
-    # 取得所有聊天室，附上收藏數
     chatrooms = ChatRoom.objects.annotate(
         fav_count=Count('favorited_by_users')
     ).order_by('-fav_count')
 
-    # 將資料整理成前端可用的 list of dict
-    chatroom_list = list(chatrooms.values('id','city','district','fav_count'))
+    chatroom_list = list(chatrooms.values('id', 'city', 'district', 'fav_count'))
 
     return render(request, 'chatroom.html', {
         'user_profile': user_profile,
         'favorites': favorites,
-        'favorite_chatroom_ids': json.dumps(favorite_ids),  # 前端收藏 ID 用
-        'chatrooms_json': json.dumps(chatroom_list)          # 前端熱門聊天室用
+        'favorite_chatroom_ids': json.dumps(favorite_ids),
+        'chatrooms_json': json.dumps(chatroom_list),
     })
 
 
