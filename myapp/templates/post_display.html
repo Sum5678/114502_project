@@ -24,11 +24,21 @@
 <style>
   body { background-color:#fff; padding-top:10px; font-family:"Microsoft JhengHei",sans-serif; }
 
-  .section-title{ text-align:center; margin-top:60px; margin-bottom:30px; }
+  .section-title{ text-align:center; margin-top:60px; margin-bottom:8px; } /* 縮小與下方距離 */
   .section-title h2{ display:inline-block; position:relative; font-weight:700; font-size:28px; color:#033e6b; padding:0 20px; }
   .section-title h2::before,.section-title h2::after{ content:""; position:absolute; top:50%; width:60px; height:2px; background:#0d6efd; }
   .section-title h2::before{ left:-70px; } .section-title h2::after{ right:-70px; }
-  .section-title p{ margin-top:10px; font-size:16px; color:#555; }
+  .section-title p{ margin:8px 0 6px; font-size:16px; color:#555; }
+
+  /* 搜尋欄放在標題裡，置中且收緊間距 */
+  .section-title .search-form-top{ margin-top:6px; }
+  .section-title .search-form-top .input-group{ border-radius:10px; overflow:hidden; box-shadow:0 0 5px rgba(0,0,0,.05); }
+
+  /* 三顆按鈕現在在標題區塊下方 */
+  .action-bar{
+    display:flex; justify-content:center; align-items:center; gap:16px;
+    flex-wrap:wrap; margin:10px 0 12px;
+  }
 
   .card{ border-left:8px solid #ccc; }
   .card .card-body{ background:#fff; border-radius:6px; position:relative; }
@@ -98,14 +108,6 @@
 
   .my-comment-title{ color:#0d6efd; font-weight:700; font-size:0.95rem; }
   .my-comment-list .time{ color:#6b7280; font-size:.85rem; }
-
-  /* === 讓按鈕塞進標題區：收緊間距並置中排列 === */
-  .post-list .section-title{ margin-bottom: 10px; }         /* 原 30px -> 緊貼下方 */
-  .post-list .section-title p{ margin: 8px 0 0; }           /* 移掉多餘外距 */
-  .section-title .action-bar{
-    display:flex; justify-content:center; align-items:center; gap:16px;
-    flex-wrap:wrap; margin-top:10px;
-  }
 </style>
 </head>
 <body>
@@ -172,62 +174,57 @@
       {% endif %}
     </div>
   </div>
+  
 </header>
+
 
 <main class="main">
   <section class="post-list mt-5" id="post-list-section">
     <div class="container">
       <div class="section-title text-center">
         <h2>貼文總覽｜交流區</h2>
-        <p>以下是大家的分享</p>
 
-        {% if request.user.is_authenticated %}
-        <!-- ✅ 三顆按鈕移到標題區 -->
-        <div class="action-bar">
-          <button type="button" class="btn saved-trigger"
-                  data-bs-toggle="offcanvas"
-                  data-bs-target="#savedOffcanvas"
-                  aria-controls="savedOffcanvas">
-            <i class="bi bi-star-fill text-warning me-1"></i>
-            我的收藏
-            <span class="badge rounded-pill saved-badge ms-1" id="savedCount">0</span>
-          </button>
-
-          <button type="button" class="btn liked-trigger"
-                  data-bs-toggle="offcanvas"
-                  data-bs-target="#likedOffcanvas"
-                  aria-controls="likedOffcanvas">
-            <i class="bi bi-heart-fill text-danger me-1"></i>
-            我的按讚
-            <span class="badge rounded-pill liked-badge ms-1" id="likedCount">0</span>
-          </button>
-
-          <button type="button" class="btn commented-trigger"
-                  data-bs-toggle="offcanvas"
-                  data-bs-target="#commentedOffcanvas"
-                  aria-controls="commentedOffcanvas">
-            <i class="bi bi-chat-dots-fill me-1"></i>
-            我的留言
-            <span class="badge rounded-pill commented-badge ms-1" id="commentedCount">
-              {{ commented_total_count|default:"0" }}
+        <!-- 🔎 搜尋欄搬到標題區 -->
+        <form method="get" action="{% url 'post_display' %}" class="search-form-top d-flex justify-content-center">
+          <div class="input-group w-50">
+            <span class="input-group-text" style="background-color:#e6f3fb; border:none;">
+              <i class="bi bi-search" style="color:#63b3ed; font-size:1.2rem;"></i>
             </span>
-          </button>
-        </div>
-        {% endif %}
+            <input type="text" name="q" class="form-control"
+                   placeholder="輸入關鍵字搜尋貼文…" value="{{ request.GET.q }}"
+                   style="border:none; background-color:#f0faff; color:#033e6b; font-size:15px;">
+            <button type="submit" class="btn" style="background-color:#63b3ed; color:#fff; border:none;">搜尋</button>
+          </div>
+        </form>
       </div>
 
-      <!-- 🔎 搜尋列（保持在標題之下） -->
-      <form method="get" action="{% url 'post_display' %}" class="d-flex justify-content-center mt-3 mb-3">
-        <div class="input-group w-50" style="border-radius:10px; overflow:hidden; box-shadow:0 0 5px rgba(0,0,0,.05);">
-          <span class="input-group-text" style="background-color:#e6f3fb; border:none;">
-            <i class="bi bi-search" style="color:#63b3ed; font-size:1.2rem;"></i>
+      {% if request.user.is_authenticated %}
+      <!-- ✅ 三顆按鈕移到這裡（標題下、列表上方） -->
+      <div class="action-bar">
+        <button type="button" class="btn saved-trigger"
+                data-bs-toggle="offcanvas" data-bs-target="#savedOffcanvas" aria-controls="savedOffcanvas">
+          <i class="bi bi-star-fill text-warning me-1"></i>
+          我的收藏
+          <span class="badge rounded-pill saved-badge ms-1" id="savedCount">0</span>
+        </button>
+
+        <button type="button" class="btn liked-trigger"
+                data-bs-toggle="offcanvas" data-bs-target="#likedOffcanvas" aria-controls="likedOffcanvas">
+          <i class="bi bi-heart-fill text-danger me-1"></i>
+          我的按讚
+          <span class="badge rounded-pill liked-badge ms-1" id="likedCount">0</span>
+        </button>
+
+        <button type="button" class="btn commented-trigger"
+                data-bs-toggle="offcanvas" data-bs-target="#commentedOffcanvas" aria-controls="commentedOffcanvas">
+          <i class="bi bi-chat-dots-fill me-1"></i>
+          我的留言
+          <span class="badge rounded-pill commented-badge ms-1" id="commentedCount">
+            {{ commented_total_count|default:"0" }}
           </span>
-          <input type="text" name="q" class="form-control"
-                 placeholder="輸入關鍵字搜尋貼文…" value="{{ request.GET.q }}"
-                 style="border:none; background-color:#f0faff; color:#033e6b; font-size:15px;">
-          <button type="submit" class="btn" style="background-color:#63b3ed; color:#fff; border:none;">搜尋</button>
-        </div>
-      </form>
+        </button>
+      </div>
+      {% endif %}
 
       {% if request.user.is_authenticated %}
       <!-- Offcanvas：我的收藏 -->
@@ -558,89 +555,71 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-  function updateSavedCount(){
-    const list = document.getElementById('savedPostsList');
-    const count = list ? list.querySelectorAll('[data-saved="1"]').length : 0;
-    const badge = document.getElementById('savedCount');
-    if (badge) badge.textContent = count;
-  }
-  function updateLikedCount(){
-    const list = document.getElementById('likedPostsList');
-    const count = list ? list.querySelectorAll('[data-liked="1"]').length : 0;
-    const badge = document.getElementById('likedCount');
-    if (badge) badge.textContent = count;
-  }
-  function updateCommentedCount(){
-    const wrapper = document.getElementById('commentedPostsList');
-    const count = wrapper ? wrapper.querySelectorAll('[data-my-comment="1"]').length : 0;
-    const badge = document.getElementById('commentedCount');
-    if (badge) badge.textContent = count;
-  }
+  function updateSavedCount(){ const list=document.getElementById('savedPostsList'); const count=list?list.querySelectorAll('[data-saved="1"]').length:0; const badge=document.getElementById('savedCount'); if(badge) badge.textContent=count; }
+  function updateLikedCount(){ const list=document.getElementById('likedPostsList'); const count=list?list.querySelectorAll('[data-liked="1"]').length:0; const badge=document.getElementById('likedCount'); if(badge) badge.textContent=count; }
+  function updateCommentedCount(){ const wrapper=document.getElementById('commentedPostsList'); const count=wrapper?wrapper.querySelectorAll('[data-my-comment="1"]').length:0; const badge=document.getElementById('commentedCount'); if(badge) badge.textContent=count; }
 
-  /* 首次載入先算一次 */
   updateSavedCount(); updateLikedCount(); updateCommentedCount();
 
   document.querySelectorAll('.toggle-more').forEach(link => {
     link.addEventListener('click', function (e) {
       e.preventDefault();
-      const p = this.closest('.message-content');
-      const fullText = p.dataset.full;
-      const truncated = fullText.slice(0, 100);
-      if (this.textContent.trim() === '查看更多') {
-        p.innerHTML = ''; p.textContent = fullText;
-        const closeLink = document.createElement('a');
-        closeLink.href = "#"; closeLink.textContent = " 關閉詳情"; closeLink.classList.add('toggle-more');
+      const p=this.closest('.message-content');
+      const fullText=p.dataset.full;
+      const truncated=fullText.slice(0,100);
+      if (this.textContent.trim()==='查看更多') {
+        p.innerHTML=''; p.textContent=fullText;
+        const closeLink=document.createElement('a'); closeLink.href="#"; closeLink.textContent=" 關閉詳情"; closeLink.classList.add('toggle-more');
         p.appendChild(closeLink); closeLink.addEventListener('click', arguments.callee);
       } else {
-        p.innerHTML = ''; p.textContent = truncated;
-        const dots = document.createElement('span'); dots.classList.add('ellipsis'); dots.textContent = '...';
-        const moreLink = document.createElement('a'); moreLink.href = "#"; moreLink.textContent = " 查看更多"; moreLink.classList.add('toggle-more');
+        p.innerHTML=''; p.textContent=truncated;
+        const dots=document.createElement('span'); dots.classList.add('ellipsis'); dots.textContent='...';
+        const moreLink=document.createElement('a'); moreLink.href="#"; moreLink.textContent=" 查看更多"; moreLink.classList.add('toggle-more');
         p.appendChild(dots); p.appendChild(document.createTextNode(' ')); p.appendChild(moreLink);
         moreLink.addEventListener('click', arguments.callee);
       }
     });
   });
 
-  document.querySelectorAll('.like-form').forEach(form => {
-    form.addEventListener('submit', function (e) {
+  document.querySelectorAll('.like-form').forEach(form=>{
+    form.addEventListener('submit',function(e){
       e.preventDefault();
-      const url = this.action;
-      const formData = new FormData(this);
-      const button = this.querySelector('button');
-      const postId = this.dataset.postId;
+      const url=this.action;
+      const formData=new FormData(this);
+      const button=this.querySelector('button');
+      const postId=this.dataset.postId;
 
-      fetch(url, { method:'POST', body:formData, headers:{ 'X-Requested-With':'XMLHttpRequest' }})
-      .then(response => {
-        if (response.ok) {
+      fetch(url,{method:'POST',body:formData,headers:{'X-Requested-With':'XMLHttpRequest'}})
+      .then(response=>{
+        if(response.ok){
           button.classList.toggle('liked');
-          const isLiked = button.classList.contains('liked');
-          button.innerHTML = `<i class="bi ${isLiked ? 'bi-heart-fill text-danger' : 'bi-heart'}"></i> ${isLiked ? '收回愛心' : '愛心'}`;
+          const isLiked=button.classList.contains('liked');
+          button.innerHTML=`<i class="bi ${isLiked?'bi-heart-fill text-danger':'bi-heart'}"></i> ${isLiked?'收回愛心':'愛心'}`;
 
-          const card = this.closest('.card-body');
-          const iconDiv = card.querySelector('.interaction-bar div:first-child i');
-          const countSpan = card.querySelector('.interaction-bar div:first-child');
-          if (iconDiv && countSpan) {
-            iconDiv.className = `bi ${isLiked ? 'bi-heart-fill text-danger' : 'bi-heart'}`;
-            let countText = countSpan.innerText.trim();
-            let count = parseInt(countText.replace(/\D/g, '')) || 0;
-            count = isLiked ? count + 1 : Math.max(count - 1, 0);
-            countSpan.innerHTML = `<i class="bi ${isLiked ? 'bi-heart-fill text-danger' : 'bi-heart'}"></i> ${count}`;
+          const card=this.closest('.card-body');
+          const iconDiv=card.querySelector('.interaction-bar div:first-child i');
+          const countSpan=card.querySelector('.interaction-bar div:first-child');
+          if(iconDiv&&countSpan){
+            iconDiv.className=`bi ${isLiked?'bi-heart-fill text-danger':'bi-heart'}`;
+            let countText=countSpan.innerText.trim();
+            let count=parseInt(countText.replace(/\D/g,''))||0;
+            count=isLiked?count+1:Math.max(count-1,0);
+            countSpan.innerHTML=`<i class="bi ${isLiked?'bi-heart-fill text-danger':'bi-heart'}"></i> ${count}`;
           }
 
-          const likedList = document.getElementById('likedPostsList');
-          const likedEmpty = document.getElementById('likedEmpty');
-          if (likedList) {
-            const existing = likedList.querySelector(`[data-post-id="${postId}"]`);
-            if (!isLiked && existing) {
-              existing.remove();
-            } else if (isLiked && !existing) {
-              const title = card.querySelector('.card-title')?.textContent?.trim() || `#${postId}`;
-              const meta = card.querySelector('.meta')?.textContent || '';
-              const col = document.createElement('div');
-              col.className = 'col-12';
+          const likedList=document.getElementById('likedPostsList');
+          const likedEmpty=document.getElementById('likedEmpty');
+          if(likedList){
+            const existing=likedList.querySelector(`[data-post-id="${postId}"]`);
+            if(!isLiked&&existing){ existing.remove(); }
+            else if(isLiked&&!existing){
+              const title=card.querySelector('.card-title')?.textContent?.trim()||`#${postId}`;
+              const meta=card.querySelector('.meta')?.textContent||'';
+              const col=document.createElement('div');
+              col.className='col-12';
               col.setAttribute('data-liked','1');
-              col.setAttribute('data-post-id', postId);
-              col.innerHTML = `
+              col.setAttribute('data-post-id',postId);
+              col.innerHTML=`
                 <div class="p-3 saved-item-card">
                   <div class="d-flex align-items-start">
                     <i class="bi bi-heart-fill text-danger me-2 mt-1"></i>
@@ -654,45 +633,44 @@ document.addEventListener('DOMContentLoaded', function () {
                 </div>`;
               likedList.appendChild(col);
             }
-            const hasLiked = likedList.querySelector('[data-liked="1"]');
-            if (likedEmpty) likedEmpty.style.display = hasLiked ? 'none' : 'block';
+            const hasLiked=likedList.querySelector('[data-liked="1"]');
+            if(likedEmpty) likedEmpty.style.display=hasLiked?'none':'block';
             updateLikedCount();
           }
         }
       })
-      .catch(() => alert('按愛心失敗，請稍後再試'));
+      .catch(()=>alert('按愛心失敗，請稍後再試'));
     });
   });
 
-  document.querySelectorAll('.save-form').forEach(form => {
-    form.addEventListener('submit', function (e) {
+  document.querySelectorAll('.save-form').forEach(form=>{
+    form.addEventListener('submit',function(e){
       e.preventDefault();
-      const url = this.action;
-      const formData = new FormData(this);
-      const icon = this.querySelector('button i');
-      const postId = this.dataset.postId;
+      const url=this.action;
+      const formData=new FormData(this);
+      const icon=this.querySelector('button i');
+      const postId=this.dataset.postId;
 
-      fetch(url, { method:'POST', body:formData, headers:{ 'X-Requested-With':'XMLHttpRequest' }})
-      .then(response => {
-        if (response.ok) {
-          const isFilled = icon.classList.contains('bi-star-fill');
-          icon.className = `bi ${isFilled ? 'bi-star' : 'bi-star-fill'}`;
+      fetch(url,{method:'POST',body:formData,headers:{'X-Requested-With':'XMLHttpRequest'}})
+      .then(response=>{
+        if(response.ok){
+          const isFilled=icon.classList.contains('bi-star-fill');
+          icon.className=`bi ${isFilled?'bi-star':'bi-star-fill'}`;
 
-          const savedList = document.getElementById('savedPostsList');
-          const empty = document.getElementById('savedEmpty');
-          if (savedList) {
-            const existing = savedList.querySelector(`[data-post-id="${postId}"]`);
-            if (isFilled && existing) {
-              existing.remove();
-            } else if (!isFilled && !existing) {
-              const card = this.closest('.card-body');
-              const title = card.querySelector('.card-title')?.textContent?.trim() || `#${postId}`;
-              const meta = card.querySelector('.meta')?.textContent || '';
-              const col = document.createElement('div');
-              col.className = 'col-12';
+          const savedList=document.getElementById('savedPostsList');
+          const empty=document.getElementById('savedEmpty');
+          if(savedList){
+            const existing=savedList.querySelector(`[data-post-id="${postId}"]`);
+            if(isFilled&&existing){ existing.remove(); }
+            else if(!isFilled&&!existing){
+              const card=this.closest('.card-body');
+              const title=card.querySelector('.card-title')?.textContent?.trim()||`#${postId}`;
+              const meta=card.querySelector('.meta')?.textContent||'';
+              const col=document.createElement('div');
+              col.className='col-12';
               col.setAttribute('data-saved','1');
-              col.setAttribute('data-post-id', postId);
-              col.innerHTML = `
+              col.setAttribute('data-post-id',postId);
+              col.innerHTML=`
                 <div class="p-3 saved-item-card">
                   <div class="d-flex align-items-start">
                     <i class="bi bi-star-fill text-warning me-2 mt-1"></i>
@@ -706,84 +684,83 @@ document.addEventListener('DOMContentLoaded', function () {
                 </div>`;
               savedList.appendChild(col);
             }
-            const hasSaved = savedList.querySelector('[data-saved="1"]');
-            if (empty) empty.style.display = hasSaved ? 'none' : 'block';
+            const hasSaved=savedList.querySelector('[data-saved="1"]');
+            if(empty) empty.style.display=hasSaved?'none':'block';
             updateSavedCount();
           }
         }
       })
-      .catch(() => alert('收藏失敗，請稍後再試'));
+      .catch(()=>alert('收藏失敗，請稍後再試'));
     });
   });
 
-  document.querySelectorAll('.require-login').forEach(el => {
-    el.addEventListener('click', function (e) {
+  document.querySelectorAll('.require-login').forEach(el=>{
+    el.addEventListener('click',function(e){
       e.preventDefault();
-      const modal = new bootstrap.Modal(document.getElementById('authRequiredModal'));
+      const modal=new bootstrap.Modal(document.getElementById('authRequiredModal'));
       modal.show();
     });
   });
 
-  const scrollTopWrapper = document.getElementById('scrollTopWrapper');
-  const scrollTopBtn = document.getElementById('scrollToTopNav');
-  const updateScrollTopVisibility = () => { scrollTopWrapper.style.display = (window.scrollY > 100) ? 'flex' : 'none'; };
-  window.addEventListener('scroll', updateScrollTopVisibility); updateScrollTopVisibility();
-  scrollTopBtn?.addEventListener('click', () => {
+  const scrollTopWrapper=document.getElementById('scrollTopWrapper');
+  const scrollTopBtn=document.getElementById('scrollToTopNav');
+  const updateScrollTopVisibility=()=>{ scrollTopWrapper.style.display=(window.scrollY>100)?'flex':'none'; };
+  window.addEventListener('scroll',updateScrollTopVisibility); updateScrollTopVisibility();
+  scrollTopBtn?.addEventListener('click',()=>{
     window.scrollTo({ top:0, behavior:'smooth' });
-    const timer = setInterval(() => { if (window.scrollY === 0) { scrollTopWrapper.style.display='none'; clearInterval(timer);} }, 80);
+    const timer=setInterval(()=>{ if(window.scrollY===0){ scrollTopWrapper.style.display='none'; clearInterval(timer);} },80);
   });
 
-  document.querySelectorAll('.btn-comment').forEach(btn => {
-    btn.addEventListener('click', function () {
-      const postId = this.dataset.postId;
-      const box = document.getElementById(`comments-${postId}`);
-      if (box) box.style.display = (box.style.display === 'none' || box.style.display === '') ? 'block' : 'none';
+  document.querySelectorAll('.btn-comment').forEach(btn=>{
+    btn.addEventListener('click',function(){
+      const postId=this.dataset.postId;
+      const box=document.getElementById(`comments-${postId}`);
+      if(box) box.style.display=(box.style.display==='none'||box.style.display==='')?'block':'none';
     });
   });
 
-  document.querySelectorAll('.comment-form').forEach(form => {
-    form.addEventListener('submit', function (e) {
+  document.querySelectorAll('.comment-form').forEach(form=>{
+    form.addEventListener('submit',function(e){
       e.preventDefault();
-      const url = this.action;
-      const formData = new FormData(this);
-      const csrfToken = this.querySelector('input[name="csrfmiddlewaretoken"]')?.value || '';
-      const postId = this.dataset.postId;
+      const url=this.action;
+      const formData=new FormData(this);
+      const csrfToken=this.querySelector('input[name="csrfmiddlewaretoken"]')?.value||'';
+      const postId=this.dataset.postId;
 
-      fetch(url, {
+      fetch(url,{
         method:'POST',
         body:formData,
         headers:{ 'X-Requested-With':'XMLHttpRequest', 'X-CSRFToken':csrfToken }
       })
-      .then(async (res) => { if (!res.ok){ const data=await res.json().catch(()=>({})); throw new Error(data.error||'留言失敗，請稍後再試'); } return res.json();})
-      .then(data => {
+      .then(async (res)=>{ if(!res.ok){ const data=await res.json().catch(()=>({})); throw new Error(data.error||'留言失敗，請稍後再試'); } return res.json();})
+      .then(data=>{
         this.reset();
-        const wrap = this.closest('.comments');
-        const list = wrap.querySelector('[data-list]');
-        const empty = wrap.querySelector('[data-empty]');
-        if (empty) empty.remove();
-        list.innerHTML = '';
-        (data.comments || []).forEach(c => {
-          const li = document.createElement('li');
-          li.className = 'mb-2 border-bottom pb-2';
-          li.innerHTML = `<div class="small text-muted">${c.nickname} ・ ${c.time}</div><div class="mt-1">${c.content}</div>`;
+        const wrap=this.closest('.comments');
+        const list=wrap.querySelector('[data-list]');
+        const empty=wrap.querySelector('[data-empty]');
+        if(empty) empty.remove();
+        list.innerHTML='';
+        (data.comments||[]).forEach(c=>{
+          const li=document.createElement('li');
+          li.className='mb-2 border-bottom pb-2';
+          li.innerHTML=`<div class="small text-muted">${c.nickname} ・ ${c.time}</div><div class="mt-1">${c.content}</div>`;
           list.appendChild(li);
         });
 
-        const commentedList = document.getElementById('commentedPostsList');
-        const commentedEmpty = document.getElementById('commentedEmpty');
-        if (commentedList) {
-          const latest = (data.comments || [])[ (data.comments || []).length - 1 ];
-          let cardCol = commentedList.querySelector(`[data-post-id="${postId}"]`);
-
-          if (!cardCol) {
-            const card = this.closest('.card-body');
-            const title = card.querySelector('.card-title')?.textContent?.trim() || `#${postId}`;
-            const meta = card.querySelector('.meta')?.textContent || '';
-            cardCol = document.createElement('div');
-            cardCol.className = 'col-12';
+        const commentedList=document.getElementById('commentedPostsList');
+        const commentedEmpty=document.getElementById('commentedEmpty');
+        if(commentedList){
+          const latest=(data.comments||[])[(data.comments||[]).length-1];
+          let cardCol=commentedList.querySelector(`[data-post-id="${postId}"]`);
+          if(!cardCol){
+            const card=this.closest('.card-body');
+            const title=card.querySelector('.card-title')?.textContent?.trim()||`#${postId}`;
+            const meta=card.querySelector('.meta')?.textContent||'';
+            cardCol=document.createElement('div');
+            cardCol.className='col-12';
             cardCol.setAttribute('data-commented','1');
-            cardCol.setAttribute('data-post-id', postId);
-            cardCol.innerHTML = `
+            cardCol.setAttribute('data-post-id',postId);
+            cardCol.innerHTML=`
               <div class="p-3 saved-item-card">
                 <div class="d-flex align-items-start">
                   <i class="bi bi-chat-dots-fill me-2 mt-1"></i>
@@ -800,179 +777,161 @@ document.addEventListener('DOMContentLoaded', function () {
             commentedList.appendChild(cardCol);
           }
 
-          const ul = cardCol.querySelector('ul.my-comment-list');
-          const li = document.createElement('li');
-          li.className = 'mb-2 my-comment-item';
+          const ul=cardCol.querySelector('ul.my-comment-list');
+          const li=document.createElement('li');
+          li.className='mb-2 my-comment-item';
           li.setAttribute('data-my-comment','1');
-          const t = document.createElement('div'); t.className = 'time'; t.textContent = latest.time || '';
-          const c = document.createElement('div'); c.className = 'mt-1'; c.textContent = latest.content || '';
+          const t=document.createElement('div'); t.className='time'; t.textContent=latest.time||'';
+          const c=document.createElement('div'); c.className='mt-1'; c.textContent=latest.content||'';
           li.appendChild(t); li.appendChild(c);
           ul.appendChild(li);
 
-          const hasCard = commentedList.querySelector('[data-commented="1"]');
-          if (commentedEmpty) commentedEmpty.style.display = hasCard ? 'none' : 'block';
+          const hasCard=commentedList.querySelector('[data-commented="1"]');
+          if(commentedEmpty) commentedEmpty.style.display=hasCard?'none':'block';
           updateCommentedCount();
         }
       })
-      .catch(err => alert(err.message || '留言失敗，請稍後再試'));
+      .catch(err=>alert(err.message||'留言失敗，請稍後再試'));
     });
   });
 
   (function () {
-    const list = document.getElementById('savedPostsList');
-    const empty = document.getElementById('savedEmpty');
-    const ocEl = document.getElementById('savedOffcanvas');
-    if (!list) return;
+    const list=document.getElementById('savedPostsList');
+    const empty=document.getElementById('savedEmpty');
+    const ocEl=document.getElementById('savedOffcanvas');
+    if(!list) return;
 
     updateSavedCount();
-    if (!list.querySelector('[data-saved="1"]') && empty) empty.style.display = 'block';
+    if(!list.querySelector('[data-saved="1"]')&&empty) empty.style.display='block';
 
-    let pendingTargetId = null;
-    list.addEventListener('click', function (e) {
-      const btn = e.target.closest('.saved-jump'); if (!btn) return;
+    let pendingTargetId=null;
+    list.addEventListener('click',function(e){
+      const btn=e.target.closest('.saved-jump'); if(!btn) return;
       e.preventDefault();
-      pendingTargetId = btn.getAttribute('data-target-id');
-      const ocInstance = bootstrap.Offcanvas.getInstance(ocEl);
-      if (ocEl && ocEl.classList.contains('show') && ocInstance) {
-        ocInstance.hide();
-      } else {
-        scrollToPost(pendingTargetId); pendingTargetId = null;
-      }
+      pendingTargetId=btn.getAttribute('data-target-id');
+      const ocInstance=bootstrap.Offcanvas.getInstance(ocEl);
+      if(ocEl&&ocEl.classList.contains('show')&&ocInstance){ ocInstance.hide(); }
+      else { scrollToPost(pendingTargetId); pendingTargetId=null; }
     });
-    ocEl?.addEventListener('hidden.bs.offcanvas', () => {
-      if (pendingTargetId) { scrollToPost(pendingTargetId); pendingTargetId = null; }
-    });
+    ocEl?.addEventListener('hidden.bs.offcanvas',()=>{ if(pendingTargetId){ scrollToPost(pendingTargetId); pendingTargetId=null; }});
   })();
 
   (function () {
-    const list = document.getElementById('likedPostsList');
-    const empty = document.getElementById('likedEmpty');
-    const ocEl = document.getElementById('likedOffcanvas');
-    if (!list) return;
+    const list=document.getElementById('likedPostsList');
+    const empty=document.getElementById('likedEmpty');
+    const ocEl=document.getElementById('likedOffcanvas');
+    if(!list) return;
 
     updateLikedCount();
-    if (!list.querySelector('[data-liked="1"]') && empty) empty.style.display = 'block';
+    if(!list.querySelector('[data-liked="1"]')&&empty) empty.style.display='block';
 
-    let pendingTargetId = null;
-    list.addEventListener('click', function (e) {
-      const btn = e.target.closest('.liked-jump'); if (!btn) return;
+    let pendingTargetId=null;
+    list.addEventListener('click',function(e){
+      const btn=e.target.closest('.liked-jump'); if(!btn) return;
       e.preventDefault();
-      pendingTargetId = btn.getAttribute('data-target-id');
-      const ocInstance = bootstrap.Offcanvas.getInstance(ocEl);
-      if (ocEl && ocEl.classList.contains('show') && ocInstance) {
-        ocInstance.hide();
-      } else {
-        scrollToPost(pendingTargetId); pendingTargetId = null;
-      }
+      pendingTargetId=btn.getAttribute('data-target-id');
+      const ocInstance=bootstrap.Offcanvas.getInstance(ocEl);
+      if(ocEl&&ocEl.classList.contains('show')&&ocInstance){ ocInstance.hide(); }
+      else { scrollToPost(pendingTargetId); pendingTargetId=null; }
     });
-    ocEl?.addEventListener('hidden.bs.offcanvas', () => {
-      if (pendingTargetId) { scrollToPost(pendingTargetId); pendingTargetId = null; }
-    });
+    ocEl?.addEventListener('hidden.bs.offcanvas',()=>{ if(pendingTargetId){ scrollToPost(pendingTargetId); pendingTargetId=null; }});
   })();
 
   (function () {
-    const list = document.getElementById('commentedPostsList');
-    const empty = document.getElementById('commentedEmpty');
-    const ocEl = document.getElementById('commentedOffcanvas');
-    if (!list) return;
+    const list=document.getElementById('commentedPostsList');
+    const empty=document.getElementById('commentedEmpty');
+    const ocEl=document.getElementById('commentedOffcanvas');
+    if(!list) return;
 
     updateCommentedCount();
-    if (!list.querySelector('[data-commented="1"]') && empty) empty.style.display = 'block';
+    if(!list.querySelector('[data-commented="1"]')&&empty) empty.style.display='block';
 
-    let pendingTargetId = null;
-    list.addEventListener('click', function (e) {
-      const btn = e.target.closest('.commented-jump'); if (!btn) return;
+    let pendingTargetId=null;
+    list.addEventListener('click',function(e){
+      const btn=e.target.closest('.commented-jump'); if(!btn) return;
       e.preventDefault();
-      pendingTargetId = btn.getAttribute('data-target-id');
-      const ocInstance = bootstrap.Offcanvas.getInstance(ocEl);
-      if (ocEl && ocEl.classList.contains('show') && ocInstance) {
-        ocInstance.hide();
-      } else {
-        scrollToPost(pendingTargetId); pendingTargetId = null;
-      }
+      pendingTargetId=btn.getAttribute('data-target-id');
+      const ocInstance=bootstrap.Offcanvas.getInstance(ocEl);
+      if(ocEl&&ocEl.classList.contains('show')&&ocInstance){ ocInstance.hide(); }
+      else { scrollToPost(pendingTargetId); pendingTargetId=null; }
     });
-    ocEl?.addEventListener('hidden.bs.offcanvas', () => {
-      if (pendingTargetId) { scrollToPost(pendingTargetId); pendingTargetId = null; }
-    });
+    ocEl?.addEventListener('hidden.bs.offcanvas',()=>{ if(pendingTargetId){ scrollToPost(pendingTargetId); pendingTargetId=null; }});
   })();
 
-  function scrollToPost(targetId) {
-    const el = document.getElementById(targetId);
-    if (!el) return;
-    const headerH = document.getElementById('header')?.offsetHeight || 0;
-    const y = el.getBoundingClientRect().top + window.pageYOffset - headerH - 8;
-    window.scrollTo({ top: y, behavior: 'smooth' });
+  function scrollToPost(targetId){
+    const el=document.getElementById(targetId);
+    if(!el) return;
+    const headerH=document.getElementById('header')?.offsetHeight||0;
+    const y=el.getBoundingClientRect().top+window.pageYOffset-headerH-8;
+    window.scrollTo({ top:y, behavior:'smooth' });
     el.classList.add('ring-highlight');
-    setTimeout(() => el.classList.remove('ring-highlight'), 1500);
+    setTimeout(()=>el.classList.remove('ring-highlight'),1500);
   }
 
-  document.querySelectorAll('.delete-comment-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-      if (!confirm('確定要刪除這則留言嗎？')) return;
-      const postId = this.dataset.postId; const time = this.dataset.time;
-      fetch(`/post/${postId}/comment/delete/`, {
+  document.querySelectorAll('.delete-comment-btn').forEach(btn=>{
+    btn.addEventListener('click',function(){
+      if(!confirm('確定要刪除這則留言嗎？')) return;
+      const postId=this.dataset.postId; const time=this.dataset.time;
+      fetch(`/post/${postId}/comment/delete/`,{
         method:'POST',
-        headers:{ 'Content-Type':'application/x-www-form-urlencoded', 'X-Requested-With':'XMLHttpRequest', 'X-CSRFToken': getCookie('csrftoken') },
+        headers:{ 'Content-Type':'application/x-www-form-urlencoded','X-Requested-With':'XMLHttpRequest','X-CSRFToken': getCookie('csrftoken') },
         body:`time=${encodeURIComponent(time)}`
       })
-      .then(res => res.json())
-      .then(data => { if (!data.success) throw new Error(data.error || '刪除失敗'); window.location.reload(); })
-      .catch(err => alert(err.message || '刪除失敗'));
+      .then(res=>res.json())
+      .then(data=>{ if(!data.success) throw new Error(data.error||'刪除失敗'); window.location.reload(); })
+      .catch(err=>alert(err.message||'刪除失敗'));
     });
   });
 
-  let currentPostId = null, currentTime = null;
-  const editModalEl = document.getElementById('editCommentModal');
-  if (editModalEl){
-    const modal = new bootstrap.Modal(editModalEl);
-    const textarea = document.getElementById('editCommentContent');
-    document.querySelectorAll('.edit-comment-btn').forEach(btn => {
-      btn.addEventListener('click', function (e) {
-        e.preventDefault(); currentPostId = this.dataset.postId; currentTime = this.dataset.time;
-        textarea.value = this.dataset.content; modal.show();
+  let currentPostId=null, currentTime=null;
+  const editModalEl=document.getElementById('editCommentModal');
+  if(editModalEl){
+    const modal=new bootstrap.Modal(editModalEl);
+    const textarea=document.getElementById('editCommentContent');
+    document.querySelectorAll('.edit-comment-btn').forEach(btn=>{
+      btn.addEventListener('click',function(e){
+        e.preventDefault(); currentPostId=this.dataset.postId; currentTime=this.dataset.time;
+        textarea.value=this.dataset.content; modal.show();
       });
     });
-    document.getElementById('saveCommentEdit')?.addEventListener('click', function () {
-      const newContent = textarea.value.trim(); if (!newContent){ alert("留言內容不能為空！"); return; }
-      fetch(`/edit_comment/${currentPostId}/${encodeURIComponent(currentTime)}/`, {
+    document.getElementById('saveCommentEdit')?.addEventListener('click',function(){
+      const newContent=textarea.value.trim(); if(!newContent){ alert("留言內容不能為空！"); return; }
+      fetch(`/edit_comment/${currentPostId}/${encodeURIComponent(currentTime)}/`,{
         method:'POST', headers:{ 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value, 'Content-Type':'application/json' },
         body: JSON.stringify({ content:newContent })
       })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          const commentEls = document.querySelectorAll(`#comments-${currentPostId} .small.text-muted`);
-          commentEls.forEach(el => { if (el.innerText.includes(currentTime)) el.parentElement.querySelector('.mt-1').innerText = newContent; });
+      .then(res=>res.json())
+      .then(data=>{
+        if(data.success){
+          const commentEls=document.querySelectorAll(`#comments-${currentPostId} .small.text-muted`);
+          commentEls.forEach(el=>{ if(el.innerText.includes(currentTime)) el.parentElement.querySelector('.mt-1').innerText=newContent; });
           modal.hide();
-        } else { alert(data.error || "更新失敗"); }
+        } else { alert(data.error||"更新失敗"); }
       });
     });
   }
 
-  function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-      const cookies = document.cookie.split(';');
-      for (let i = 0; i < cookies.length; i++) {
-        const cookie = cookies[i].trim();
-        if (cookie.substring(0, name.length + 1) === (name + '=')) {
-          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-          break;
-        }
+  function getCookie(name){
+    let cookieValue=null;
+    if(document.cookie&&document.cookie!==''){
+      const cookies=document.cookie.split(';');
+      for(let i=0;i<cookies.length;i++){
+        const cookie=cookies[i].trim();
+        if(cookie.substring(0,name.length+1)===(name+'=')){ cookieValue=decodeURIComponent(cookie.substring(name.length+1)); break; }
       }
     }
     return cookieValue;
   }
 });
 
-document.querySelectorAll('.btn-share').forEach(btn => {
-  btn.addEventListener('click', function () {
-    const postId = this.dataset.postId;
-    const shareUrl = `${window.location.origin}/post/${postId}`;
-    if (navigator.share) {
+document.querySelectorAll('.btn-share').forEach(btn=>{
+  btn.addEventListener('click',function(){
+    const postId=this.dataset.postId;
+    const shareUrl=`${window.location.origin}/post/${postId}`;
+    if(navigator.share){
       navigator.share({ title: document.title, text: '快來看看這則貼文！', url: shareUrl }).catch(console.error);
     } else {
-      navigator.clipboard.writeText(shareUrl).then(() => alert('分享連結已複製到剪貼簿'));
+      navigator.clipboard.writeText(shareUrl).then(()=>alert('分享連結已複製到剪貼簿'));
     }
   });
 });
@@ -981,7 +940,7 @@ document.querySelectorAll('.btn-share').forEach(btn => {
 <script>
 (function () {
   const nav = performance.getEntriesByType && performance.getEntriesByType('navigation')[0];
-  const isReload = nav ? nav.type = 'reload'
+  const isReload = nav ? nav.type === 'reload'
                        : (performance.navigation && performance.navigation.type === 1);
 
   if (isReload) {
