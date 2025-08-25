@@ -108,6 +108,41 @@
 
   .my-comment-title{ color:#0d6efd; font-weight:700; font-size:0.95rem; }
   .my-comment-list .time{ color:#6b7280; font-size:.85rem; }
+
+  /* ===== 🔎 搜尋歷史：覆寫與樣式 ===== */
+  /* 讓 dropdown 不被裁切 */
+  .section-title .search-form-top .input-group { overflow: visible; }
+  /* 歷史下拉 */
+  .search-history {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 1100;
+    max-height: 260px;
+    overflow: auto;
+    border: 1px solid #e1efff;
+    background: #fff;
+    border-radius: 0 0 10px 10px;
+    box-shadow:0 6px 18px rgba(3,62,107,.08);
+    display: none;
+  }
+  .search-history.show { display: block; }
+  .search-history .history-item {
+    display:flex; align-items:center; gap:8px;
+    padding:8px 12px; cursor:pointer; user-select:none;
+  }
+  .search-history .history-item:hover { background:#f0faff; }
+  .search-history .icon { width:18px; display:flex; justify-content:center; }
+  .search-history .term {
+    flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    color:#033e6b; font-size:14px;
+  }
+  .search-history .remove {
+    border:none; background:transparent; font-size:18px; line-height:1;
+    color:#9aa9b8; padding:0 4px; cursor:pointer;
+  }
+  .search-history .remove:hover { color:#555; }
 </style>
 </head>
 <body>
@@ -184,16 +219,20 @@
       <div class="section-title text-center">
         <h2>貼文總覽｜交流區</h2>
 
-        <!-- 🔎 搜尋欄搬到標題區 -->
-        <form method="get" action="{% url 'post_display' %}" class="search-form-top d-flex justify-content-center">
-          <div class="input-group w-50">
+        <!-- 🔎 搜尋欄（含歷史下拉） -->
+        <form id="searchForm" method="get" action="{% url 'post_display' %}" class="search-form-top d-flex justify-content-center">
+          <div class="input-group w-50 position-relative">
             <span class="input-group-text" style="background-color:#e6f3fb; border:none;">
               <i class="bi bi-search" style="color:#63b3ed; font-size:1.2rem;"></i>
             </span>
-            <input type="text" name="q" class="form-control"
+            <input id="searchInput" type="text" name="q" class="form-control"
                    placeholder="輸入關鍵字搜尋貼文…" value="{{ request.GET.q }}"
+                   autocomplete="off"
                    style="border:none; background-color:#f0faff; color:#033e6b; font-size:15px;">
             <button type="submit" class="btn" style="background-color:#63b3ed; color:#fff; border:none;">搜尋</button>
+
+            <!-- 搜尋歷史下拉 -->
+            <div id="searchHistory" class="search-history"></div>
           </div>
         </form>
       </div>
@@ -922,18 +961,88 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     return cookieValue;
   }
-});
 
-document.querySelectorAll('.btn-share').forEach(btn=>{
-  btn.addEventListener('click',function(){
-    const postId=this.dataset.postId;
-    const shareUrl=`${window.location.origin}/post/${postId}`;
-    if(navigator.share){
-      navigator.share({ title: document.title, text: '快來看看這則貼文！', url: shareUrl }).catch(console.error);
-    } else {
-      navigator.clipboard.writeText(shareUrl).then(()=>alert('分享連結已複製到剪貼簿'));
+  /* ===== 🔎 搜尋歷史（localStorage） ===== */
+  (function(){
+    const STORAGE_KEY='post_display_search_history_v1';
+    const MAX_ITEMS=20;
+    const form=document.getElementById('searchForm');
+    const input=document.getElementById('searchInput');
+    const panel=document.getElementById('searchHistory');
+
+    function readHistory(){
+      try{ return JSON.parse(localStorage.getItem(STORAGE_KEY))||[]; }catch(e){ return []; }
     }
-  });
+    function writeHistory(arr){
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(arr.slice(0,MAX_ITEMS)));
+    }
+    function addTerm(term){
+      term=term.trim();
+      if(!term) return;
+      let list=readHistory().filter(t=>t.toLowerCase()!==term.toLowerCase());
+      list.unshift(term);
+      writeHistory(list);
+    }
+    function removeTerm(term){
+      let list=readHistory().filter(t=>t!==term);
+      writeHistory(list);
+    }
+    function createItem(term){
+      const row=document.createElement('div');
+      row.className='history-item';
+      row.innerHTML=`
+        <span class="icon"><i class="bi bi-clock-history"></i></span>
+        <span class="term"></span>
+        <button type="button" class="remove" aria-label="刪除"><i class="bi bi-x"></i></button>
+      `;
+      row.querySelector('.term').textContent=term;
+
+      // 點選帶入並送出
+      row.addEventListener('mousedown',function(e){
+        if(e.target.closest('.remove')) return; // 刪除鍵不觸發選取
+        input.value=term;
+        setTimeout(()=>form.submit(),0); // 立即送出
+      });
+      // 單筆刪除
+      row.querySelector('.remove').addEventListener('mousedown',function(e){
+        e.stopPropagation();
+        removeTerm(term);
+        render(input.value);
+      });
+      return row;
+    }
+    function render(filterText=''){
+      const list=readHistory().filter(t=>t.toLowerCase().includes(filterText.trim().toLowerCase()));
+      panel.innerHTML='';
+      if(list.length===0){ panel.classList.remove('show'); return; }
+      list.forEach(t=>panel.appendChild(createItem(t)));
+      panel.classList.add('show');
+    }
+    function openPanel(){ render(input.value); }
+    function closePanel(){ panel.classList.remove('show'); }
+
+    // 聚焦或點擊時開啟
+    input.addEventListener('focus', openPanel);
+    input.addEventListener('input', ()=>render(input.value));
+
+    // 送出時寫入
+    form.addEventListener('submit', function(){
+      addTerm(input.value);
+      closePanel();
+    });
+
+    // 點外面關閉
+    document.addEventListener('mousedown', function(e){
+      if(!panel.contains(e.target) && e.target!==input){
+        closePanel();
+      }
+    });
+
+    // Esc 關閉
+    input.addEventListener('keydown', function(e){
+      if(e.key==='Escape'){ closePanel(); input.blur(); }
+    });
+  })();
 });
 </script>
 
