@@ -222,7 +222,9 @@
                   aria-controls="commentedOffcanvas">
             <i class="bi bi-chat-dots-fill me-1"></i>
             我的留言
-            <span class="badge rounded-pill commented-badge ms-1" id="commentedCount">0</span>
+            <span class="badge rounded-pill commented-badge ms-1" id="commentedCount">
+            {{ commented_total_count|default:"0" }}
+          </span>
           </button>
         {% endif %}
       </form>
@@ -325,7 +327,7 @@
                       <ul class="list-unstyled small mb-2 my-comment-list" data-post-id="{{ post.interaction_id }}">
                         {% for c in post.comment_list %}
                           {% if c.user_id|stringformat:"s" == request.user.id|stringformat:"s" %}
-                            <li class="mb-2">
+                            <li class="mb-2 my-comment-item" data-my-comment="1">
                               <div class="time">{{ c.time }}</div>
                               <div class="mt-1">{{ c.content|escape }}</div>
                             </li>
@@ -577,11 +579,16 @@ document.addEventListener('DOMContentLoaded', function () {
     if (badge) badge.textContent = count;
   }
   function updateCommentedCount(){
-    const list = document.getElementById('commentedPostsList');
-    const count = list ? list.querySelectorAll('[data-commented="1"]').length : 0;
+    const wrapper = document.getElementById('commentedPostsList');
+    const count = wrapper ? wrapper.querySelectorAll('[data-my-comment="1"]').length : 0;
     const badge = document.getElementById('commentedCount');
     if (badge) badge.textContent = count;
   }
+
+  // ✅ 頁面載入先各算一次（不必等打開側欄）
+  updateSavedCount();
+  updateLikedCount();
+  updateCommentedCount();
 
   // 查看更多/關閉詳情
   document.querySelectorAll('.toggle-more').forEach(link => {
@@ -780,7 +787,7 @@ document.addEventListener('DOMContentLoaded', function () {
           list.appendChild(li);
         });
 
-        // === 新增：同步「我的留言」清單，並把留言內容放進去 ===
+        // === 新增：同步「我的留言」清單，並把留言內容放進去（修正：補抓 UL + 同作用域更新徽章/空狀態） ===
         const commentedList = document.getElementById('commentedPostsList');
         const commentedEmpty = document.getElementById('commentedEmpty');
         if (commentedList) {
@@ -813,19 +820,21 @@ document.addEventListener('DOMContentLoaded', function () {
             commentedList.appendChild(cardCol);
           }
 
-          // 把最新留言加到該卡片的留言清單
-          const ul = commentedList.querySelector(`.my-comment-list[data-post-id="${postId}"]`);
-          if (ul && latest) {
-            const li = document.createElement('li');
-            li.className = 'mb-2';
-            const t = document.createElement('div'); t.className = 'time'; t.textContent = latest.time || '';
-            const c = document.createElement('div'); c.className = 'mt-1'; c.textContent = latest.content || '';
-            li.appendChild(t); li.appendChild(c);
-            ul.appendChild(li);
-          }
+          // ✅ 抓到該卡片內的 UL 才能 append
+          const ul = cardCol.querySelector('ul.my-comment-list');
 
-          const hasC = commentedList.querySelector('[data-commented="1"]');
-          if (commentedEmpty) commentedEmpty.style.display = hasC ? 'none' : 'block';
+          // 把最新留言加到該卡片的留言清單
+          const li = document.createElement('li');
+          li.className = 'mb-2 my-comment-item';
+          li.setAttribute('data-my-comment','1');
+          const t = document.createElement('div'); t.className = 'time'; t.textContent = latest.time || '';
+          const c = document.createElement('div'); c.className = 'mt-1'; c.textContent = latest.content || '';
+          li.appendChild(t); li.appendChild(c);
+          ul.appendChild(li);
+
+          // 更新空狀態與徽章（放在同 if 作用域內）
+          const hasCard = commentedList.querySelector('[data-commented="1"]');
+          if (commentedEmpty) commentedEmpty.style.display = hasCard ? 'none' : 'block';
           updateCommentedCount();
         }
       })
