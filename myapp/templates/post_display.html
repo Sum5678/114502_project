@@ -28,6 +28,7 @@
   .section-title h2{ display:inline-block; position:relative; font-weight:700; font-size:28px; color:#033e6b; padding:0 20px; }
   .section-title h2::before,.section-title h2::after{ content:""; position:absolute; top:50%; width:60px; height:2px; background:#0d6efd; }
   .section-title h2::before{ left:-70px; } .section-title h2::after{ right:-70px; }
+  .section-title p{ margin:8px 0 6px; font-size:16px; color:#555; }
 
   .section-title .search-form-top{ margin-top:6px; }
   .section-title .search-form-top .input-group{ border-radius:10px; overflow:hidden; box-shadow:0 0 5px rgba(0,0,0,.05); }
@@ -104,11 +105,19 @@
     box-shadow:0 6px 14px rgba(3,62,107,.05);
   }
   .my-comment-card + .my-comment-card{ margin-top:10px; }
-  .my-comment-card .head{ display:flex; align-items:center; gap:8px; }
+  .my-comment-card .head{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
   .my-comment-card .dot{ width:8px; height:8px; border-radius:50%; background:#63b3ed; }
   .my-comment-card .time{ color:#6b7280; font-size:.85rem; }
   .my-comment-card .content{ color:#033e6b; }
   .my-comment-card .actions{ text-align:right; margin-top:6px; }
+
+  /* 身份徽章 */
+  .id-badge{
+    display:inline-flex; align-items:center; gap:4px;
+    padding:2px 8px; border-radius:999px;
+    background:#eef6ff; border:1px solid #cfe2ff; color:#0b5ed7;
+    font-size:.75rem; font-weight:600;
+  }
 
   /* 搜尋歷史下拉 */
   .section-title .search-form-top .input-group { overflow: visible; }
@@ -385,6 +394,21 @@
                             <div class="head">
                               <span class="dot"></span>
                               <span class="time">{{ c.time }}</span>
+                              <span class="id-badge">
+                                {% if c.identity == 'anonymous' %}
+                                  匿名
+                                {% elif c.identity == 'nickname1' %}
+                                  暱稱 1：{{ c.nickname }}
+                                {% elif c.identity == 'nickname2' %}
+                                  暱稱 2：{{ c.nickname }}
+                                {% else %}
+                                  {% if c.nickname and c.nickname != '匿名' and c.nickname != '(匿名)' %}
+                                    暱稱：{{ c.nickname }}
+                                  {% else %}
+                                    匿名
+                                  {% endif %}
+                                {% endif %}
+                              </span>
                             </div>
                             <div class="content mt-1">{{ c.content|escape }}</div>
                             <div class="actions">
@@ -485,7 +509,25 @@
               {% for c in post.comment_list|slice:":3" %}
                 <li class="mb-2 border-bottom pb-2 position-relative" data-comment-time="{{ c.time }}">
                   <div>
-                    <div class="small text-muted">{{ c.nickname }} ・ {{ c.time }}</div>
+                    <div class="small text-muted d-flex align-items-center gap-2 flex-wrap">
+                      <span>{{ c.nickname }}</span>
+                      <span>・ {{ c.time }}</span>
+                      <span class="id-badge">
+                        {% if c.identity == 'anonymous' %}
+                          匿名
+                        {% elif c.identity == 'nickname1' %}
+                          暱稱 1：{{ c.nickname }}
+                        {% elif c.identity == 'nickname2' %}
+                          暱稱 2：{{ c.nickname }}
+                        {% else %}
+                          {% if c.nickname and c.nickname != '匿名' and c.nickname != '(匿名)' %}
+                            暱稱：{{ c.nickname }}
+                          {% else %}
+                            匿名
+                          {% endif %}
+                        {% endif %}
+                      </span>
+                    </div>
                     <div class="mt-1">{{ c.content|escape }}</div>
                   </div>
 
@@ -780,7 +822,17 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
-  /* 新增留言 Ajax（同步到我的留言：同一篇只一個區塊，內含多卡） */
+  /* 將身份轉為顯示字串：匿名就顯示「匿名」，不會出現「暱稱：匿名」 */
+  function identityText(c){
+    const nn = (c.nickname||'').trim();
+    if(c.identity==='anonymous') return '匿名';
+    if(c.identity==='nickname1') return `暱稱 1：${nn}`;
+    if(c.identity==='nickname2') return `暱稱 2：${nn}`;
+    if(nn==='' || nn==='匿名' || nn==='(匿名)') return '匿名';
+    return `暱稱：${nn}`;
+  }
+
+  /* 新增留言 Ajax（同步到我的留言區塊 + 畫面留言清單帶身份徽章） */
   document.querySelectorAll('.comment-form').forEach(form=>{
     form.addEventListener('submit',function(e){
       e.preventDefault();
@@ -797,6 +849,8 @@ document.addEventListener('DOMContentLoaded', function () {
       .then(async (res)=>{ if(!res.ok){ const data=await res.json().catch(()=>({})); throw new Error(data.error||'留言失敗，請稍後再試'); } return res.json();})
       .then(data=>{
         this.reset();
+
+        /* 1) 更新貼文底下的留言（含身份徽章） */
         const wrap=this.closest('.comments');
         const list=wrap.querySelector('[data-list]');
         const empty=wrap.querySelector('[data-empty]');
@@ -806,11 +860,19 @@ document.addEventListener('DOMContentLoaded', function () {
           const li=document.createElement('li');
           li.className='mb-2 border-bottom pb-2';
           li.setAttribute('data-comment-time', c.time||'');
-          li.innerHTML=`<div class="small text-muted">${c.nickname} ・ ${c.time}</div><div class="mt-1">${c.content}</div>`;
+          li.innerHTML=`
+            <div>
+              <div class="small text-muted d-flex align-items-center gap-2 flex-wrap">
+                <span>${c.nickname||''}</span>
+                <span>・ ${c.time||''}</span>
+                <span class="id-badge">${identityText(c)}</span>
+              </div>
+              <div class="mt-1">${c.content||''}</div>
+            </div>`;
           list.appendChild(li);
         });
 
-        /* 同步到 offcanvas「我的留言」 */
+        /* 2) 同步到 offcanvas「我的留言」 */
         const commentedList=document.getElementById('commentedPostsList');
         const commentedEmpty=document.getElementById('commentedEmpty');
         if(commentedList){
@@ -847,7 +909,11 @@ document.addEventListener('DOMContentLoaded', function () {
             li.className='my-comment-card';
             li.setAttribute('data-my-comment','1');
             li.innerHTML=`
-              <div class="head"><span class="dot"></span><span class="time">${latest.time||''}</span></div>
+              <div class="head">
+                <span class="dot"></span>
+                <span class="time">${latest.time||''}</span>
+                <span class="id-badge">${identityText(latest)}</span>
+              </div>
               <div class="content mt-1">${latest.content||''}</div>
               <div class="actions">
                 <a class="btn btn-link p-0 btn-sm commented-jump" data-bs-dismiss="offcanvas" data-target-id="post-${postId}" data-time="${latest.time||''}">前往這則</a>
