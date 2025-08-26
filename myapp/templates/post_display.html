@@ -233,7 +233,7 @@
       </div>
 
       {% if request.user.is_authenticated %}
-      <!-- ✅ 四顆按鈕（新增：我的發文） -->
+      <!-- ✅ 四顆按鈕（我的發文改為顯示完整貼文） -->
       <div class="action-bar">
         <button type="button" class="btn saved-trigger"
                 data-bs-toggle="offcanvas" data-bs-target="#savedOffcanvas" aria-controls="savedOffcanvas">
@@ -268,7 +268,7 @@
       {% endif %}
 
       {% if request.user.is_authenticated %}
-      <!-- Offcanvas：我的收藏 -->
+      <!-- Offcanvas：我的收藏（維持原樣） -->
       <div class="offcanvas offcanvas-end offcanvas-saved" tabindex="-1" id="savedOffcanvas" aria-labelledby="savedOffcanvasLabel">
         <div class="offcanvas-header" style="background:#e6f3fb;">
           <h5 class="offcanvas-title fw-bold text-primary" id="savedOffcanvasLabel">
@@ -304,7 +304,7 @@
         </div>
       </div>
 
-      <!-- Offcanvas：我的按讚 -->
+      <!-- Offcanvas：我的按讚（維持原樣） -->
       <div class="offcanvas offcanvas-end offcanvas-liked" tabindex="-1" id="likedOffcanvas" aria-labelledby="likedOffcanvasLabel">
         <div class="offcanvas-header" style="background:#e6f3fb;">
           <h5 class="offcanvas-title fw-bold text-primary" id="likedOffcanvasLabel">
@@ -340,7 +340,7 @@
         </div>
       </div>
 
-      <!-- Offcanvas：我的發文 -->
+      <!-- Offcanvas：我的發文（⚠️ 改為顯示完整貼文卡片） -->
       <div class="offcanvas offcanvas-end offcanvas-posted" tabindex="-1" id="postedOffcanvas" aria-labelledby="postedOffcanvasLabel">
         <div class="offcanvas-header" style="background:#e6f3fb;">
           <h5 class="offcanvas-title fw-bold text-primary" id="postedOffcanvasLabel">
@@ -357,16 +357,32 @@
           <div class="row g-3" id="postedPostsList">
             {% for post in my_posts %}
               <div class="col-12" data-posted="1" data-post-id="{{ post.interaction_id }}">
-                <div class="p-3 saved-item-card">
-                  <div class="d-flex align-items-start">
-                    <i class="bi bi-journal-text me-2 mt-1"></i>
-                    <div class="flex-grow-1">
-                      <div class="fw-bold text-truncate" title="{{ post.title }}">{{ post.title }}</div>
-                      <div class="small text-muted mb-2">由 {{ post.nickname|default:"(我)" }} ・ {{ post.created_at|date:"Y-m-d H:i" }}</div>
-                      <div class="d-flex gap-2">
-                        <button type="button" class="btn btn-sm btn-primary posted-jump"
-                                data-bs-dismiss="offcanvas" data-target-id="post-{{ post.interaction_id }}">前往貼文</button>
+                <div class="card mb-2" style="border-left: 8px solid #{{ post.bgcolor }};">
+                  <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                      <img src="{{ post.avatar_url }}" alt="avatar" class="rounded-circle me-3" style="width:60px; height:60px;">
+                      <div>
+                        <h5 class="card-title mb-0">{{ post.title }}</h5>
+                        <div class="meta">{{ post.nickname|default:"(我)" }} ・ {{ post.created_at|date:"Y/m/d H:i" }}</div>
                       </div>
+                    </div>
+
+                    <!-- 完整內容（不截斷） -->
+                    <div class="card-text mt-2">
+                      {{ post.message_content|safe }}
+                    </div>
+
+                    <div class="interaction-bar mt-3">
+                      <div>
+                        <i class="bi bi-heart"></i> {{ post.like_heart_count }}
+                      </div>
+                      <!-- 右側可加上編輯/刪除捷徑 -->
+                      {% if request.user.id|stringformat:"s" == post.user_id|stringformat:"s" %}
+                      <div class="d-flex gap-2">
+                        <a href="{% url 'edit_post' post.interaction_id %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil-square"></i> 編輯</a>
+                        <a href="{% url 'delete_post' post.interaction_id %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> 刪除</a>
+                      </div>
+                      {% endif %}
                     </div>
                   </div>
                 </div>
@@ -376,7 +392,7 @@
         </div>
       </div>
 
-      <!-- Offcanvas：我的留言 -->
+      <!-- Offcanvas：我的留言（維持原樣，展示我的留言列表） -->
       <div class="offcanvas offcanvas-end offcanvas-commented" tabindex="-1" id="commentedOffcanvas" aria-labelledby="commentedOffcanvasLabel">
         <div class="offcanvas-header" style="background:#e6f3fb;">
           <h5 class="offcanvas-title fw-bold text-primary" id="commentedOffcanvasLabel">
@@ -940,16 +956,7 @@ document.addEventListener('DOMContentLoaded', function () {
     updatePostedCount();
     if(!list.querySelector('[data-posted="1"]')&&empty) empty.style.display='block';
 
-    let pendingTargetId=null;
-    list.addEventListener('click',function(e){
-      const btn=e.target.closest('.posted-jump'); if(!btn) return;
-      e.preventDefault();
-      pendingTargetId=btn.getAttribute('data-target-id');
-      const ocInstance=bootstrap.Offcanvas.getInstance(ocEl);
-      if(ocEl&&ocEl.classList.contains('show')&&ocInstance){ ocInstance.hide(); }
-      else { scrollToPost(pendingTargetId); pendingTargetId=null; }
-    });
-    ocEl?.addEventListener('hidden.bs.offcanvas',()=>{ if(pendingTargetId){ scrollToPost(pendingTargetId); pendingTargetId=null; }});
+    // 不再有跳轉按鈕，這段只保留計數處理。
   })();
 
   /* —— Offcanvas 跳轉（我的留言） —— */
