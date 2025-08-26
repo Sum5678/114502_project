@@ -550,56 +550,52 @@
 
   // 渲染訊息
   function renderMessages(messages) {
-  chatWindow.innerHTML = '';
-  if (!messages.length) {
-    chatWindow.innerHTML = '<p class="text-muted">還沒有留言，快來發表第一則訊息！</p>';
-    return;
-  }
-
-  messages.forEach(msg => {
-    const wrapper = document.createElement('div');
-    wrapper.classList.add('mb-2');
-    wrapper.id = "msg-" + msg.id;
-
-    const msgBox = document.createElement('div');
-    msgBox.classList.add('p-2', 'border', 'rounded', 'bg-white');
-
-    // 如果是回覆，加上引用
-    if (msg.reply_to_id && msg.reply_to_text) {
-      const quote = document.createElement('div');
-      quote.classList.add('reply-quote');
-      quote.textContent = `回覆「${msg.reply_to_text}」`;
-      quote.onclick = () => {
-        const target = document.getElementById("msg-" + msg.reply_to_id);
-        if (target) {
-          target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          target.classList.add('bg-warning', 'bg-opacity-25');
-          setTimeout(() => target.classList.remove('bg-warning', 'bg-opacity-25'), 1500);
-        }
-      };
-      msgBox.appendChild(quote);
+    chatWindow.innerHTML = '';
+    if (!messages.length) {
+        chatWindow.innerHTML = '<p class="text-muted">還沒有留言，快來發表第一則訊息！</p>';
+        return;
     }
 
-    const main = document.createElement('span');
-    main.textContent = `${msg.nickname || '匿名'}：${msg.message}`;
-    msgBox.appendChild(main);
+    messages.forEach(msg => {
+        const wrapper = document.createElement('div');
+        wrapper.classList.add('mb-2');
+        const msgId = "msg-" + Date.now() + "-" + Math.floor(Math.random()*1000);
+        wrapper.id = msgId;
 
-    const replyBtn = document.createElement('button');
-    replyBtn.textContent = '回覆';
-    replyBtn.classList.add('btn', 'btn-link', 'btn-sm', 'p-0', 'ms-2');
-    replyBtn.onclick = () => {
-      replyTarget = { id: msg.id, text: msg.message };
-      chatInput.placeholder = `回覆「${msg.message}」...`;
-      chatInput.focus();
-    };
-    msgBox.appendChild(replyBtn);
+        const msgBox = document.createElement('div');
+        msgBox.classList.add('p-2', 'border', 'rounded', 'bg-white');
 
-    wrapper.appendChild(msgBox);
-    chatWindow.appendChild(wrapper);
-  });
+        // 主訊息暱稱加顏色
+        const main = document.createElement('span');
+        main.innerHTML = `<strong style="color:${msg.status_color}">${msg.nickname || '匿名'}</strong>：${msg.message}`;
+        msgBox.appendChild(main);
 
-  chatWindow.scrollTop = chatWindow.scrollHeight;
+        // 回覆按鈕
+        const replyBtn = document.createElement('button');
+        replyBtn.textContent = '回覆';
+        replyBtn.classList.add('btn', 'btn-link', 'btn-sm', 'p-0', 'ms-2');
+        replyBtn.onclick = () => {
+            replyTarget = { id: msgId, text: msg.message };
+            chatInput.placeholder = `回覆「${msg.message}」...`;
+            chatInput.focus();
+        };
+        msgBox.appendChild(replyBtn);
+
+        // 如果有回覆目標，加引用框
+        if (msg.reply_to_text) {
+            const quote = document.createElement("div");
+            quote.classList.add("small", "text-muted", "border-start", "ps-2", "mb-1");
+            quote.textContent = `回覆「${msg.reply_to_text}」`;
+            msgBox.insertBefore(quote, main);
+        }
+
+        wrapper.appendChild(msgBox);
+        chatWindow.appendChild(wrapper);
+    });
+
+    chatWindow.scrollTop = chatWindow.scrollHeight;
 }
+
 
 
 
