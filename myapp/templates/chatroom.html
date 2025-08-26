@@ -526,6 +526,7 @@
       chatWindow.innerHTML = '<p class="text-muted">還沒有留言，快來發表第一則訊息！</p>';
       return;
     }
+    // 在 renderMessages 裡
     messages.forEach(msg => {
       const wrapper = document.createElement('div');
       wrapper.classList.add('mb-2');
@@ -534,26 +535,39 @@
       const msgBox = document.createElement('div');
       msgBox.classList.add('p-2', 'border', 'rounded', 'bg-white');
 
+      // 如果是回覆訊息，建立引用 div
+      if (msg.reply_to_text && msg.reply_to_id) {
+        const quote = document.createElement("div");
+        quote.classList.add("small", "text-muted", "border-start", "ps-2", "mb-1");
+        quote.textContent = `回覆「${msg.reply_to_text}」`;
+        // 點擊引用文字滾動回去原訊息
+        quote.style.cursor = 'pointer';
+        quote.onclick = () => {
+          const target = document.getElementById("msg-" + msg.reply_to_id);
+          if(target){
+            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            target.classList.add('bg-warning', 'bg-opacity-25');
+            setTimeout(() => target.classList.remove('bg-warning','bg-opacity-25'),1500);
+          }
+        };
+        msgBox.appendChild(quote);
+      }
+
       const main = document.createElement('span');
       main.innerHTML = `<strong style="color:${msg.status_color || '#000'}">${msg.nickname || '匿名'}</strong>：${msg.message}`;
       msgBox.appendChild(main);
 
-      if (msg.reply_to_text) {
-        const quote = document.createElement("div");
-        quote.classList.add("small", "text-muted", "border-start", "ps-2", "mb-1");
-        quote.textContent = `回覆「${msg.reply_to_text}」`;
-        msgBox.insertBefore(quote, main);
-      }
-
+      // 回覆按鈕
       const replyBtn = document.createElement('button');
       replyBtn.textContent = '回覆';
-      replyBtn.classList.add('btn', 'btn-link', 'btn-sm', 'p-0', 'ms-2');
+      replyBtn.classList.add('btn','btn-link','btn-sm','p-0','ms-2');
       replyBtn.onclick = () => setReply(msg.id, msg.message);
       msgBox.appendChild(replyBtn);
 
       wrapper.appendChild(msgBox);
       chatWindow.appendChild(wrapper);
     });
+
     chatWindow.scrollTop = chatWindow.scrollHeight;
   }
 
@@ -607,12 +621,20 @@
 
       if (replyTarget) {
         const quote = document.createElement("div");
-        quote.classList.add("small", "text-muted", "border-start", "ps-2", "mb-1");
+        quote.classList.add("small","text-muted","border-start","ps-2","mb-1");
         quote.textContent = `回覆「${replyTarget.text}」`;
         quote.style.cursor = 'pointer';
-        quote.onclick = () => setReply(replyTarget.id, replyTarget.text);
+        quote.onclick = () => {
+          const target = document.getElementById("msg-" + replyTarget.id);
+          if(target){
+            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            target.classList.add('bg-warning','bg-opacity-25');
+            setTimeout(()=>target.classList.remove('bg-warning','bg-opacity-25'),1500);
+          }
+        };
         msgBox.appendChild(quote);
       }
+
 
       const main = document.createElement('span');
       main.innerHTML = `<strong style="color:${data.message.status_color || '#000'}">${data.message.nickname || '匿名'}</strong>：${data.message.message}`;
