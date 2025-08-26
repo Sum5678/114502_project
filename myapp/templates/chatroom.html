@@ -287,90 +287,101 @@
     {% endif %}
   </div>
 </header>
+
 <main class="main mt-5 pt-5">
   <div class="container container-flex" data-aos="fade-up">
 
-    {% if user.is_authenticated %}
-      <!-- ✅ 已登入顯示完整聊天室 -->
+    <!-- 左側邊欄 -->
+    <div class="sidebar-container">
+      <div class="sidebar-section">
+        <h4 class="section-title">所有聊天室</h4>
+        <!-- <select id="popularSelect" class="form-select" aria-label="所有聊天室選擇">
+          <option value="" selected disabled>請選擇聊天室</option>
+        </select> -->
+        <select id="popularSelect" class="form-select" aria-label="所有聊天室選擇">
+          <option value="" selected disabled>請選擇聊天室</option>
+          {% for room in popular_chatrooms %}
+            <option value="{{ room.id }}">
+              {{ room.city }} {{ room.district }} （收藏數：{{ room.fav_count }}）
+            </option>
+          {% endfor %}
+        </select>
 
-      <!-- 左側邊欄 -->
-      <div class="sidebar-container">
-        <div class="sidebar-section">
-          <h4 class="section-title">所有聊天室</h4>
-          <select id="popularSelect" class="form-select" aria-label="所有聊天室選擇">
-            <option value="" selected disabled>請選擇聊天室</option>
-            {% for room in popular_chatrooms %}
-              <option value="{{ room.id }}">
-                {{ room.city }} {{ room.district }} （收藏數：{{ room.fav_count }}）
-              </option>
+      </div>
+
+
+      
+
+
+      
+
+      <div class="sidebar-section">
+        <h4 class="section-title">搜尋聊天室</h4>
+        <input 
+          type="text" 
+          id="chatroomSearchInput" 
+          class="form-control mb-2" 
+          placeholder="輸入縣市或行政區搜尋..." 
+        />
+        <div id="userChatrooms" class="user-chatrooms"></div>
+      </div>
+
+
+      <div class="sidebar-section favorites-section">
+        <h4 class="section-title">我的收藏聊天室</h4>
+        <ul id="favoriteList">
+          {% if is_fav %}
+            {% for fav in favorites %}
+              <li>
+                <a href="javascript:void(0)" onclick="openChatroom('{{ fav.chat_room.id }}')">
+                  {{ fav.chat_room.city }} {{ fav.chat_room.district }}
+                </a>
+              </li>
             {% endfor %}
-          </select>
-        </div>
-
-        <div class="sidebar-section">
-          <h4 class="section-title">搜尋聊天室</h4>
-          <input 
-            type="text" 
-            id="chatroomSearchInput" 
-            class="form-control mb-2" 
-            placeholder="輸入縣市或行政區搜尋..." 
-          />
-          <div id="userChatrooms" class="user-chatrooms"></div>
-        </div>
-
-        <div class="sidebar-section favorites-section">
-          <h4 class="section-title">我的收藏聊天室</h4>
-          <ul id="favoriteList">
-            {% if favorites %}
-              {% for fav in favorites %}
-                <li>
-                  <a href="javascript:void(0)" onclick="openChatroom('{{ fav.chat_room.id }}')">
-                    {{ fav.chat_room.city }} {{ fav.chat_room.district }}
-                  </a>
-                </li>
-              {% endfor %}
-            {% else %}
-              <li class="text-muted">尚未收藏任何聊天室</li>
-            {% endif %}
-          </ul>
-        </div>
+          {% else %}
+            <li class="text-muted">尚未收藏任何聊天室</li>
+          {% endif %}
+        </ul>
       </div>
 
-      <!-- 右側聊天室主區 -->
-      <div class="chatroom-box d-none" id="chatroomBox">
-        <div class="d-flex justify-content-between align-items-center mb-2">
-          <h5 id="chatroomTitle" class="mb-0">聊天室名稱</h5>
-          <span id="favoriteBtn" class="favorite-btn" title="點擊收藏/取消收藏">☆ 收藏</span>
-        </div>
-        <div class="chat-window" id="chatWindow"></div>
-        <div class="chat-input-area mt-3" style="align-items:center; gap:0.5rem;">
-          <select id="nicknameSelect" class="form-select" style="max-width: 140px;">
-            <option value="">匿名</option>
-            {% if user_profile and user_profile.default_nickname1 %}
-              <option value="{{ user_profile.default_nickname1 }}">{{ user_profile.default_nickname1 }}</option>
-            {% endif %}
-            {% if user_profile and user_profile.default_nickname2 %}
-              <option value="{{ user_profile.default_nickname2 }}">{{ user_profile.default_nickname2 }}</option>
-            {% endif %}
-          </select>
-          <span id="nicknameDisplay" style="min-width: 50px; font-weight: 600; color: #0d6efd;">匿名</span>
-          <input type="text" id="chatInput" placeholder="輸入留言..." autocomplete="off" />
-          <button class="btn btn-primary" onclick="sendMessage()">送出</button>
-        </div>
+      <!-- <p class="text-muted small">DEBUG: 收藏數量：{{ favorites|length }}</p> -->
+    </div>
+
+    <!-- 右側聊天室主區 -->
+    <div class="chatroom-box d-none" id="chatroomBox" aria-live="polite" aria-atomic="true" role="region">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h5 id="chatroomTitle" class="mb-0">聊天室名稱</h5>
+        <span id="favoriteBtn" class="favorite-btn" title="點擊收藏/取消收藏" role="button" tabindex="0" aria-pressed="false" aria-label="收藏聊天室">☆ 收藏</span>
+      </div>
+      <div class="chat-window" id="chatWindow" tabindex="0" aria-label="聊天訊息區">
+        <!-- 訊息區（由 JavaScript 動態渲染） -->
+      </div>     
+      <div class="chat-input-area mt-3" style="align-items:center; gap:0.5rem;">
+        <select id="nicknameSelect" class="form-select" style="max-width: 140px;">
+          <option value="">匿名</option>
+          {% if user_profile.default_nickname1 %}
+            <option value="{{ user_profile.default_nickname1 }}" data-link="{% url 'about' %}">
+              {{ user_profile.default_nickname1 }}
+            </option>
+          {% endif %}
+          {% if user_profile.default_nickname2 %}
+            <option value="{{ user_profile.default_nickname2 }}" data-link="{% url 'about' %}">
+              {{ user_profile.default_nickname2 }}
+            </option>
+          {% endif %}
+        </select>
+        <span id="nicknameDisplay" style="min-width: 50px; font-weight: 600; color: #0d6efd;">匿名</span>
+        
+        <input type="text" id="chatInput" placeholder="輸入留言..." autocomplete="off" aria-label="輸入聊天訊息" />
+        <button class="btn btn-primary" onclick="sendMessage()" aria-label="送出訊息">送出</button>
       </div>
 
-      <div id="chatroomData" data-favorites='{{ favorite_chatroom_ids|escapejs }}'></div>
+    </div>
 
-    {% else %}
-      <!-- ❌ 未登入顯示提示 -->
-      <div class="alert alert-warning w-100 text-center p-5">
-        <h4 class="mb-0">請先登入才能使用聊天室</h4>
-      </div>
-    {% endif %}
+    <div id="chatroomData" data-favorites='{{ favorite_chatroom_ids|escapejs }}'></div>
 
   </div>
 </main>
-
 
 <footer id="footer" class="footer position-relative light-background mt-5 py-3 bg-white shadow-sm">
   <div class="container text-center text-muted small">
@@ -554,15 +565,9 @@
       const msgBox = document.createElement('div');
       msgBox.classList.add('p-2', 'border', 'rounded', 'bg-white');
 
-      // ✅ 暱稱顯示顏色
-      const nicknameSpan = document.createElement('span');
-      nicknameSpan.textContent = (msg.nickname || '匿名') + '：';
-      nicknameSpan.style.color = msg.status_color || '#000000';
-      msgBox.appendChild(nicknameSpan);
-
-      const textSpan = document.createElement('span');
-      textSpan.textContent = msg.message;
-      msgBox.appendChild(textSpan);
+      const main = document.createElement('span');
+      main.textContent = `${msg.nickname || '匿名'}：${msg.message}`;
+      msgBox.appendChild(main);
 
       const replyBtn = document.createElement('button');
       replyBtn.textContent = '回覆';
@@ -580,86 +585,6 @@
 
     chatWindow.scrollTop = chatWindow.scrollHeight;
   }
-
-  
-// 送出訊息
-function sendMessage() {
-  const messageText = chatInput.value.trim();
-  const nickname = nicknameSelect.value || '匿名';
-  if (!messageText) return alert('訊息不能為空！');
-  if (!currentRoomId) return alert('請先選擇聊天室！');
-
-  fetch(`/chat/send/${currentRoomId}/`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-CSRFToken': getCookie('csrftoken')
-    },
-    body: JSON.stringify({
-      message: messageText,
-      nickname: nickname,
-      reply_to_id: replyTarget ? replyTarget.id_in_db : null
-    })
-  })
-  .then(res => res.json())
-  .then(data => {
-    if (data.status !== 'ok') {
-      return alert('發送失敗：' + data.msg);
-    }
-
-    // 清空輸入框
-    chatInput.value = '';
-    chatInput.placeholder = "輸入留言...";
-    replyTarget = null;
-
-    // 產生訊息 DOM
-    const wrapper = document.createElement('div');
-    wrapper.classList.add('mb-2');
-    wrapper.id = "msg-" + data.message.id;
-
-    const msgBox = document.createElement('div');
-    msgBox.classList.add('p-2', 'border', 'rounded', 'bg-white');
-
-    // 如果有回覆目標，加引用框
-    if (data.message.reply_to_text) {
-      const quote = document.createElement('div');
-      quote.classList.add('small', 'text-muted', 'border-start', 'ps-2', 'mb-1');
-      quote.textContent = `回覆「${data.message.reply_to_text}」`;
-      quote.style.cursor = 'pointer';
-      quote.onclick = () => {
-        const target = document.getElementById("msg-" + data.message.reply_to_id);
-        if (target) {
-          target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          target.classList.add('bg-warning', 'bg-opacity-25');
-          setTimeout(() => target.classList.remove('bg-warning', 'bg-opacity-25'), 1500);
-        } else alert("找不到原始訊息");
-      };
-      msgBox.appendChild(quote);
-    }
-
-    // 主訊息
-    const main = document.createElement('span');
-    main.textContent = `${data.message.nickname || '匿名'}：${data.message.message}`;
-    msgBox.appendChild(main);
-
-    // 回覆按鈕
-    const replyBtn = document.createElement('button');
-    replyBtn.textContent = '回覆';
-    replyBtn.classList.add('btn', 'btn-link', 'btn-sm', 'p-0', 'ms-2');
-    replyBtn.onclick = () => {
-      replyTarget = { id_in_db: data.message.id, text: data.message.message };
-      chatInput.placeholder = `回覆「${data.message.message}」...`;
-      chatInput.focus();
-    };
-    msgBox.appendChild(replyBtn);
-
-    wrapper.appendChild(msgBox);
-    chatWindow.appendChild(wrapper);
-    chatWindow.scrollTop = chatWindow.scrollHeight;
-  })
-  .catch(() => alert('訊息送出失敗'));
-}
-
 
 
 
@@ -719,8 +644,89 @@ function sendMessage() {
 
  
 
-  
+  // 送出訊息
+  function sendMessage() {
+    const message = chatInput.value.trim();
+    const nickname = nicknameSelect.value || '匿名';
+    if (!message) return alert('訊息不能為空！');
+    if (!currentRoomId) return alert('請先選擇聊天室！');
 
+    fetch(`/chat/send/${currentRoomId}/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      body: JSON.stringify({ message, nickname })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.status !== 'ok') {
+        return alert('發送失敗：' + data.msg);
+      }
+
+      // 清空輸入框
+      chatInput.value = '';
+      chatInput.placeholder = "輸入留言...";
+
+      if (!data.message) {
+        openChatroom(currentRoomId);
+        replyTarget = null;
+        return;
+      }
+
+      // 產生訊息 DOM
+      const wrapper = document.createElement('div');
+      wrapper.classList.add('mb-2');
+      const msgId = "msg-" + Date.now() + "-" + Math.floor(Math.random()*1000);
+      wrapper.id = msgId;
+
+      const msgBox = document.createElement('div');
+      msgBox.classList.add('p-2', 'border', 'rounded', 'bg-white');
+
+      // 如果有回覆目標，加引用框
+      if (replyTarget) {
+        const quote = document.createElement('div');
+        quote.classList.add('small', 'text-muted', 'border-start', 'ps-2', 'mb-1');
+        quote.textContent = `回覆「${replyTarget.text}」`;
+        quote.style.cursor = 'pointer';
+
+        // 點擊引用 → 捲到目標
+        quote.onclick = () => {
+          const target = document.getElementById(replyTarget.id);
+          if (target) {
+            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            target.classList.add('bg-warning', 'bg-opacity-25');
+            setTimeout(() => target.classList.remove('bg-warning', 'bg-opacity-25'), 1500);
+          } else alert("找不到原始訊息");
+        };
+
+        msgBox.appendChild(quote);
+      }
+
+      // 主訊息
+      const main = document.createElement('span');
+      main.textContent = `${data.message.nickname || '匿名'}：${data.message.message}`;
+      msgBox.appendChild(main);
+
+      // 回覆按鈕
+      const replyBtn = document.createElement('button');
+      replyBtn.textContent = '回覆';
+      replyBtn.classList.add('btn', 'btn-link', 'btn-sm', 'p-0', 'ms-2');
+      replyBtn.onclick = () => {
+        replyTarget = { id: msgId, text: data.message.message };
+        chatInput.placeholder = `回覆「${data.message.message}」...`;
+        chatInput.focus();
+      };
+      msgBox.appendChild(replyBtn);
+
+      wrapper.appendChild(msgBox);
+      chatWindow.appendChild(wrapper);
+      chatWindow.scrollTop = chatWindow.scrollHeight;
+
+      replyTarget = null; // reset
+    });
+  }
 
 
   // 更新收藏按鈕
