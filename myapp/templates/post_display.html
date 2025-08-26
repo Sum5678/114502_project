@@ -30,11 +30,9 @@
   .section-title h2::before{ left:-70px; } .section-title h2::after{ right:-70px; }
   .section-title p{ margin:8px 0 6px; font-size:16px; color:#555; }
 
-  /* 搜尋欄放在標題裡，置中且收緊間距 */
   .section-title .search-form-top{ margin-top:6px; }
   .section-title .search-form-top .input-group{ border-radius:10px; overflow:hidden; box-shadow:0 0 5px rgba(0,0,0,.05); }
 
-  /* 三顆按鈕現在在標題區塊下方（+ 我的發文） */
   .action-bar{
     display:flex; justify-content:center; align-items:center; gap:16px;
     flex-wrap:wrap; margin:10px 0 12px;
@@ -109,7 +107,6 @@
   .my-comment-title{ color:#0d6efd; font-weight:700; font-size:0.95rem; }
   .my-comment-list .time{ color:#6b7280; font-size:.85rem; }
 
-  /* ===== 🔎 搜尋歷史：覆寫與樣式 ===== */
   .section-title .search-form-top .input-group { overflow: visible; }
   .search-history {
     position: absolute;
@@ -242,21 +239,21 @@
                 data-bs-toggle="offcanvas" data-bs-target="#savedOffcanvas" aria-controls="savedOffcanvas">
           <i class="bi bi-star-fill text-warning me-1"></i>
           我的收藏
-          <span class="badge rounded-pill saved-badge ms-1" id="savedCount">0</span>
+          <span class="badge rounded-pill saved-badge ms-1" id="savedCount">{{ my_saved_posts|length|default:"0" }}</span>
         </button>
 
         <button type="button" class="btn liked-trigger"
                 data-bs-toggle="offcanvas" data-bs-target="#likedOffcanvas" aria-controls="likedOffcanvas">
           <i class="bi bi-heart-fill text-danger me-1"></i>
           我的按讚
-          <span class="badge rounded-pill liked-badge ms-1" id="likedCount">0</span>
+          <span class="badge rounded-pill liked-badge ms-1" id="likedCount">{{ my_liked_posts|length|default:"0" }}</span>
         </button>
 
         <button type="button" class="btn posted-trigger"
                 data-bs-toggle="offcanvas" data-bs-target="#postedOffcanvas" aria-controls="postedOffcanvas">
           <i class="bi bi-journal-text me-1"></i>
           我的發文
-          <span class="badge rounded-pill posted-badge ms-1" id="postedCount">0</span>
+          <span class="badge rounded-pill posted-badge ms-1" id="postedCount">{{ my_posts|length|default:"0" }}</span>
         </button>
 
         <button type="button" class="btn commented-trigger"
@@ -297,7 +294,6 @@
                       <div class="d-flex gap-2">
                         <button type="button" class="btn btn-sm btn-primary saved-jump"
                                 data-bs-dismiss="offcanvas" data-target-id="post-{{ post.interaction_id }}">前往貼文</button>
-                        <a class="btn btn-sm btn-outline-primary" href="/post/{{ post.interaction_id }}">開啟貼文頁</a>
                       </div>
                     </div>
                   </div>
@@ -334,7 +330,6 @@
                       <div class="d-flex gap-2">
                         <button type="button" class="btn btn-sm btn-primary liked-jump"
                                 data-bs-dismiss="offcanvas" data-target-id="post-{{ post.interaction_id }}">前往貼文</button>
-                        <a class="btn btn-sm btn-outline-primary" href="/post/{{ post.interaction_id }}">開啟貼文頁</a>
                       </div>
                     </div>
                   </div>
@@ -345,7 +340,7 @@
         </div>
       </div>
 
-      <!-- Offcanvas：我的發文（新增） -->
+      <!-- Offcanvas：我的發文 -->
       <div class="offcanvas offcanvas-end offcanvas-posted" tabindex="-1" id="postedOffcanvas" aria-labelledby="postedOffcanvasLabel">
         <div class="offcanvas-header" style="background:#e6f3fb;">
           <h5 class="offcanvas-title fw-bold text-primary" id="postedOffcanvasLabel">
@@ -371,7 +366,6 @@
                       <div class="d-flex gap-2">
                         <button type="button" class="btn btn-sm btn-primary posted-jump"
                                 data-bs-dismiss="offcanvas" data-target-id="post-{{ post.interaction_id }}">前往貼文</button>
-                        <a class="btn btn-sm btn-outline-primary" href="/post/{{ post.interaction_id }}">開啟貼文頁</a>
                       </div>
                     </div>
                   </div>
@@ -421,7 +415,6 @@
                       <div class="d-flex gap-2">
                         <button type="button" class="btn btn-sm btn-primary commented-jump"
                                 data-bs-dismiss="offcanvas" data-target-id="post-{{ post.interaction_id }}">前往貼文</button>
-                        <a class="btn btn-sm btn-outline-primary" href="/post/{{ post.interaction_id }}">開啟貼文頁</a>
                       </div>
                     </div>
                   </div>
@@ -494,7 +487,7 @@
               </button>
             </div>
 
-            {% if request.user.id == post.user_id %}
+            {% if request.user.id|stringformat:"s" == post.user_id|stringformat:"s" %}
             <div class="interaction-actions-right">
               <a href="{% url 'edit_post' post.interaction_id %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil-square"></i> 編輯</a>
               <a href="{% url 'delete_post' post.interaction_id %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> 刪除</a>
@@ -561,7 +554,7 @@
                   <span class="identity-label">以誰的身分留言：</span>
                   <div class="btn-group btn-group-sm identity-group flex-wrap" role="group" aria-label="留言身分">
                     {% with has1=profile_nickname1|length has2=profile_nickname2|length %}
-                      <input type="radio" class="btn-check" name="comment_identity" id="ci1-{{ post.interaction_id }}" value="nickname1" {% if has1 %}{% if has1 %}checked{% endif %}{% else %}disabled{% endif %}>
+                      <input type="radio" class="btn-check" name="comment_identity" id="ci1-{{ post.interaction_id }}" value="nickname1" {% if has1 %}checked{% else %}disabled{% endif %}>
                       <label class="btn" for="ci1-{{ post.interaction_id }}"><i class="bi bi-person-badge"></i> 暱稱 1{% if has1 %}：{{ profile_nickname1 }}{% else %}（未設定）{% endif %}</label>
 
                       <input type="radio" class="btn-check" name="comment_identity" id="ci2-{{ post.interaction_id }}" value="nickname2" {% if not has1 and has2 %}checked{% endif %} {% if not has2 %}disabled{% endif %}>
@@ -704,6 +697,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const existing=likedList.querySelector(`[data-post-id="${postId}"]`);
             if(!isLiked&&existing){ existing.remove(); }
             else if(isLiked&&!existing){
+              const card=this.closest('.card-body');
               const title=card.querySelector('.card-title')?.textContent?.trim()||`#${postId}`;
               const meta=card.querySelector('.meta')?.textContent||'';
               const col=document.createElement('div');
@@ -720,7 +714,6 @@ document.addEventListener('DOMContentLoaded', function () {
                       <div class="d-flex gap-2">
                         <button type="button" class="btn btn-sm btn-primary liked-jump"
                                 data-bs-dismiss="offcanvas" data-target-id="post-${postId}">前往貼文</button>
-                        <a class="btn btn-sm btn-outline-primary" href="/post/${postId}">開啟貼文頁</a>
                       </div>
                     </div>
                   </div>
@@ -774,7 +767,6 @@ document.addEventListener('DOMContentLoaded', function () {
                       <div class="d-flex gap-2">
                         <button type="button" class="btn btn-sm btn-primary saved-jump"
                                 data-bs-dismiss="offcanvas" data-target-id="post-${postId}">前往貼文</button>
-                        <a class="btn btn-sm btn-outline-primary" href="/post/${postId}">開啟貼文頁</a>
                       </div>
                     </div>
                   </div>
@@ -869,7 +861,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     <div class="d-flex gap-2">
                       <button type="button" class="btn btn-sm btn-primary commented-jump"
                               data-bs-dismiss="offcanvas" data-target-id="post-${postId}">前往貼文</button>
-                      <a class="btn btn-sm btn-outline-primary" href="/post/${postId}">開啟貼文頁</a>
                     </div>
                   </div>
                 </div>
@@ -986,9 +977,7 @@ document.addEventListener('DOMContentLoaded', function () {
   function scrollToPost(targetId){
     const el=document.getElementById(targetId);
     if(!el){
-      // 若此頁沒有該貼文，導向單篇頁面（支援歷史貼文）
-      const postId = String(targetId||'').replace(/^post-/, '');
-      if (postId) { window.location.href = `/post/${postId}`; }
+      alert('此頁找不到該貼文');  // 不再導向單篇貼文頁
       return;
     }
     const headerH=document.getElementById('header')?.offsetHeight||0;
@@ -1088,13 +1077,11 @@ document.addEventListener('DOMContentLoaded', function () {
       `;
       row.querySelector('.term').textContent=term;
 
-      // 點選帶入並送出
       row.addEventListener('mousedown',function(e){
-        if(e.target.closest('.remove')) return; // 刪除鍵不觸發選取
+        if(e.target.closest('.remove')) return;
         input.value=term;
-        setTimeout(()=>form.submit(),0); // 立即送出
+        setTimeout(()=>form.submit(),0);
       });
-      // 單筆刪除
       row.querySelector('.remove').addEventListener('mousedown',function(e){
         e.stopPropagation();
         removeTerm(term);
@@ -1112,24 +1099,20 @@ document.addEventListener('DOMContentLoaded', function () {
     function openPanel(){ render(input.value); }
     function closePanel(){ panel.classList.remove('show'); }
 
-    // 聚焦或點擊時開啟
     input.addEventListener('focus', openPanel);
     input.addEventListener('input', ()=>render(input.value));
 
-    // 送出時寫入
     form.addEventListener('submit', function(){
       addTerm(input.value);
       closePanel();
     });
 
-    // 點外面關閉
     document.addEventListener('mousedown', function(e){
       if(!panel.contains(e.target) && e.target!==input){
         closePanel();
       }
     });
 
-    // Esc 關閉
     input.addEventListener('keydown', function(e){
       if(e.key==='Escape'){ closePanel(); input.blur(); }
     });

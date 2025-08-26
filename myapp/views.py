@@ -2191,21 +2191,22 @@ def post(request):
 
 # 貼文展示（含搜尋、liked/saved/comment 標記 + 把暱稱帶給前端讓留言可選）
 def post_display(request):
-    query = request.GET.get('q')
+    query = (request.GET.get('q') or '').strip()
+
+    # ===== 全量集合（側欄清單 & 徽章用，不受搜尋影響） =====
+    all_posts_qs = ChatInteraction.objects.all().order_by('-created_at')
+
+    # ===== 主清單（可被搜尋過濾，頁面中間那一串卡片） =====
     if query:
-        posts = ChatInteraction.objects.filter(
-            Q(title__icontains=query) | Q(message_content__icontains=query)
+        posts = all_posts_qs.filter(
+            Q(title__icontains=query) | Q(message_content__icontains=query) | Q(nickname__icontains=query)
         ).order_by('-created_at')
     else:
-        posts = ChatInteraction.objects.all().order_by('-created_at')
+        posts = all_posts_qs
 
     user_id_str = str(request.user.id) if request.user.is_authenticated else None
 
-    # ★ 新增：三個個人清單（收藏 / 按讚 / 我留言過）
-    my_saved_posts = []
-    my_liked_posts = []
-    my_commented_posts = []
-
+    # 解析主清單每篇的 like/saved/comments 狀態（供卡片/按鈕顯示）
     for post in posts:
         # liked
         try:
@@ -2231,13 +2232,53 @@ def post_display(request):
         except json.JSONDecodeError:
             post.comment_list = []
 
-        # ★ 新增：塞進三個清單（沿用現有判斷結果，不改你原本邏輯）
-        if post.is_saved:
-            my_saved_posts.append(post)
-        if post.is_liked:
-            my_liked_posts.append(post)
-        if user_id_str and any(str(c.get('user_id')) == user_id_str for c in post.comment_list):
-            my_commented_posts.append(post)
+    # ===== 側欄四個清單：不受搜尋影響，從全量貼文統計 =====
+    my_saved_posts = []
+    my_liked_posts = []
+    my_commented_posts = []
+    my_posts = []
+    commented_total_count = 0
+
+    if request.user.is_authenticated:
+        for p in all_posts_qs:
+            # liked / saved
+            try:
+                liked_user_ids_all = json.loads(p.liked_user_ids or '[]')
+            except json.JSONDecodeError:
+                liked_user_ids_all = []
+            liked_user_ids_all = [str(x) for x in liked_user_ids_all]
+
+            try:
+                saved_user_ids_all = json.loads(getattr(p, 'saved_user_ids', '[]') or '[]')
+            except json.JSONDecodeError:
+                saved_user_ids_all = []
+            saved_user_ids_all = [str(x) for x in saved_user_ids_all]
+
+            # comments 全量（供「我的留言」 offcanvas 顯示時可以渲染）
+            try:
+                comments_all = json.loads(getattr(p, 'comments', '[]') or '[]')
+            except json.JSONDecodeError:
+                comments_all = []
+
+            # 我的發文
+            if str(p.user_id) == user_id_str:
+                my_posts.append(p)
+
+            # 我的收藏
+            if user_id_str in saved_user_ids_all:
+                my_saved_posts.append(p)
+
+            # 我的按讚
+            if user_id_str in liked_user_ids_all:
+                my_liked_posts.append(p)
+
+            # 我的留言（貼文內有我留過言）
+            my_comments_num = sum(1 for c in comments_all if str(c.get('user_id')) == user_id_str)
+            if my_comments_num > 0:
+                # 讓模板可用 post.comment_list（內含所有留言，模板只會渲染我的）
+                p.comment_list = comments_all
+                my_commented_posts.append(p)
+                commented_total_count += my_comments_num
 
     # 把暱稱1/2帶給模板（留言單選要用）
     nick1 = ""
@@ -2247,7 +2288,7 @@ def post_display(request):
         nick1 = (prof.default_nickname1 or "").strip() if prof else ""
         nick2 = (prof.default_nickname2 or "").strip() if prof else ""
 
-    # ★ 新增：把三個清單放進 context（僅登入時提供）
+    # context：主清單 + 側欄清單 + 徽章總數 + 暱稱
     context = {
         'posts': posts,
         'profile_nickname1': nick1,
@@ -2258,7 +2299,9 @@ def post_display(request):
             'my_saved_posts': my_saved_posts,
             'my_liked_posts': my_liked_posts,
             'my_commented_posts': my_commented_posts,
-            'uid': user_id_str,  # 若模板有需要用到 uid 字串
+            'my_posts': my_posts,
+            'commented_total_count': commented_total_count,
+            'uid': user_id_str,  # 若模板需要用到 uid 字串
         })
 
     return render(request, 'post_display.html', context)
