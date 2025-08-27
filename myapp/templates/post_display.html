@@ -227,10 +227,32 @@
                    placeholder="輸入關鍵字搜尋貼文…" value="{{ request.GET.q }}"
                    autocomplete="off"
                    style="border:none; background-color:#f0faff; color:#033e6b; font-size:15px;">
+            <!-- ✅ 保留目前排序參數 -->
+            <input type="hidden" name="sort" value="{{ request.GET.sort|default:'desc' }}">
             <button type="submit" class="btn" style="background-color:#63b3ed; color:#fff; border:none;">搜尋</button>
 
             <!-- 搜尋歷史下拉 -->
             <div id="searchHistory" class="search-history"></div>
+          </div>
+        </form>
+
+        <!-- 🔁 排序切換（新→舊 / 舊→新） -->
+        <form id="sortForm" method="get" action="{% url 'post_display' %}" class="d-flex justify-content-center mt-2">
+          <!-- 保留搜尋字串 -->
+          <input type="hidden" name="q" value="{{ request.GET.q }}">
+          <div class="btn-group" role="group" aria-label="排序">
+            <!-- 新→舊（預設） -->
+            <input type="radio" class="btn-check" name="sort" id="sortDesc" value="desc"
+                   {% if request.GET.sort != 'asc' %}checked{% endif %}>
+            <label class="btn btn-outline-primary" for="sortDesc">
+              <i class="bi bi-sort-down-alt"></i> 新 → 舊
+            </label>
+            <!-- 舊→新 -->
+            <input type="radio" class="btn-check" name="sort" id="sortAsc" value="asc"
+                   {% if request.GET.sort == 'asc' %}checked{% endif %}>
+            <label class="btn btn-outline-primary" for="sortAsc">
+              <i class="bi bi-sort-up-alt"></i> 舊 → 新
+            </label>
           </div>
         </form>
       </div>
@@ -662,6 +684,15 @@ document.addEventListener('DOMContentLoaded', function () {
   function updateCommentedCount(){ const wrapper=document.getElementById('commentedPostsList'); const count=wrapper?wrapper.querySelectorAll('[data-my-comment="1"]').length:0; const badge=document.getElementById('commentedCount'); if(badge) badge.textContent=count; }
 
   updateSavedCount(); updateLikedCount(); updatePostedCount(); updateCommentedCount();
+
+  /* 🔁 排序切換：勾選即提交（保留 q） */
+  (function () {
+    var sortForm = document.getElementById('sortForm');
+    if (!sortForm) return;
+    sortForm.querySelectorAll('.btn-check').forEach(function (rb) {
+      rb.addEventListener('change', function () { sortForm.submit(); });
+    });
+  })();
 
   /* 展開/收合內文 */
   document.querySelectorAll('.toggle-more').forEach(function(link){

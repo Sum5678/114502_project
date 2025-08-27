@@ -2119,7 +2119,7 @@ def store_data_api(request):
 #     return render(request, 'store_map.html')
 
 
-# ------------ 交流區後端（整合版）------------
+# ------------ 交流區後端（整合版，加入主清單排序參數；其餘邏輯不變）------------
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, HttpResponseForbidden
 from django.contrib.auth.decorators import login_required
@@ -2192,17 +2192,20 @@ def post(request):
 # 貼文展示（含搜尋、liked/saved/comment 標記 + 把暱稱帶給前端讓留言可選）
 def post_display(request):
     query = (request.GET.get('q') or '').strip()
+    # ✅ 新增排序參數（預設新→舊）
+    sort = request.GET.get('sort', 'desc')
+    order_expr = 'created_at' if sort == 'asc' else '-created_at'
 
     # ===== 全量集合（側欄清單 & 徽章用，不受搜尋影響） =====
     all_posts_qs = ChatInteraction.objects.all().order_by('-created_at')
 
-    # ===== 主清單（可被搜尋過濾，頁面中間那一串卡片） =====
+    # ===== 主清單（可被搜尋過濾，頁面中間那一串卡片；依 sort 排序） =====
+    base_qs = ChatInteraction.objects.all()
     if query:
-        posts = all_posts_qs.filter(
+        base_qs = base_qs.filter(
             Q(title__icontains=query) | Q(message_content__icontains=query) | Q(nickname__icontains=query)
-        ).order_by('-created_at')
-    else:
-        posts = all_posts_qs
+        )
+    posts = base_qs.order_by(order_expr)
 
     user_id_str = str(request.user.id) if request.user.is_authenticated else None
 
@@ -2531,6 +2534,7 @@ def post_comments(request, post_id):
         'total_comments': len(comments),
     })
 # ------------ /交流區後端（整合版）------------
+
 
 
 
