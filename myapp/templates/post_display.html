@@ -34,7 +34,7 @@
   /* 新：上方工具列（左：統計膠囊；右：排序） */
   .toolbar{ display:flex; align-items:center; justify-content:space-between; gap:16px; margin:18px 0 10px; }
   .action-bar{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
-  .sort-wrap{ flex-shrink:0; }
+  .sort-wrap{ flex-shrink:0; display:flex; align-items:center; gap:8px; }
   .w-60{ width:min(760px, 60vw); } /* 搜尋欄寬度 */
   @media (max-width: 992px){
     .toolbar{ flex-direction:column; align-items:stretch; }
@@ -148,6 +148,41 @@
   .card-cta{ border:1px solid #e5eef8; border-top:0; background:#f5fbff; padding:10px 16px; margin-top:-8px; border-radius:0 0 12px 12px; display:flex; justify-content:flex-end; }
 
   .comment-highlight{ outline:2px solid #63b3ed; background:#f0faff; border-radius:8px; transition: background .6s ease, outline .6s ease; }
+
+  /* ===== 排序切換：簡潔小膠囊（淺色、不佔版面） ===== */
+  .sort-label{
+    font-size:.8rem; color:#5a7ca9; letter-spacing:.02em;
+  }
+  .sort-toggle{
+    display:inline-flex;
+    border:1px solid #cfe8fb;
+    border-radius:999px;
+    background:#f8fbff;
+    overflow:hidden;
+    box-shadow:0 2px 8px rgba(3,62,107,.05);
+  }
+  .sort-option{
+    padding:4px 12px;
+    font-weight:600;
+    color:#033e6b;
+    background:transparent;
+    border:none;
+    cursor:pointer;
+    transition:background .2s, color .2s, transform .12s;
+    display:flex; align-items:center; gap:6px;
+    line-height:1.2;
+  }
+  .sort-option i{ font-size:.9rem; opacity:.85; }
+  .sort-option:hover{ background:#e6f3fb; }
+  .btn-check:focus + .sort-option{ outline:2px solid rgba(99,179,237,.35); outline-offset:0; }
+  .btn-check:checked + .sort-option{
+    background:#63b3ed;
+    color:#fff;
+  }
+  .btn-check:checked + .sort-option i{ opacity:1; color:#fff; }
+  @media (prefers-reduced-motion: reduce){
+    .sort-option{ transition:none; }
+  }
 </style>
 </head>
 <body>
@@ -265,20 +300,22 @@
         </div>
         {% endif %}
 
-        <!-- 🔁 排序切換 -->
+        <!-- 🔁 排序切換（簡潔小膠囊版） -->
         <div class="sort-wrap">
-          <form id="sortForm" method="get" action="{% url 'post_display' %}" class="d-flex">
+          <span class="sort-label"><i class="bi bi-sliders2-vertical"></i> 貼文排序：</span>
+          <form id="sortForm" method="get" action="{% url 'post_display' %}" class="d-inline">
             <input type="hidden" name="q" value="{{ request.GET.q }}">
-            <div class="btn-group" role="group" aria-label="排序">
+            <div class="sort-toggle" role="group" aria-label="貼文排序">
               <input type="radio" class="btn-check" name="sort" id="sortDesc" value="desc"
                      {% if request.GET.sort != 'asc' %}checked{% endif %}>
-              <label class="btn btn-outline-primary" for="sortDesc">
-                <i class="bi bi-sort-down-alt"></i> 新 → 舊
+              <label class="sort-option" for="sortDesc" title="最新貼文在前">
+                <i class="bi bi-arrow-down"></i> 最新貼文
               </label>
+
               <input type="radio" class="btn-check" name="sort" id="sortAsc" value="asc"
                      {% if request.GET.sort == 'asc' %}checked{% endif %}>
-              <label class="btn btn-outline-primary" for="sortAsc">
-                <i class="bi bi-sort-up-alt"></i> 舊 → 新
+              <label class="sort-option" for="sortAsc" title="最舊貼文在前">
+                <i class="bi bi-arrow-up"></i> 最舊貼文
               </label>
             </div>
           </form>
@@ -758,7 +795,7 @@ document.addEventListener('DOMContentLoaded', function () {
             else if(isLiked&&!existing){
               var cardBody=form.closest('.card-body');
               var title=cardBody.querySelector('.card-title')?cardBody.querySelector('.card-title').textContent.trim():'#'+postId;
-              var meta=cardBody.querySelector('.meta')?cardBody.querySelector('.meta').textContent:''; 
+              var meta=cardBody.querySelector('.meta')?cardBody.querySelector('.meta').textContent:'';
               var col=document.createElement('div');
               col.className='col-12';
               col.setAttribute('data-liked','1');
@@ -811,7 +848,7 @@ document.addEventListener('DOMContentLoaded', function () {
             else if(!isFilled&&!existing){
               var cardBody=form.closest('.card-body');
               var title=cardBody.querySelector('.card-title')?cardBody.querySelector('.card-title').textContent.trim():'#'+postId;
-              var meta=cardBody.querySelector('.meta')?cardBody.querySelector('.meta').textContent:''; 
+              var meta=cardBody.querySelector('.meta')?cardBody.querySelector('.meta').textContent:'';
               var col=document.createElement('div');
               col.className='col-12';
               col.setAttribute('data-saved','1');
@@ -1290,7 +1327,7 @@ document.addEventListener('DOMContentLoaded', function () {
 <script>
 (function () {
   var nav = performance.getEntriesByType && performance.getEntriesByType('navigation')[0];
-  var isReload = nav ? nav.type === 'reload' : (performance.navigation && performance.navigation.type === 1);
+  var isReload = nav ? nav.type == 'reload' : (performance.navigation && performance.navigation.type === 1);
 
   if (isReload) {
     if (location.hash) { history.replaceState(null, '', location.pathname + location.search); }
