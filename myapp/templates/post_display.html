@@ -148,6 +148,41 @@
   .card-cta{ border:1px solid #e5eef8; border-top:0; background:#f5fbff; padding:10px 16px; margin-top:-8px; border-radius:0 0 12px 12px; display:flex; justify-content:flex-end; }
 
   .comment-highlight{ outline:2px solid #63b3ed; background:#f0faff; border-radius:8px; transition: background .6s ease, outline .6s ease; }
+
+  /* ===== 藍色系：排序單選按鈕（美化） ===== */
+  .sort-toggle{
+    display:inline-flex;
+    gap:6px;
+    padding:6px;
+    border-radius:999px;
+    border:1px solid #cfe8fb;
+    background:linear-gradient(180deg,#f5fbff,#eaf5ff);
+    box-shadow:0 6px 18px rgba(3,62,107,.08);
+  }
+  .sort-option{
+    --pad-x:16px;
+    --pad-y:8px;
+    border-radius:999px;
+    padding:var(--pad-y) var(--pad-x);
+    font-weight:700;
+    color:#0b4a7a;
+    background:linear-gradient(180deg,#ffffff,#f2f8ff);
+    border:1px solid transparent;
+    display:inline-flex; align-items:center; gap:6px;
+    transition:transform .15s ease, box-shadow .15s ease, filter .15s ease, background .15s ease;
+  }
+  .sort-option i{ font-size:1rem; opacity:.9; }
+  .sort-option:hover{ filter:brightness(1.03); transform:translateY(-1px); }
+  .btn-check:focus + .sort-option{ outline:2px solid rgba(99,179,237,.35); outline-offset:2px; }
+  .btn-check:checked + .sort-option{
+    background:linear-gradient(180deg,var(--sb-3),var(--sb-4));
+    color:#fff;
+    box-shadow:0 8px 20px rgba(47,139,230,.28), inset 0 -2px 0 rgba(0,0,0,.05);
+  }
+  .btn-check:checked + .sort-option i{ opacity:1; }
+  @media (prefers-reduced-motion: reduce){
+    .sort-option{ transition:none; }
+  }
 </style>
 </head>
 <body>
@@ -265,19 +300,19 @@
         </div>
         {% endif %}
 
-        <!-- 🔁 排序切換 -->
+        <!-- 🔁 排序切換（藍色美化版） -->
         <div class="sort-wrap">
           <form id="sortForm" method="get" action="{% url 'post_display' %}" class="d-flex">
             <input type="hidden" name="q" value="{{ request.GET.q }}">
-            <div class="btn-group" role="group" aria-label="排序">
+            <div class="btn-group sort-toggle" role="group" aria-label="排序">
               <input type="radio" class="btn-check" name="sort" id="sortDesc" value="desc"
                      {% if request.GET.sort != 'asc' %}checked{% endif %}>
-              <label class="btn btn-outline-primary" for="sortDesc">
+              <label class="btn sort-option" for="sortDesc" title="新 → 舊">
                 <i class="bi bi-sort-down-alt"></i> 新 → 舊
               </label>
               <input type="radio" class="btn-check" name="sort" id="sortAsc" value="asc"
                      {% if request.GET.sort == 'asc' %}checked{% endif %}>
-              <label class="btn btn-outline-primary" for="sortAsc">
+              <label class="btn sort-option" for="sortAsc" title="舊 → 新">
                 <i class="bi bi-sort-up-alt"></i> 舊 → 新
               </label>
             </div>
@@ -758,7 +793,7 @@ document.addEventListener('DOMContentLoaded', function () {
             else if(isLiked&&!existing){
               var cardBody=form.closest('.card-body');
               var title=cardBody.querySelector('.card-title')?cardBody.querySelector('.card-title').textContent.trim():'#'+postId;
-              var meta=cardBody.querySelector('.meta')?cardBody.querySelector('.meta').textContent:''; 
+              var meta=cardBody.querySelector('.meta')?cardBody.querySelector('.meta').textContent:'';
               var col=document.createElement('div');
               col.className='col-12';
               col.setAttribute('data-liked','1');
@@ -811,7 +846,7 @@ document.addEventListener('DOMContentLoaded', function () {
             else if(!isFilled&&!existing){
               var cardBody=form.closest('.card-body');
               var title=cardBody.querySelector('.card-title')?cardBody.querySelector('.card-title').textContent.trim():'#'+postId;
-              var meta=cardBody.querySelector('.meta')?cardBody.querySelector('.meta').textContent:''; 
+              var meta=cardBody.querySelector('.meta')?cardBody.querySelector('.meta').textContent:'';
               var col=document.createElement('div');
               col.className='col-12';
               col.setAttribute('data-saved','1');
