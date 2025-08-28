@@ -2119,7 +2119,7 @@ def store_data_api(request):
 #     return render(request, 'store_map.html')
 
 
-# ------------ 交流區後端（整合版，加入主清單排序參數；其餘邏輯不變）------------
+# ------------ 交流區後端（整合版，加入主清單排序 + 留言回覆/按讚；其餘邏輯維持）------------
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, HttpResponseForbidden
 from django.contrib.auth.decorators import login_required
@@ -2131,9 +2131,85 @@ from .models import ChatInteraction, ThisUserProfile  # 使用者檔案 + 貼文
 import json
 import bleach
 from urllib.parse import quote  # dicebear seed 編碼，避免特殊字元
+from uuid import uuid4
 
 ALLOWED_TAGS = ['a']
 ALLOWED_ATTRIBUTES = {'a': ['href', 'target', 'rel']}
+
+
+# ======== 工具：留言結構相容 / 查找 ========
+
+def _now_str():
+    return timezone.now().strftime("%Y-%m-%d %H:%M:%S")
+
+
+def _load_comments(post):
+    """讀取並回傳 list（舊資料自動相容）。"""
+    try:
+        comments = json.loads(getattr(post, 'comments', '[]') or '[]')
+    except json.JSONDecodeError:
+        comments = []
+    if not isinstance(comments, list):
+        comments = []
+    return comments
+
+
+def _ensure_comment_defaults(c):
+    """補齊單一留言的預設欄位（舊資料向下相容）。"""
+    c.setdefault('id', c.get('time') or str(uuid4()))
+    c.setdefault('identity', 'anonymous')  # 舊資料沒有就當匿名
+    c.setdefault('nickname', c.get('nickname') or "(匿名)")
+    c.setdefault('content', c.get('content', ''))
+    c.setdefault('time', c.get('time') or _now_str())
+    c.setdefault('user_id', c.get('user_id'))  # 可能為 None，但保留
+    c.setdefault('like_user_ids', [])
+    # like_user_ids 統一轉成 str
+    c['like_user_ids'] = [str(x) for x in (c.get('like_user_ids') or [])]
+    c['like_count'] = len(c['like_user_ids'])
+    c.setdefault('replies', [])
+    # replies 正常化
+    replies = c.get('replies') or []
+    if not isinstance(replies, list):
+        replies = []
+    fixed = []
+    for r in replies:
+        fixed.append(_ensure_reply_defaults(r))
+    c['replies'] = fixed
+    return c
+
+
+def _ensure_reply_defaults(r):
+    """補齊回覆的預設欄位。"""
+    r.setdefault('id', r.get('time') or str(uuid4()))
+    r.setdefault('identity', 'anonymous')
+    r.setdefault('nickname', r.get('nickname') or "(匿名)")
+    r.setdefault('content', r.get('content', ''))
+    r.setdefault('time', r.get('time') or _now_str())
+    r.setdefault('user_id', r.get('user_id'))
+    r.setdefault('like_user_ids', [])
+    r['like_user_ids'] = [str(x) for x in (r.get('like_user_ids') or [])]
+    r['like_count'] = len(r['like_user_ids'])
+    return r
+
+
+def _find_comment(comments, comment_id_or_time):
+    """依 id 或 time 找到留言 dict 與其索引。"""
+    for idx, c in enumerate(comments):
+        cid = c.get('id') or c.get('time')
+        if str(cid) == str(comment_id_or_time) or str(c.get('time')) == str(comment_id_or_time):
+            return idx, c
+    return None, None
+
+
+def _find_reply(comment, reply_id_or_time):
+    """依 id 或 time 找到回覆 dict 與其索引。"""
+    replies = comment.get('replies') or []
+    for idx, r in enumerate(replies):
+        rid = r.get('id') or r.get('time')
+        if str(rid) == str(reply_id_or_time) or str(r.get('time')) == str(reply_id_or_time):
+            return idx, r
+    return None, None
+
 
 # 發文（可選用 暱稱1 / 暱稱2 / 匿名）
 @login_required(login_url='/01userlogin/')
@@ -2229,11 +2305,24 @@ def post_display(request):
         post.is_saved = bool(user_id_str and (user_id_str in saved_user_ids))
         post.saved_user_list = saved_user_ids
 
-        # comments（存文字 JSON，解析給模板用）
-        try:
-            post.comment_list = json.loads(getattr(post, 'comments', '[]') or '[]')
-        except json.JSONDecodeError:
-            post.comment_list = []
+        # comments（存文字 JSON，解析給模板用；向下相容+補欄位）
+        comments = _load_comments(post)
+        fixed_comments = []
+        for c in comments:
+            c = _ensure_comment_defaults(c)
+            # 計算這位使用者是否按過讚
+            if user_id_str:
+                c['is_liked'] = str(user_id_str) in c['like_user_ids']
+            else:
+                c['is_liked'] = False
+            # 回覆也處理 liked 狀態
+            for r in c['replies']:
+                if user_id_str:
+                    r['is_liked'] = str(user_id_str) in r['like_user_ids']
+                else:
+                    r['is_liked'] = False
+            fixed_comments.append(c)
+        post.comment_list = fixed_comments
 
     # ===== 側欄四個清單：不受搜尋影響，從全量貼文統計 =====
     my_saved_posts = []
@@ -2258,10 +2347,7 @@ def post_display(request):
             saved_user_ids_all = [str(x) for x in saved_user_ids_all]
 
             # comments 全量（供「我的留言」 offcanvas 顯示時可以渲染）
-            try:
-                comments_all = json.loads(getattr(p, 'comments', '[]') or '[]')
-            except json.JSONDecodeError:
-                comments_all = []
+            c_all = _load_comments(p)
 
             # 我的發文
             if str(p.user_id) == user_id_str:
@@ -2271,15 +2357,14 @@ def post_display(request):
             if user_id_str in saved_user_ids_all:
                 my_saved_posts.append(p)
 
-            # 我的按讚
+            # 我的按讚（針對貼文本身）
             if user_id_str in liked_user_ids_all:
                 my_liked_posts.append(p)
 
             # 我的留言（貼文內有我留過言）
-            my_comments_num = sum(1 for c in comments_all if str(c.get('user_id')) == user_id_str)
+            my_comments_num = sum(1 for c in c_all if str(c.get('user_id')) == user_id_str)
             if my_comments_num > 0:
-                # 讓模板可用 post.comment_list（內含所有留言，模板只會渲染我的）
-                p.comment_list = comments_all
+                p.comment_list = c_all
                 my_commented_posts.append(p)
                 commented_total_count += my_comments_num
 
@@ -2341,7 +2426,7 @@ def delete_post(request, post_id):
     return render(request, 'delete_post_confirm.html', {'post': post})
 
 
-# ❤️ 按讚
+# ❤️ 貼文按讚
 @require_POST
 @login_required(login_url='/01userlogin/')
 def like_post(request, post_id):
@@ -2398,7 +2483,7 @@ def save_post(request, post_id):
     return redirect('post_display')
 
 
-# 💬 新增留言（支援 暱稱1／暱稱2／匿名）
+# 💬 新增留言（支援 暱稱1／暱稱2／匿名；保留原行為並擴充欄位）
 @require_POST
 @login_required(login_url='/01userlogin/')
 def add_comment(request, post_id):
@@ -2427,27 +2512,29 @@ def add_comment(request, post_id):
     else:
         nickname = "(匿名)"
 
-    # 取既有留言（存於文字欄位 comments 內，內容是 JSON 字串）
-    try:
-        comments = json.loads(getattr(post, 'comments', '[]') or '[]')
-    except json.JSONDecodeError:
-        comments = []
+    comments = _load_comments(post)
 
-    comment_time = timezone.now().strftime("%Y-%m-%d %H:%M:%S")
+    comment_time = _now_str()
+    comment_id = str(uuid4())
     comments.append({
+        'id': comment_id,
         'user_id': user_id_str,
+        'identity': identity,
         'nickname': nickname,
         'content': safe_text,
-        'time': comment_time
+        'time': comment_time,
+        'like_user_ids': [],
+        'replies': []
     })
 
     post.comments = json.dumps(comments, ensure_ascii=False)
     post.save(update_fields=['comments'])
 
+    # 回傳完整 comments（與原本行為一致），同時讓前端可讀新欄位
     return JsonResponse({'success': True, 'comments': comments})
 
 
-# ❌ 刪除留言（以 user_id + time 匹配）
+# ❌ 刪除留言（以 user_id + time 匹配）——原邏輯保留
 @require_POST
 @login_required(login_url='/01userlogin/')
 def delete_comment(request, post_id):
@@ -2458,23 +2545,20 @@ def delete_comment(request, post_id):
     if not comment_time:
         return JsonResponse({'error': '缺少留言時間'}, status=400)
 
-    try:
-        comments = json.loads(getattr(post, 'comments', '[]') or '[]')
-    except json.JSONDecodeError:
-        comments = []
+    comments = _load_comments(post)
 
-    target = next((c for c in comments if c.get('time') == comment_time and c.get('user_id') == user_id_str), None)
+    target = next((c for c in comments if c.get('time') == comment_time and str(c.get('user_id')) == user_id_str), None)
     if not target:
         return JsonResponse({'error': '留言不存在或你無權刪除'}, status=404)
 
-    comments = [c for c in comments if not (c.get('time') == comment_time and c.get('user_id') == user_id_str)]
+    comments = [c for c in comments if not (c.get('time') == comment_time and str(c.get('user_id')) == user_id_str)]
     post.comments = json.dumps(comments, ensure_ascii=False)
     post.save(update_fields=['comments'])
 
     return JsonResponse({'success': True, 'comments': comments})
 
 
-# ✏️ 編輯留言（以 user_id + time 匹配）
+# ✏️ 編輯留言（以 user_id + time 匹配）——原邏輯保留
 @require_POST
 @login_required(login_url='/01userlogin/')
 def edit_comment(request, post_id, time):
@@ -2493,10 +2577,7 @@ def edit_comment(request, post_id, time):
     if len(safe_text) > 300:
         return JsonResponse({"success": False, "error": "留言超過 300 字上限"})
 
-    try:
-        comments = json.loads(getattr(post, 'comments', '[]') or '[]')
-    except json.JSONDecodeError:
-        comments = []
+    comments = _load_comments(post)
 
     user_id_str = str(request.user.id)
     updated = False
@@ -2514,15 +2595,12 @@ def edit_comment(request, post_id, time):
     return JsonResponse({"success": True})
 
 
-# 查看全部留言（分頁）
+# 🧵 查看全部留言（分頁）——原邏輯保留
 from django.core.paginator import Paginator
 def post_comments(request, post_id):
     post = get_object_or_404(ChatInteraction, pk=post_id)
 
-    try:
-        comments = json.loads(getattr(post, 'comments', '[]') or '[]')
-    except json.JSONDecodeError:
-        comments = []
+    comments = _load_comments(post)
 
     paginator = Paginator(comments, 10)
     page_number = request.GET.get('page')
@@ -2533,7 +2611,148 @@ def post_comments(request, post_id):
         'page_obj': page_obj,
         'total_comments': len(comments),
     })
+
+
+# ============== 新增：留言回覆 & 留言/回覆按讚 ==============
+
+# 💬 回覆留言
+@require_POST
+@login_required(login_url='/01userlogin/')
+def reply_comment(request, post_id):
+    """
+    參數：
+      - comment_id: 目標留言的 id（舊資料可帶 time）
+      - reply_identity: nickname1 / nickname2 / anonymous
+      - reply: 文字內容（<=300）
+    回傳：
+      { success: True, reply: {...} }
+    """
+    post = get_object_or_404(ChatInteraction, pk=post_id)
+    comment_id = (request.POST.get('comment_id') or '').strip()
+    reply_text = (request.POST.get('reply') or '').strip()
+    identity = (request.POST.get('reply_identity') or 'anonymous').strip()
+    user_id_str = str(request.user.id)
+
+    if not comment_id:
+        return JsonResponse({'success': False, 'error': '缺少 comment_id'}, status=400)
+    if not reply_text:
+        return JsonResponse({'success': False, 'error': '回覆不能為空'}, status=400)
+
+    safe_text = bleach.clean(reply_text, tags=[], attributes={}, strip=True)
+    if len(safe_text) > 300:
+        return JsonResponse({'success': False, 'error': '回覆超過 300 字上限'}, status=400)
+
+    # 取得暱稱
+    prof = ThisUserProfile.objects.filter(gmail=request.user.email).first()
+    nick1 = (prof.default_nickname1 or "").strip() if prof else ""
+    nick2 = (prof.default_nickname2 or "").strip() if prof else ""
+
+    if identity == 'nickname1' and nick1:
+        nickname = nick1
+    elif identity == 'nickname2' and nick2:
+        nickname = nick2
+    else:
+        nickname = "(匿名)"
+        identity = 'anonymous'
+
+    comments = _load_comments(post)
+    idx, target = _find_comment(comments, comment_id)
+    if target is None:
+        return JsonResponse({'success': False, 'error': '找不到目標留言'}, status=404)
+
+    # 正規化目標留言
+    target = _ensure_comment_defaults(target)
+
+    reply_dict = {
+        'id': str(uuid4()),
+        'user_id': user_id_str,
+        'identity': identity,
+        'nickname': nickname,
+        'content': safe_text,
+        'time': _now_str(),
+        'like_user_ids': []
+    }
+    # 寫入 replies
+    target['replies'] = (target.get('replies') or [])
+    target['replies'].append(reply_dict)
+
+    # 回存到 comments
+    comments[idx] = target
+    post.comments = json.dumps(comments, ensure_ascii=False)
+    post.save(update_fields=['comments'])
+
+    # 補齊回傳欄位（like_count）
+    reply_out = _ensure_reply_defaults(reply_dict)
+    return JsonResponse({'success': True, 'reply': reply_out})
+
+
+# ❤️ 留言/回覆按讚（同一路由，帶不帶 reply_id 決定目標）
+@require_POST
+@login_required(login_url='/01userlogin/')
+def like_comment(request, post_id):
+    """
+    參數：
+      - comment_id（必填）
+      - reply_id（選填，若有則對回覆按讚）
+    回傳：
+      { success: True, liked: bool, like_count: int }
+    """
+    post = get_object_or_404(ChatInteraction, pk=post_id)
+    comment_id = (request.POST.get('comment_id') or '').strip()
+    reply_id = (request.POST.get('reply_id') or '').strip()
+    user_id_str = str(request.user.id)
+
+    if not comment_id:
+        return JsonResponse({'success': False, 'error': '缺少 comment_id'}, status=400)
+
+    comments = _load_comments(post)
+    c_idx, c = _find_comment(comments, comment_id)
+    if c is None:
+        return JsonResponse({'success': False, 'error': '找不到目標留言'}, status=404)
+    c = _ensure_comment_defaults(c)
+
+    # 針對回覆
+    if reply_id:
+        r_idx, r = _find_reply(c, reply_id)
+        if r is None:
+            return JsonResponse({'success': False, 'error': '找不到目標回覆'}, status=404)
+        r = _ensure_reply_defaults(r)
+
+        likers = set(str(x) for x in (r.get('like_user_ids') or []))
+        if user_id_str in likers:
+            likers.remove(user_id_str)
+            liked = False
+        else:
+            likers.add(user_id_str)
+            liked = True
+        r['like_user_ids'] = list(likers)
+        r['like_count'] = len(likers)
+
+        # 寫回
+        c['replies'][r_idx] = r
+        comments[c_idx] = c
+        post.comments = json.dumps(comments, ensure_ascii=False)
+        post.save(update_fields=['comments'])
+        return JsonResponse({'success': True, 'liked': liked, 'like_count': r['like_count']})
+
+    # 針對留言本身
+    likers = set(str(x) for x in (c.get('like_user_ids') or []))
+    if user_id_str in likers:
+        likers.remove(user_id_str)
+        liked = False
+    else:
+        likers.add(user_id_str)
+        liked = True
+    c['like_user_ids'] = list(likers)
+    c['like_count'] = len(likers)
+
+    comments[c_idx] = c
+    post.comments = json.dumps(comments, ensure_ascii=False)
+    post.save(update_fields=['comments'])
+    return JsonResponse({'success': True, 'liked': liked, 'like_count': c['like_count']})
+
 # ------------ /交流區後端（整合版）------------
+
 
 
 
