@@ -169,6 +169,9 @@
   .comment-actions .btn-link{ text-decoration:none; }
   .comment-like-btn.liked, .reply-like-btn.liked { color:#dc3545; font-weight:700; }
   .reply-editor{ display:none; }
+  /* 回覆縮排：依層級向右縮 */
+.reply-item { margin-left: calc((var(--lvl,1) - 1) * 16px); }
+
 </style>
 </head>
 <body class="{% if request.user.is_authenticated %}authenticated{% else %}guest{% endif %}">
@@ -611,101 +614,115 @@
                       {% endif %}
                     </div>
 
-                    <!-- 回覆串 -->
-                    <ul class="replies" data-replies>
-                      {% for r in c.replies %}
-                        {% with rid=r.id|default:r.time %}
-                        <li class="position-relative" data-reply-id="{{ rid }}">
-                          <div class="small text-muted d-flex align-items-center gap-2 flex-wrap">
-                            <span class="id-badge">
-                              {% if r.identity == 'anonymous' %}
-                                匿名
-                              {% elif r.identity == 'nickname1' %}
-                                暱稱 1：{{ r.nickname }}
-                              {% elif r.identity == 'nickname2' %}
-                                暱稱 2：{{ r.nickname }}
-                              {% else %}
-                                {% if r.nickname and r.nickname != '匿名' and r.nickname != '(匿名)' %}
-                                  暱稱：{{ r.nickname }}
-                                {% else %}
-                                  匿名
-                                {% endif %}
-                              {% endif %}
-                            </span>
-                            <span>・ {{ r.time }}</span>
-                          </div>
-                          <div class="mt-1 reply-content">{{ r.content|escape }}</div>
-                          <div class="d-flex align-items-center mt-1">
-                            {% if request.user.is_authenticated %}
-                              <button type="button"
-                                      class="btn btn-link p-0 reply-like-btn {% if r.is_liked %}liked{% endif %}"
-                                      data-like-url="{% url 'like_comment' post.interaction_id %}"
-                                      data-post-id="{{ post.interaction_id }}"
-                                      data-comment-id="{{ cid }}"
-                                      data-reply-id="{{ rid }}">
-                                <i class="bi {% if r.is_liked %}bi-heart-fill text-danger{% else %}bi-heart{% endif %}"></i>
-                                <span class="ms-1 like-text">{% if r.is_liked %}收回讚{% else %}按讚{% endif %}</span>
-                                <span class="ms-1 like-count">{{ r.like_count|default:0 }}</span>
-                              </button>
+                    <!-- ====== 回覆串（使用 replies_flat 顯示所有層級） ====== -->
+<ul class="replies" data-replies>
+  {% for r in c.replies_flat %}
+    {% with rid=r.id|default:r.time %}
+    <li class="reply-item position-relative"
+        data-reply-id="{{ rid }}"
+        style="--lvl: {{ r.level|default:1 }};">
+      <div class="small text-muted d-flex align-items-center gap-2 flex-wrap">
+        <span class="id-badge">
+          {% if r.identity == 'anonymous' %}
+            匿名
+          {% elif r.identity == 'nickname1' %}
+            暱稱 1：{{ r.nickname }}
+          {% elif r.identity == 'nickname2' %}
+            暱稱 2：{{ r.nickname }}
+          {% else %}
+            {% if r.nickname and r.nickname != '匿名' and r.nickname != '(匿名)' %}
+              暱稱：{{ r.nickname }}
+            {% else %} 匿名 {% endif %}
+          {% endif %}
+        </span>
+        <span>・ {{ r.time }}</span>
+      </div>
 
-                              <button type="button"
-                                      class="btn btn-link p-0 ms-3 toggle-reply"
-                                      data-target="#reply-reply-editor-{{ post.interaction_id }}-{{ forloop.parentloop.counter }}-{{ forloop.counter }}">
-                                <i class="bi bi-chat"></i> 回覆
-                              </button>
-                            {% else %}
-                              <button type="button" class="btn btn-link p-0 require-login">
-                                <i class="bi bi-heart"></i> 按讚
-                              </button>
-                              <button type="button" class="btn btn-link p-0 require-login ms-3">
-                                <i class="bi bi-chat"></i> 回覆
-                              </button>
-                            {% endif %}
-                          </div>
+      <div class="mt-1 reply-content">{{ r.content|escape }}</div>
 
-                          {% if request.user.is_authenticated %}
-                          <div id="reply-reply-editor-{{ post.interaction_id }}-{{ forloop.parentloop.counter }}-{{ forloop.counter }}" class="reply-editor mt-2">
-                            <form method="post"
-                                  action="{% url 'reply_comment' post.interaction_id %}"
-                                  class="reply-form"
-                                  data-post-id="{{ post.interaction_id }}"
-                                  data-comment-id="{{ cid }}"
-                                  data-parent-reply-id="{{ rid }}">
-                              {% csrf_token %}
-                              <input type="hidden" name="comment_id" value="{{ cid }}">
-                              <input type="hidden" name="parent_reply_id" value="{{ rid }}">
+      <div class="d-flex align-items-center mt-1">
+        {% if request.user.is_authenticated %}
+          <button type="button"
+                  class="btn btn-link p-0 reply-like-btn {% if r.is_liked %}liked{% endif %}"
+                  data-like-url="{% url 'like_comment' post.interaction_id %}"
+                  data-post-id="{{ post.interaction_id }}"
+                  data-comment-id="{{ cid }}"
+                  data-reply-id="{{ rid }}">
+            <i class="bi {% if r.is_liked %}bi-heart-fill text-danger{% else %}bi-heart{% endif %}"></i>
+            <span class="ms-1 like-text">{% if r.is_liked %}收回讚{% else %}按讚{% endif %}</span>
+            <span class="ms-1 like-count">{{ r.like_count|default:0 }}</span>
+          </button>
 
-                              <div class="d-flex align-items-center flex-wrap mb-2" style="gap:10px;">
-                                <span class="identity-label">以誰的身分回覆：</span>
-                                <div class="btn-group btn-group-sm identity-group flex-wrap">
-                                  {% with has1=profile_nickname1|length has2=profile_nickname2|length %}
-                                    <input type="radio" class="btn-check" name="reply_identity" id="rir1-{{ post.interaction_id }}-{{ forloop.parentloop.counter }}-{{ forloop.counter }}" value="nickname1" {% if has1 %}checked{% else %}disabled{% endif %}>
-                                    <label class="btn" for="rir1-{{ post.interaction_id }}-{{ forloop.parentloop.counter }}-{{ forloop.counter }}"><i class="bi bi-person-badge"></i> 暱稱 1{% if has1 %}：{{ profile_nickname1 }}{% else %}（未設定）{% endif %}</label>
+          <button type="button"
+                  class="btn btn-link p-0 ms-3 toggle-reply"
+                  data-target="#reply-reply-editor-{{ post.interaction_id }}-{{ cid }}-{{ rid }}">
+            <i class="bi bi-chat"></i> 回覆
+          </button>
+        {% else %}
+          <button type="button" class="btn btn-link p-0 require-login">
+            <i class="bi bi-heart"></i> 按讚
+          </button>
+          <button type="button" class="btn btn-link p-0 require-login ms-3">
+            <i class="bi bi-chat"></i> 回覆
+          </button>
+        {% endif %}
+      </div>
 
-                                    <input type="radio" class="btn-check" name="reply_identity" id="rir2-{{ post.interaction_id }}-{{ forloop.parentloop.counter }}-{{ forloop.counter }}" value="nickname2" {% if not has1 and has2 %}checked{% endif %} {% if not has2 %}disabled{% endif %}>
-                                    <label class="btn" for="rir2-{{ post.interaction_id }}-{{ forloop.parentloop.counter }}-{{ forloop.counter }}"><i class="bi bi-person-badge"></i> 暱稱 2{% if has2 %}：{{ profile_nickname2 }}{% else %}（未設定）{% endif %}</label>
+      {% if request.user.is_authenticated %}
+      <!-- 對「任何層級」回覆再回覆 -->
+      <div id="reply-reply-editor-{{ post.interaction_id }}-{{ cid }}-{{ rid }}" class="reply-editor mt-2">
+        <form method="post"
+              action="{% url 'reply_comment' post.interaction_id %}"
+              class="reply-form"
+              data-post-id="{{ post.interaction_id }}"
+              data-comment-id="{{ cid }}"
+              data-parent-reply-id="{{ rid }}">
+          {% csrf_token %}
+          <input type="hidden" name="comment_id" value="{{ cid }}">
+          <input type="hidden" name="parent_reply_id" value="{{ rid }}">
+          <div class="input-group">
+            <input type="text" name="reply" class="form-control" placeholder="寫下回覆…" maxlength="300" required>
+            <button type="submit" class="btn btn-primary">送出</button>
+          </div>
+          <div class="form-text">最多 300 字。</div>
+        </form>
+      </div>
+      {% endif %}
 
-                                    <input type="radio" class="btn-check" name="reply_identity" id="rirA-{{ post.interaction_id }}-{{ forloop.parentloop.counter }}-{{ forloop.counter }}" value="anonymous" {% if not has1 and not has2 %}checked{% endif %}>
-                                    <label class="btn" for="rirA-{{ post.interaction_id }}-{{ forloop.parentloop.counter }}-{{ forloop.counter }}"><i class="bi bi-incognito"></i> (匿名)</label>
-                                  {% endwith %}
-                                </div>
-                              </div>
+      {% if request.user.is_authenticated and r.user_id|stringformat:"s" == request.user.id|stringformat:"s" %}
+      <!-- 本人三點選單：編輯/刪除回覆（沿用你現有的 JS Modal） -->
+      <div class="dropdown position-absolute top-0 end-0">
+        <button class="btn btn-link text-muted p-0" type="button" data-bs-toggle="dropdown">
+          <i class="bi bi-three-dots-vertical"></i>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li>
+            <a class="dropdown-item text-primary edit-reply-btn"
+               href="#"
+               data-post-id="{{ post.interaction_id }}"
+               data-comment-id="{{ cid }}"
+               data-reply-id="{{ rid }}"
+               data-content="{{ r.content|escapejs }}">
+              <i class="bi bi-pencil-fill me-2"></i> 編輯
+            </a>
+          </li>
+          <li>
+            <a class="dropdown-item text-danger delete-reply-btn"
+               href="#"
+               data-post-id="{{ post.interaction_id }}"
+               data-comment-id="{{ cid }}"
+               data-reply-id="{{ rid }}">
+              <i class="bi bi-trash-fill me-2"></i> 刪除
+            </a>
+          </li>
+        </ul>
+      </div>
+      {% endif %}
+    </li>
+    {% endwith %}
+  {% empty %}{% endfor %}
+</ul>
 
-                              <div class="input-group">
-                                <input type="text" name="reply" class="form-control" placeholder="寫下回覆…" maxlength="300" required>
-                                <button type="submit" class="btn btn-primary">送出</button>
-                              </div>
-                              <div class="form-text">最多 300 字。</div>
-                            </form>
-                          </div>
-                          {% endif %}
-
-                          <ul class="replies" data-replies></ul>
-                        </li>
-                        {% endwith %}
-                      {% empty %}
-                      {% endfor %}
-                    </ul>
 
                     <!-- 回覆編輯器 -->
                     {% if request.user.is_authenticated %}
