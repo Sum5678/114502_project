@@ -128,11 +128,13 @@
     font-size:.75rem; font-weight:600;
   }
 
-  /* 搜尋歷史下拉 */
+  /* 搜尋歷史下拉（保留你的原本功能；僅調整 z-index 與隱藏時完全不占位） */
   .search-history {
-    position: absolute; top: 100%; left: 0; right: 0; z-index: 1100;
+    position: absolute; top: 100%; left: 0; right: 0;
+    z-index: 1020; /* 低於 offcanvas(1045)，不會擋住右邊膠囊；僅在顯示時存在 */
     max-height: 260px; overflow: auto; border: 1px solid #e1efff; background: #fff;
-    border-radius: 0 0 12px 12px; box-shadow:0 10px 24px rgba(3,62,107,.12); display: none;
+    border-radius: 0 0 12px 12px; box-shadow:0 10px 24px rgba(3,62,107,.12);
+    display: none; /* 只有 .show 才會顯示，避免覆蓋點擊 */
   }
   .search-history.show { display: block; }
   .search-history .history-item { display:flex; align-items:center; gap:8px; padding:10px 12px; cursor:pointer; user-select:none; }
@@ -150,39 +152,15 @@
   .comment-highlight{ outline:2px solid #63b3ed; background:#f0faff; border-radius:8px; transition: background .6s ease, outline .6s ease; }
 
   /* ===== 排序切換：簡潔小膠囊（淺色、不佔版面） ===== */
-  .sort-label{
-    font-size:.8rem; color:#5a7ca9; letter-spacing:.02em;
-  }
-  .sort-toggle{
-    display:inline-flex;
-    border:1px solid #cfe8fb;
-    border-radius:999px;
-    background:#f8fbff;
-    overflow:hidden;
-    box-shadow:0 2px 8px rgba(3,62,107,.05);
-  }
-  .sort-option{
-    padding:4px 12px;
-    font-weight:600;
-    color:#033e6b;
-    background:transparent;
-    border:none;
-    cursor:pointer;
-    transition:background .2s, color .2s, transform .12s;
-    display:flex; align-items:center; gap:6px;
-    line-height:1.2;
-  }
+  .sort-label{ font-size:.8rem; color:#5a7ca9; letter-spacing:.02em; }
+  .sort-toggle{ display:inline-flex; border:1px solid #cfe8fb; border-radius:999px; background:#f8fbff; overflow:hidden; box-shadow:0 2px 8px rgba(3,62,107,.05); }
+  .sort-option{ padding:4px 12px; font-weight:600; color:#033e6b; background:transparent; border:none; cursor:pointer; transition:background .2s, color .2s, transform .12s; display:flex; align-items:center; gap:6px; line-height:1.2; }
   .sort-option i{ font-size:.9rem; opacity:.85; }
   .sort-option:hover{ background:#e6f3fb; }
   .btn-check:focus + .sort-option{ outline:2px solid rgba(99,179,237,.35); outline-offset:0; }
-  .btn-check:checked + .sort-option{
-    background:#63b3ed;
-    color:#fff;
-  }
+  .btn-check:checked + .sort-option{ background:#63b3ed; color:#fff; }
   .btn-check:checked + .sort-option i{ opacity:1; color:#fff; }
-  @media (prefers-reduced-motion: reduce){
-    .sort-option{ transition:none; }
-  }
+  @media (prefers-reduced-motion: reduce){ .sort-option{ transition:none; } }
 
   /* ====== 新增：回覆串樣式 ====== */
   .replies{ margin-top:8px; padding-left:0; }
@@ -393,7 +371,7 @@
         </div>
       </div>
 
-      <!-- Offcanvas：我的貼文（完整 + CTA 置外） -->
+      <!-- Offcanvas：我的貼文 -->
       <div class="offcanvas offcanvas-end offcanvas-posted" tabindex="-1" id="postedOffcanvas">
         <div class="offcanvas-header" style="background:#e6f3fb;">
           <h5 class="offcanvas-title fw-bold text-primary"><i class="bi bi-journal-text me-2"></i>我的貼文</h5>
@@ -447,7 +425,7 @@
           <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
         </div>
         <div class="offcanvas-body">
-          <div id="commentedEmpty" class="text-center text-muted py-4" {% if my_commented_posts %}{% else %}style="display:block;"{% endif %}>
+          <div id="commentedEmpty" class="text-center text-muted py-4" {% if my_commented_posts %}style="display:none;"{% endif %}>
             <i class="bi bi-inbox fs-2 d-block mb-2"></i>你目前尚未留言任何貼文
           </div>
 
@@ -637,7 +615,7 @@
                     <ul class="replies" data-replies>
                       {% for r in c.replies %}
                         {% with rid=r.id|default:r.time %}
-                        <li data-reply-id="{{ rid }}">
+                        <li class="position-relative" data-reply-id="{{ rid }}">
                           <div class="small text-muted d-flex align-items-center gap-2 flex-wrap">
                             <span class="id-badge">
                               {% if r.identity == 'anonymous' %}
@@ -656,7 +634,7 @@
                             </span>
                             <span>・ {{ r.time }}</span>
                           </div>
-                          <div class="mt-1">{{ r.content|escape }}</div>
+                          <div class="mt-1 reply-content">{{ r.content|escape }}</div>
                           <div class="d-flex align-items-center mt-1">
                             {% if request.user.is_authenticated %}
                               <button type="button"
@@ -669,80 +647,61 @@
                                 <span class="ms-1 like-text">{% if r.is_liked %}收回讚{% else %}按讚{% endif %}</span>
                                 <span class="ms-1 like-count">{{ r.like_count|default:0 }}</span>
                               </button>
+
+                              <button type="button"
+                                      class="btn btn-link p-0 ms-3 toggle-reply"
+                                      data-target="#reply-reply-editor-{{ post.interaction_id }}-{{ forloop.parentloop.counter }}-{{ forloop.counter }}">
+                                <i class="bi bi-chat"></i> 回覆
+                              </button>
                             {% else %}
                               <button type="button" class="btn btn-link p-0 require-login">
                                 <i class="bi bi-heart"></i> 按讚
                               </button>
+                              <button type="button" class="btn btn-link p-0 require-login ms-3">
+                                <i class="bi bi-chat"></i> 回覆
+                              </button>
                             {% endif %}
                           </div>
-                        
-      <div class="d-flex align-items-center mt-1">
-        {% if request.user.is_authenticated %}
-          <button type="button"
-                  class="btn btn-link p-0 reply-like-btn {% if r.is_liked %}liked{% endif %}"
-                  data-like-url="{% url 'like_comment' post.interaction_id %}"
-                  data-post-id="{{ post.interaction_id }}"
-                  data-comment-id="{{ cid }}"
-                  data-reply-id="{{ rid }}">
-            <i class="bi {% if r.is_liked %}bi-heart-fill text-danger{% else %}bi-heart{% endif %}"></i>
-            <span class="ms-1 like-text">{% if r.is_liked %}收回讚{% else %}按讚{% endif %}</span>
-            <span class="ms-1 like-count">{{ r.like_count|default:0 }}</span>
-          </button>
 
-          <button type="button"
-                  class="btn btn-link p-0 ms-3 toggle-reply"
-                  data-target="#reply-reply-editor-{{ post.interaction_id }}-{{ forloop.parentloop.counter }}-{{ forloop.counter }}">
-            <i class="bi bi-chat"></i> 回覆
-          </button>
-        {% else %}
-          <button type="button" class="btn btn-link p-0 require-login">
-            <i class="bi bi-heart"></i> 按讚
-          </button>
-          <button type="button" class="btn btn-link p-0 require-login ms-3">
-            <i class="bi bi-chat"></i> 回覆
-          </button>
-        {% endif %}
-      </div>
+                          {% if request.user.is_authenticated %}
+                          <div id="reply-reply-editor-{{ post.interaction_id }}-{{ forloop.parentloop.counter }}-{{ forloop.counter }}" class="reply-editor mt-2">
+                            <form method="post"
+                                  action="{% url 'reply_comment' post.interaction_id %}"
+                                  class="reply-form"
+                                  data-post-id="{{ post.interaction_id }}"
+                                  data-comment-id="{{ cid }}"
+                                  data-parent-reply-id="{{ rid }}">
+                              {% csrf_token %}
+                              <input type="hidden" name="comment_id" value="{{ cid }}">
+                              <input type="hidden" name="parent_reply_id" value="{{ rid }}">
 
-      {% if request.user.is_authenticated %}
-      <div id="reply-reply-editor-{{ post.interaction_id }}-{{ forloop.parentloop.counter }}-{{ forloop.counter }}" class="reply-editor mt-2">
-        <form method="post"
-              action="{% url 'reply_comment' post.interaction_id %}"
-              class="reply-form"
-              data-post-id="{{ post.interaction_id }}"
-              data-comment-id="{{ cid }}"
-              data-parent-reply-id="{{ rid }}">
-          {% csrf_token %}
-          <input type="hidden" name="comment_id" value="{{ cid }}">
-          <input type="hidden" name="parent_reply_id" value="{{ rid }}">
+                              <div class="d-flex align-items-center flex-wrap mb-2" style="gap:10px;">
+                                <span class="identity-label">以誰的身分回覆：</span>
+                                <div class="btn-group btn-group-sm identity-group flex-wrap">
+                                  {% with has1=profile_nickname1|length has2=profile_nickname2|length %}
+                                    <input type="radio" class="btn-check" name="reply_identity" id="rir1-{{ post.interaction_id }}-{{ forloop.parentloop.counter }}-{{ forloop.counter }}" value="nickname1" {% if has1 %}checked{% else %}disabled{% endif %}>
+                                    <label class="btn" for="rir1-{{ post.interaction_id }}-{{ forloop.parentloop.counter }}-{{ forloop.counter }}"><i class="bi bi-person-badge"></i> 暱稱 1{% if has1 %}：{{ profile_nickname1 }}{% else %}（未設定）{% endif %}</label>
 
-          <div class="d-flex align-items-center flex-wrap mb-2" style="gap:10px;">
-            <span class="identity-label">以誰的身分回覆：</span>
-            <div class="btn-group btn-group-sm identity-group flex-wrap">
-              {% with has1=profile_nickname1|length has2=profile_nickname2|length %}
-                <input type="radio" class="btn-check" name="reply_identity" id="rir1-{{ post.interaction_id }}-{{ forloop.parentloop.counter }}-{{ forloop.counter }}" value="nickname1" {% if has1 %}checked{% else %}disabled{% endif %}>
-                <label class="btn" for="rir1-{{ post.interaction_id }}-{{ forloop.parentloop.counter }}-{{ forloop.counter }}"><i class="bi bi-person-badge"></i> 暱稱 1{% if has1 %}：{{ profile_nickname1 }}{% else %}（未設定）{% endif %}</label>
+                                    <input type="radio" class="btn-check" name="reply_identity" id="rir2-{{ post.interaction_id }}-{{ forloop.parentloop.counter }}-{{ forloop.counter }}" value="nickname2" {% if not has1 and has2 %}checked{% endif %} {% if not has2 %}disabled{% endif %}>
+                                    <label class="btn" for="rir2-{{ post.interaction_id }}-{{ forloop.parentloop.counter }}-{{ forloop.counter }}"><i class="bi bi-person-badge"></i> 暱稱 2{% if has2 %}：{{ profile_nickname2 }}{% else %}（未設定）{% endif %}</label>
 
-                <input type="radio" class="btn-check" name="reply_identity" id="rir2-{{ post.interaction_id }}-{{ forloop.parentloop.counter }}-{{ forloop.counter }}" value="nickname2" {% if not has1 and has2 %}checked{% endif %} {% if not has2 %}disabled{% endif %}>
-                <label class="btn" for="rir2-{{ post.interaction_id }}-{{ forloop.parentloop.counter }}-{{ forloop.counter }}"><i class="bi bi-person-badge"></i> 暱稱 2{% if has2 %}：{{ profile_nickname2 }}{% else %}（未設定）{% endif %}</label>
+                                    <input type="radio" class="btn-check" name="reply_identity" id="rirA-{{ post.interaction_id }}-{{ forloop.parentloop.counter }}-{{ forloop.counter }}" value="anonymous" {% if not has1 and not has2 %}checked{% endif %}>
+                                    <label class="btn" for="rirA-{{ post.interaction_id }}-{{ forloop.parentloop.counter }}-{{ forloop.counter }}"><i class="bi bi-incognito"></i> (匿名)</label>
+                                  {% endwith %}
+                                </div>
+                              </div>
 
-                <input type="radio" class="btn-check" name="reply_identity" id="rirA-{{ post.interaction_id }}-{{ forloop.parentloop.counter }}-{{ forloop.counter }}" value="anonymous" {% if not has1 and not has2 %}checked{% endif %}>
-                <label class="btn" for="rirA-{{ post.interaction_id }}-{{ forloop.parentloop.counter }}-{{ forloop.counter }}"><i class="bi bi-incognito"></i> (匿名)</label>
-              {% endwith %}
-            </div>
-          </div>
+                              <div class="input-group">
+                                <input type="text" name="reply" class="form-control" placeholder="寫下回覆…" maxlength="300" required>
+                                <button type="submit" class="btn btn-primary">送出</button>
+                              </div>
+                              <div class="form-text">最多 300 字。</div>
+                            </form>
+                          </div>
+                          {% endif %}
 
-          <div class="input-group">
-            <input type="text" name="reply" class="form-control" placeholder="寫下回覆…" maxlength="300" required>
-            <button type="submit" class="btn btn-primary">送出</button>
-          </div>
-          <div class="form-text">最多 300 字。</div>
-        </form>
-      </div>
-      {% endif %}
-
-      <ul class="replies" data-replies></ul>
-    </li>
+                          <ul class="replies" data-replies></ul>
+                        </li>
                         {% endwith %}
                       {% empty %}
                       {% endfor %}
@@ -910,12 +869,11 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-  function updateSavedCount(){ const list=document.getElementById('savedPostsList'); const count=list?list.querySelectorAll('[data-saved="1"]').length:0; const badge=document.getElementById('savedCount'); if(badge) badge.textContent=count; }
-  function updateLikedCount(){ const list=document.getElementById('likedPostsList'); const count=list?list.querySelectorAll('[data-liked="1"]').length:0; const badge=document.getElementById('likedCount'); if(badge) badge.textContent=count; }
-  function updatePostedCount(){ const list=document.getElementById('postedPostsList'); const count=list?list.querySelectorAll('[data-posted="1"]').length:0; const badge=document.getElementById('postedCount'); if(badge) badge.textContent=count; }
-  function updateCommentedCount(){ const wrapper=document.getElementById('commentedPostsList'); const count=wrapper?wrapper.querySelectorAll('[data-my-comment="1"]').length:0; const badge=document.getElementById('commentedCount'); if(badge) badge.textContent=count; }
-
-  updateSavedCount(); updateLikedCount(); updatePostedCount(); updateCommentedCount();
+  // ====== 將數量顯示交還後端：移除初始化覆寫 ======
+  function updateSavedCount(){ const list=document.getElementById('savedPostsList'); const count=list?list.querySelectorAll('[data-saved="1"]').length:0; const badge=document.getElementById('savedCount'); if(badge && count>=0) badge.textContent=count; }
+  function updateLikedCount(){ const list=document.getElementById('likedPostsList'); const count=list?list.querySelectorAll('[data-liked="1"]').length:0; const badge=document.getElementById('likedCount'); if(badge && count>=0) badge.textContent=count; }
+  function updatePostedCount(){ const list=document.getElementById('postedPostsList'); const count=list?list.querySelectorAll('[data-posted="1"]').length:0; const badge=document.getElementById('postedCount'); if(badge && count>=0) badge.textContent=count; }
+  function updateCommentedCount(){ const wrapper=document.getElementById('commentedPostsList'); const count=wrapper?wrapper.querySelectorAll('[data-my-comment="1"]').length:0; const badge=document.getElementById('commentedCount'); if(badge && count>=0) badge.textContent=count; }
 
   /* 🔁 排序切換：勾選即提交（保留 q） */
   (function () {
@@ -970,7 +928,7 @@ document.addEventListener('DOMContentLoaded', function () {
           if(iconDiv&&countSpan){
             iconDiv.className='bi '+(isLiked?'bi-heart-fill text-danger':'bi-heart');
             var countText=countSpan.innerText.trim();
-            var count=parseInt(countText.replace(/\D/g,''))||0;
+            var count=parseInt(countText.replace(/\\D/g,''))||0;
             count=isLiked?count+1:Math.max(count-1,0);
             countSpan.innerHTML='<i class="bi '+(isLiked?'bi-heart-fill text-danger':'bi-heart')+'"></i> '+count;
           }
@@ -979,7 +937,7 @@ document.addEventListener('DOMContentLoaded', function () {
           var likedList=document.getElementById('likedPostsList');
           var likedEmpty=document.getElementById('likedEmpty');
           if(likedList){
-            var existing=likedList.querySelector('[data-post-id="'+postId+'"]');
+            var existing=likedList.querySelector('[data-post-id=\"'+postId+'\"]');
             if(!isLiked&&existing){ existing.remove(); }
             else if(isLiked&&!existing){
               var cardBody=form.closest('.card-body');
@@ -990,21 +948,21 @@ document.addEventListener('DOMContentLoaded', function () {
               col.setAttribute('data-liked','1');
               col.setAttribute('data-post-id',postId);
               col.innerHTML='' +
-                '<div class="p-3 saved-item-card">' +
-                  '<div class="d-flex align-items-start">' +
-                    '<i class="bi bi-heart-fill text-danger me-2 mt-1"></i>' +
-                    '<div class="flex-grow-1">' +
-                      '<div class="fw-bold text-truncate" title="'+title+'">'+title+'</div>' +
-                      '<div class="small text-muted mb-2">'+meta+'</div>' +
-                      '<div class="d-flex gap-2">' +
-                        '<button type="button" class="btn btn-sm btn-primary liked-jump" data-bs-dismiss="offcanvas" data-target-id="post-'+postId+'">前往貼文</button>' +
+                '<div class=\"p-3 saved-item-card\">' +
+                  '<div class=\"d-flex align-items-start\">' +
+                    '<i class=\"bi bi-heart-fill text-danger me-2 mt-1\"></i>' +
+                    '<div class=\"flex-grow-1\">' +
+                      '<div class=\"fw-bold text-truncate\" title=\"'+title+'\">'+title+'</div>' +
+                      '<div class=\"small text-muted mb-2\">'+meta+'</div>' +
+                      '<div class=\"d-flex gap-2\">' +
+                        '<button type=\"button\" class=\"btn btn-sm btn-primary liked-jump\" data-bs-dismiss=\"offcanvas\" data-target-id=\"post-'+postId+'\">前往貼文</button>' +
                       '</div>' +
                     '</div>' +
                   '</div>' +
                 '</div>';
               likedList.appendChild(col);
             }
-            var hasLiked=likedList.querySelector('[data-liked="1"]');
+            var hasLiked=likedList.querySelector('[data-liked=\"1\"]');
             if(likedEmpty) likedEmpty.style.display=hasLiked?'none':'block';
             updateLikedCount();
           }
@@ -1032,7 +990,7 @@ document.addEventListener('DOMContentLoaded', function () {
           var savedList=document.getElementById('savedPostsList');
           var empty=document.getElementById('savedEmpty');
           if(savedList){
-            var existing=savedList.querySelector('[data-post-id="'+postId+'"]');
+            var existing=savedList.querySelector('[data-post-id=\"'+postId+'\"]');
             if(isFilled&&existing){ existing.remove(); }
             else if(!isFilled&&!existing){
               var cardBody=form.closest('.card-body');
@@ -1043,21 +1001,21 @@ document.addEventListener('DOMContentLoaded', function () {
               col.setAttribute('data-saved','1');
               col.setAttribute('data-post-id',postId);
               col.innerHTML='' +
-                '<div class="p-3 saved-item-card">' +
-                  '<div class="d-flex align-items-start">' +
-                    '<i class="bi bi-star-fill text-warning me-2 mt-1"></i>' +
-                    '<div class="flex-grow-1">' +
-                      '<div class="fw-bold text-truncate" title="'+title+'">'+title+'</div>' +
-                      '<div class="small text-muted mb-2">'+meta+'</div>' +
-                      '<div class="d-flex gap-2">' +
-                        '<button type="button" class="btn btn-sm btn-primary saved-jump" data-bs-dismiss="offcanvas" data-target-id="post-'+postId+'">前往貼文</button>' +
+                '<div class=\"p-3 saved-item-card\">' +
+                  '<div class=\"d-flex align-items-start\">' +
+                    '<i class=\"bi bi-star-fill text-warning me-2 mt-1\"></i>' +
+                    '<div class=\"flex-grow-1\">' +
+                      '<div class=\"fw-bold text-truncate\" title=\"'+title+'\">'+title+'</div>' +
+                      '<div class=\"small text-muted mb-2\">'+meta+'</div>' +
+                      '<div class=\"d-flex gap-2\">' +
+                        '<button type=\"button\" class=\"btn btn-sm btn-primary saved-jump\" data-bs-dismiss=\"offcanvas\" data-target-id=\"post-'+postId+'\">前往貼文</button>' +
                       '</div>' +
                     '</div>' +
                   '</div>' +
                 '</div>';
               savedList.appendChild(col);
             }
-            var hasSaved=savedList.querySelector('[data-saved="1"]');
+            var hasSaved=savedList.querySelector('[data-saved=\"1\"]');
             if(empty) empty.style.display=hasSaved?'none':'block';
             updateSavedCount();
           }
@@ -1100,7 +1058,7 @@ document.addEventListener('DOMContentLoaded', function () {
       e.preventDefault();
       var url=this.action;
       var formData=new FormData(this);
-      var csrfToken=this.querySelector('input[name="csrfmiddlewaretoken"]')?this.querySelector('input[name="csrfmiddlewaretoken"]').value:'';
+      var csrfToken=this.querySelector('input[name=\"csrfmiddlewaretoken\"]')?this.querySelector('input[name=\"csrfmiddlewaretoken\"]').value:'';
       var postId=this.dataset.postId;
 
       fetch(url,{
@@ -1124,11 +1082,11 @@ document.addEventListener('DOMContentLoaded', function () {
           li.setAttribute('data-comment-id', c.id || c.time || '');
           li.innerHTML='' +
             '<div>' +
-              '<div class="small text-muted d-flex align-items-center gap-2 flex-wrap">' +
-                '<span class="id-badge">'+identityText(c)+'</span>' +
+              '<div class=\"small text-muted d-flex align-items-center gap-2 flex-wrap\">' +
+                '<span class=\"id-badge\">'+identityText(c)+'</span>' +
                 '<span>・ '+(c.time||'')+'</span>' +
               '</div>' +
-              '<div class="mt-1">'+(c.content||'')+'</div>' +
+              '<div class=\"mt-1\">'+(c.content||'')+'</div>' +
             '</div>';
           list.appendChild(li);
         });
@@ -1138,7 +1096,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if(commentedList){
           var latest=(data.comments||[])[(data.comments||[]).length-1];
           if(latest){
-            var cardCol=commentedList.querySelector('[data-post-id="'+postId+'"]');
+            var cardCol=commentedList.querySelector('[data-post-id=\"'+postId+'\"]');
             if(!cardCol){
               var cardBody=form.closest('.card-body');
               var title=cardBody.querySelector('.card-title')?cardBody.querySelector('.card-title').textContent.trim():'#'+postId;
@@ -1148,16 +1106,16 @@ document.addEventListener('DOMContentLoaded', function () {
               cardCol.setAttribute('data-commented','1');
               cardCol.setAttribute('data-post-id',postId);
               cardCol.innerHTML='' +
-                '<div class="p-3 saved-item-card">' +
-                  '<div class="d-flex align-items-start">' +
-                    '<i class="bi bi-chat-dots-fill me-2 mt-1"></i>' +
-                    '<div class="flex-grow-1">' +
-                      '<div class="fw-bold text-truncate" title="'+title+'">'+title+'</div>' +
-                      '<div class="small text-muted mb-2">'+meta+'</div>' +
-                      '<div class="my-comment-title mb-2">我的留言：</div>' +
-                      '<ul class="my-comment-list" data-post-id="'+postId+'"></ul>' +
-                      '<div class="text-end mt-2">' +
-                        '<button type="button" class="btn btn-sm btn-primary commented-jump" data-bs-dismiss="offcanvas" data-target-id="post-'+postId+'">前往貼文</button>' +
+                '<div class=\"p-3 saved-item-card\">' +
+                  '<div class=\"d-flex align-items-start\">' +
+                    '<i class=\"bi bi-chat-dots-fill me-2 mt-1\"></i>' +
+                    '<div class=\"flex-grow-1\">' +
+                      '<div class=\"fw-bold text-truncate\" title=\"'+title+'\">'+title+'</div>' +
+                      '<div class=\"small text-muted mb-2\">'+meta+'</div>' +
+                      '<div class=\"my-comment-title mb-2\">我的留言：</div>' +
+                      '<ul class=\"my-comment-list\" data-post-id=\"'+postId+'\"></ul>' +
+                      '<div class=\"text-end mt-2\">' +
+                        '<button type=\"button\" class=\"btn btn-sm btn-primary commented-jump\" data-bs-dismiss=\"offcanvas\" data-target-id=\"post-'+postId+'\">前往貼文</button>' +
                       '</div>' +
                     '</div>' +
                   '</div>' +
@@ -1169,14 +1127,14 @@ document.addEventListener('DOMContentLoaded', function () {
             li.className='my-comment-card';
             li.setAttribute('data-my-comment','1');
             li.innerHTML='' +
-              '<div class="head">' +
-                '<span class="dot"></span>' +
-                '<span class="time">'+(latest.time||'')+'</span>' +
-                '<span class="id-badge">'+identityText(latest)+'</span>' +
+              '<div class=\"head\">' +
+                '<span class=\"dot\"></span>' +
+                '<span class=\"time\">'+(latest.time||'')+'</span>' +
+                '<span class=\"id-badge\">'+identityText(latest)+'</span>' +
               '</div>' +
-              '<div class="content mt-1">'+(latest.content||'')+'</div>' +
-              '<div class="actions">' +
-                '<a class="btn btn-link p-0 btn-sm commented-jump" data-bs-dismiss="offcanvas" data-target-id="post-'+postId+'" data-time="'+(latest.time||'')+'">前往這則</a>' +
+              '<div class=\"content mt-1\">'+(latest.content||'')+'</div>' +
+              '<div class=\"actions\">' +
+                '<a class=\"btn btn-link p-0 btn-sm commented-jump\" data-bs-dismiss=\"offcanvas\" data-target-id=\"post-'+postId+'\" data-time=\"'+(latest.time||'')+'\">前往這則</a>' +
               '</div>';
             ul.appendChild(li);
 
@@ -1213,135 +1171,135 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   // 送出回覆（支援連續回覆與巢狀回覆）
-// 改為事件委派，讓初始與動態新增的表單都可使用，並允許針對「回覆」再回覆（無限巢狀）
-document.addEventListener('submit', function(e){
-  var form = e.target.closest('.reply-form');
-  if(!form) return;
-  e.preventDefault();
+  document.addEventListener('submit', function(e){
+    var form = e.target.closest('.reply-form');
+    if(!form) return;
+    e.preventDefault();
 
-  if(form.dataset.busy === '1') return;
-  form.dataset.busy = '1';
+    if(form.dataset.busy === '1') return;
+    form.dataset.busy = '1';
 
-  var url = form.getAttribute('action');
-  var postId = form.getAttribute('data-post-id');
-  var commentId = form.getAttribute('data-comment-id');
-  var parentReplyId = form.getAttribute('data-parent-reply-id') || (form.querySelector('[name="parent_reply_id"]')||{}).value || '';
-  var csrf = getCookie('csrftoken') || (form.querySelector('[name=csrfmiddlewaretoken]')||{}).value;
+    var url = form.getAttribute('action');
+    var postId = form.getAttribute('data-post-id');
+    var commentId = form.getAttribute('data-comment-id');
+    var parentReplyId = form.getAttribute('data-parent-reply-id') || (form.querySelector('[name=\"parent_reply_id\"]')||{}).value || '';
+    var csrf = getCookie('csrftoken') || (form.querySelector('[name=csrfmiddlewaretoken]')||{}).value;
 
-  var fd = new FormData(form);
-  fd.set('comment_id', commentId);
-  if (parentReplyId) fd.set('parent_reply_id', parentReplyId);
+    var fd = new FormData(form);
+    fd.set('comment_id', commentId);
+    if (parentReplyId) fd.set('parent_reply_id', parentReplyId);
 
-  fetch(url, {
-    method: 'POST',
-    body: fd,
-    headers: { 'X-Requested-With':'XMLHttpRequest', 'X-CSRFToken': csrf }
-  })
-  .then(function(res){ return res.json(); })
-  .then(function(data){
-    if(!data.success){ throw new Error(data.error || '回覆失敗'); }
+    fetch(url, {
+      method: 'POST',
+      body: fd,
+      headers: { 'X-Requested-With':'XMLHttpRequest', 'X-CSRFToken': csrf }
+    })
+    .then(function(res){ return res.json(); })
+    .then(function(data){
+      if(!data.success){ throw new Error(data.error || '回覆失敗'); }
 
-    var commentLi = document.querySelector('[id="post-'+postId+'"] [data-comment-id="'+commentId+'"]');
-    if(!commentLi) return;
+      var commentLi = document.querySelector('[id=\"post-'+postId+'\"] [data-comment-id=\"'+commentId+'\"]');
+      if(!commentLi) return;
 
-    var commentLikeBtn = commentLi.querySelector('.comment-like-btn');
-    var likeUrl = commentLikeBtn ? commentLikeBtn.getAttribute('data-like-url') : ('/post/'+postId+'/comment/like/');
+      var commentLikeBtn = commentLi.querySelector('.comment-like-btn');
+      var likeUrl = commentLikeBtn ? commentLikeBtn.getAttribute('data-like-url') : ('/post/'+postId+'/comment/like/');
 
-    var repliesTarget;
-    if (parentReplyId) {
-      var parentReplyLi = commentLi.querySelector('[data-reply-id="'+parentReplyId+'"]');
-      if (parentReplyLi) {
-        repliesTarget = parentReplyLi.querySelector('.replies[data-replies]');
-        if (!repliesTarget) {
-          repliesTarget = document.createElement('ul');
-          repliesTarget.className = 'replies';
-          repliesTarget.setAttribute('data-replies','');
-          parentReplyLi.appendChild(repliesTarget);
+      var repliesTarget;
+      if (parentReplyId) {
+        var parentReplyLi = commentLi.querySelector('[data-reply-id=\"'+parentReplyId+'\"]');
+        if (parentReplyLi) {
+          repliesTarget = parentReplyLi.querySelector('.replies[data-replies]');
+          if (!repliesTarget) {
+            repliesTarget = document.createElement('ul');
+            repliesTarget.className = 'replies';
+            repliesTarget.setAttribute('data-replies','');
+            parentReplyLi.appendChild(repliesTarget);
+          }
         }
       }
-    }
-    if (!repliesTarget) {
-      repliesTarget = commentLi.querySelector(':scope > .replies[data-replies]') || commentLi.querySelector('.replies[data-replies]');
-    }
-    if (!repliesTarget) return;
+      if (!repliesTarget) {
+        repliesTarget = commentLi.querySelector(':scope > .replies[data-replies]') || commentLi.querySelector('.replies[data-replies]');
+      }
+      if (!repliesTarget) return;
 
-    var r = data.reply || {};
-    var rid = r.id || r.time || ('r_'+Date.now());
+      var r = data.reply || {};
+      var rid = r.id || r.time || ('r_'+Date.now());
 
-    var commentsBox = form.closest('.comments');
-    var nn1 = commentsBox ? (commentsBox.getAttribute('data-nickname1')||'') : '';
-    var nn2 = commentsBox ? (commentsBox.getAttribute('data-nickname2')||'') : '';
-    var has1 = !!(nn1 && nn1.trim().length);
-    var has2 = !!(nn2 && nn2.trim().length);
+      var commentsBox = form.closest('.comments');
+      var nn1 = commentsBox ? (commentsBox.getAttribute('data-nickname1')||'') : '';
+      var nn2 = commentsBox ? (commentsBox.getAttribute('data-nickname2')||'') : '';
+      var has1 = !!(nn1 && nn1.trim().length);
+      var has2 = !!(nn2 && nn2.trim().length);
 
-    var editorId = 'reply-reply-editor-'+postId+'-'+commentId+'-'+rid;
-    function esc(t){ return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-    function identityLabel(obj){
-      var nn = (obj.nickname||'').trim();
-      if(obj.identity==='anonymous') return '匿名';
-      if(obj.identity==='nickname1') return '暱稱 1：'+nn;
-      if(obj.identity==='nickname2') return '暱稱 2：'+nn;
-      return (nn===''||nn==='匿名'||nn==='(匿名)') ? '匿名' : ('暱稱：'+nn);
-    }
+      var editorId = 'reply-reply-editor-'+postId+'-'+commentId+'-'+rid;
+      function esc(t){ return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+      function identityLabel(obj){
+        var nn = (obj.nickname||'').trim();
+        if(obj.identity==='anonymous') return '匿名';
+        if(obj.identity==='nickname1') return '暱稱 1：'+nn;
+        if(obj.identity==='nickname2') return '暱稱 2：'+nn;
+        return (nn===''||nn==='匿名'||nn==='(匿名)') ? '匿名' : ('暱稱：'+nn);
+      }
 
-    var li = document.createElement('li');
-    li.setAttribute('data-reply-id', rid);
-    li.innerHTML =
-      '<div class="small text-muted d-flex align-items-center gap-2 flex-wrap">' +
-        '<span class="id-badge">'+ identityLabel(r) +'</span>' +
-        '<span>・ '+ esc(r.time||'') +'</span>' +
-      '</div>' +
-      '<div class="mt-1">'+ esc(r.content||'') +'</div>' +
-      '<div class="d-flex align-items-center mt-1">' +
-        '<button type="button" class="btn btn-link p-0 reply-like-btn" '+
-          'data-like-url="'+ likeUrl +'" '+
-          'data-post-id="'+postId+'" data-comment-id="'+commentId+'" data-reply-id="'+rid+'">' +
-          '<i class="bi bi-heart"></i> <span class="ms-1 like-text">按讚</span> <span class="ms-1 like-count">0</span>' +
-        '</button>' +
+      var li = document.createElement('li');
+      li.setAttribute('data-reply-id', rid);
+      li.innerHTML =
+        '<div class=\"small text-muted d-flex align-items-center gap-2 flex-wrap\">' +
+          '<span class=\"id-badge\">'+ identityLabel(r) +'</span>' +
+          '<span>・ '+ esc(r.time||'') +'</span>' +
+        '</div>' +
+        '<div class=\"mt-1\">'+ esc(r.content||'') +'</div>' +
+        '<div class=\"d-flex align-items-center mt-1\">' +
+          '<button type=\"button\" class=\"btn btn-link p-0 reply-like-btn\" '+
+            'data-like-url=\"'+ likeUrl +'\" '+
+            'data-post-id=\"'+postId+'\" data-comment-id=\"'+commentId+'\" data-reply-id=\"'+rid+'\">' +
+            '<i class=\"bi bi-heart\"></i> <span class=\"ms-1 like-text\">按讚</span> <span class=\"ms-1 like-count\">0</span>' +
+          '</button>' +
+          (document.body.classList.contains('authenticated') ?
+            '<button type=\"button\" class=\"btn btn-link p-0 ms-3 toggle-reply\" data-target=\"#'+ editorId +'\"><i class=\"bi bi-chat\"></i> 回覆</button>'
+            :
+            '<button type=\"button\" class=\"btn btn-link p-0 require-login ms-3\"><i class=\"bi bi-chat\"></i> 回覆</button>'
+          ) +
+        '</div>' +
         (document.body.classList.contains('authenticated') ?
-          '<button type="button" class="btn btn-link p-0 ms-3 toggle-reply" data-target="#'+ editorId +'"><i class="bi bi-chat"></i> 回覆</button>'
-          :
-          '<button type="button" class="btn btn-link p-0 require-login ms-3"><i class="bi bi-chat"></i> 回覆</button>'
-        ) +
-      '</div>' +
-      (document.body.classList.contains('authenticated') ?
-        '<div id="'+ editorId +'" class="reply-editor mt-2" style="display:none;">'+
-          '<form method="post" action="'+ url +'" class="reply-form" data-post-id="'+postId+'" data-comment-id="'+commentId+'" data-parent-reply-id="'+rid+'">'+
-            '<div class="d-flex align-items-center flex-wrap mb-2" style="gap:10px;">'+
-              '<span class="identity-label">以誰的身分回覆：</span>'+
-              '<div class="btn-group btn-group-sm identity-group flex-wrap">'+
-                '<input type="radio" class="btn-check" name="reply_identity" id="dyn-ri1-'+ editorId +'" value="nickname1" '+ (has1 ? 'checked' : 'disabled') +'>' +
-                '<label class="btn" for="dyn-ri1-'+ editorId +'"><i class="bi bi-person-badge"></i> 暱稱 1'+ (has1?('：'+ esc(nn1)):'（未設定）') +'</label>'+
-                '<input type="radio" class="btn-check" name="reply_identity" id="dyn-ri2-'+ editorId +'" value="nickname2" '+ ((!has1 && has2) ? 'checked' : '') +' '+ (has2?'':'disabled') +'>' +
-                '<label class="btn" for="dyn-ri2-'+ editorId +'"><i class="bi bi-person-badge"></i> 暱稱 2'+ (has2?('：'+ esc(nn2)):'（未設定）') +'</label>'+
-                '<input type="radio" class="btn-check" name="reply_identity" id="dyn-riA-'+ editorId +'" value="anonymous" '+ ((has1 || has2) ? '' : 'checked') +'>' +
-                '<label class="btn" for="dyn-riA-'+ editorId +'"><i class="bi bi-incognito"></i> (匿名)</label>'+
+          '<div id=\"'+ editorId +'\" class=\"reply-editor mt-2\" style=\"display:none;\">'+
+            '<form method=\"post\" action=\"'+ url +'\" class=\"reply-form\" data-post-id=\"'+postId+'\" data-comment-id=\"'+commentId+'\" data-parent-reply-id=\"'+rid+'\">'+
+              '<div class=\"d-flex align-items-center flex-wrap mb-2\" style=\"gap:10px;\">'+
+                '<span class=\"identity-label\">以誰的身分回覆：</span>'+
+                '<div class=\"btn-group btn-group-sm identity-group flex-wrap\">'+
+                  '<input type=\"radio\" class=\"btn-check\" name=\"reply_identity\" id=\"dyn-ri1-'+ editorId +'\" value=\"nickname1\" '+ (has1 ? 'checked' : 'disabled') +'>' +
+                  '<label class=\"btn\" for=\"dyn-ri1-'+ editorId +'\"><i class=\"bi bi-person-badge\"></i> 暱稱 1'+ (has1?('：'+ esc(nn1)):'（未設定）') +'</label>'+
+                  '<input type=\"radio\" class=\"btn-check\" name=\"reply_identity\" id=\"dyn-ri2-'+ editorId +'\" value=\"nickname2\" '+ ((!has1 && has2) ? 'checked' : '') +' '+ (has2?'':'disabled') +'>' +
+                  '<label class=\"btn\" for=\"dyn-ri2-'+ editorId +'\"><i class=\"bi bi-person-badge\"></i> 暱稱 2'+ (has2?('：'+ esc(nn2)):'（未設定）') +'</label>'+
+                  '<input type=\"radio\" class=\"btn-check\" name=\"reply_identity\" id=\"dyn-riA-'+ editorId +'\" value=\"anonymous\" '+ ((has1 || has2) ? '' : 'checked') +'>' +
+                  '<label class=\"btn\" for=\"dyn-riA-'+ editorId +'\"><i class=\"bi bi-incognito\"></i> (匿名)</label>'+
+                '</div>'+
               '</div>'+
-            '</div>'+
-            '<div class="input-group">'+
-              '<input type="text" name="reply" class="form-control" placeholder="寫下回覆…" maxlength="300" required>'+
-              '<button type="submit" class="btn btn-primary">送出</button>'+
-            '</div>'+
-            '<div class="form-text">最多 300 字。</div>'+
-          '</form>'+
-        '</div>'
-        : ''
-      ) +
-      '<ul class="replies" data-replies></ul>';
+              '<div class=\"input-group\">'+
+                '<input type=\"text\" name=\"reply\" class=\"form-control\" placeholder=\"寫下回覆…\" maxlength=\"300\" required>'+
+                '<button type=\"submit\" class=\"btn btn-primary\">送出</button>'+
+              '</div>'+
+              '<div class=\"form-text\">最多 300 字。</div>'+
+            '</form>'+
+          '</div>'
+          : ''
+        ) +
+        '<ul class=\"replies\" data-replies></ul>';
 
-    repliesTarget.appendChild(li);
+      repliesTarget.appendChild(li);
 
-    var input = form.querySelector('input[name="reply"]');
-    if(input){ input.value = ''; input.focus(); }
-  })
-  .catch(function(err){
-    alert(err.message || '回覆失敗');
-  })
-  .finally(function(){
-    form.dataset.busy = '';
+      var input = form.querySelector('input[name=\"reply\"]');
+      if(input){ input.value = ''; input.focus(); }
+    })
+    .catch(function(err){
+      alert(err.message || '回覆失敗');
+    })
+    .finally(function(){
+      form.dataset.busy = '';
+    });
   });
-});
-// 委派：留言按讚
+
+  // 委派：留言按讚
   document.body.addEventListener('click', function(e){
     var btn = e.target.closest('.comment-like-btn');
     if(!btn) return;
@@ -1361,7 +1319,6 @@ document.addEventListener('submit', function(e){
     .then(function(res){ return res.json(); })
     .then(function(data){
       if(!data.success){ throw new Error(data.error||'操作失敗'); }
-      // 更新按鈕外觀與數字
       var liked = data.liked;
       var count = data.like_count || 0;
       btn.classList.toggle('liked', liked);
@@ -1381,7 +1338,6 @@ document.addEventListener('submit', function(e){
     if(!btn) return;
 
     var url = btn.getAttribute('data-like-url');
-    var postId = btn.getAttribute('data-post-id');
     var commentId = btn.getAttribute('data-comment-id');
     var replyId = btn.getAttribute('data-reply-id');
 
@@ -1417,13 +1373,11 @@ document.addEventListener('submit', function(e){
     var ocEl=document.getElementById('savedOffcanvas');
     if(!list) return;
 
-    updateSavedCount();
-    if(!list.querySelector('[data-saved="1"]')&&empty) empty.style.display='block';
-
     var pendingTargetId=null;
     list.addEventListener('click',function(e){
       var btn=e.target.closest('.saved-jump'); if(!btn) return;
       e.preventDefault();
+      if (window.__closeSearchHistory) window.__closeSearchHistory();
       pendingTargetId=btn.getAttribute('data-target-id');
       var ocInstance=bootstrap.Offcanvas.getInstance(ocEl);
       if(ocEl&&ocEl.classList.contains('show')&&ocInstance){ ocInstance.hide(); }
@@ -1437,17 +1391,14 @@ document.addEventListener('submit', function(e){
   /* —— Offcanvas 跳轉（按讚） —— */
   (function () {
     var list=document.getElementById('likedPostsList');
-    var empty=document.getElementById('likedEmpty');
     var ocEl=document.getElementById('likedOffcanvas');
     if(!list) return;
-
-    updateLikedCount();
-    if(!list.querySelector('[data-liked="1"]')&&empty) empty.style.display='block';
 
     var pendingTargetId=null;
     list.addEventListener('click',function(e){
       var btn=e.target.closest('.liked-jump'); if(!btn) return;
       e.preventDefault();
+      if (window.__closeSearchHistory) window.__closeSearchHistory();
       pendingTargetId=btn.getAttribute('data-target-id');
       var ocInstance=bootstrap.Offcanvas.getInstance(ocEl);
       if(ocEl&&ocEl.classList.contains('show')&&ocInstance){ ocInstance.hide(); }
@@ -1461,17 +1412,14 @@ document.addEventListener('submit', function(e){
   /* —— Offcanvas 跳轉（我的貼文） —— */
   (function () {
     var list=document.getElementById('postedPostsList');
-    var empty=document.getElementById('postedEmpty');
     var ocEl=document.getElementById('postedOffcanvas');
     if(!list) return;
-
-    updatePostedCount();
-    if(!list.querySelector('[data-posted="1"]')&&empty) empty.style.display='block';
 
     var pendingTargetId=null;
     list.addEventListener('click',function(e){
       var btn=e.target.closest('.posted-jump'); if(!btn) return;
       e.preventDefault();
+      if (window.__closeSearchHistory) window.__closeSearchHistory();
       pendingTargetId=btn.getAttribute('data-target-id');
       var ocInstance=bootstrap.Offcanvas.getInstance(ocEl);
       if(ocEl&&ocEl.classList.contains('show')&&ocInstance){ ocInstance.hide(); }
@@ -1485,18 +1433,14 @@ document.addEventListener('submit', function(e){
   /* —— Offcanvas 跳轉（我的留言：可帶時間定位） —— */
   (function () {
     var list=document.getElementById('commentedPostsList');
-    var empty=document.getElementById('commentedEmpty');
     var ocEl=document.getElementById('commentedOffcanvas');
     if(!list) return;
-
-    updateCommentedCount();
-    var hasItems = !!list.querySelector('[data-commented="1"]');
-    if(empty) empty.style.display = hasItems ? 'none' : 'block';
 
     var pendingTarget=null; // {id, time}
     list.addEventListener('click',function(e){
       var btn=e.target.closest('.commented-jump'); if(!btn) return;
       e.preventDefault();
+      if (window.__closeSearchHistory) window.__closeSearchHistory();
       pendingTarget={ id: btn.getAttribute('data-target-id'), time: btn.getAttribute('data-time') };
       var ocInstance=bootstrap.Offcanvas.getInstance(ocEl);
       if(ocEl&&ocEl.classList.contains('show')&&ocInstance){ ocInstance.hide(); }
@@ -1524,7 +1468,7 @@ document.addEventListener('submit', function(e){
     if(commentTime && box){
       setTimeout(function(){
         var esc = (window.CSS && typeof window.CSS.escape==='function') ? window.CSS.escape(commentTime) : commentTime;
-        var selector = '[data-comment-time="'+esc+'"]';
+        var selector = '[data-comment-time=\"'+esc+'\"]';
         var li = box.querySelector(selector);
         if(li){
           li.classList.add('comment-highlight');
@@ -1592,7 +1536,7 @@ document.addEventListener('submit', function(e){
     }
   }
 
-  /* ===== 🔎 搜尋歷史（localStorage） ===== */
+  /* ===== 🔎 搜尋歷史（保留你的原版；只加上外部可呼叫 close 以及點擊膠囊時自動關閉） ===== */
   (function(){
     var STORAGE_KEY='post_display_search_history_v1';
     var MAX_ITEMS=20;
@@ -1621,9 +1565,9 @@ document.addEventListener('submit', function(e){
       var row=document.createElement('div');
       row.className='history-item';
       row.innerHTML='' +
-        '<span class="icon"><i class="bi bi-clock-history"></i></span>' +
-        '<span class="term"></span>' +
-        '<button type="button" class="remove" aria-label="刪除"><i class="bi bi-x"></i></button>';
+        '<span class=\"icon\"><i class=\"bi bi-clock-history\"></i></span>' +
+        '<span class=\"term\"></span>' +
+        '<button type=\"button\" class=\"remove\" aria-label=\"刪除\"><i class=\"bi bi-x\"></i></button>';
       row.querySelector('.term').textContent=term;
 
       row.addEventListener('mousedown',function(e){
@@ -1670,6 +1614,14 @@ document.addEventListener('submit', function(e){
         if(e.key==='Escape'){ closePanel(); input.blur(); }
       });
     }
+
+    // 暴露給外部：點擊 offcanvas 膠囊時關閉歷史面板，避免擋住點擊
+    window.__closeSearchHistory = closePanel;
+
+    // 四個膠囊點擊前，主動關閉歷史面板（避免「點不進去」）
+    document.querySelectorAll('.saved-trigger,.liked-trigger,.posted-trigger,.commented-trigger').forEach(function(btn){
+      btn.addEventListener('click', function(){ closePanel(); });
+    });
   })();
 });
 </script>
@@ -1681,14 +1633,10 @@ document.addEventListener('submit', function(e){
   var btn  = document.getElementById('scrollToTopNav');
   if (!wrap || !btn) return;
 
-  function pageYOffsetVal(){
-    return window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
-  }
+  function pageYOffsetVal(){ return window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0; }
   function atTop(){ return pageYOffsetVal() <= 0; }
 
-  function toggle(){
-    wrap.style.display = (pageYOffsetVal() > 100) ? 'flex' : 'none';
-  }
+  function toggle(){ wrap.style.display = (pageYOffsetVal() > 100) ? 'flex' : 'none'; }
   window.addEventListener('scroll', toggle, { passive: true });
   toggle();
 
@@ -1743,6 +1691,84 @@ document.addEventListener('submit', function(e){
       document.documentElement.scrollTop = 0;
     }
   });
+})();
+
+// ====== 針對「回覆」的編輯/刪除（使用同一個 Modal） ======
+(function(){
+  var modalEl = document.getElementById('editCommentModal');
+  if(!modalEl) return;
+  var modal = window.bootstrap ? (window.bootstrap.Modal.getInstance(modalEl) || new window.bootstrap.Modal(modalEl)) : null;
+  var textarea = document.getElementById('editCommentContent');
+  var saveBtn = document.getElementById('saveCommentEdit');
+
+  // 開啟回覆編輯
+  document.body.addEventListener('click', function(e){
+    var btn = e.target.closest('.edit-reply-btn');
+    if(!btn) return;
+    e.preventDefault();
+    window.currentReplyEdit = {
+      postId: btn.getAttribute('data-post-id'),
+      commentId: btn.getAttribute('data-comment-id'),
+      replyId: btn.getAttribute('data-reply-id')
+    };
+    textarea.value = btn.getAttribute('data-content') || '';
+    if(modal) modal.show();
+  });
+
+  // 刪除回覆
+  document.body.addEventListener('click', function(e){
+    var btn = e.target.closest('.delete-reply-btn');
+    if(!btn) return;
+    e.preventDefault();
+    if(!confirm('確定要刪除這則回覆嗎？')) return;
+    var postId = btn.getAttribute('data-post-id');
+    var commentId = btn.getAttribute('data-comment-id');
+    var replyId = btn.getAttribute('data-reply-id');
+    var fd = new FormData();
+    fd.set('comment_id', commentId);
+    fd.set('reply_id', replyId);
+    fetch('/post/'+postId+'/reply/delete/', {
+      method:'POST',
+      body: fd,
+      headers: {'X-Requested-With':'XMLHttpRequest', 'X-CSRFToken': (document.cookie.match(/csrftoken=([^;]+)/)||[])[1] || '' }
+    })
+    .then(function(res){ return res.json(); })
+    .then(function(data){
+      if(!data.success) throw new Error(data.error||'刪除失敗');
+      var li = document.querySelector('[id=\"post-'+postId+'\"] [data-reply-id=\"'+replyId+'\"]');
+      if(li){ li.remove(); }
+    })
+    .catch(function(err){ alert(err.message||'刪除失敗'); });
+  });
+
+  // 覆寫：若為回覆編輯模式則改呼叫 /reply/edit/
+  if(saveBtn){
+    saveBtn.addEventListener('click',function(ev){
+      if(!window.currentReplyEdit) return; // 不是回覆模式，保持原本留言編輯流程
+      ev.preventDefault();
+      var payload = { content: (textarea.value||'').trim(), comment_id: window.currentReplyEdit.commentId, reply_id: window.currentReplyEdit.replyId };
+      if(!payload.content){ alert('內容不能為空！'); return; }
+      fetch('/post/'+window.currentReplyEdit.postId+'/reply/edit/', {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json', 'X-CSRFToken': (document.cookie.match(/csrftoken=([^;]+)/)||[])[1] || '' },
+        body: JSON.stringify(payload)
+      })
+      .then(function(res){ return res.json(); })
+      .then(function(data){
+        if(!data.success) throw new Error(data.error||'更新失敗');
+        var li = document.querySelector('[id=\"post-'+window.currentReplyEdit.postId+'\"] [data-reply-id=\"'+window.currentReplyEdit.replyId+'\"]');
+        if(li){
+          var contentEl = li.querySelector('.reply-content');
+          if(contentEl) contentEl.textContent = payload.content;
+          var editBtn = li.querySelector('.edit-reply-btn');
+          if(editBtn) editBtn.setAttribute('data-content', payload.content);
+        }
+        if(modal) modal.hide();
+        window.currentReplyEdit = null;
+      })
+      .catch(function(err){ alert(err.message||'更新失敗'); });
+    }, true);
+  }
 })();
 </script>
 </body>
