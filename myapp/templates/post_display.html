@@ -128,13 +128,13 @@
     font-size:.75rem; font-weight:600;
   }
 
-  /* 搜尋歷史下拉（保留你的原本功能；僅調整 z-index 與隱藏時完全不占位） */
+  /* 搜尋歷史下拉 */
   .search-history {
     position: absolute; top: 100%; left: 0; right: 0;
-    z-index: 1020; /* 低於 offcanvas(1045)，不會擋住右邊膠囊；僅在顯示時存在 */
+    z-index: 1020;
     max-height: 260px; overflow: auto; border: 1px solid #e1efff; background: #fff;
     border-radius: 0 0 12px 12px; box-shadow:0 10px 24px rgba(3,62,107,.12);
-    display: none; /* 只有 .show 才會顯示，避免覆蓋點擊 */
+    display: none;
   }
   .search-history.show { display: block; }
   .search-history .history-item { display:flex; align-items:center; gap:8px; padding:10px 12px; cursor:pointer; user-select:none; }
@@ -144,14 +144,13 @@
   .search-history .remove { border:none; background:transparent; font-size:18px; line-height:1; color:#9aa9b8; padding:0 4px; cursor:pointer; }
   .search-history .remove:hover { color:#555; }
 
-  /* 卡片外延伸 CTA 區塊（我的貼文） */
   .btn-sky{ background:#e6f3fb; border:1px solid #63b3ed; color:#033e6b; border-radius:10px; padding:6px 14px; font-weight:600; }
   .btn-sky:hover{ background:#d8eefc; color:#033e6b; border-color:#63b3ed; }
   .card-cta{ border:1px solid #e5eef8; border-top:0; background:#f5fbff; padding:10px 16px; margin-top:-8px; border-radius:0 0 12px 12px; display:flex; justify-content:flex-end; }
 
   .comment-highlight{ outline:2px solid #63b3ed; background:#f0faff; border-radius:8px; transition: background .6s ease, outline .6s ease; }
 
-  /* ===== 排序切換：簡潔小膠囊（淺色、不佔版面） ===== */
+  /* 排序切換 */
   .sort-label{ font-size:.8rem; color:#5a7ca9; letter-spacing:.02em; }
   .sort-toggle{ display:inline-flex; border:1px solid #cfe8fb; border-radius:999px; background:#f8fbff; overflow:hidden; box-shadow:0 2px 8px rgba(3,62,107,.05); }
   .sort-option{ padding:4px 12px; font-weight:600; color:#033e6b; background:transparent; border:none; cursor:pointer; transition:background .2s, color .2s, transform .12s; display:flex; align-items:center; gap:6px; line-height:1.2; }
@@ -162,19 +161,19 @@
   .btn-check:checked + .sort-option i{ opacity:1; color:#fff; }
   @media (prefers-reduced-motion: reduce){ .sort-option{ transition:none; } }
 
-  /* ====== 新增：回覆串樣式 ====== */
+  /* 回覆縮排 */
   .replies{ margin-top:8px; padding-left:0; }
   .replies > li{ list-style:none; border-left:3px solid #e6f3fb; padding-left:10px; margin-left:8px; margin-top:6px; }
   .comment-actions{ gap:12px; }
   .comment-actions .btn-link{ text-decoration:none; }
   .comment-like-btn.liked, .reply-like-btn.liked { color:#dc3545; font-weight:700; }
   .reply-editor{ display:none; }
-  /* 回覆縮排：依層級向右縮 */
-.reply-item { margin-left: calc((var(--lvl,1) - 1) * 16px); }
-
+  .reply-item { margin-left: calc((var(--lvl,1) - 1) * 16px); }
 </style>
 </head>
-<body class="{% if request.user.is_authenticated %}authenticated{% else %}guest{% endif %}">
+
+<body class="{% if request.user.is_authenticated %}authenticated{% endif %}"
+      data-uid="{% if request.user.is_authenticated %}{{ request.user.id }}{% endif %}">
 <header id="header" class="header d-flex align-items-center fixed-top">
   <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
     <a href="{% url 'home' %}" class="logo d-flex align-items-center me-auto me-xl-0">
@@ -690,7 +689,7 @@
       {% endif %}
 
       {% if request.user.is_authenticated and r.user_id|stringformat:"s" == request.user.id|stringformat:"s" %}
-      <!-- 本人三點選單：編輯/刪除回覆（沿用你現有的 JS Modal） -->
+      <!-- 本人三點選單：編輯/刪除回覆 -->
       <div class="dropdown position-absolute top-0 end-0">
         <button class="btn btn-link text-muted p-0" type="button" data-bs-toggle="dropdown">
           <i class="bi bi-three-dots-vertical"></i>
@@ -723,8 +722,7 @@
   {% empty %}{% endfor %}
 </ul>
 
-
-                    <!-- 回覆編輯器 -->
+                    <!-- 回覆編輯器（原始留言的回覆） -->
                     {% if request.user.is_authenticated %}
                     <div id="reply-editor-{{ post.interaction_id }}-{{ forloop.counter }}" class="reply-editor mt-2">
                       <form method="post"
@@ -829,12 +827,12 @@
             {% endif %}
           </div>
 
-          <!-- 編輯留言 Modal -->
+          <!-- 編輯留言 Modal（同時給留言與回覆使用） -->
           <div class="modal fade" id="editCommentModal" tabindex="-1" aria-labelledby="editCommentModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
               <div class="modal-content border-0" style="border-radius:12px;">
                 <div class="modal-header" style="background-color:#e6f3fb;">
-                  <h5 class="modal-title fw-bold text-primary" id="editCommentModalLabel"><i class="bi bi-pencil-square me-2"></i> 編輯留言</h5>
+                  <h5 class="modal-title fw-bold text-primary" id="editCommentModalLabel"><i class="bi bi-pencil-square me-2"></i> 編輯內容</h5>
                   <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
@@ -876,6 +874,8 @@
     </div>
   </div>
 </div>
+
+
 
 <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
 <script src="{% static 'assets/vendor/aos/aos.js' %}"></script>
@@ -945,7 +945,7 @@ document.addEventListener('DOMContentLoaded', function () {
           if(iconDiv&&countSpan){
             iconDiv.className='bi '+(isLiked?'bi-heart-fill text-danger':'bi-heart');
             var countText=countSpan.innerText.trim();
-            var count=parseInt(countText.replace(/\\D/g,''))||0;
+            var count=parseInt(countText.replace(/\D/g,''))||0;
             count=isLiked?count+1:Math.max(count-1,0);
             countSpan.innerHTML='<i class="bi '+(isLiked?'bi-heart-fill text-danger':'bi-heart')+'"></i> '+count;
           }
@@ -954,7 +954,7 @@ document.addEventListener('DOMContentLoaded', function () {
           var likedList=document.getElementById('likedPostsList');
           var likedEmpty=document.getElementById('likedEmpty');
           if(likedList){
-            var existing=likedList.querySelector('[data-post-id=\"'+postId+'\"]');
+            var existing=likedList.querySelector('[data-post-id="'+postId+'"]');
             if(!isLiked&&existing){ existing.remove(); }
             else if(isLiked&&!existing){
               var cardBody=form.closest('.card-body');
@@ -965,21 +965,21 @@ document.addEventListener('DOMContentLoaded', function () {
               col.setAttribute('data-liked','1');
               col.setAttribute('data-post-id',postId);
               col.innerHTML='' +
-                '<div class=\"p-3 saved-item-card\">' +
-                  '<div class=\"d-flex align-items-start\">' +
-                    '<i class=\"bi bi-heart-fill text-danger me-2 mt-1\"></i>' +
-                    '<div class=\"flex-grow-1\">' +
-                      '<div class=\"fw-bold text-truncate\" title=\"'+title+'\">'+title+'</div>' +
-                      '<div class=\"small text-muted mb-2\">'+meta+'</div>' +
-                      '<div class=\"d-flex gap-2\">' +
-                        '<button type=\"button\" class=\"btn btn-sm btn-primary liked-jump\" data-bs-dismiss=\"offcanvas\" data-target-id=\"post-'+postId+'\">前往貼文</button>' +
+                '<div class="p-3 saved-item-card">' +
+                  '<div class="d-flex align-items-start">' +
+                    '<i class="bi bi-heart-fill text-danger me-2 mt-1"></i>' +
+                    '<div class="flex-grow-1">' +
+                      '<div class="fw-bold text-truncate" title="'+title+'">'+title+'</div>' +
+                      '<div class="small text-muted mb-2">'+meta+'</div>' +
+                      '<div class="d-flex gap-2">' +
+                        '<button type="button" class="btn btn-sm btn-primary liked-jump" data-bs-dismiss="offcanvas" data-target-id="post-'+postId+'">前往貼文</button>' +
                       '</div>' +
                     '</div>' +
                   '</div>' +
                 '</div>';
               likedList.appendChild(col);
             }
-            var hasLiked=likedList.querySelector('[data-liked=\"1\"]');
+            var hasLiked=likedList.querySelector('[data-liked="1"]');
             if(likedEmpty) likedEmpty.style.display=hasLiked?'none':'block';
             updateLikedCount();
           }
@@ -1007,7 +1007,7 @@ document.addEventListener('DOMContentLoaded', function () {
           var savedList=document.getElementById('savedPostsList');
           var empty=document.getElementById('savedEmpty');
           if(savedList){
-            var existing=savedList.querySelector('[data-post-id=\"'+postId+'\"]');
+            var existing=savedList.querySelector('[data-post-id="'+postId+'"]');
             if(isFilled&&existing){ existing.remove(); }
             else if(!isFilled&&!existing){
               var cardBody=form.closest('.card-body');
@@ -1018,21 +1018,21 @@ document.addEventListener('DOMContentLoaded', function () {
               col.setAttribute('data-saved','1');
               col.setAttribute('data-post-id',postId);
               col.innerHTML='' +
-                '<div class=\"p-3 saved-item-card\">' +
-                  '<div class=\"d-flex align-items-start\">' +
-                    '<i class=\"bi bi-star-fill text-warning me-2 mt-1\"></i>' +
-                    '<div class=\"flex-grow-1\">' +
-                      '<div class=\"fw-bold text-truncate\" title=\"'+title+'\">'+title+'</div>' +
-                      '<div class=\"small text-muted mb-2\">'+meta+'</div>' +
-                      '<div class=\"d-flex gap-2\">' +
-                        '<button type=\"button\" class=\"btn btn-sm btn-primary saved-jump\" data-bs-dismiss=\"offcanvas\" data-target-id=\"post-'+postId+'\">前往貼文</button>' +
+                '<div class="p-3 saved-item-card">' +
+                  '<div class="d-flex align-items-start">' +
+                    '<i class="bi bi-star-fill text-warning me-2 mt-1"></i>' +
+                    '<div class="flex-grow-1">' +
+                      '<div class="fw-bold text-truncate" title="'+title+'">'+title+'</div>' +
+                      '<div class="small text-muted mb-2">'+meta+'</div>' +
+                      '<div class="d-flex gap-2">' +
+                        '<button type="button" class="btn btn-sm btn-primary saved-jump" data-bs-dismiss="offcanvas" data-target-id="post-'+postId+'">前往貼文</button>' +
                       '</div>' +
                     '</div>' +
                   '</div>' +
                 '</div>';
               savedList.appendChild(col);
             }
-            var hasSaved=savedList.querySelector('[data-saved=\"1\"]');
+            var hasSaved=savedList.querySelector('[data-saved="1"]');
             if(empty) empty.style.display=hasSaved?'none':'block';
             updateSavedCount();
           }
@@ -1049,6 +1049,14 @@ document.addEventListener('DOMContentLoaded', function () {
       var modal=new bootstrap.Modal(document.getElementById('authRequiredModal'));
       modal.show();
     });
+  });
+  // 動態元素委派
+  document.body.addEventListener('click', function(e){
+    var req = e.target.closest('.require-login');
+    if(!req) return;
+    e.preventDefault();
+    var modal=new bootstrap.Modal(document.getElementById('authRequiredModal'));
+    modal.show();
   });
 
   /* 留言展開 */
@@ -1069,33 +1077,26 @@ document.addEventListener('DOMContentLoaded', function () {
     return '暱稱：'+nn;
   }
 
-  
-
-// === 新增：同步更新貼文的留言數（按鈕 + 「共有 N 則留言」標籤） ===
-function setCommentCounters(postId, newCount){
-  try{
-    // 更新卡片上的「留言（N）」按鈕
-    var btn = document.querySelector('.btn-comment[data-post-id="'+postId+'"]');
-    if(btn){
-      btn.innerHTML = '<i class="bi bi-chat-dots"></i> 留言（' + newCount + '）';
-    }
-    // 更新留言區塊標題「共有 N 則留言」
-    var box = document.getElementById('comments-' + postId);
-    if(box){
-      var label = box.querySelector('[data-count-label]');
-      if(label){
-        label.textContent = '共有 ' + newCount + ' 則留言';
+  // === 新增：同步更新貼文的留言數（按鈕 + 「共有 N 則留言」標籤） ===
+  function setCommentCounters(postId, newCount){
+    try{
+      var btn = document.querySelector('.btn-comment[data-post-id="'+postId+'"]');
+      if(btn){ btn.innerHTML = '<i class="bi bi-chat-dots"></i> 留言（' + newCount + '）'; }
+      var box = document.getElementById('comments-' + postId);
+      if(box){
+        var label = box.querySelector('[data-count-label]');
+        if(label){ label.textContent = '共有 ' + newCount + ' 則留言'; }
       }
-    }
-  }catch(e){ /* no-op */ }
-}
-/* 新增留言 Ajax（同步 offcanvas） */
+    }catch(e){ /* no-op */ }
+  }
+
+  /* 新增留言 Ajax（同步 offcanvas） */
   document.querySelectorAll('.comment-form').forEach(function(form){
     form.addEventListener('submit',function(e){
       e.preventDefault();
       var url=this.action;
       var formData=new FormData(this);
-      var csrfToken=this.querySelector('input[name=\"csrfmiddlewaretoken\"]')?this.querySelector('input[name=\"csrfmiddlewaretoken\"]').value:'';
+      var csrfToken=this.querySelector('input[name="csrfmiddlewaretoken"]')?this.querySelector('input[name="csrfmiddlewaretoken"]').value:'';
       var postId=this.dataset.postId;
 
       fetch(url,{
@@ -1103,7 +1104,13 @@ function setCommentCounters(postId, newCount){
         body:formData,
         headers:{ 'X-Requested-With':'XMLHttpRequest', 'X-CSRFToken':csrfToken }
       })
-      .then(function(res){ if(!res.ok){ return res.json().catch(function(){return {};}).then(function(data){ throw new Error(data.error||'留言失敗，請稍後再試'); }); } return res.json();})
+      .then(function(res){
+        if(!res.ok){
+          return res.json().catch(function(){return {};})
+          .then(function(data){ throw new Error(data.error||'留言失敗，請稍後再試'); });
+        }
+        return res.json();
+      })
       .then(function(data){
         form.reset();
 
@@ -1112,22 +1119,22 @@ function setCommentCounters(postId, newCount){
         var empty=wrap.querySelector('[data-empty]');
         if(empty) empty.remove();
         list.innerHTML='';
-        
-        // 同步更新「留言」數量（按鈕＆標題）
+
         var newCount = (data.comments || []).length;
         setCommentCounters(postId, newCount);
+
         (data.comments||[]).forEach(function(c){
           var li=document.createElement('li');
-          li.className='mb-2 border-bottom pb-2';
+          li.className = 'mt-2 position-relative';
           li.setAttribute('data-comment-time', c.time||'');
           li.setAttribute('data-comment-id', c.id || c.time || '');
           li.innerHTML='' +
             '<div>' +
-              '<div class=\"small text-muted d-flex align-items-center gap-2 flex-wrap\">' +
-                '<span class=\"id-badge\">'+identityText(c)+'</span>' +
+              '<div class="small text-muted d-flex align-items-center gap-2 flex-wrap">' +
+                '<span class="id-badge">'+identityText(c)+'</span>' +
                 '<span>・ '+(c.time||'')+'</span>' +
               '</div>' +
-              '<div class=\"mt-1\">'+(c.content||'')+'</div>' +
+              '<div class="mt-1">'+(c.content||'')+'</div>' +
             '</div>';
           list.appendChild(li);
         });
@@ -1137,7 +1144,7 @@ function setCommentCounters(postId, newCount){
         if(commentedList){
           var latest=(data.comments||[])[(data.comments||[]).length-1];
           if(latest){
-            var cardCol=commentedList.querySelector('[data-post-id=\"'+postId+'\"]');
+            var cardCol=commentedList.querySelector('[data-post-id="'+postId+'"]');
             if(!cardCol){
               var cardBody=form.closest('.card-body');
               var title=cardBody.querySelector('.card-title')?cardBody.querySelector('.card-title').textContent.trim():'#'+postId;
@@ -1147,16 +1154,16 @@ function setCommentCounters(postId, newCount){
               cardCol.setAttribute('data-commented','1');
               cardCol.setAttribute('data-post-id',postId);
               cardCol.innerHTML='' +
-                '<div class=\"p-3 saved-item-card\">' +
-                  '<div class=\"d-flex align-items-start\">' +
-                    '<i class=\"bi bi-chat-dots-fill me-2 mt-1\"></i>' +
-                    '<div class=\"flex-grow-1\">' +
-                      '<div class=\"fw-bold text-truncate\" title=\"'+title+'\">'+title+'</div>' +
-                      '<div class=\"small text-muted mb-2\">'+meta+'</div>' +
-                      '<div class=\"my-comment-title mb-2\">我的留言：</div>' +
-                      '<ul class=\"my-comment-list\" data-post-id=\"'+postId+'\"></ul>' +
-                      '<div class=\"text-end mt-2\">' +
-                        '<button type=\"button\" class=\"btn btn-sm btn-primary commented-jump\" data-bs-dismiss=\"offcanvas\" data-target-id=\"post-'+postId+'\">前往貼文</button>' +
+                '<div class="p-3 saved-item-card">' +
+                  '<div class="d-flex align-items-start">' +
+                    '<i class="bi bi-chat-dots-fill me-2 mt-1"></i>' +
+                    '<div class="flex-grow-1">' +
+                      '<div class="fw-bold text-truncate" title="'+title+'">'+title+'</div>' +
+                      '<div class="small text-muted mb-2">'+meta+'</div>' +
+                      '<div class="my-comment-title mb-2">我的留言：</div>' +
+                      '<ul class="my-comment-list" data-post-id="'+postId+'"></ul>' +
+                      '<div class="text-end mt-2">' +
+                        '<button type="button" class="btn btn-sm btn-primary commented-jump" data-bs-dismiss="offcanvas" data-target-id="post-'+postId+'">前往貼文</button>' +
                       '</div>' +
                     '</div>' +
                   '</div>' +
@@ -1168,14 +1175,14 @@ function setCommentCounters(postId, newCount){
             li.className='my-comment-card';
             li.setAttribute('data-my-comment','1');
             li.innerHTML='' +
-              '<div class=\"head\">' +
-                '<span class=\"dot\"></span>' +
-                '<span class=\"time\">'+(latest.time||'')+'</span>' +
-                '<span class=\"id-badge\">'+identityText(latest)+'</span>' +
+              '<div class="head">' +
+                '<span class="dot"></span>' +
+                '<span class="time">'+(latest.time||'')+'</span>' +
+                '<span class="id-badge">'+identityText(latest)+'</span>' +
               '</div>' +
-              '<div class=\"content mt-1\">'+(latest.content||'')+'</div>' +
-              '<div class=\"actions\">' +
-                '<a class=\"btn btn-link p-0 btn-sm commented-jump\" data-bs-dismiss=\"offcanvas\" data-target-id=\"post-'+postId+'\" data-time=\"'+(latest.time||'')+'\">前往這則</a>' +
+              '<div class="content mt-1">'+(latest.content||'')+'</div>' +
+              '<div class="actions">' +
+                '<a class="btn btn-link p-0 btn-sm commented-jump" data-bs-dismiss="offcanvas" data-target-id="post-'+postId+'" data-time="'+(latest.time||'')+'">前往這則</a>' +
               '</div>';
             ul.appendChild(li);
 
@@ -1189,7 +1196,6 @@ function setCommentCounters(postId, newCount){
   });
 
   /* ====== 新增：留言/回覆「按讚」與「回覆」的前端事件 ====== */
-
   function getCookie(name){
     var cookieValue=null;
     if(document.cookie&&document.cookie!==''){
@@ -1202,16 +1208,16 @@ function setCommentCounters(postId, newCount){
     return cookieValue;
   }
 
-  // 切換顯示回覆編輯器
-  document.querySelectorAll('.toggle-reply').forEach(function(btn){
-    btn.addEventListener('click', function(){
-      var target=this.getAttribute('data-target');
-      var box=document.querySelector(target);
-      if(box){ box.style.display = (box.style.display==='none'||box.style.display==='') ? 'block' : 'none'; }
-    });
+  // 切換顯示回覆編輯器（使用委派，支援動態節點）
+  document.body.addEventListener('click', function(e){
+    var btn = e.target.closest('.toggle-reply');
+    if(!btn) return;
+    var target=btn.getAttribute('data-target');
+    var box=document.querySelector(target);
+    if(box){ box.style.display = (box.style.display==='none'||box.style.display==='') ? 'block' : 'none'; }
   });
 
-  // 送出回覆（支援連續回覆與巢狀回覆）
+  // 送出回覆（支援連續回覆與巢狀回覆，且「立即顯示三點」）
   document.addEventListener('submit', function(e){
     var form = e.target.closest('.reply-form');
     if(!form) return;
@@ -1223,7 +1229,7 @@ function setCommentCounters(postId, newCount){
     var url = form.getAttribute('action');
     var postId = form.getAttribute('data-post-id');
     var commentId = form.getAttribute('data-comment-id');
-    var parentReplyId = form.getAttribute('data-parent-reply-id') || (form.querySelector('[name=\"parent_reply_id\"]')||{}).value || '';
+    var parentReplyId = form.getAttribute('data-parent-reply-id') || (form.querySelector('[name="parent_reply_id"]')||{}).value || '';
     var csrf = getCookie('csrftoken') || (form.querySelector('[name=csrfmiddlewaretoken]')||{}).value;
 
     var fd = new FormData(form);
@@ -1239,7 +1245,7 @@ function setCommentCounters(postId, newCount){
     .then(function(data){
       if(!data.success){ throw new Error(data.error || '回覆失敗'); }
 
-      var commentLi = document.querySelector('[id=\"post-'+postId+'\"] [data-comment-id=\"'+commentId+'\"]');
+      var commentLi = document.querySelector('[id="post-'+postId+'"] [data-comment-id="'+commentId+'"]');
       if(!commentLi) return;
 
       var commentLikeBtn = commentLi.querySelector('.comment-like-btn');
@@ -1247,7 +1253,7 @@ function setCommentCounters(postId, newCount){
 
       var repliesTarget;
       if (parentReplyId) {
-        var parentReplyLi = commentLi.querySelector('[data-reply-id=\"'+parentReplyId+'\"]');
+        var parentReplyLi = commentLi.querySelector('[data-reply-id="'+parentReplyId+'"]');
         if (parentReplyLi) {
           repliesTarget = parentReplyLi.querySelector('.replies[data-replies]');
           if (!repliesTarget) {
@@ -1272,6 +1278,21 @@ function setCommentCounters(postId, newCount){
       var has1 = !!(nn1 && nn1.trim().length);
       var has2 = !!(nn2 && nn2.trim().length);
 
+      // 立即顯示三點（此回覆就是本人送出的）
+      var isMineReply = true;
+
+      // 計算層級（用於縮排）
+      var level = 1;
+      if (parentReplyId) {
+        var parentLi = commentLi.querySelector('[data-reply-id="'+parentReplyId+'"]');
+        if (parentLi) {
+          var pl = parseInt(getComputedStyle(parentLi).getPropertyValue('--lvl')) || 1;
+          level = pl + 1;
+        } else {
+          level = 2;
+        }
+      }
+
       var editorId = 'reply-reply-editor-'+postId+'-'+commentId+'-'+rid;
       function esc(t){ return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
       function identityLabel(obj){
@@ -1284,52 +1305,82 @@ function setCommentCounters(postId, newCount){
 
       var li = document.createElement('li');
       li.setAttribute('data-reply-id', rid);
+      li.className = 'reply-item position-relative';
+      li.style.setProperty('--lvl', level);
+
+      var menuId = 'rMenu-' + postId + '-' + rid;
+      var contentAttr = (r.content || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+      var replyDropdownHTML = isMineReply ? (
+        '<div class="dropdown position-absolute top-0 end-0">' +
+          '<button class="btn btn-link text-muted p-0" type="button" id="'+menuId+'" data-bs-toggle="dropdown">' +
+            '<i class="bi bi-three-dots-vertical"></i>' +
+          '</button>' +
+          '<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="'+menuId+'">' +
+            '<li>' +
+              '<a class="dropdown-item text-primary edit-reply-btn" href="#" ' +
+                 'data-post-id="'+postId+'" data-comment-id="'+commentId+'" data-reply-id="'+rid+'" ' +
+                 'data-content="'+contentAttr+'">' +
+                '<i class="bi bi-pencil-fill me-2"></i> 編輯' +
+              '</a>' +
+            '</li>' +
+            '<li>' +
+              '<a class="dropdown-item text-danger delete-reply-btn" href="#" ' +
+                 'data-post-id="'+postId+'" data-comment-id="'+commentId+'" data-reply-id="'+rid+'">' +
+                '<i class="bi bi-trash-fill me-2"></i> 刪除' +
+              '</a>' +
+            '</li>' +
+          '</ul>' +
+        '</div>'
+      ) : '';
+
       li.innerHTML =
-        '<div class=\"small text-muted d-flex align-items-center gap-2 flex-wrap\">' +
-          '<span class=\"id-badge\">'+ identityLabel(r) +'</span>' +
+        '<div class="small text-muted d-flex align-items-center gap-2 flex-wrap">' +
+          '<span class="id-badge">'+ identityLabel(r) +'</span>' +
           '<span>・ '+ esc(r.time||'') +'</span>' +
         '</div>' +
-        '<div class=\"mt-1\">'+ esc(r.content||'') +'</div>' +
-        '<div class=\"d-flex align-items-center mt-1\">' +
-          '<button type=\"button\" class=\"btn btn-link p-0 reply-like-btn\" '+
-            'data-like-url=\"'+ likeUrl +'\" '+
-            'data-post-id=\"'+postId+'\" data-comment-id=\"'+commentId+'\" data-reply-id=\"'+rid+'\">' +
-            '<i class=\"bi bi-heart\"></i> <span class=\"ms-1 like-text\">按讚</span> <span class=\"ms-1 like-count\">0</span>' +
+        '<div class="mt-1 reply-content">'+ esc(r.content||'') +'</div>' +
+        replyDropdownHTML +
+        '<div class="d-flex align-items-center mt-1">' +
+          '<button type="button" class="btn btn-link p-0 reply-like-btn" '+
+            'data-like-url="'+ likeUrl +'" '+
+            'data-post-id="'+postId+'" data-comment-id="'+commentId+'" data-reply-id="'+rid+'">' +
+            '<i class="bi bi-heart"></i> <span class="ms-1 like-text">按讚</span> <span class="ms-1 like-count">0</span>' +
           '</button>' +
           (document.body.classList.contains('authenticated') ?
-            '<button type=\"button\" class=\"btn btn-link p-0 ms-3 toggle-reply\" data-target=\"#'+ editorId +'\"><i class=\"bi bi-chat\"></i> 回覆</button>'
+            '<button type="button" class="btn btn-link p-0 ms-3 toggle-reply" data-target="#'+ editorId +'"><i class="bi bi-chat"></i> 回覆</button>'
             :
-            '<button type=\"button\" class=\"btn btn-link p-0 require-login ms-3\"><i class=\"bi bi-chat\"></i> 回覆</button>'
+            '<button type="button" class="btn btn-link p-0 require-login ms-3"><i class="bi bi-chat"></i> 回覆</button>'
           ) +
         '</div>' +
         (document.body.classList.contains('authenticated') ?
-          '<div id=\"'+ editorId +'\" class=\"reply-editor mt-2\" style=\"display:none;\">'+
-            '<form method=\"post\" action=\"'+ url +'\" class=\"reply-form\" data-post-id=\"'+postId+'\" data-comment-id=\"'+commentId+'\" data-parent-reply-id=\"'+rid+'\">'+
-              '<div class=\"d-flex align-items-center flex-wrap mb-2\" style=\"gap:10px;\">'+
-                '<span class=\"identity-label\">以誰的身分回覆：</span>'+
-                '<div class=\"btn-group btn-group-sm identity-group flex-wrap\">'+
-                  '<input type=\"radio\" class=\"btn-check\" name=\"reply_identity\" id=\"dyn-ri1-'+ editorId +'\" value=\"nickname1\" '+ (has1 ? 'checked' : 'disabled') +'>' +
-                  '<label class=\"btn\" for=\"dyn-ri1-'+ editorId +'\"><i class=\"bi bi-person-badge\"></i> 暱稱 1'+ (has1?('：'+ esc(nn1)):'（未設定）') +'</label>'+
-                  '<input type=\"radio\" class=\"btn-check\" name=\"reply_identity\" id=\"dyn-ri2-'+ editorId +'\" value=\"nickname2\" '+ ((!has1 && has2) ? 'checked' : '') +' '+ (has2?'':'disabled') +'>' +
-                  '<label class=\"btn\" for=\"dyn-ri2-'+ editorId +'\"><i class=\"bi bi-person-badge\"></i> 暱稱 2'+ (has2?('：'+ esc(nn2)):'（未設定）') +'</label>'+
-                  '<input type=\"radio\" class=\"btn-check\" name=\"reply_identity\" id=\"dyn-riA-'+ editorId +'\" value=\"anonymous\" '+ ((has1 || has2) ? '' : 'checked') +'>' +
-                  '<label class=\"btn\" for=\"dyn-riA-'+ editorId +'\"><i class=\"bi bi-incognito\"></i> (匿名)</label>'+
+          '<div id="'+ editorId +'" class="reply-editor mt-2" style="display:none;">'+
+            '<form method="post" action="'+ url +'" class="reply-form" data-post-id="'+postId+'" data-comment-id="'+commentId+'" data-parent-reply-id="'+rid+'">'+
+              '<div class="d-flex align-items-center flex-wrap mb-2" style="gap:10px;">'+
+                '<span class="identity-label">以誰的身分回覆：</span>'+
+                '<div class="btn-group btn-group-sm identity-group flex-wrap">'+
+                  '<input type="radio" class="btn-check" name="reply_identity" id="dyn-ri1-'+ editorId +'" value="nickname1" '+ (has1 ? 'checked' : 'disabled') +'>' +
+                  '<label class="btn" for="dyn-ri1-'+ editorId +'"><i class="bi bi-person-badge"></i> 暱稱 1'+ (has1?('：'+ esc(nn1)):'（未設定）') +'</label>'+
+                  '<input type="radio" class="btn-check" name="reply_identity" id="dyn-ri2-'+ editorId +'" value="nickname2" '+ ((!has1 && has2) ? 'checked' : '') +' '+ (has2?'':'disabled') +'>' +
+                  '<label class="btn" for="dyn-ri2-'+ editorId +'"><i class="bi bi-person-badge"></i> 暱稱 2'+ (has2?('：'+ esc(nn2)):'（未設定）') +'</label>'+
+                  '<input type="radio" class="btn-check" name="reply_identity" id="dyn-riA-'+ editorId +'" value="anonymous" '+ ((has1 || has2) ? '' : 'checked') +'>' +
+                  '<label class="btn" for="dyn-riA-'+ editorId +'"><i class="bi bi-incognito"></i> (匿名)</label>'+
                 '</div>'+
               '</div>'+
-              '<div class=\"input-group\">'+
-                '<input type=\"text\" name=\"reply\" class=\"form-control\" placeholder=\"寫下回覆…\" maxlength=\"300\" required>'+
-                '<button type=\"submit\" class=\"btn btn-primary\">送出</button>'+
+              '<div class="input-group">'+
+                '<input type="text" name="reply" class="form-control" placeholder="寫下回覆…" maxlength="300" required>'+
+                '<button type="submit" class="btn btn-primary">送出</button>'+
               '</div>'+
-              '<div class=\"form-text\">最多 300 字。</div>'+
+              '<div class="form-text">最多 300 字。</div>'+
             '</form>'+
           '</div>'
           : ''
         ) +
-        '<ul class=\"replies\" data-replies></ul>';
+        '<ul class="replies" data-replies></ul>';
 
       repliesTarget.appendChild(li);
 
-      var input = form.querySelector('input[name=\"reply\"]');
+      var input = form.querySelector('input[name="reply"]');
       if(input){ input.value = ''; input.focus(); }
     })
     .catch(function(err){
@@ -1509,7 +1560,7 @@ function setCommentCounters(postId, newCount){
     if(commentTime && box){
       setTimeout(function(){
         var esc = (window.CSS && typeof window.CSS.escape==='function') ? window.CSS.escape(commentTime) : commentTime;
-        var selector = '[data-comment-time=\"'+esc+'\"]';
+        var selector = '[data-comment-time="'+esc+'"]';
         var li = box.querySelector(selector);
         if(li){
           li.classList.add('comment-highlight');
@@ -1577,7 +1628,7 @@ function setCommentCounters(postId, newCount){
     }
   }
 
-  /* ===== 🔎 搜尋歷史（保留你的原版；只加上外部可呼叫 close 以及點擊膠囊時自動關閉） ===== */
+  /* ===== 🔎 搜尋歷史 ===== */
   (function(){
     var STORAGE_KEY='post_display_search_history_v1';
     var MAX_ITEMS=20;
@@ -1606,9 +1657,9 @@ function setCommentCounters(postId, newCount){
       var row=document.createElement('div');
       row.className='history-item';
       row.innerHTML='' +
-        '<span class=\"icon\"><i class=\"bi bi-clock-history\"></i></span>' +
-        '<span class=\"term\"></span>' +
-        '<button type=\"button\" class=\"remove\" aria-label=\"刪除\"><i class=\"bi bi-x\"></i></button>';
+        '<span class="icon"><i class="bi bi-clock-history"></i></span>' +
+        '<span class="term"></span>' +
+        '<button type="button" class="remove" aria-label="刪除"><i class="bi bi-x"></i></button>';
       row.querySelector('.term').textContent=term;
 
       row.addEventListener('mousedown',function(e){
@@ -1656,10 +1707,7 @@ function setCommentCounters(postId, newCount){
       });
     }
 
-    // 暴露給外部：點擊 offcanvas 膠囊時關閉歷史面板，避免擋住點擊
     window.__closeSearchHistory = closePanel;
-
-    // 四個膠囊點擊前，主動關閉歷史面板（避免「點不進去」）
     document.querySelectorAll('.saved-trigger,.liked-trigger,.posted-trigger,.commented-trigger').forEach(function(btn){
       btn.addEventListener('click', function(){ closePanel(); });
     });
@@ -1776,7 +1824,7 @@ function setCommentCounters(postId, newCount){
     .then(function(res){ return res.json(); })
     .then(function(data){
       if(!data.success) throw new Error(data.error||'刪除失敗');
-      var li = document.querySelector('[id=\"post-'+postId+'\"] [data-reply-id=\"'+replyId+'\"]');
+      var li = document.querySelector('[id="post-'+postId+'"] [data-reply-id="'+replyId+'"]');
       if(li){ li.remove(); }
     })
     .catch(function(err){ alert(err.message||'刪除失敗'); });
@@ -1797,7 +1845,7 @@ function setCommentCounters(postId, newCount){
       .then(function(res){ return res.json(); })
       .then(function(data){
         if(!data.success) throw new Error(data.error||'更新失敗');
-        var li = document.querySelector('[id=\"post-'+window.currentReplyEdit.postId+'\"] [data-reply-id=\"'+window.currentReplyEdit.replyId+'\"]');
+        var li = document.querySelector('[id="post-'+window.currentReplyEdit.postId+'"] [data-reply-id="'+window.currentReplyEdit.replyId+'"]');
         if(li){
           var contentEl = li.querySelector('.reply-content');
           if(contentEl) contentEl.textContent = payload.content;
