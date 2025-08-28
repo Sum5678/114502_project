@@ -560,7 +560,7 @@
           </div>
 
           <div class="comments mt-3" id="comments-{{ post.interaction_id }}" data-nickname1="{{ profile_nickname1 }}" data-nickname2="{{ profile_nickname2 }}" style="display:none;">
-            <div class="mb-2 text-primary fw-bold">共有 {{ post.comment_list|length }} 則留言</div>
+            <div class="mb-2 text-primary fw-bold" data-count-label>共有 {{ post.comment_list|length }} 則留言</div>
             <ul class="list-unstyled mb-3" data-list>
               {% for c in post.comment_list|slice:":3" %}
                 {% with cid=c.id|default:c.time %}
@@ -1069,7 +1069,27 @@ document.addEventListener('DOMContentLoaded', function () {
     return '暱稱：'+nn;
   }
 
-  /* 新增留言 Ajax（同步 offcanvas） */
+  
+
+// === 新增：同步更新貼文的留言數（按鈕 + 「共有 N 則留言」標籤） ===
+function setCommentCounters(postId, newCount){
+  try{
+    // 更新卡片上的「留言（N）」按鈕
+    var btn = document.querySelector('.btn-comment[data-post-id="'+postId+'"]');
+    if(btn){
+      btn.innerHTML = '<i class="bi bi-chat-dots"></i> 留言（' + newCount + '）';
+    }
+    // 更新留言區塊標題「共有 N 則留言」
+    var box = document.getElementById('comments-' + postId);
+    if(box){
+      var label = box.querySelector('[data-count-label]');
+      if(label){
+        label.textContent = '共有 ' + newCount + ' 則留言';
+      }
+    }
+  }catch(e){ /* no-op */ }
+}
+/* 新增留言 Ajax（同步 offcanvas） */
   document.querySelectorAll('.comment-form').forEach(function(form){
     form.addEventListener('submit',function(e){
       e.preventDefault();
@@ -1092,6 +1112,10 @@ document.addEventListener('DOMContentLoaded', function () {
         var empty=wrap.querySelector('[data-empty]');
         if(empty) empty.remove();
         list.innerHTML='';
+        
+        // 同步更新「留言」數量（按鈕＆標題）
+        var newCount = (data.comments || []).length;
+        setCommentCounters(postId, newCount);
         (data.comments||[]).forEach(function(c){
           var li=document.createElement('li');
           li.className='mb-2 border-bottom pb-2';
