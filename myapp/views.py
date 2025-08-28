@@ -2236,6 +2236,32 @@ def _mark_is_liked_recursive(replies, user_id_str):
         r['is_liked'] = bool(user_id_str and (user_id_str in like_ids))
         _mark_is_liked_recursive(r.get('replies') or [], user_id_str)
 
+
+def _flatten_replies(replies, level=1):
+    """
+    把任意深度的 replies 展平成一個 list，供模板或 API 顯示用。
+    會保留：id/time/content/identity/nickname/user_id/is_liked/like_count/level。
+    """
+    flat = []
+    if not isinstance(replies, list):
+        return flat
+    for r in replies:
+        r = _ensure_reply_defaults(r)
+        item = {
+            'id': str(r.get('id') or r.get('time')),
+            'time': r.get('time'),
+            'content': r.get('content', ''),
+            'identity': r.get('identity', 'anonymous'),
+            'nickname': r.get('nickname') or '(匿名)',
+            'user_id': r.get('user_id'),
+            'is_liked': r.get('is_liked', False),
+            'like_count': len(r.get('like_user_ids') or []),
+            'level': level,
+        }
+        flat.append(item)
+        flat.extend(_flatten_replies(r.get('replies') or [], level + 1))
+    return flat
+
 # ================== 貼文 CRUD / 展示 ==================
 
 # 發文（可選用 暱稱1 / 暱稱2 / 匿名）
@@ -2302,7 +2328,7 @@ def post_display(request):
     # ===== 全量集合（側欄清單 & 徽章用，不受搜尋影響） =====
     all_posts_qs = ChatInteraction.objects.all().order_by('-created_at')
 
-    # ===== 主清單（可被搜尋過濾，頁面中間那一串卡片；依 sort 排序） =====
+    # ===== 主清單（可被搜尋過濾；依 sort 排序） =====
     base_qs = ChatInteraction.objects.all()
     if query:
         base_qs = base_qs.filter(
@@ -2342,6 +2368,10 @@ def post_display(request):
             else:
                 c['is_liked'] = False
             _mark_is_liked_recursive(c.get('replies') or [], user_id_str)
+
+            # ✅ 額外提供扁平化列表（若前端要一次渲染所有層級可使用）
+            c['replies_flat'] = _flatten_replies(c.get('replies') or [], 1)
+
             fixed_comments.append(c)
         post.comment_list = fixed_comments
 
@@ -2367,7 +2397,7 @@ def post_display(request):
                 saved_user_ids_all = []
             saved_user_ids_all = [str(x) for x in saved_user_ids_all]
 
-            # comments 全量（供「我的留言」 offcanvas 顯示時可以渲染）
+            # comments 全量（供「我的留言」 offcanvas 渲染）
             c_all = _load_comments(p)
 
             # 我的發文
@@ -2865,6 +2895,7 @@ def delete_reply(request, post_id):
     return JsonResponse({'success': True})
 
 # ------------ /交流區後端（整合版）------------
+
 
 
 
