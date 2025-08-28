@@ -193,7 +193,7 @@
   .reply-editor{ display:none; }
 </style>
 </head>
-<body>
+<body class="{% if request.user.is_authenticated %}authenticated{% else %}guest{% endif %}">
 <header id="header" class="header d-flex align-items-center fixed-top">
   <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
     <a href="{% url 'home' %}" class="logo d-flex align-items-center me-auto me-xl-0">
@@ -578,7 +578,7 @@
             {% endif %}
           </div>
 
-          <div class="comments mt-3" id="comments-{{ post.interaction_id }}" style="display:none;">
+          <div class="comments mt-3" id="comments-{{ post.interaction_id }}" data-nickname1="{{ profile_nickname1 }}" data-nickname2="{{ profile_nickname2 }}" style="display:none;">
             <div class="mb-2 text-primary fw-bold">共有 {{ post.comment_list|length }} 則留言</div>
             <ul class="list-unstyled mb-3" data-list>
               {% for c in post.comment_list|slice:":3" %}
@@ -675,7 +675,74 @@
                               </button>
                             {% endif %}
                           </div>
-                        </li>
+                        
+      <div class="d-flex align-items-center mt-1">
+        {% if request.user.is_authenticated %}
+          <button type="button"
+                  class="btn btn-link p-0 reply-like-btn {% if r.is_liked %}liked{% endif %}"
+                  data-like-url="{% url 'like_comment' post.interaction_id %}"
+                  data-post-id="{{ post.interaction_id }}"
+                  data-comment-id="{{ cid }}"
+                  data-reply-id="{{ rid }}">
+            <i class="bi {% if r.is_liked %}bi-heart-fill text-danger{% else %}bi-heart{% endif %}"></i>
+            <span class="ms-1 like-text">{% if r.is_liked %}收回讚{% else %}按讚{% endif %}</span>
+            <span class="ms-1 like-count">{{ r.like_count|default:0 }}</span>
+          </button>
+
+          <button type="button"
+                  class="btn btn-link p-0 ms-3 toggle-reply"
+                  data-target="#reply-reply-editor-{{ post.interaction_id }}-{{ forloop.parentloop.counter }}-{{ forloop.counter }}">
+            <i class="bi bi-chat"></i> 回覆
+          </button>
+        {% else %}
+          <button type="button" class="btn btn-link p-0 require-login">
+            <i class="bi bi-heart"></i> 按讚
+          </button>
+          <button type="button" class="btn btn-link p-0 require-login ms-3">
+            <i class="bi bi-chat"></i> 回覆
+          </button>
+        {% endif %}
+      </div>
+
+      {% if request.user.is_authenticated %}
+      <div id="reply-reply-editor-{{ post.interaction_id }}-{{ forloop.parentloop.counter }}-{{ forloop.counter }}" class="reply-editor mt-2">
+        <form method="post"
+              action="{% url 'reply_comment' post.interaction_id %}"
+              class="reply-form"
+              data-post-id="{{ post.interaction_id }}"
+              data-comment-id="{{ cid }}"
+              data-parent-reply-id="{{ rid }}">
+          {% csrf_token %}
+          <input type="hidden" name="comment_id" value="{{ cid }}">
+          <input type="hidden" name="parent_reply_id" value="{{ rid }}">
+
+          <div class="d-flex align-items-center flex-wrap mb-2" style="gap:10px;">
+            <span class="identity-label">以誰的身分回覆：</span>
+            <div class="btn-group btn-group-sm identity-group flex-wrap">
+              {% with has1=profile_nickname1|length has2=profile_nickname2|length %}
+                <input type="radio" class="btn-check" name="reply_identity" id="rir1-{{ post.interaction_id }}-{{ forloop.parentloop.counter }}-{{ forloop.counter }}" value="nickname1" {% if has1 %}checked{% else %}disabled{% endif %}>
+                <label class="btn" for="rir1-{{ post.interaction_id }}-{{ forloop.parentloop.counter }}-{{ forloop.counter }}"><i class="bi bi-person-badge"></i> 暱稱 1{% if has1 %}：{{ profile_nickname1 }}{% else %}（未設定）{% endif %}</label>
+
+                <input type="radio" class="btn-check" name="reply_identity" id="rir2-{{ post.interaction_id }}-{{ forloop.parentloop.counter }}-{{ forloop.counter }}" value="nickname2" {% if not has1 and has2 %}checked{% endif %} {% if not has2 %}disabled{% endif %}>
+                <label class="btn" for="rir2-{{ post.interaction_id }}-{{ forloop.parentloop.counter }}-{{ forloop.counter }}"><i class="bi bi-person-badge"></i> 暱稱 2{% if has2 %}：{{ profile_nickname2 }}{% else %}（未設定）{% endif %}</label>
+
+                <input type="radio" class="btn-check" name="reply_identity" id="rirA-{{ post.interaction_id }}-{{ forloop.parentloop.counter }}-{{ forloop.counter }}" value="anonymous" {% if not has1 and not has2 %}checked{% endif %}>
+                <label class="btn" for="rirA-{{ post.interaction_id }}-{{ forloop.parentloop.counter }}-{{ forloop.counter }}"><i class="bi bi-incognito"></i> (匿名)</label>
+              {% endwith %}
+            </div>
+          </div>
+
+          <div class="input-group">
+            <input type="text" name="reply" class="form-control" placeholder="寫下回覆…" maxlength="300" required>
+            <button type="submit" class="btn btn-primary">送出</button>
+          </div>
+          <div class="form-text">最多 300 字。</div>
+        </form>
+      </div>
+      {% endif %}
+
+      <ul class="replies" data-replies></ul>
+    </li>
                         {% endwith %}
                       {% empty %}
                       {% endfor %}
@@ -1145,57 +1212,136 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
-  // 送出回覆
-  document.querySelectorAll('.reply-form').forEach(function(form){
-    form.addEventListener('submit', function(e){
-      e.preventDefault();
-      var url=this.getAttribute('action');
-      var postId=this.getAttribute('data-post-id');
-      var commentId=this.getAttribute('data-comment-id');
-      var csrf=getCookie('csrftoken') || (this.querySelector('[name=csrfmiddlewaretoken]')||{}).value;
+  // 送出回覆（支援連續回覆與巢狀回覆）
+// 改為事件委派，讓初始與動態新增的表單都可使用，並允許針對「回覆」再回覆（無限巢狀）
+document.addEventListener('submit', function(e){
+  var form = e.target.closest('.reply-form');
+  if(!form) return;
+  e.preventDefault();
 
-      var fd=new FormData(this);
-      fd.set('comment_id', commentId);
+  if(form.dataset.busy === '1') return;
+  form.dataset.busy = '1';
 
-      fetch(url,{
-        method:'POST',
-        body:fd,
-        headers:{ 'X-Requested-With':'XMLHttpRequest', 'X-CSRFToken': csrf }
-      })
-      .then(function(res){ return res.json(); })
-      .then(function(data){
-        if(!data.success){ throw new Error(data.error||'回覆失敗'); }
-        // 新增一個回覆到對應的 replies 列表
-        var commentLi = document.querySelector('[id="post-'+postId+'"] [data-comment-id="'+commentId+'"]');
-        if(!commentLi) return;
-        var replies = commentLi.querySelector('[data-replies]');
-        var r = data.reply || {};
-        var rid = r.id || r.time || ('r_'+Date.now());
-        var li = document.createElement('li');
-        li.setAttribute('data-reply-id', rid);
-        li.innerHTML =
-          '<div class="small text-muted d-flex align-items-center gap-2 flex-wrap">' +
-            '<span class="id-badge">'+ identityText(r) +'</span>' +
-            '<span>・ '+ (r.time||'') +'</span>' +
-          '</div>' +
-          '<div class="mt-1">'+ (r.content||'') +'</div>' +
-          '<div class="d-flex align-items-center mt-1">' +
-            '<button type="button" class="btn btn-link p-0 reply-like-btn" '+
-              'data-like-url="/post/'+postId+'/comment/like/" '+
-              'data-post-id="'+postId+'" data-comment-id="'+commentId+'" data-reply-id="'+rid+'">' +
-              '<i class="bi bi-heart"></i> <span class="ms-1 like-text">按讚</span> <span class="ms-1 like-count">0</span>' +
-            '</button>' +
-          '</div>';
-        replies.appendChild(li);
+  var url = form.getAttribute('action');
+  var postId = form.getAttribute('data-post-id');
+  var commentId = form.getAttribute('data-comment-id');
+  var parentReplyId = form.getAttribute('data-parent-reply-id') || (form.querySelector('[name="parent_reply_id"]')||{}).value || '';
+  var csrf = getCookie('csrftoken') || (form.querySelector('[name=csrfmiddlewaretoken]')||{}).value;
 
-        // 清空輸入框
-        var input = form.querySelector('input[name="reply"]'); if(input) input.value='';
-      })
-      .catch(function(err){ alert(err.message||'回覆失敗'); });
-    });
+  var fd = new FormData(form);
+  fd.set('comment_id', commentId);
+  if (parentReplyId) fd.set('parent_reply_id', parentReplyId);
+
+  fetch(url, {
+    method: 'POST',
+    body: fd,
+    headers: { 'X-Requested-With':'XMLHttpRequest', 'X-CSRFToken': csrf }
+  })
+  .then(function(res){ return res.json(); })
+  .then(function(data){
+    if(!data.success){ throw new Error(data.error || '回覆失敗'); }
+
+    var commentLi = document.querySelector('[id="post-'+postId+'"] [data-comment-id="'+commentId+'"]');
+    if(!commentLi) return;
+
+    var commentLikeBtn = commentLi.querySelector('.comment-like-btn');
+    var likeUrl = commentLikeBtn ? commentLikeBtn.getAttribute('data-like-url') : ('/post/'+postId+'/comment/like/');
+
+    var repliesTarget;
+    if (parentReplyId) {
+      var parentReplyLi = commentLi.querySelector('[data-reply-id="'+parentReplyId+'"]');
+      if (parentReplyLi) {
+        repliesTarget = parentReplyLi.querySelector('.replies[data-replies]');
+        if (!repliesTarget) {
+          repliesTarget = document.createElement('ul');
+          repliesTarget.className = 'replies';
+          repliesTarget.setAttribute('data-replies','');
+          parentReplyLi.appendChild(repliesTarget);
+        }
+      }
+    }
+    if (!repliesTarget) {
+      repliesTarget = commentLi.querySelector(':scope > .replies[data-replies]') || commentLi.querySelector('.replies[data-replies]');
+    }
+    if (!repliesTarget) return;
+
+    var r = data.reply || {};
+    var rid = r.id || r.time || ('r_'+Date.now());
+
+    var commentsBox = form.closest('.comments');
+    var nn1 = commentsBox ? (commentsBox.getAttribute('data-nickname1')||'') : '';
+    var nn2 = commentsBox ? (commentsBox.getAttribute('data-nickname2')||'') : '';
+    var has1 = !!(nn1 && nn1.trim().length);
+    var has2 = !!(nn2 && nn2.trim().length);
+
+    var editorId = 'reply-reply-editor-'+postId+'-'+commentId+'-'+rid;
+    function esc(t){ return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    function identityLabel(obj){
+      var nn = (obj.nickname||'').trim();
+      if(obj.identity==='anonymous') return '匿名';
+      if(obj.identity==='nickname1') return '暱稱 1：'+nn;
+      if(obj.identity==='nickname2') return '暱稱 2：'+nn;
+      return (nn===''||nn==='匿名'||nn==='(匿名)') ? '匿名' : ('暱稱：'+nn);
+    }
+
+    var li = document.createElement('li');
+    li.setAttribute('data-reply-id', rid);
+    li.innerHTML =
+      '<div class="small text-muted d-flex align-items-center gap-2 flex-wrap">' +
+        '<span class="id-badge">'+ identityLabel(r) +'</span>' +
+        '<span>・ '+ esc(r.time||'') +'</span>' +
+      '</div>' +
+      '<div class="mt-1">'+ esc(r.content||'') +'</div>' +
+      '<div class="d-flex align-items-center mt-1">' +
+        '<button type="button" class="btn btn-link p-0 reply-like-btn" '+
+          'data-like-url="'+ likeUrl +'" '+
+          'data-post-id="'+postId+'" data-comment-id="'+commentId+'" data-reply-id="'+rid+'">' +
+          '<i class="bi bi-heart"></i> <span class="ms-1 like-text">按讚</span> <span class="ms-1 like-count">0</span>' +
+        '</button>' +
+        (document.body.classList.contains('authenticated') ?
+          '<button type="button" class="btn btn-link p-0 ms-3 toggle-reply" data-target="#'+ editorId +'"><i class="bi bi-chat"></i> 回覆</button>'
+          :
+          '<button type="button" class="btn btn-link p-0 require-login ms-3"><i class="bi bi-chat"></i> 回覆</button>'
+        ) +
+      '</div>' +
+      (document.body.classList.contains('authenticated') ?
+        '<div id="'+ editorId +'" class="reply-editor mt-2" style="display:none;">'+
+          '<form method="post" action="'+ url +'" class="reply-form" data-post-id="'+postId+'" data-comment-id="'+commentId+'" data-parent-reply-id="'+rid+'">'+
+            '<div class="d-flex align-items-center flex-wrap mb-2" style="gap:10px;">'+
+              '<span class="identity-label">以誰的身分回覆：</span>'+
+              '<div class="btn-group btn-group-sm identity-group flex-wrap">'+
+                '<input type="radio" class="btn-check" name="reply_identity" id="dyn-ri1-'+ editorId +'" value="nickname1" '+ (has1 ? 'checked' : 'disabled') +'>' +
+                '<label class="btn" for="dyn-ri1-'+ editorId +'"><i class="bi bi-person-badge"></i> 暱稱 1'+ (has1?('：'+ esc(nn1)):'（未設定）') +'</label>'+
+                '<input type="radio" class="btn-check" name="reply_identity" id="dyn-ri2-'+ editorId +'" value="nickname2" '+ ((!has1 && has2) ? 'checked' : '') +' '+ (has2?'':'disabled') +'>' +
+                '<label class="btn" for="dyn-ri2-'+ editorId +'"><i class="bi bi-person-badge"></i> 暱稱 2'+ (has2?('：'+ esc(nn2)):'（未設定）') +'</label>'+
+                '<input type="radio" class="btn-check" name="reply_identity" id="dyn-riA-'+ editorId +'" value="anonymous" '+ ((has1 || has2) ? '' : 'checked') +'>' +
+                '<label class="btn" for="dyn-riA-'+ editorId +'"><i class="bi bi-incognito"></i> (匿名)</label>'+
+              '</div>'+
+            '</div>'+
+            '<div class="input-group">'+
+              '<input type="text" name="reply" class="form-control" placeholder="寫下回覆…" maxlength="300" required>'+
+              '<button type="submit" class="btn btn-primary">送出</button>'+
+            '</div>'+
+            '<div class="form-text">最多 300 字。</div>'+
+          '</form>'+
+        '</div>'
+        : ''
+      ) +
+      '<ul class="replies" data-replies></ul>';
+
+    repliesTarget.appendChild(li);
+
+    var input = form.querySelector('input[name="reply"]');
+    if(input){ input.value = ''; input.focus(); }
+  })
+  .catch(function(err){
+    alert(err.message || '回覆失敗');
+  })
+  .finally(function(){
+    form.dataset.busy = '';
   });
-
-  // 委派：留言按讚
+});
+// 委派：留言按讚
   document.body.addEventListener('click', function(e){
     var btn = e.target.closest('.comment-like-btn');
     if(!btn) return;

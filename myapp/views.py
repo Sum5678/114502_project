@@ -2119,7 +2119,7 @@ def store_data_api(request):
 #     return render(request, 'store_map.html')
 
 
-# ------------ 交流區後端（整合版，加入主清單排序 + 留言回覆/按讚；其餘邏輯維持）------------
+# ------------ 交流區後端（整合版，支援巢狀回覆 / 巢狀按讚；與前端新版對應）------------
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, HttpResponseForbidden
 from django.contrib.auth.decorators import login_required
@@ -2137,7 +2137,7 @@ ALLOWED_TAGS = ['a']
 ALLOWED_ATTRIBUTES = {'a': ['href', 'target', 'rel']}
 
 
-# ======== 工具：留言結構相容 / 查找 ========
+# ======== 工具：時間、載入/正規化、搜尋 ========
 
 def _now_str():
     return timezone.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -2154,32 +2154,8 @@ def _load_comments(post):
     return comments
 
 
-def _ensure_comment_defaults(c):
-    """補齊單一留言的預設欄位（舊資料向下相容）。"""
-    c.setdefault('id', c.get('time') or str(uuid4()))
-    c.setdefault('identity', 'anonymous')  # 舊資料沒有就當匿名
-    c.setdefault('nickname', c.get('nickname') or "(匿名)")
-    c.setdefault('content', c.get('content', ''))
-    c.setdefault('time', c.get('time') or _now_str())
-    c.setdefault('user_id', c.get('user_id'))  # 可能為 None，但保留
-    c.setdefault('like_user_ids', [])
-    # like_user_ids 統一轉成 str
-    c['like_user_ids'] = [str(x) for x in (c.get('like_user_ids') or [])]
-    c['like_count'] = len(c['like_user_ids'])
-    c.setdefault('replies', [])
-    # replies 正常化
-    replies = c.get('replies') or []
-    if not isinstance(replies, list):
-        replies = []
-    fixed = []
-    for r in replies:
-        fixed.append(_ensure_reply_defaults(r))
-    c['replies'] = fixed
-    return c
-
-
 def _ensure_reply_defaults(r):
-    """補齊回覆的預設欄位。"""
+    """補齊回覆欄位，並對其子回覆遞迴正規化。"""
     r.setdefault('id', r.get('time') or str(uuid4()))
     r.setdefault('identity', 'anonymous')
     r.setdefault('nickname', r.get('nickname') or "(匿名)")
@@ -2189,7 +2165,36 @@ def _ensure_reply_defaults(r):
     r.setdefault('like_user_ids', [])
     r['like_user_ids'] = [str(x) for x in (r.get('like_user_ids') or [])]
     r['like_count'] = len(r['like_user_ids'])
+    # 巢狀 replies
+    replies = r.get('replies') or []
+    if not isinstance(replies, list):
+        replies = []
+    fixed = []
+    for rr in replies:
+        fixed.append(_ensure_reply_defaults(rr))
+    r['replies'] = fixed
     return r
+
+
+def _ensure_comment_defaults(c):
+    """補齊單一留言的欄位，並遞迴正規化其所有回覆。"""
+    c.setdefault('id', c.get('time') or str(uuid4()))
+    c.setdefault('identity', 'anonymous')
+    c.setdefault('nickname', c.get('nickname') or "(匿名)")
+    c.setdefault('content', c.get('content', ''))
+    c.setdefault('time', c.get('time') or _now_str())
+    c.setdefault('user_id', c.get('user_id'))
+    c.setdefault('like_user_ids', [])
+    c['like_user_ids'] = [str(x) for x in (c.get('like_user_ids') or [])]
+    c['like_count'] = len(c['like_user_ids'])
+    replies = c.get('replies') or []
+    if not isinstance(replies, list):
+        replies = []
+    fixed = []
+    for r in replies:
+        fixed.append(_ensure_reply_defaults(r))
+    c['replies'] = fixed
+    return c
 
 
 def _find_comment(comments, comment_id_or_time):
@@ -2201,8 +2206,8 @@ def _find_comment(comments, comment_id_or_time):
     return None, None
 
 
-def _find_reply(comment, reply_id_or_time):
-    """依 id 或 time 找到回覆 dict 與其索引。"""
+def _find_reply_shallow(comment, reply_id_or_time):
+    """只在單層 replies 內找回覆（舊函式，保留）。"""
     replies = comment.get('replies') or []
     for idx, r in enumerate(replies):
         rid = r.get('id') or r.get('time')
@@ -2210,6 +2215,38 @@ def _find_reply(comment, reply_id_or_time):
             return idx, r
     return None, None
 
+
+def _find_reply_recursive(replies, reply_id_or_time):
+    """
+    在任意深度的 replies（list）遞迴尋找指定回覆。
+    回傳：(parent_list, index, reply_dict)；parent_list 是包含該回覆的 list 物件。
+    找不到則回傳 (None, None, None)。
+    """
+    if not isinstance(replies, list):
+        return (None, None, None)
+    target_key = str(reply_id_or_time)
+    for i, r in enumerate(replies):
+        rid = str(r.get('id') or r.get('time'))
+        if rid == target_key:
+            return (replies, i, r)
+        child = r.get('replies') or []
+        parent, idx, rr = _find_reply_recursive(child, target_key)
+        if rr is not None:
+            return (parent, idx, rr)
+    return (None, None, None)
+
+
+def _mark_is_liked_recursive(replies, user_id_str):
+    """把 is_liked 旗標遞迴標在每一層回覆上，供初始渲染（若有多層）。"""
+    if not isinstance(replies, list):
+        return
+    for r in replies:
+        like_ids = [str(x) for x in (r.get('like_user_ids') or [])]
+        r['is_liked'] = bool(user_id_str and (user_id_str in like_ids))
+        _mark_is_liked_recursive(r.get('replies') or [], user_id_str)
+
+
+# ================== 貼文 CRUD / 展示 ==================
 
 # 發文（可選用 暱稱1 / 暱稱2 / 匿名）
 @login_required(login_url='/01userlogin/')
@@ -2305,22 +2342,17 @@ def post_display(request):
         post.is_saved = bool(user_id_str and (user_id_str in saved_user_ids))
         post.saved_user_list = saved_user_ids
 
-        # comments（存文字 JSON，解析給模板用；向下相容+補欄位）
+        # comments（存文字 JSON，解析給模板用；向下相容+補欄位，且遞迴設置 is_liked）
         comments = _load_comments(post)
         fixed_comments = []
         for c in comments:
             c = _ensure_comment_defaults(c)
-            # 計算這位使用者是否按過讚
             if user_id_str:
                 c['is_liked'] = str(user_id_str) in c['like_user_ids']
             else:
                 c['is_liked'] = False
-            # 回覆也處理 liked 狀態
-            for r in c['replies']:
-                if user_id_str:
-                    r['is_liked'] = str(user_id_str) in r['like_user_ids']
-                else:
-                    r['is_liked'] = False
+            # 回覆 liked 狀態遞迴處理
+            _mark_is_liked_recursive(c.get('replies') or [], user_id_str)
             fixed_comments.append(c)
         post.comment_list = fixed_comments
 
@@ -2613,15 +2645,16 @@ def post_comments(request, post_id):
     })
 
 
-# ============== 新增：留言回覆 & 留言/回覆按讚 ==============
+# ============== 新增：巢狀留言回覆 & 巢狀留言/回覆按讚（符合前端新版） ==============
 
-# 💬 回覆留言
+# 💬 回覆留言 / 回覆的回覆（無限巢狀）
 @require_POST
 @login_required(login_url='/01userlogin/')
 def reply_comment(request, post_id):
     """
-    參數：
+    參數（前端已配合）：
       - comment_id: 目標留言的 id（舊資料可帶 time）
+      - parent_reply_id: 選填；若填，表示「回覆某一則回覆」
       - reply_identity: nickname1 / nickname2 / anonymous
       - reply: 文字內容（<=300）
     回傳：
@@ -2629,6 +2662,7 @@ def reply_comment(request, post_id):
     """
     post = get_object_or_404(ChatInteraction, pk=post_id)
     comment_id = (request.POST.get('comment_id') or '').strip()
+    parent_reply_id = (request.POST.get('parent_reply_id') or '').strip()
     reply_text = (request.POST.get('reply') or '').strip()
     identity = (request.POST.get('reply_identity') or 'anonymous').strip()
     user_id_str = str(request.user.id)
@@ -2656,12 +2690,10 @@ def reply_comment(request, post_id):
         identity = 'anonymous'
 
     comments = _load_comments(post)
-    idx, target = _find_comment(comments, comment_id)
-    if target is None:
+    c_idx, c = _find_comment(comments, comment_id)
+    if c is None:
         return JsonResponse({'success': False, 'error': '找不到目標留言'}, status=404)
-
-    # 正規化目標留言
-    target = _ensure_comment_defaults(target)
+    c = _ensure_comment_defaults(c)
 
     reply_dict = {
         'id': str(uuid4()),
@@ -2670,30 +2702,42 @@ def reply_comment(request, post_id):
         'nickname': nickname,
         'content': safe_text,
         'time': _now_str(),
-        'like_user_ids': []
+        'like_user_ids': [],
+        'replies': []
     }
-    # 寫入 replies
-    target['replies'] = (target.get('replies') or [])
-    target['replies'].append(reply_dict)
 
-    # 回存到 comments
-    comments[idx] = target
+    # 決定寫入位置：如果有 parent_reply_id，則加到那則回覆的 replies 裡；否則寫在留言第一層
+    if parent_reply_id:
+        parent_list, idx, target_r = _find_reply_recursive(c.get('replies') or [], parent_reply_id)
+        if target_r is None:
+            return JsonResponse({'success': False, 'error': '找不到目標回覆'}, status=404)
+        target_r = _ensure_reply_defaults(target_r)
+        target_r['replies'] = (target_r.get('replies') or [])
+        target_r['replies'].append(reply_dict)
+        # 回寫
+        parent_list[idx] = target_r
+    else:
+        c['replies'] = (c.get('replies') or [])
+        c['replies'].append(reply_dict)
+
+    # 寫回 comments
+    comments[c_idx] = c
     post.comments = json.dumps(comments, ensure_ascii=False)
     post.save(update_fields=['comments'])
 
-    # 補齊回傳欄位（like_count）
+    # 回傳補齊欄位
     reply_out = _ensure_reply_defaults(reply_dict)
     return JsonResponse({'success': True, 'reply': reply_out})
 
 
-# ❤️ 留言/回覆按讚（同一路由，帶不帶 reply_id 決定目標）
+# ❤️ 留言/回覆按讚（同一路由；支援巢狀回覆）
 @require_POST
 @login_required(login_url='/01userlogin/')
 def like_comment(request, post_id):
     """
     參數：
       - comment_id（必填）
-      - reply_id（選填，若有則對回覆按讚）
+      - reply_id（選填，若有則對「該 id 的回覆」（任意深度）按讚）
     回傳：
       { success: True, liked: bool, like_count: int }
     """
@@ -2711,9 +2755,9 @@ def like_comment(request, post_id):
         return JsonResponse({'success': False, 'error': '找不到目標留言'}, status=404)
     c = _ensure_comment_defaults(c)
 
-    # 針對回覆
+    # 針對「任意深度」的回覆
     if reply_id:
-        r_idx, r = _find_reply(c, reply_id)
+        parent_list, r_idx, r = _find_reply_recursive(c.get('replies') or [], reply_id)
         if r is None:
             return JsonResponse({'success': False, 'error': '找不到目標回覆'}, status=404)
         r = _ensure_reply_defaults(r)
@@ -2728,8 +2772,8 @@ def like_comment(request, post_id):
         r['like_user_ids'] = list(likers)
         r['like_count'] = len(likers)
 
-        # 寫回
-        c['replies'][r_idx] = r
+        # 回寫回覆
+        parent_list[r_idx] = r
         comments[c_idx] = c
         post.comments = json.dumps(comments, ensure_ascii=False)
         post.save(update_fields=['comments'])
@@ -2751,7 +2795,7 @@ def like_comment(request, post_id):
     post.save(update_fields=['comments'])
     return JsonResponse({'success': True, 'liked': liked, 'like_count': c['like_count']})
 
-# ------------ /交流區後端（整合版）------------
+# ------------ /交流區後端（整合版，巢狀回覆就緒）------------
 
 
 
