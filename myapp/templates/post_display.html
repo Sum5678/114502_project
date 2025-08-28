@@ -888,17 +888,17 @@
 
 <script>
 (function(){
-  // -------------------------
-  // 工具：統一更新四個 offcanvas 計數
-  // -------------------------
+  // =========================
+  // 小工具 & 共用函式
+  // =========================
+  function esc(t){ return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function text(el, sel, d=''){ el = el && (sel ? el.querySelector(sel) : el); return (el && el.textContent ? el.textContent.trim() : d); }
+
   function updateSavedCount(){ const list=document.getElementById('savedPostsList'); const count=list?list.querySelectorAll('[data-saved="1"]').length:0; const badge=document.getElementById('savedCount'); if(badge) badge.textContent=count; }
   function updateLikedCount(){ const list=document.getElementById('likedPostsList'); const count=list?list.querySelectorAll('[data-liked="1"]').length:0; const badge=document.getElementById('likedCount'); if(badge) badge.textContent=count; }
   function updatePostedCount(){ const list=document.getElementById('postedPostsList'); const count=list?list.querySelectorAll('[data-posted="1"]').length:0; const badge=document.getElementById('postedCount'); if(badge) badge.textContent=count; }
   function updateCommentedCount(){ const list=document.getElementById('commentedPostsList'); const count=list?list.querySelectorAll('[data-my-comment="1"]').length:0; const badge=document.getElementById('commentedCount'); if(badge) badge.textContent=count; }
 
-  // -------------------------
-  // 工具：身份文字
-  // -------------------------
   function identityText(c){
     var nn=(c.nickname||'').trim();
     if(c.identity==='anonymous') return '匿名';
@@ -908,9 +908,7 @@
     return '暱稱：'+nn;
   }
 
-  // -------------------------
-  // 工具：統一更新一篇貼文的留言數字樣（按鈕 & 標籤）
-  // -------------------------
+  // 統一更新一篇貼文的留言數（按鈕 + 標籤）
   function setCommentCounters(postId, newCount){
     try{
       var btn=document.querySelector('.btn-comment[data-post-id="'+postId+'"]');
@@ -923,54 +921,139 @@
     }catch(e){}
   }
 
-  // -------------------------
-  // 重要：取得「頂層留言數 + 所有回覆數」
-  // -------------------------
-  function ensureTopCount(box){
-    // 若後端沒注入 data-top-count，從「共有 N 則留言」字樣抓 N；再不行就抓 data-list 中的頂層 li（僅作保底）
-    if(!box.getAttribute('data-top-count')){
-      var n=0;
-      var label=box.querySelector('[data-count-label]');
-      if(label){
-        var m=label.textContent.match(/(\d+)/);
-        if(m) n=parseInt(m[1],10)||0;
-      }
-      if(!n){
-        var list=box.querySelector('[data-list]');
-        if(list) n=list.querySelectorAll(':scope > li[data-comment-id]').length;
-      }
-      box.setAttribute('data-top-count', String(n));
-    }
+  // 用 DOM 算頂層留言數
+  function getTopCountFromDOM(box){
+    var list=box.querySelector('[data-list]');
+    return list ? list.querySelectorAll(':scope > li[data-comment-id]').length : 0;
   }
+
+  // 取得「留言 + 回覆」總數（完全依 DOM，不信任後端數字）
   function getTotalCommentsIncludingReplies(postId){
     var box = document.getElementById('comments-' + postId);
     if(!box) return 0;
-
-    // 若沒帶 data-top-count，可用 0（或你也可保留我之前的 ensureTopCount 解析「共有 N 則留言」再設）
-    var topCount = parseInt(box.getAttribute('data-top-count') || '0', 10);
-
-    // ⬇️ 修正這行：只統計回覆的 LI，避免把按鈕也算進去
-    var replyCount = box.querySelectorAll('li.reply-item[data-reply-id]').length;
-
+    var topCount   = getTopCountFromDOM(box);
+    var replyCount = box.querySelectorAll('li.reply-item[data-reply-id]').length; // 只算回覆 LI
     return topCount + replyCount;
   }
 
-
-  // -------------------------
-  // 通用：取 CSRF Cookie
-  // -------------------------
+  // 取得 CSRF
   function getCookie(name){
     var cookieValue=null;
     if(document.cookie && document.cookie!==''){
       var cookies=document.cookie.split(';');
       for(var i=0;i<cookies.length;i++){
         var cookie=cookies[i].trim();
-        if(cookie.substring(0,name.length+1)===(name+'=')){
-          cookieValue=decodeURIComponent(cookie.substring(name.length+1)); break;
-        }
+        if(cookie.substring(0,name.length+1)===(name+'=')){ cookieValue=decodeURIComponent(cookie.substring(name.length+1)); break; }
       }
     }
     return cookieValue;
+  }
+
+  // ======== Offcanvas：我的留言（重建用） ========
+  function ensureMyCommentsCard(postId){
+    var listWrap = document.getElementById('commentedPostsList');
+    if(!listWrap) return null;
+    var card = listWrap.querySelector('[data-post-id="'+postId+'"]');
+    if(card) return card;
+
+    var cardBody = document.querySelector('#post-'+postId+' .card-body') || document.getElementById('post-'+postId) || document;
+    var title = text(cardBody, '.card-title', '#'+postId);
+    var meta  = text(cardBody, '.meta', '');
+
+    card = document.createElement('div');
+    card.className='col-12';
+    card.setAttribute('data-commented','1');
+    card.setAttribute('data-post-id', postId);
+    card.innerHTML =
+      '<div class="p-3 saved-item-card">' +
+        '<div class="d-flex align-items-start">' +
+          '<i class="bi bi-chat-dots-fill me-2 mt-1"></i>' +
+          '<div class="flex-grow-1">' +
+            '<div class="fw-bold text-truncate" title="'+esc(title)+'">'+esc(title)+'</div>' +
+            '<div class="small text-muted mb-2">'+esc(meta)+'</div>' +
+            '<div class="my-comment-title mb-2">我的留言：</div>' +
+            '<ul class="my-comment-list" data-post-id="'+postId+'"></ul>' +
+            '<div class="text-end mt-2">' +
+              '<button type="button" class="btn btn-sm btn-primary commented-jump" data-bs-dismiss="offcanvas" data-target-id="post-'+postId+'">前往貼文</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    listWrap.prepend(card);
+    return card;
+  }
+
+  function appendMyCommentToCard(postId, timeText, idLabelText, contentHTML){
+    var card = ensureMyCommentsCard(postId);
+    if(!card) return;
+    var ul = card.querySelector('ul.my-comment-list');
+    var li = document.createElement('li');
+    li.className = 'my-comment-card';
+    li.setAttribute('data-my-comment','1');
+    li.innerHTML =
+      '<div class="head">' +
+        '<span class="dot"></span>' +
+        '<span class="time">'+ esc(timeText||'') +'</span>' +
+        '<span class="id-badge">'+ esc(idLabelText||'我') +'</span>' +
+      '</div>' +
+      '<div class="content mt-1">'+ (contentHTML||'') +'</div>' +
+      '<div class="actions">' +
+        '<a class="btn btn-link p-0 btn-sm commented-jump" data-bs-dismiss="offcanvas" data-target-id="post-'+postId+'" data-time="'+ esc(timeText||'') +'">前往這則</a>' +
+      '</div>';
+    ul.appendChild(li);
+  }
+
+  // 重新從頁面 DOM 建構「我的留言」（含過去的留言 + 回覆）
+  function rebuildMyCommentsFromDOM(){
+    var container = document.getElementById('commentedPostsList');
+    if(!container) return;
+
+    // 清乾淨既有的（避免重複）
+    container.querySelectorAll('.my-comment-card').forEach(function(n){ n.remove(); });
+    // 若卡片是舊的但內部清空，也讓它在最後自動被移除
+    container.querySelectorAll('[data-commented][data-post-id] ul.my-comment-list').forEach(function(ul){ ul.innerHTML=''; });
+
+    // 逐篇貼文掃描
+    document.querySelectorAll('.comments[id^="comments-"]').forEach(function(box){
+      var postId = box.id.replace('comments-','');
+
+      // 1) 我的「頂層留言」：有 .edit-comment-btn 或 .delete-comment-btn 視為本人
+      box.querySelectorAll(':scope [data-list] > li[data-comment-id]').forEach(function(li){
+        var mine = !!li.querySelector('.edit-comment-btn, .delete-comment-btn');
+        if(!mine) return;
+        var time = li.getAttribute('data-comment-time') || text(li, '.small.text-muted span:nth-child(2)', '');
+        var idLabel = text(li, '.id-badge', '我');
+        var content = esc(text(li, '.mt-1', ''));
+        appendMyCommentToCard(postId, time, idLabel, content);
+      });
+
+      // 2) 我的「回覆」：回覆項中含 .edit-reply-btn 視為本人
+      box.querySelectorAll('li.reply-item[data-reply-id]').forEach(function(rli){
+        var mine = !!rli.querySelector('.edit-reply-btn');
+        if(!mine) return;
+        // 取時間：小字區第 2 個 span（第一個是 id-badge）
+        var meta = rli.querySelector('.small.text-muted');
+        var spans = meta ? meta.querySelectorAll('span') : [];
+        var time = spans && spans[1] ? spans[1].textContent.trim().replace(/^・\s*/,'') : '';
+        var idLabel = text(rli, '.id-badge', '我');
+        var content = esc(text(rli, '.reply-content', ''));
+        appendMyCommentToCard(postId, time, idLabel, content);
+      });
+
+      // 3) 更新每篇貼文的留言總數（用 DOM 算）
+      setCommentCounters(postId, getTotalCommentsIncludingReplies(postId));
+    });
+
+    // 移除沒有任何我留言的卡片
+    container.querySelectorAll('[data-commented][data-post-id]').forEach(function(card){
+      var hasAny = !!card.querySelector('.my-comment-card');
+      if(!hasAny) card.remove();
+    });
+
+    // 空狀態 & 計數
+    var commentedEmpty=document.getElementById('commentedEmpty');
+    if(commentedEmpty) commentedEmpty.style.display = container.querySelector('[data-my-comment="1"]') ? 'none':'block';
+    updateCommentedCount();
   }
 
   // =========================
@@ -978,7 +1061,7 @@
   // =========================
   document.addEventListener('DOMContentLoaded', function(){
 
-    // ---- 排序切換（保持 q） ----
+    /* 排序切換 */
     (function(){
       var sortForm=document.getElementById('sortForm'); if(!sortForm) return;
       sortForm.querySelectorAll('.btn-check').forEach(function(rb){
@@ -986,7 +1069,7 @@
       });
     })();
 
-    // ---- 展開/收合貼文內文 ----
+    /* 展開/收合貼文內文 */
     document.querySelectorAll('.toggle-more').forEach(function(link){
       link.addEventListener('click', function(e){
         e.preventDefault();
@@ -1008,7 +1091,7 @@
       });
     });
 
-    // ---- 讚（貼文） Ajax ----
+    /* 讚（貼文） */
     document.querySelectorAll('.like-form').forEach(function(form){
       form.addEventListener('submit', function(e){
         e.preventDefault();
@@ -1034,7 +1117,7 @@
             span.innerHTML='<i class="bi '+(isLiked?'bi-heart-fill text-danger':'bi-heart')+'"></i> '+count;
           }
 
-          // 同步我的按讚
+          // 我的按讚 offcanvas
           var likedList=document.getElementById('likedPostsList');
           var likedEmpty=document.getElementById('likedEmpty');
           if(likedList){
@@ -1042,9 +1125,8 @@
             if(!isLiked && exist){ exist.remove(); }
             else if(isLiked && !exist){
               var cardBody=form.closest('.card-body');
-              var title=(cardBody.querySelector('.card-title')||{}).textContent || ('#'+postId);
-              title=title.trim();
-              var meta=(cardBody.querySelector('.meta')||{}).textContent || '';
+              var title=text(cardBody,'.card-title','#'+postId);
+              var meta =text(cardBody,'.meta','');
               var col=document.createElement('div');
               col.className='col-12';
               col.setAttribute('data-liked','1');
@@ -1054,8 +1136,8 @@
                   '<div class="d-flex align-items-start">' +
                     '<i class="bi bi-heart-fill text-danger me-2 mt-1"></i>' +
                     '<div class="flex-grow-1">' +
-                      '<div class="fw-bold text-truncate" title="'+title+'">'+title+'</div>' +
-                      '<div class="small text-muted mb-2">'+meta+'</div>' +
+                      '<div class="fw-bold text-truncate" title="'+esc(title)+'">'+esc(title)+'</div>' +
+                      '<div class="small text-muted mb-2">'+esc(meta)+'</div>' +
                       '<div class="d-flex gap-2">' +
                         '<button type="button" class="btn btn-sm btn-primary liked-jump" data-bs-dismiss="offcanvas" data-target-id="post-'+postId+'">前往貼文</button>' +
                       '</div>' +
@@ -1072,7 +1154,7 @@
       });
     });
 
-    // ---- 收藏（貼文） Ajax ----
+    /* 收藏（貼文） */
     document.querySelectorAll('.save-form').forEach(function(form){
       form.addEventListener('submit', function(e){
         e.preventDefault();
@@ -1094,9 +1176,8 @@
             if(filled && exist){ exist.remove(); }
             else if(!filled && !exist){
               var cardBody=form.closest('.card-body');
-              var title=(cardBody.querySelector('.card-title')||{}).textContent || ('#'+postId);
-              title=title.trim();
-              var meta=(cardBody.querySelector('.meta')||{}).textContent || '';
+              var title=text(cardBody,'.card-title','#'+postId);
+              var meta =text(cardBody,'.meta','');
               var col=document.createElement('div');
               col.className='col-12';
               col.setAttribute('data-saved','1');
@@ -1106,8 +1187,8 @@
                   '<div class="d-flex align-items-start">' +
                     '<i class="bi bi-star-fill text-warning me-2 mt-1"></i>' +
                     '<div class="flex-grow-1">' +
-                      '<div class="fw-bold text-truncate" title="'+title+'">'+title+'</div>' +
-                      '<div class="small text-muted mb-2">'+meta+'</div>' +
+                      '<div class="fw-bold text-truncate" title="'+esc(title)+'">'+esc(title)+'</div>' +
+                      '<div class="small text-muted mb-2">'+esc(meta)+'</div>' +
                       '<div class="d-flex gap-2">' +
                         '<button type="button" class="btn btn-sm btn-primary saved-jump" data-bs-dismiss="offcanvas" data-target-id="post-'+postId+'">前往貼文</button>' +
                       '</div>' +
@@ -1124,7 +1205,7 @@
       });
     });
 
-    // ---- 未登入提示（靜態與動態） ----
+    /* 未登入提示 */
     function showAuthModal(){ new bootstrap.Modal(document.getElementById('authRequiredModal')).show(); }
     document.querySelectorAll('.require-login').forEach(function(el){
       el.addEventListener('click', function(e){ e.preventDefault(); showAuthModal(); });
@@ -1134,7 +1215,7 @@
       e.preventDefault(); showAuthModal();
     });
 
-    // ---- 展開留言區 ----
+    /* 展開留言區 */
     document.querySelectorAll('.btn-comment').forEach(function(btn){
       btn.addEventListener('click', function(){
         var postId=this.dataset.postId;
@@ -1143,20 +1224,12 @@
       });
     });
 
+    /* 首次載入：用 DOM 重新計算每篇貼文的留言總數 & 重建「我的留言」（含回覆） */
     document.querySelectorAll('.comments[id^="comments-"]').forEach(function(box){
-  if(!box.getAttribute('data-top-count')){
-    var label = box.querySelector('[data-count-label]');
-    var n = 0;
-    if(label){
-      var m = label.textContent.match(/(\d+)/);
-      if(m) n = parseInt(m[1],10) || 0;
-    }
-    box.setAttribute('data-top-count', String(n));
-  }
-  var postId = box.id.replace('comments-','');
-  setCommentCounters(postId, getTotalCommentsIncludingReplies(postId));
-});
-
+      var postId = box.id.replace('comments-','');
+      setCommentCounters(postId, getTotalCommentsIncludingReplies(postId));
+    });
+    rebuildMyCommentsFromDOM(); // ← 這行確保刷新後也會把舊的回覆算進去
 
     // =========================
     // 新增留言（頂層）
@@ -1185,11 +1258,8 @@
           var empty=wrap.querySelector('[data-empty]');
           if(empty) empty.remove();
 
-          // 重新渲染頂層留言（以後端回傳為準）
+          // 以回傳資料重畫頂層
           list.innerHTML='';
-          var commentsBox=document.getElementById('comments-'+postId);
-          if(commentsBox){ commentsBox.setAttribute('data-top-count', (data.comments||[]).length); }
-
           (data.comments||[]).forEach(function(c){
             var li=document.createElement('li');
             li.className='mb-2 border-bottom pb-2 position-relative';
@@ -1207,62 +1277,9 @@
             list.appendChild(li);
           });
 
-          // 頂層重繪完成後再更新總數（回覆數取自現有 DOM）
+          // 更新總數並重建我的留言（把剛發的頂層也算入）
           setCommentCounters(postId, getTotalCommentsIncludingReplies(postId));
-
-          // --- 同步「我的留言」 offcanvas ---
-          var commentedList=document.getElementById('commentedPostsList');
-          var commentedEmpty=document.getElementById('commentedEmpty');
-          if(commentedList){
-            var latest=(data.comments||[])[(data.comments||[]).length-1];
-            if(latest){
-              var cardCol=commentedList.querySelector('[data-post-id="'+postId+'"]');
-              if(!cardCol){
-                var cardBody=form.closest('.card-body');
-                var title=(cardBody.querySelector('.card-title')||{}).textContent || ('#'+postId);
-                title=title.trim();
-                var meta=(cardBody.querySelector('.meta')||{}).textContent || '';
-                cardCol=document.createElement('div');
-                cardCol.className='col-12';
-                cardCol.setAttribute('data-commented','1');
-                cardCol.setAttribute('data-post-id',postId);
-                cardCol.innerHTML='' +
-                  '<div class="p-3 saved-item-card">' +
-                    '<div class="d-flex align-items-start">' +
-                      '<i class="bi bi-chat-dots-fill me-2 mt-1"></i>' +
-                      '<div class="flex-grow-1">' +
-                        '<div class="fw-bold text-truncate" title="'+title+'">'+title+'</div>' +
-                        '<div class="small text-muted mb-2">'+meta+'</div>' +
-                        '<div class="my-comment-title mb-2">我的留言：</div>' +
-                        '<ul class="my-comment-list" data-post-id="'+postId+'"></ul>' +
-                        '<div class="text-end mt-2">' +
-                          '<button type="button" class="btn btn-sm btn-primary commented-jump" data-bs-dismiss="offcanvas" data-target-id="post-'+postId+'">前往貼文</button>' +
-                        '</div>' +
-                      '</div>' +
-                    '</div>' +
-                  '</div>';
-                commentedList.prepend(cardCol);
-              }
-              var ul=cardCol.querySelector('ul.my-comment-list');
-              var li=document.createElement('li');
-              li.className='my-comment-card';
-              li.setAttribute('data-my-comment','1');
-              li.innerHTML='' +
-                '<div class="head">' +
-                  '<span class="dot"></span>' +
-                  '<span class="time">'+(latest.time||'')+'</span>' +
-                  '<span class="id-badge">'+ identityText(latest) +'</span>' +
-                '</div>' +
-                '<div class="content mt-1">'+ (latest.content||'') +'</div>' +
-                '<div class="actions">' +
-                  '<a class="btn btn-link p-0 btn-sm commented-jump" data-bs-dismiss="offcanvas" data-target-id="post-'+postId+'" data-time="'+(latest.time||'')+'">前往這則</a>' +
-                '</div>';
-              ul.appendChild(li);
-
-              if(commentedEmpty) commentedEmpty.style.display='none';
-              updateCommentedCount();
-            }
-          }
+          rebuildMyCommentsFromDOM();
         })
         .catch(function(err){ alert(err.message||'留言失敗，請稍後再試'); });
       });
@@ -1344,7 +1361,6 @@
         }
 
         var editorId='reply-reply-editor-'+postId+'-'+commentId+'-'+rid;
-        function esc(t){ return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
         function identityLabel(obj){
           var nn=(obj.nickname||'').trim();
           if(obj.identity==='anonymous') return '匿名';
@@ -1383,7 +1399,7 @@
             '<button type="button" class="btn btn-link p-0 reply-like-btn" data-like-url="'+ likeUrl +'" data-post-id="'+postId+'" data-comment-id="'+commentId+'" data-reply-id="'+rid+'">' +
               '<i class="bi bi-heart"></i> <span class="ms-1 like-text">按讚</span> <span class="ms-1 like-count">0</span>' +
             '</button>' +
-            (document.body.classList.contains('authenticated') ?
+            (document.body.classList.contains('authenticated') ? 
               '<button type="button" class="btn btn-link p-0 ms-3 toggle-reply" data-target="#'+editorId+'"><i class="bi bi-chat"></i> 回覆</button>' :
               '<button type="button" class="btn btn-link p-0 require-login ms-3"><i class="bi bi-chat"></i> 回覆</button>') +
           '</div>' +
@@ -1413,7 +1429,8 @@
 
         repliesTarget.appendChild(li);
 
-        // 新回覆加入 → 立即重算（頂層數不變）
+        // 將這則回覆也同步到「我的留言」，並更新總數
+        rebuildMyCommentsFromDOM();
         setCommentCounters(postId, getTotalCommentsIncludingReplies(postId));
 
         var input=form.querySelector('input[name="reply"]');
@@ -1436,9 +1453,9 @@
         if(!data.success) throw new Error(data.error||'操作失敗');
         var liked=data.liked, count=data.like_count||0;
         btn.classList.toggle('liked', liked);
-        var icon=btn.querySelector('i'), text=btn.querySelector('.like-text'), num=btn.querySelector('.like-count');
+        var icon=btn.querySelector('i'), textEl=btn.querySelector('.like-text'), num=btn.querySelector('.like-count');
         if(icon) icon.className='bi ' + (liked ? 'bi-heart-fill text-danger' : 'bi-heart');
-        if(text) text.textContent = liked ? '收回讚' : '按讚';
+        if(textEl) textEl.textContent = liked ? '收回讚' : '按讚';
         if(num)  num.textContent  = count;
       })
       .catch(function(err){ alert(err.message||'操作失敗'); });
@@ -1458,9 +1475,9 @@
         if(!data.success) throw new Error(data.error||'操作失敗');
         var liked=data.liked, count=data.like_count||0;
         btn.classList.toggle('liked', liked);
-        var icon=btn.querySelector('i'), text=btn.querySelector('.like-text'), num=btn.querySelector('.like-count');
+        var icon=btn.querySelector('i'), textEl=btn.querySelector('.like-text'), num=btn.querySelector('.like-count');
         if(icon) icon.className='bi ' + (liked ? 'bi-heart-fill text-danger' : 'bi-heart');
-        if(text) text.textContent = liked ? '收回讚' : '按讚';
+        if(textEl) textEl.textContent = liked ? '收回讚' : '按讚';
         if(num)  num.textContent  = count;
       })
       .catch(function(err){ alert(err.message||'操作失敗'); });
@@ -1474,17 +1491,17 @@
       var ocEl=document.getElementById(ocId);
       if(!list) return;
       var pending=null;
-      list.addEventListener('click', function(e){
+      list.addEventListener('click',function(e){
         var btn=e.target.closest(itemSelector); if(!btn) return;
         e.preventDefault();
         if(window.__closeSearchHistory) window.__closeSearchHistory();
         pending={ id: btn.getAttribute('data-target-id'), time: btn.getAttribute('data-time') || '' };
         var inst=bootstrap.Offcanvas.getInstance(ocEl);
-        if(ocEl && ocEl.classList.contains('show') && inst){ inst.hide(); }
+        if(ocEl&&ocEl.classList.contains('show')&&inst){ inst.hide(); }
         else { scrollToPost(pending.id, pending.time); pending=null; }
       });
       if(ocEl){
-        ocEl.addEventListener('hidden.bs.offcanvas', function(){
+        ocEl.addEventListener('hidden.bs.offcanvas',function(){
           if(pending){ scrollToPost(pending.id, pending.time); pending=null; }
         });
       }
@@ -1495,7 +1512,7 @@
     bindOffcanvasJump('commentedPostsList','commentedOffcanvas','.commented-jump');
 
     // =========================
-    // 回頂部按鈕（若 offcanvas 開啟先關閉）
+    // 回頂部按鈕
     // =========================
     (function(){
       var wrap=document.getElementById('scrollTopWrapper');
@@ -1529,31 +1546,30 @@
     // 刪除/編輯留言（原本流程）
     // =========================
     document.querySelectorAll('.delete-comment-btn').forEach(function(btn){
-      btn.addEventListener('click', function(){
+      btn.addEventListener('click',function(){
         if(!confirm('確定要刪除這則留言嗎？')) return;
         var postId=this.dataset.postId, time=this.dataset.time;
-        fetch('/post/'+postId+'/comment/delete/', {
+        fetch('/post/'+postId+'/comment/delete/',{
           method:'POST',
-          headers:{'Content-Type':'application/x-www-form-urlencoded','X-Requested-With':'XMLHttpRequest','X-CSRFToken':getCookie('csrftoken')},
+          headers:{ 'Content-Type':'application/x-www-form-urlencoded','X-Requested-With':'XMLHttpRequest','X-CSRFToken': getCookie('csrftoken') },
           body:'time='+encodeURIComponent(time)
         })
         .then(function(res){ return res.json(); })
         .then(function(data){
           if(!data.success) throw new Error(data.error||'刪除失敗');
-          // 這裡仍然走 reload，避免頂層留言與其回覆樹不同步
-          window.location.reload();
+          window.location.reload(); // 確保樹狀同步
         })
         .catch(function(err){ alert(err.message||'刪除失敗'); });
       });
     });
 
-    // ---- 編輯留言/回覆共用 Modal ----
+    // ---- 編輯留言 ----
     (function(){
       var modalEl=document.getElementById('editCommentModal'); if(!modalEl) return;
       var modal=new bootstrap.Modal(modalEl);
       var textarea=document.getElementById('editCommentContent');
       document.querySelectorAll('.edit-comment-btn').forEach(function(btn){
-        btn.addEventListener('click', function(e){
+        btn.addEventListener('click',function(e){
           e.preventDefault();
           window.currentPostId=this.dataset.postId;
           window.currentTime=this.dataset.time;
@@ -1563,31 +1579,32 @@
       });
       var saveBtn=document.getElementById('saveCommentEdit');
       if(saveBtn){
-        saveBtn.addEventListener('click', function(){
+        saveBtn.addEventListener('click',function(){
           var content=(textarea.value||'').trim(); if(!content){ alert('留言內容不能為空！'); return; }
           fetch('/edit_comment/'+window.currentPostId+'/'+encodeURIComponent(window.currentTime)+'/',{
             method:'POST',
-            headers:{'X-CSRFToken': (document.querySelector('[name=csrfmiddlewaretoken]')||{}).value, 'Content-Type':'application/json'},
-            body: JSON.stringify({content:content})
+            headers:{ 'X-CSRFToken': (document.querySelector('[name=csrfmiddlewaretoken]')||{}).value, 'Content-Type':'application/json' },
+            body: JSON.stringify({ content:content })
           })
           .then(function(res){ return res.json(); })
           .then(function(data){
             if(!data.success) throw new Error(data.error||'更新失敗');
-            var els=document.querySelectorAll('#comments-'+window.currentPostId+' .small.text-muted');
-            Array.prototype.forEach.call(els, function(el){
+            var commentEls=document.querySelectorAll('#comments-'+window.currentPostId+' .small.text-muted');
+            Array.prototype.forEach.call(commentEls,function(el){
               if(el.innerText.indexOf(window.currentTime)!==-1){
                 var tgt=el.parentElement.parentElement.querySelector('.mt-1');
                 if(tgt) tgt.innerText=content;
               }
             });
             modal.hide();
+            rebuildMyCommentsFromDOM();
           })
           .catch(function(err){ alert(err.message||'更新失敗'); });
         });
       }
     })();
 
-    // ---- 回覆的編輯/刪除（同一個 Modal）----
+    // ---- 回覆的編輯/刪除（共用 Modal） ----
     (function(){
       var modalEl=document.getElementById('editCommentModal'); if(!modalEl) return;
       var modal=window.bootstrap ? (window.bootstrap.Modal.getInstance(modalEl) || new window.bootstrap.Modal(modalEl)) : null;
@@ -1613,29 +1630,31 @@
         var replyId=btn.getAttribute('data-reply-id');
         var fd=new FormData(); fd.set('comment_id', commentId); fd.set('reply_id', replyId);
         fetch('/post/'+postId+'/reply/delete/', {
-          method:'POST', body:fd,
-          headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken': (document.cookie.match(/csrftoken=([^;]+)/)||[])[1] || ''}
+          method:'POST',
+          body: fd,
+          headers:{'X-Requested-With':'XMLHttpRequest', 'X-CSRFToken': (document.cookie.match(/csrftoken=([^;]+)/)||[])[1] || '' }
         })
         .then(function(res){ return res.json(); })
         .then(function(data){
           if(!data.success) throw new Error(data.error||'刪除失敗');
           var li=document.querySelector('[id="post-'+postId+'"] [data-reply-id="'+replyId+'"]');
           if(li){ li.remove(); }
-          // 刪除回覆後即時更新總數
           setCommentCounters(postId, getTotalCommentsIncludingReplies(postId));
+          rebuildMyCommentsFromDOM();
         })
         .catch(function(err){ alert(err.message||'刪除失敗'); });
       });
 
-      // 覆寫：回覆編輯（送到 /reply/edit/）
+      // 覆寫儲存：回覆編輯
       if(saveBtn){
-        saveBtn.addEventListener('click', function(ev){
-          if(!window.currentReplyEdit) return; // 不是回覆模式，沿用留言編輯流程
+        saveBtn.addEventListener('click',function(ev){
+          if(!window.currentReplyEdit) return;
           ev.preventDefault();
           var payload={ content:(textarea.value||'').trim(), comment_id:window.currentReplyEdit.commentId, reply_id:window.currentReplyEdit.replyId };
           if(!payload.content){ alert('內容不能為空！'); return; }
           fetch('/post/'+window.currentReplyEdit.postId+'/reply/edit/', {
-            method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken': (document.cookie.match(/csrftoken=([^;]+)/)||[])[1] || ''},
+            method:'POST',
+            headers:{ 'Content-Type':'application/json','X-CSRFToken': (document.cookie.match(/csrftoken=([^;]+)/)||[])[1] || '' },
             body: JSON.stringify(payload)
           })
           .then(function(res){ return res.json(); })
@@ -1643,11 +1662,13 @@
             if(!data.success) throw new Error(data.error||'更新失敗');
             var li=document.querySelector('[id="post-'+window.currentReplyEdit.postId+'"] [data-reply-id="'+window.currentReplyEdit.replyId+'"]');
             if(li){
-              var el=li.querySelector('.reply-content'); if(el) el.textContent=payload.content;
-              var editBtn=li.querySelector('.edit-reply-btn'); if(editBtn) editBtn.setAttribute('data-content', payload.content);
+              var contentEl=li.querySelector('.reply-content');
+              if(contentEl) contentEl.textContent=payload.content;
+              var editBtn=li.querySelector('.edit-reply-btn');
+              if(editBtn) editBtn.setAttribute('data-content', payload.content);
             }
             if(modal) modal.hide();
-            window.currentReplyEdit=null;
+            rebuildMyCommentsFromDOM();
           })
           .catch(function(err){ alert(err.message||'更新失敗'); });
         }, true);
@@ -1707,9 +1728,7 @@
       });
     })();
 
-    // -------------------------
-    // 初始化 offcanvas 計數（若需要）
-    // -------------------------
+    // 初始化 offcanvas 計數
     updateSavedCount(); updateLikedCount(); updatePostedCount(); updateCommentedCount();
   });
 
@@ -1748,8 +1767,8 @@
 
     if(commentTime && box){
       setTimeout(function(){
-        var esc=(window.CSS && typeof window.CSS.escape==='function') ? window.CSS.escape(commentTime) : commentTime;
-        var li=box.querySelector('[data-comment-time="'+esc+'"]');
+        var cssEscape=(window.CSS && typeof window.CSS.escape==='function') ? window.CSS.escape(commentTime) : commentTime;
+        var li=box.querySelector('[data-comment-time="'+cssEscape+'"]');
         if(li){
           li.classList.add('comment-highlight');
           li.scrollIntoView({ behavior:'smooth', block:'center' });
