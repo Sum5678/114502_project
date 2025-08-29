@@ -130,9 +130,11 @@
 
   /* 搜尋歷史下拉 */
   .search-history {
-    position: absolute; top: 100%; left: 0; right: 0; z-index: 1100;
+    position: absolute; top: 100%; left: 0; right: 0;
+    z-index: 1020;
     max-height: 260px; overflow: auto; border: 1px solid #e1efff; background: #fff;
-    border-radius: 0 0 12px 12px; box-shadow:0 10px 24px rgba(3,62,107,.12); display: none;
+    border-radius: 0 0 12px 12px; box-shadow:0 10px 24px rgba(3,62,107,.12);
+    display: none;
   }
   .search-history.show { display: block; }
   .search-history .history-item { display:flex; align-items:center; gap:8px; padding:10px 12px; cursor:pointer; user-select:none; }
@@ -142,58 +144,36 @@
   .search-history .remove { border:none; background:transparent; font-size:18px; line-height:1; color:#9aa9b8; padding:0 4px; cursor:pointer; }
   .search-history .remove:hover { color:#555; }
 
-  /* 卡片外延伸 CTA 區塊（我的貼文） */
   .btn-sky{ background:#e6f3fb; border:1px solid #63b3ed; color:#033e6b; border-radius:10px; padding:6px 14px; font-weight:600; }
   .btn-sky:hover{ background:#d8eefc; color:#033e6b; border-color:#63b3ed; }
   .card-cta{ border:1px solid #e5eef8; border-top:0; background:#f5fbff; padding:10px 16px; margin-top:-8px; border-radius:0 0 12px 12px; display:flex; justify-content:flex-end; }
 
   .comment-highlight{ outline:2px solid #63b3ed; background:#f0faff; border-radius:8px; transition: background .6s ease, outline .6s ease; }
 
-  /* ===== 排序切換：簡潔小膠囊（淺色、不佔版面） ===== */
-  .sort-label{
-    font-size:.8rem; color:#5a7ca9; letter-spacing:.02em;
-  }
-  .sort-toggle{
-    display:inline-flex;
-    border:1px solid #cfe8fb;
-    border-radius:999px;
-    background:#f8fbff;
-    overflow:hidden;
-    box-shadow:0 2px 8px rgba(3,62,107,.05);
-  }
-  .sort-option{
-    padding:4px 12px;
-    font-weight:600;
-    color:#033e6b;
-    background:transparent;
-    border:none;
-    cursor:pointer;
-    transition:background .2s, color .2s, transform .12s;
-    display:flex; align-items:center; gap:6px;
-    line-height:1.2;
-  }
+  /* 排序切換 */
+  .sort-label{ font-size:.8rem; color:#5a7ca9; letter-spacing:.02em; }
+  .sort-toggle{ display:inline-flex; border:1px solid #cfe8fb; border-radius:999px; background:#f8fbff; overflow:hidden; box-shadow:0 2px 8px rgba(3,62,107,.05); }
+  .sort-option{ padding:4px 12px; font-weight:600; color:#033e6b; background:transparent; border:none; cursor:pointer; transition:background .2s, color .2s, transform .12s; display:flex; align-items:center; gap:6px; line-height:1.2; }
   .sort-option i{ font-size:.9rem; opacity:.85; }
   .sort-option:hover{ background:#e6f3fb; }
   .btn-check:focus + .sort-option{ outline:2px solid rgba(99,179,237,.35); outline-offset:0; }
-  .btn-check:checked + .sort-option{
-    background:#63b3ed;
-    color:#fff;
-  }
+  .btn-check:checked + .sort-option{ background:#63b3ed; color:#fff; }
   .btn-check:checked + .sort-option i{ opacity:1; color:#fff; }
-  @media (prefers-reduced-motion: reduce){
-    .sort-option{ transition:none; }
-  }
+  @media (prefers-reduced-motion: reduce){ .sort-option{ transition:none; } }
 
-  /* ====== 新增：回覆串樣式 ====== */
+  /* 回覆縮排 */
   .replies{ margin-top:8px; padding-left:0; }
   .replies > li{ list-style:none; border-left:3px solid #e6f3fb; padding-left:10px; margin-left:8px; margin-top:6px; }
   .comment-actions{ gap:12px; }
   .comment-actions .btn-link{ text-decoration:none; }
   .comment-like-btn.liked, .reply-like-btn.liked { color:#dc3545; font-weight:700; }
   .reply-editor{ display:none; }
+  .reply-item { margin-left: calc((var(--lvl,1) - 1) * 16px); }
 </style>
 </head>
-<body>
+
+<body class="{% if request.user.is_authenticated %}authenticated{% endif %}"
+      data-uid="{% if request.user.is_authenticated %}{{ request.user.id }}{% endif %}">
 <header id="header" class="header d-flex align-items-center fixed-top">
   <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
     <a href="{% url 'home' %}" class="logo d-flex align-items-center me-auto me-xl-0">
@@ -393,7 +373,7 @@
         </div>
       </div>
 
-      <!-- Offcanvas：我的貼文（完整 + CTA 置外） -->
+      <!-- Offcanvas：我的貼文 -->
       <div class="offcanvas offcanvas-end offcanvas-posted" tabindex="-1" id="postedOffcanvas">
         <div class="offcanvas-header" style="background:#e6f3fb;">
           <h5 class="offcanvas-title fw-bold text-primary"><i class="bi bi-journal-text me-2"></i>我的貼文</h5>
@@ -447,7 +427,7 @@
           <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
         </div>
         <div class="offcanvas-body">
-          <div id="commentedEmpty" class="text-center text-muted py-4" {% if my_commented_posts %}{% else %}style="display:block;"{% endif %}>
+          <div id="commentedEmpty" class="text-center text-muted py-4" {% if my_commented_posts %}style="display:none;"{% endif %}>
             <i class="bi bi-inbox fs-2 d-block mb-2"></i>你目前尚未留言任何貼文
           </div>
 
@@ -578,8 +558,10 @@
             {% endif %}
           </div>
 
-          <div class="comments mt-3" id="comments-{{ post.interaction_id }}" style="display:none;">
-            <div class="mb-2 text-primary fw-bold">共有 {{ post.comment_list|length }} 則留言</div>
+          <div class="comments mt-3" id="comments-{{ post.interaction_id }}"
+     data-nickname1="{{ profile_nickname1 }}" data-nickname2="{{ profile_nickname2 }}"
+     data-top-count="{{ post.comment_list|length }}" style="display:none;">
+            <div class="mb-2 text-primary fw-bold" data-count-label>共有 {{ post.comment_list|length }} 則留言</div>
             <ul class="list-unstyled mb-3" data-list>
               {% for c in post.comment_list|slice:":3" %}
                 {% with cid=c.id|default:c.time %}
@@ -633,55 +615,116 @@
                       {% endif %}
                     </div>
 
-                    <!-- 回覆串 -->
-                    <ul class="replies" data-replies>
-                      {% for r in c.replies %}
-                        {% with rid=r.id|default:r.time %}
-                        <li data-reply-id="{{ rid }}">
-                          <div class="small text-muted d-flex align-items-center gap-2 flex-wrap">
-                            <span class="id-badge">
-                              {% if r.identity == 'anonymous' %}
-                                匿名
-                              {% elif r.identity == 'nickname1' %}
-                                暱稱 1：{{ r.nickname }}
-                              {% elif r.identity == 'nickname2' %}
-                                暱稱 2：{{ r.nickname }}
-                              {% else %}
-                                {% if r.nickname and r.nickname != '匿名' and r.nickname != '(匿名)' %}
-                                  暱稱：{{ r.nickname }}
-                                {% else %}
-                                  匿名
-                                {% endif %}
-                              {% endif %}
-                            </span>
-                            <span>・ {{ r.time }}</span>
-                          </div>
-                          <div class="mt-1">{{ r.content|escape }}</div>
-                          <div class="d-flex align-items-center mt-1">
-                            {% if request.user.is_authenticated %}
-                              <button type="button"
-                                      class="btn btn-link p-0 reply-like-btn {% if r.is_liked %}liked{% endif %}"
-                                      data-like-url="{% url 'like_comment' post.interaction_id %}"
-                                      data-post-id="{{ post.interaction_id }}"
-                                      data-comment-id="{{ cid }}"
-                                      data-reply-id="{{ rid }}">
-                                <i class="bi {% if r.is_liked %}bi-heart-fill text-danger{% else %}bi-heart{% endif %}"></i>
-                                <span class="ms-1 like-text">{% if r.is_liked %}收回讚{% else %}按讚{% endif %}</span>
-                                <span class="ms-1 like-count">{{ r.like_count|default:0 }}</span>
-                              </button>
-                            {% else %}
-                              <button type="button" class="btn btn-link p-0 require-login">
-                                <i class="bi bi-heart"></i> 按讚
-                              </button>
-                            {% endif %}
-                          </div>
-                        </li>
-                        {% endwith %}
-                      {% empty %}
-                      {% endfor %}
-                    </ul>
+                    <!-- ====== 回覆串（使用 replies_flat 顯示所有層級） ====== -->
+<ul class="replies" data-replies>
+  {% for r in c.replies_flat %}
+    {% with rid=r.id|default:r.time %}
+    <li class="reply-item position-relative"
+        data-reply-id="{{ rid }}"
+        style="--lvl: {{ r.level|default:1 }};">
+      <div class="small text-muted d-flex align-items-center gap-2 flex-wrap">
+        <span class="id-badge">
+          {% if r.identity == 'anonymous' %}
+            匿名
+          {% elif r.identity == 'nickname1' %}
+            暱稱 1：{{ r.nickname }}
+          {% elif r.identity == 'nickname2' %}
+            暱稱 2：{{ r.nickname }}
+          {% else %}
+            {% if r.nickname and r.nickname != '匿名' and r.nickname != '(匿名)' %}
+              暱稱：{{ r.nickname }}
+            {% else %} 匿名 {% endif %}
+          {% endif %}
+        </span>
+        <span>・ {{ r.time }}</span>
+      </div>
 
-                    <!-- 回覆編輯器 -->
+      <div class="mt-1 reply-content">{{ r.content|escape }}</div>
+
+      <div class="d-flex align-items-center mt-1">
+        {% if request.user.is_authenticated %}
+          <button type="button"
+                  class="btn btn-link p-0 reply-like-btn {% if r.is_liked %}liked{% endif %}"
+                  data-like-url="{% url 'like_comment' post.interaction_id %}"
+                  data-post-id="{{ post.interaction_id }}"
+                  data-comment-id="{{ cid }}"
+                  data-reply-id="{{ rid }}">
+            <i class="bi {% if r.is_liked %}bi-heart-fill text-danger{% else %}bi-heart{% endif %}"></i>
+            <span class="ms-1 like-text">{% if r.is_liked %}收回讚{% else %}按讚{% endif %}</span>
+            <span class="ms-1 like-count">{{ r.like_count|default:0 }}</span>
+          </button>
+
+          <button type="button"
+                  class="btn btn-link p-0 ms-3 toggle-reply"
+                  data-target="#reply-reply-editor-{{ post.interaction_id }}-{{ cid }}-{{ rid }}">
+            <i class="bi bi-chat"></i> 回覆
+          </button>
+        {% else %}
+          <button type="button" class="btn btn-link p-0 require-login">
+            <i class="bi bi-heart"></i> 按讚
+          </button>
+          <button type="button" class="btn btn-link p-0 require-login ms-3">
+            <i class="bi bi-chat"></i> 回覆
+          </button>
+        {% endif %}
+      </div>
+
+      {% if request.user.is_authenticated %}
+      <!-- 對「任何層級」回覆再回覆 -->
+      <div id="reply-reply-editor-{{ post.interaction_id }}-{{ cid }}-{{ rid }}" class="reply-editor mt-2">
+        <form method="post"
+              action="{% url 'reply_comment' post.interaction_id %}"
+              class="reply-form"
+              data-post-id="{{ post.interaction_id }}"
+              data-comment-id="{{ cid }}"
+              data-parent-reply-id="{{ rid }}">
+          {% csrf_token %}
+          <input type="hidden" name="comment_id" value="{{ cid }}">
+          <input type="hidden" name="parent_reply_id" value="{{ rid }}">
+          <div class="input-group">
+            <input type="text" name="reply" class="form-control" placeholder="寫下回覆…" maxlength="300" required>
+            <button type="submit" class="btn btn-primary">送出</button>
+          </div>
+          <div class="form-text">最多 300 字。</div>
+        </form>
+      </div>
+      {% endif %}
+
+      {% if request.user.is_authenticated and r.user_id|stringformat:"s" == request.user.id|stringformat:"s" %}
+      <!-- 本人三點選單：編輯/刪除回覆 -->
+      <div class="dropdown position-absolute top-0 end-0">
+        <button class="btn btn-link text-muted p-0" type="button" data-bs-toggle="dropdown">
+          <i class="bi bi-three-dots-vertical"></i>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li>
+            <a class="dropdown-item text-primary edit-reply-btn"
+               href="#"
+               data-post-id="{{ post.interaction_id }}"
+               data-comment-id="{{ cid }}"
+               data-reply-id="{{ rid }}"
+               data-content="{{ r.content|escapejs }}">
+              <i class="bi bi-pencil-fill me-2"></i> 編輯
+            </a>
+          </li>
+          <li>
+            <a class="dropdown-item text-danger delete-reply-btn"
+               href="#"
+               data-post-id="{{ post.interaction_id }}"
+               data-comment-id="{{ cid }}"
+               data-reply-id="{{ rid }}">
+              <i class="bi bi-trash-fill me-2"></i> 刪除
+            </a>
+          </li>
+        </ul>
+      </div>
+      {% endif %}
+    </li>
+    {% endwith %}
+  {% empty %}{% endfor %}
+</ul>
+
+                    <!-- 回覆編輯器（原始留言的回覆） -->
                     {% if request.user.is_authenticated %}
                     <div id="reply-editor-{{ post.interaction_id }}-{{ forloop.counter }}" class="reply-editor mt-2">
                       <form method="post"
@@ -786,12 +829,12 @@
             {% endif %}
           </div>
 
-          <!-- 編輯留言 Modal -->
+          <!-- 編輯留言 Modal（同時給留言與回覆使用） -->
           <div class="modal fade" id="editCommentModal" tabindex="-1" aria-labelledby="editCommentModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
               <div class="modal-content border-0" style="border-radius:12px;">
                 <div class="modal-header" style="background-color:#e6f3fb;">
-                  <h5 class="modal-title fw-bold text-primary" id="editCommentModalLabel"><i class="bi bi-pencil-square me-2"></i> 編輯留言</h5>
+                  <h5 class="modal-title fw-bold text-primary" id="editCommentModalLabel"><i class="bi bi-pencil-square me-2"></i> 編輯內容</h5>
                   <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
@@ -834,6 +877,8 @@
   </div>
 </div>
 
+
+
 <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
 <script src="{% static 'assets/vendor/aos/aos.js' %}"></script>
 <script src="{% static 'assets/vendor/glightbox/js/glightbox.min.js' %}"></script>
@@ -842,291 +887,59 @@
 <script src="{% static 'assets/js/main.js' %}"></script>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
+(function(){
+  // =========================
+  // 小工具 & 共用函式
+  // =========================
+  function esc(t){ return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function text(el, sel, d=''){ el = el && (sel ? el.querySelector(sel) : el); return (el && el.textContent ? el.textContent.trim() : d); }
+
   function updateSavedCount(){ const list=document.getElementById('savedPostsList'); const count=list?list.querySelectorAll('[data-saved="1"]').length:0; const badge=document.getElementById('savedCount'); if(badge) badge.textContent=count; }
   function updateLikedCount(){ const list=document.getElementById('likedPostsList'); const count=list?list.querySelectorAll('[data-liked="1"]').length:0; const badge=document.getElementById('likedCount'); if(badge) badge.textContent=count; }
   function updatePostedCount(){ const list=document.getElementById('postedPostsList'); const count=list?list.querySelectorAll('[data-posted="1"]').length:0; const badge=document.getElementById('postedCount'); if(badge) badge.textContent=count; }
-  function updateCommentedCount(){ const wrapper=document.getElementById('commentedPostsList'); const count=wrapper?wrapper.querySelectorAll('[data-my-comment="1"]').length:0; const badge=document.getElementById('commentedCount'); if(badge) badge.textContent=count; }
-
-  updateSavedCount(); updateLikedCount(); updatePostedCount(); updateCommentedCount();
-
-  /* 🔁 排序切換：勾選即提交（保留 q） */
-  (function () {
-    var sortForm = document.getElementById('sortForm');
-    if (!sortForm) return;
-    sortForm.querySelectorAll('.btn-check').forEach(function (rb) {
-      rb.addEventListener('change', function () { sortForm.submit(); });
-    });
-  })();
-
-  /* 展開/收合內文 */
-  document.querySelectorAll('.toggle-more').forEach(function(link){
-    link.addEventListener('click', function (e) {
-      e.preventDefault();
-      var p=this.closest('.message-content');
-      var fullText=p.dataset.full;
-      var truncated=fullText.slice(0,100);
-      if (this.textContent.trim()==='查看更多') {
-        p.innerHTML=''; p.textContent=fullText;
-        var closeLink=document.createElement('a'); closeLink.href="#"; closeLink.textContent=" 關閉詳情"; closeLink.classList.add('toggle-more');
-        p.appendChild(closeLink);
-        closeLink.addEventListener('click', arguments.callee);
-      } else {
-        p.innerHTML=''; p.textContent=truncated;
-        var dots=document.createElement('span'); dots.classList.add('ellipsis'); dots.textContent='...';
-        var moreLink=document.createElement('a'); moreLink.href="#"; moreLink.textContent=" 查看更多"; moreLink.classList.add('toggle-more');
-        p.appendChild(dots); p.appendChild(document.createTextNode(' ')); p.appendChild(moreLink);
-        moreLink.addEventListener('click', arguments.callee);
-      }
-    });
-  });
-
-  /* 愛心 Ajax（貼文） */
-  document.querySelectorAll('.like-form').forEach(function(form){
-    form.addEventListener('submit',function(e){
-      e.preventDefault();
-      var url=this.action;
-      var formData=new FormData(this);
-      var button=this.querySelector('button');
-      var postId=this.dataset.postId;
-
-      fetch(url,{method:'POST',body:formData,headers:{'X-Requested-With':'XMLHttpRequest'}})
-      .then(function(response){
-        if(response.ok){
-          button.classList.toggle('liked');
-          var isLiked=button.classList.contains('liked');
-          button.innerHTML='<i class="bi '+(isLiked?'bi-heart-fill text-danger':'bi-heart')+'"></i> '+(isLiked?'收回愛心':'愛心');
-
-          var card=form.closest('.card-body');
-          var iconDiv=card.querySelector('.interaction-bar div:first-child i');
-          var countSpan=card.querySelector('.interaction-bar div:first-child');
-          if(iconDiv&&countSpan){
-            iconDiv.className='bi '+(isLiked?'bi-heart-fill text-danger':'bi-heart');
-            var countText=countSpan.innerText.trim();
-            var count=parseInt(countText.replace(/\D/g,''))||0;
-            count=isLiked?count+1:Math.max(count-1,0);
-            countSpan.innerHTML='<i class="bi '+(isLiked?'bi-heart-fill text-danger':'bi-heart')+'"></i> '+count;
-          }
-
-          /* 動態同步「我的按讚」 */
-          var likedList=document.getElementById('likedPostsList');
-          var likedEmpty=document.getElementById('likedEmpty');
-          if(likedList){
-            var existing=likedList.querySelector('[data-post-id="'+postId+'"]');
-            if(!isLiked&&existing){ existing.remove(); }
-            else if(isLiked&&!existing){
-              var cardBody=form.closest('.card-body');
-              var title=cardBody.querySelector('.card-title')?cardBody.querySelector('.card-title').textContent.trim():'#'+postId;
-              var meta=cardBody.querySelector('.meta')?cardBody.querySelector('.meta').textContent:'';
-              var col=document.createElement('div');
-              col.className='col-12';
-              col.setAttribute('data-liked','1');
-              col.setAttribute('data-post-id',postId);
-              col.innerHTML='' +
-                '<div class="p-3 saved-item-card">' +
-                  '<div class="d-flex align-items-start">' +
-                    '<i class="bi bi-heart-fill text-danger me-2 mt-1"></i>' +
-                    '<div class="flex-grow-1">' +
-                      '<div class="fw-bold text-truncate" title="'+title+'">'+title+'</div>' +
-                      '<div class="small text-muted mb-2">'+meta+'</div>' +
-                      '<div class="d-flex gap-2">' +
-                        '<button type="button" class="btn btn-sm btn-primary liked-jump" data-bs-dismiss="offcanvas" data-target-id="post-'+postId+'">前往貼文</button>' +
-                      '</div>' +
-                    '</div>' +
-                  '</div>' +
-                '</div>';
-              likedList.appendChild(col);
-            }
-            var hasLiked=likedList.querySelector('[data-liked="1"]');
-            if(likedEmpty) likedEmpty.style.display=hasLiked?'none':'block';
-            updateLikedCount();
-          }
-        }
-      })
-      .catch(function(){ alert('按愛心失敗，請稍後再試'); });
-    });
-  });
-
-  /* 收藏 Ajax（貼文） */
-  document.querySelectorAll('.save-form').forEach(function(form){
-    form.addEventListener('submit',function(e){
-      e.preventDefault();
-      var url=this.action;
-      var formData=new FormData(this);
-      var icon=this.querySelector('button i');
-      var postId=this.dataset.postId;
-
-      fetch(url,{method:'POST',body:formData,headers:{'X-Requested-With':'XMLHttpRequest'}})
-      .then(function(response){
-        if(response.ok){
-          var isFilled=icon.classList.contains('bi-star-fill');
-          icon.className='bi '+(isFilled?'bi-star':'bi-star-fill');
-
-          var savedList=document.getElementById('savedPostsList');
-          var empty=document.getElementById('savedEmpty');
-          if(savedList){
-            var existing=savedList.querySelector('[data-post-id="'+postId+'"]');
-            if(isFilled&&existing){ existing.remove(); }
-            else if(!isFilled&&!existing){
-              var cardBody=form.closest('.card-body');
-              var title=cardBody.querySelector('.card-title')?cardBody.querySelector('.card-title').textContent.trim():'#'+postId;
-              var meta=cardBody.querySelector('.meta')?cardBody.querySelector('.meta').textContent:'';
-              var col=document.createElement('div');
-              col.className='col-12';
-              col.setAttribute('data-saved','1');
-              col.setAttribute('data-post-id',postId);
-              col.innerHTML='' +
-                '<div class="p-3 saved-item-card">' +
-                  '<div class="d-flex align-items-start">' +
-                    '<i class="bi bi-star-fill text-warning me-2 mt-1"></i>' +
-                    '<div class="flex-grow-1">' +
-                      '<div class="fw-bold text-truncate" title="'+title+'">'+title+'</div>' +
-                      '<div class="small text-muted mb-2">'+meta+'</div>' +
-                      '<div class="d-flex gap-2">' +
-                        '<button type="button" class="btn btn-sm btn-primary saved-jump" data-bs-dismiss="offcanvas" data-target-id="post-'+postId+'">前往貼文</button>' +
-                      '</div>' +
-                    '</div>' +
-                  '</div>' +
-                '</div>';
-              savedList.appendChild(col);
-            }
-            var hasSaved=savedList.querySelector('[data-saved="1"]');
-            if(empty) empty.style.display=hasSaved?'none':'block';
-            updateSavedCount();
-          }
-        }
-      })
-      .catch(function(){ alert('收藏失敗，請稍後再試'); });
-    });
-  });
-
-  /* 未登入提示 */
-  document.querySelectorAll('.require-login').forEach(function(el){
-    el.addEventListener('click',function(e){
-      e.preventDefault();
-      var modal=new bootstrap.Modal(document.getElementById('authRequiredModal'));
-      modal.show();
-    });
-  });
-
-  /* 留言展開 */
-  document.querySelectorAll('.btn-comment').forEach(function(btn){
-    btn.addEventListener('click',function(){
-      var postId=this.dataset.postId;
-      var box=document.getElementById('comments-'+postId);
-      if(box) box.style.display=(box.style.display==='none'||box.style.display==='')?'block':'none';
-    });
-  });
+  function updateCommentedCount(){ const list=document.getElementById('commentedPostsList'); const count=list?list.querySelectorAll('[data-my-comment="1"]').length:0; const badge=document.getElementById('commentedCount'); if(badge) badge.textContent=count; }
 
   function identityText(c){
-    var nn = (c.nickname||'').trim();
+    var nn=(c.nickname||'').trim();
     if(c.identity==='anonymous') return '匿名';
     if(c.identity==='nickname1') return '暱稱 1：'+nn;
     if(c.identity==='nickname2') return '暱稱 2：'+nn;
-    if(nn==='' || nn==='匿名' || nn==='(匿名)') return '匿名';
+    if(!nn || nn==='匿名' || nn==='(匿名)') return '匿名';
     return '暱稱：'+nn;
   }
 
-  /* 新增留言 Ajax（同步 offcanvas） */
-  document.querySelectorAll('.comment-form').forEach(function(form){
-    form.addEventListener('submit',function(e){
-      e.preventDefault();
-      var url=this.action;
-      var formData=new FormData(this);
-      var csrfToken=this.querySelector('input[name="csrfmiddlewaretoken"]')?this.querySelector('input[name="csrfmiddlewaretoken"]').value:'';
-      var postId=this.dataset.postId;
+  // 統一更新一篇貼文的留言數（按鈕 + 標籤）
+  function setCommentCounters(postId, newCount){
+    try{
+      var btn=document.querySelector('.btn-comment[data-post-id="'+postId+'"]');
+      if(btn){ btn.innerHTML='<i class="bi bi-chat-dots"></i> 留言（'+ newCount +'）'; }
+      var box=document.getElementById('comments-'+postId);
+      if(box){
+        var label=box.querySelector('[data-count-label]');
+        if(label){ label.textContent='共有 '+ newCount +' 則留言'; }
+      }
+    }catch(e){}
+  }
 
-      fetch(url,{
-        method:'POST',
-        body:formData,
-        headers:{ 'X-Requested-With':'XMLHttpRequest', 'X-CSRFToken':csrfToken }
-      })
-      .then(function(res){ if(!res.ok){ return res.json().catch(function(){return {};}).then(function(data){ throw new Error(data.error||'留言失敗，請稍後再試'); }); } return res.json();})
-      .then(function(data){
-        form.reset();
+  // 用 DOM 算頂層留言數
+  function getTopCountFromDOM(box){
+    var list=box.querySelector('[data-list]');
+    return list ? list.querySelectorAll(':scope > li[data-comment-id]').length : 0;
+  }
 
-        var wrap=form.closest('.comments');
-        var list=wrap.querySelector('[data-list]');
-        var empty=wrap.querySelector('[data-empty]');
-        if(empty) empty.remove();
-        list.innerHTML='';
-        (data.comments||[]).forEach(function(c){
-          var li=document.createElement('li');
-          li.className='mb-2 border-bottom pb-2';
-          li.setAttribute('data-comment-time', c.time||'');
-          li.setAttribute('data-comment-id', c.id || c.time || '');
-          li.innerHTML='' +
-            '<div>' +
-              '<div class="small text-muted d-flex align-items-center gap-2 flex-wrap">' +
-                '<span class="id-badge">'+identityText(c)+'</span>' +
-                '<span>・ '+(c.time||'')+'</span>' +
-              '</div>' +
-              '<div class="mt-1">'+(c.content||'')+'</div>' +
-            '</div>';
-          list.appendChild(li);
-        });
+  // 取得「留言 + 回覆」總數（完全依 DOM，不信任後端數字）
+  function getTotalCommentsIncludingReplies(postId){
+    var box = document.getElementById('comments-' + postId);
+    if(!box) return 0;
+    var topCount   = getTopCountFromDOM(box);
+    var replyCount = box.querySelectorAll('li.reply-item[data-reply-id]').length; // 只算回覆 LI
+    return topCount + replyCount;
+  }
 
-        var commentedList=document.getElementById('commentedPostsList');
-        var commentedEmpty=document.getElementById('commentedEmpty');
-        if(commentedList){
-          var latest=(data.comments||[])[(data.comments||[]).length-1];
-          if(latest){
-            var cardCol=commentedList.querySelector('[data-post-id="'+postId+'"]');
-            if(!cardCol){
-              var cardBody=form.closest('.card-body');
-              var title=cardBody.querySelector('.card-title')?cardBody.querySelector('.card-title').textContent.trim():'#'+postId;
-              var meta=cardBody.querySelector('.meta')?cardBody.querySelector('.meta').textContent:'';
-              cardCol=document.createElement('div');
-              cardCol.className='col-12';
-              cardCol.setAttribute('data-commented','1');
-              cardCol.setAttribute('data-post-id',postId);
-              cardCol.innerHTML='' +
-                '<div class="p-3 saved-item-card">' +
-                  '<div class="d-flex align-items-start">' +
-                    '<i class="bi bi-chat-dots-fill me-2 mt-1"></i>' +
-                    '<div class="flex-grow-1">' +
-                      '<div class="fw-bold text-truncate" title="'+title+'">'+title+'</div>' +
-                      '<div class="small text-muted mb-2">'+meta+'</div>' +
-                      '<div class="my-comment-title mb-2">我的留言：</div>' +
-                      '<ul class="my-comment-list" data-post-id="'+postId+'"></ul>' +
-                      '<div class="text-end mt-2">' +
-                        '<button type="button" class="btn btn-sm btn-primary commented-jump" data-bs-dismiss="offcanvas" data-target-id="post-'+postId+'">前往貼文</button>' +
-                      '</div>' +
-                    '</div>' +
-                  '</div>' +
-                '</div>';
-              commentedList.prepend(cardCol);
-            }
-            var ul=cardCol.querySelector('ul.my-comment-list');
-            var li=document.createElement('li');
-            li.className='my-comment-card';
-            li.setAttribute('data-my-comment','1');
-            li.innerHTML='' +
-              '<div class="head">' +
-                '<span class="dot"></span>' +
-                '<span class="time">'+(latest.time||'')+'</span>' +
-                '<span class="id-badge">'+identityText(latest)+'</span>' +
-              '</div>' +
-              '<div class="content mt-1">'+(latest.content||'')+'</div>' +
-              '<div class="actions">' +
-                '<a class="btn btn-link p-0 btn-sm commented-jump" data-bs-dismiss="offcanvas" data-target-id="post-'+postId+'" data-time="'+(latest.time||'')+'">前往這則</a>' +
-              '</div>';
-            ul.appendChild(li);
-
-            if(commentedEmpty) commentedEmpty.style.display='none';
-            updateCommentedCount();
-          }
-        }
-      })
-      .catch(function(err){ alert(err.message||'留言失敗，請稍後再試'); });
-    });
-  });
-
-  /* ====== 新增：留言/回覆「按讚」與「回覆」的前端事件 ====== */
-
+  // 取得 CSRF
   function getCookie(name){
     var cookieValue=null;
-    if(document.cookie&&document.cookie!==''){
+    if(document.cookie && document.cookie!==''){
       var cookies=document.cookie.split(';');
       for(var i=0;i<cookies.length;i++){
         var cookie=cookies[i].trim();
@@ -1136,250 +949,826 @@ document.addEventListener('DOMContentLoaded', function () {
     return cookieValue;
   }
 
-  // 切換顯示回覆編輯器
-  document.querySelectorAll('.toggle-reply').forEach(function(btn){
-    btn.addEventListener('click', function(){
-      var target=this.getAttribute('data-target');
-      var box=document.querySelector(target);
-      if(box){ box.style.display = (box.style.display==='none'||box.style.display==='') ? 'block' : 'none'; }
+  // ======== Offcanvas：我的留言（重建用） ========
+  function ensureMyCommentsCard(postId){
+    var listWrap = document.getElementById('commentedPostsList');
+    if(!listWrap) return null;
+    var card = listWrap.querySelector('[data-post-id="'+postId+'"]');
+    if(card) return card;
+
+    var cardBody = document.querySelector('#post-'+postId+' .card-body') || document.getElementById('post-'+postId) || document;
+    var title = text(cardBody, '.card-title', '#'+postId);
+    var meta  = text(cardBody, '.meta', '');
+
+    card = document.createElement('div');
+    card.className='col-12';
+    card.setAttribute('data-commented','1');
+    card.setAttribute('data-post-id', postId);
+    card.innerHTML =
+      '<div class="p-3 saved-item-card">' +
+        '<div class="d-flex align-items-start">' +
+          '<i class="bi bi-chat-dots-fill me-2 mt-1"></i>' +
+          '<div class="flex-grow-1">' +
+            '<div class="fw-bold text-truncate" title="'+esc(title)+'">'+esc(title)+'</div>' +
+            '<div class="small text-muted mb-2">'+esc(meta)+'</div>' +
+            '<div class="my-comment-title mb-2">我的留言：</div>' +
+            '<ul class="my-comment-list" data-post-id="'+postId+'"></ul>' +
+            '<div class="text-end mt-2">' +
+              '<button type="button" class="btn btn-sm btn-primary commented-jump" data-bs-dismiss="offcanvas" data-target-id="post-'+postId+'">前往貼文</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    listWrap.prepend(card);
+    return card;
+  }
+
+  function appendMyCommentToCard(postId, timeText, idLabelText, contentHTML){
+    var card = ensureMyCommentsCard(postId);
+    if(!card) return;
+    var ul = card.querySelector('ul.my-comment-list');
+    var li = document.createElement('li');
+    li.className = 'my-comment-card';
+    li.setAttribute('data-my-comment','1');
+    li.innerHTML =
+      '<div class="head">' +
+        '<span class="dot"></span>' +
+        '<span class="time">'+ esc(timeText||'') +'</span>' +
+        '<span class="id-badge">'+ esc(idLabelText||'我') +'</span>' +
+      '</div>' +
+      '<div class="content mt-1">'+ (contentHTML||'') +'</div>' +
+      '<div class="actions">' +
+        '<a class="btn btn-link p-0 btn-sm commented-jump" data-bs-dismiss="offcanvas" data-target-id="post-'+postId+'" data-time="'+ esc(timeText||'') +'">前往這則</a>' +
+      '</div>';
+    ul.appendChild(li);
+  }
+
+  // 重新從頁面 DOM 建構「我的留言」（含過去的留言 + 回覆）
+  function rebuildMyCommentsFromDOM(){
+    var container = document.getElementById('commentedPostsList');
+    if(!container) return;
+
+    // 清乾淨既有的（避免重複）
+    container.querySelectorAll('.my-comment-card').forEach(function(n){ n.remove(); });
+    // 若卡片是舊的但內部清空，也讓它在最後自動被移除
+    container.querySelectorAll('[data-commented][data-post-id] ul.my-comment-list').forEach(function(ul){ ul.innerHTML=''; });
+
+    // 逐篇貼文掃描
+    document.querySelectorAll('.comments[id^="comments-"]').forEach(function(box){
+      var postId = box.id.replace('comments-','');
+
+      // 1) 我的「頂層留言」：有 .edit-comment-btn 或 .delete-comment-btn 視為本人
+      box.querySelectorAll(':scope [data-list] > li[data-comment-id]').forEach(function(li){
+        var mine = !!li.querySelector('.edit-comment-btn, .delete-comment-btn');
+        if(!mine) return;
+        var time = li.getAttribute('data-comment-time') || text(li, '.small.text-muted span:nth-child(2)', '');
+        var idLabel = text(li, '.id-badge', '我');
+        var content = esc(text(li, '.mt-1', ''));
+        appendMyCommentToCard(postId, time, idLabel, content);
+      });
+
+      // 2) 我的「回覆」：回覆項中含 .edit-reply-btn 視為本人
+      box.querySelectorAll('li.reply-item[data-reply-id]').forEach(function(rli){
+        var mine = !!rli.querySelector('.edit-reply-btn');
+        if(!mine) return;
+        // 取時間：小字區第 2 個 span（第一個是 id-badge）
+        var meta = rli.querySelector('.small.text-muted');
+        var spans = meta ? meta.querySelectorAll('span') : [];
+        var time = spans && spans[1] ? spans[1].textContent.trim().replace(/^・\s*/,'') : '';
+        var idLabel = text(rli, '.id-badge', '我');
+        var content = esc(text(rli, '.reply-content', ''));
+        appendMyCommentToCard(postId, time, idLabel, content);
+      });
+
+      // 3) 更新每篇貼文的留言總數（用 DOM 算）
+      setCommentCounters(postId, getTotalCommentsIncludingReplies(postId));
     });
-  });
 
-  // 送出回覆
-  document.querySelectorAll('.reply-form').forEach(function(form){
-    form.addEventListener('submit', function(e){
+    // 移除沒有任何我留言的卡片
+    container.querySelectorAll('[data-commented][data-post-id]').forEach(function(card){
+      var hasAny = !!card.querySelector('.my-comment-card');
+      if(!hasAny) card.remove();
+    });
+
+    // 空狀態 & 計數
+    var commentedEmpty=document.getElementById('commentedEmpty');
+    if(commentedEmpty) commentedEmpty.style.display = container.querySelector('[data-my-comment="1"]') ? 'none':'block';
+    updateCommentedCount();
+  }
+
+  // =========================
+  // DOM Ready
+  // =========================
+  document.addEventListener('DOMContentLoaded', function(){
+
+    /* 排序切換 */
+    (function(){
+      var sortForm=document.getElementById('sortForm'); if(!sortForm) return;
+      sortForm.querySelectorAll('.btn-check').forEach(function(rb){
+        rb.addEventListener('change', function(){ sortForm.submit(); });
+      });
+    })();
+
+    /* 展開/收合貼文內文 */
+    document.querySelectorAll('.toggle-more').forEach(function(link){
+      link.addEventListener('click', function(e){
+        e.preventDefault();
+        var p=this.closest('.message-content');
+        var full=p.dataset.full||'';
+        var truncated=full.slice(0,100);
+        if(this.textContent.trim()==='查看更多'){
+          p.innerHTML=''; p.textContent=full;
+          var close=document.createElement('a'); close.href='#'; close.textContent=' 關閉詳情'; close.classList.add('toggle-more');
+          p.appendChild(close);
+          close.addEventListener('click', arguments.callee);
+        }else{
+          p.innerHTML=''; p.textContent=truncated;
+          var dots=document.createElement('span'); dots.classList.add('ellipsis'); dots.textContent='...';
+          var more=document.createElement('a'); more.href='#'; more.textContent=' 查看更多'; more.classList.add('toggle-more');
+          p.appendChild(dots); p.appendChild(document.createTextNode(' ')); p.appendChild(more);
+          more.addEventListener('click', arguments.callee);
+        }
+      });
+    });
+
+    /* 讚（貼文） */
+    document.querySelectorAll('.like-form').forEach(function(form){
+      form.addEventListener('submit', function(e){
+        e.preventDefault();
+        var url=this.action;
+        var fd=new FormData(this);
+        var btn=this.querySelector('button');
+        var postId=this.dataset.postId;
+
+        fetch(url,{method:'POST',body:fd,headers:{'X-Requested-With':'XMLHttpRequest'}})
+        .then(function(res){ if(!res.ok) throw new Error(); return res; })
+        .then(function(){
+          btn.classList.toggle('liked');
+          var isLiked=btn.classList.contains('liked');
+          btn.innerHTML='<i class="bi '+(isLiked?'bi-heart-fill text-danger':'bi-heart')+'"></i> '+(isLiked?'收回愛心':'愛心');
+
+          var card=form.closest('.card-body');
+          var icon=card.querySelector('.interaction-bar div:first-child i');
+          var span=card.querySelector('.interaction-bar div:first-child');
+          if(icon && span){
+            icon.className='bi '+(isLiked?'bi-heart-fill text-danger':'bi-heart');
+            var count=parseInt((span.innerText||'').replace(/\D/g,''))||0;
+            count=isLiked?count+1:Math.max(count-1,0);
+            span.innerHTML='<i class="bi '+(isLiked?'bi-heart-fill text-danger':'bi-heart')+'"></i> '+count;
+          }
+
+          // 我的按讚 offcanvas
+          var likedList=document.getElementById('likedPostsList');
+          var likedEmpty=document.getElementById('likedEmpty');
+          if(likedList){
+            var exist=likedList.querySelector('[data-post-id="'+postId+'"]');
+            if(!isLiked && exist){ exist.remove(); }
+            else if(isLiked && !exist){
+              var cardBody=form.closest('.card-body');
+              var title=text(cardBody,'.card-title','#'+postId);
+              var meta =text(cardBody,'.meta','');
+              var col=document.createElement('div');
+              col.className='col-12';
+              col.setAttribute('data-liked','1');
+              col.setAttribute('data-post-id',postId);
+              col.innerHTML='' +
+                '<div class="p-3 saved-item-card">' +
+                  '<div class="d-flex align-items-start">' +
+                    '<i class="bi bi-heart-fill text-danger me-2 mt-1"></i>' +
+                    '<div class="flex-grow-1">' +
+                      '<div class="fw-bold text-truncate" title="'+esc(title)+'">'+esc(title)+'</div>' +
+                      '<div class="small text-muted mb-2">'+esc(meta)+'</div>' +
+                      '<div class="d-flex gap-2">' +
+                        '<button type="button" class="btn btn-sm btn-primary liked-jump" data-bs-dismiss="offcanvas" data-target-id="post-'+postId+'">前往貼文</button>' +
+                      '</div>' +
+                    '</div>' +
+                  '</div>' +
+                '</div>';
+              likedList.appendChild(col);
+            }
+            if(likedEmpty) likedEmpty.style.display = likedList.querySelector('[data-liked="1"]') ? 'none':'block';
+            updateLikedCount();
+          }
+        })
+        .catch(function(){ alert('按愛心失敗，請稍後再試'); });
+      });
+    });
+
+    /* 收藏（貼文） */
+    document.querySelectorAll('.save-form').forEach(function(form){
+      form.addEventListener('submit', function(e){
+        e.preventDefault();
+        var url=this.action;
+        var fd=new FormData(this);
+        var icon=this.querySelector('button i');
+        var postId=this.dataset.postId;
+
+        fetch(url,{method:'POST',body:fd,headers:{'X-Requested-With':'XMLHttpRequest'}})
+        .then(function(res){ if(!res.ok) throw new Error(); return res; })
+        .then(function(){
+          var filled=icon.classList.contains('bi-star-fill');
+          icon.className='bi '+(filled?'bi-star':'bi-star-fill');
+
+          var savedList=document.getElementById('savedPostsList');
+          var empty=document.getElementById('savedEmpty');
+          if(savedList){
+            var exist=savedList.querySelector('[data-post-id="'+postId+'"]');
+            if(filled && exist){ exist.remove(); }
+            else if(!filled && !exist){
+              var cardBody=form.closest('.card-body');
+              var title=text(cardBody,'.card-title','#'+postId);
+              var meta =text(cardBody,'.meta','');
+              var col=document.createElement('div');
+              col.className='col-12';
+              col.setAttribute('data-saved','1');
+              col.setAttribute('data-post-id',postId);
+              col.innerHTML='' +
+                '<div class="p-3 saved-item-card">' +
+                  '<div class="d-flex align-items-start">' +
+                    '<i class="bi bi-star-fill text-warning me-2 mt-1"></i>' +
+                    '<div class="flex-grow-1">' +
+                      '<div class="fw-bold text-truncate" title="'+esc(title)+'">'+esc(title)+'</div>' +
+                      '<div class="small text-muted mb-2">'+esc(meta)+'</div>' +
+                      '<div class="d-flex gap-2">' +
+                        '<button type="button" class="btn btn-sm btn-primary saved-jump" data-bs-dismiss="offcanvas" data-target-id="post-'+postId+'">前往貼文</button>' +
+                      '</div>' +
+                    '</div>' +
+                  '</div>' +
+                '</div>';
+              savedList.appendChild(col);
+            }
+            if(empty) empty.style.display = savedList.querySelector('[data-saved="1"]') ? 'none':'block';
+            updateSavedCount();
+          }
+        })
+        .catch(function(){ alert('收藏失敗，請稍後再試'); });
+      });
+    });
+
+    /* 未登入提示 */
+    function showAuthModal(){ new bootstrap.Modal(document.getElementById('authRequiredModal')).show(); }
+    document.querySelectorAll('.require-login').forEach(function(el){
+      el.addEventListener('click', function(e){ e.preventDefault(); showAuthModal(); });
+    });
+    document.body.addEventListener('click', function(e){
+      var req=e.target.closest('.require-login'); if(!req) return;
+      e.preventDefault(); showAuthModal();
+    });
+
+    /* 展開留言區 */
+    document.querySelectorAll('.btn-comment').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var postId=this.dataset.postId;
+        var box=document.getElementById('comments-'+postId);
+        if(box) box.style.display=(box.style.display==='none' || box.style.display==='')?'block':'none';
+      });
+    });
+
+    /* 首次載入：用 DOM 重新計算每篇貼文的留言總數 & 重建「我的留言」（含回覆） */
+    document.querySelectorAll('.comments[id^="comments-"]').forEach(function(box){
+      var postId = box.id.replace('comments-','');
+      setCommentCounters(postId, getTotalCommentsIncludingReplies(postId));
+    });
+    rebuildMyCommentsFromDOM(); // ← 這行確保刷新後也會把舊的回覆算進去
+
+    // =========================
+    // 新增留言（頂層）
+    // =========================
+    document.querySelectorAll('.comment-form').forEach(function(form){
+      form.addEventListener('submit', function(e){
+        e.preventDefault();
+        var url=this.action;
+        var fd=new FormData(this);
+        var csrf=this.querySelector('input[name="csrfmiddlewaretoken"]') ? this.querySelector('input[name="csrfmiddlewaretoken"]').value : '';
+        var postId=this.dataset.postId;
+
+        fetch(url,{ method:'POST', body:fd, headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':csrf} })
+        .then(function(res){
+          if(!res.ok){
+            return res.json().catch(function(){ return {}; })
+                     .then(function(d){ throw new Error(d.error||'留言失敗，請稍後再試'); });
+          }
+          return res.json();
+        })
+        .then(function(data){
+          form.reset();
+
+          var wrap=form.closest('.comments');
+          var list=wrap.querySelector('[data-list]');
+          var empty=wrap.querySelector('[data-empty]');
+          if(empty) empty.remove();
+
+          // 以回傳資料重畫頂層
+          list.innerHTML='';
+          (data.comments||[]).forEach(function(c){
+            var li=document.createElement('li');
+            li.className='mb-2 border-bottom pb-2 position-relative';
+            li.setAttribute('data-comment-time', c.time||'');
+            li.setAttribute('data-comment-id', c.id || c.time || '');
+            li.innerHTML='' +
+              '<div>' +
+                '<div class="small text-muted d-flex align-items-center gap-2 flex-wrap">' +
+                  '<span class="id-badge">'+ identityText(c) +'</span>' +
+                  '<span>・ '+ (c.time||'') +'</span>' +
+                '</div>' +
+                '<div class="mt-1">'+ (c.content||'') +'</div>' +
+              '</div>' +
+              '<ul class="replies" data-replies></ul>';
+            list.appendChild(li);
+          });
+
+          // 更新總數並重建我的留言（把剛發的頂層也算入）
+          setCommentCounters(postId, getTotalCommentsIncludingReplies(postId));
+          rebuildMyCommentsFromDOM();
+        })
+        .catch(function(err){ alert(err.message||'留言失敗，請稍後再試'); });
+      });
+    });
+
+    // =========================
+    // 回覆：顯示/送出/按讚/刪除/編輯
+    // =========================
+
+    // 顯示或收合回覆編輯器（委派）
+    document.body.addEventListener('click', function(e){
+      var btn=e.target.closest('.toggle-reply'); if(!btn) return;
+      var target=btn.getAttribute('data-target');
+      var box=document.querySelector(target);
+      if(box){ box.style.display=(box.style.display==='none'||box.style.display==='')?'block':'none'; }
+    });
+
+    // 送出回覆（委派）
+    document.addEventListener('submit', function(e){
+      var form=e.target.closest('.reply-form'); if(!form) return;
       e.preventDefault();
-      var url=this.getAttribute('action');
-      var postId=this.getAttribute('data-post-id');
-      var commentId=this.getAttribute('data-comment-id');
-      var csrf=getCookie('csrftoken') || (this.querySelector('[name=csrfmiddlewaretoken]')||{}).value;
+      if(form.dataset.busy==='1') return;
+      form.dataset.busy='1';
 
-      var fd=new FormData(this);
+      var url=form.getAttribute('action');
+      var postId=form.getAttribute('data-post-id');
+      var commentId=form.getAttribute('data-comment-id');
+      var parentReplyId=form.getAttribute('data-parent-reply-id') || (form.querySelector('[name="parent_reply_id"]')||{}).value || '';
+      var csrf=getCookie('csrftoken') || (form.querySelector('[name=csrfmiddlewaretoken]')||{}).value;
+
+      var fd=new FormData(form);
       fd.set('comment_id', commentId);
+      if(parentReplyId) fd.set('parent_reply_id', parentReplyId);
 
-      fetch(url,{
-        method:'POST',
-        body:fd,
-        headers:{ 'X-Requested-With':'XMLHttpRequest', 'X-CSRFToken': csrf }
-      })
+      fetch(url,{ method:'POST', body:fd, headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':csrf} })
       .then(function(res){ return res.json(); })
       .then(function(data){
-        if(!data.success){ throw new Error(data.error||'回覆失敗'); }
-        // 新增一個回覆到對應的 replies 列表
-        var commentLi = document.querySelector('[id="post-'+postId+'"] [data-comment-id="'+commentId+'"]');
+        if(!data.success) throw new Error(data.error||'回覆失敗');
+
+        var commentLi=document.querySelector('[id="post-'+postId+'"] [data-comment-id="'+commentId+'"]');
         if(!commentLi) return;
-        var replies = commentLi.querySelector('[data-replies]');
-        var r = data.reply || {};
-        var rid = r.id || r.time || ('r_'+Date.now());
-        var li = document.createElement('li');
+
+        var commentLikeBtn=commentLi.querySelector('.comment-like-btn');
+        var likeUrl=commentLikeBtn ? commentLikeBtn.getAttribute('data-like-url') : ('/post/'+postId+'/comment/like/');
+
+        var repliesTarget;
+        if(parentReplyId){
+          var parentReplyLi=commentLi.querySelector('[data-reply-id="'+parentReplyId+'"]');
+          if(parentReplyLi){
+            repliesTarget=parentReplyLi.querySelector('.replies[data-replies]');
+            if(!repliesTarget){
+              repliesTarget=document.createElement('ul');
+              repliesTarget.className='replies'; repliesTarget.setAttribute('data-replies','');
+              parentReplyLi.appendChild(repliesTarget);
+            }
+          }
+        }
+        if(!repliesTarget){
+          repliesTarget=commentLi.querySelector(':scope > .replies[data-replies]') || commentLi.querySelector('.replies[data-replies]');
+        }
+        if(!repliesTarget) return;
+
+        var r=data.reply || {};
+        var rid=r.id || r.time || ('r_'+Date.now());
+
+        var commentsBox=form.closest('.comments');
+        var nn1=commentsBox ? (commentsBox.getAttribute('data-nickname1')||'') : '';
+        var nn2=commentsBox ? (commentsBox.getAttribute('data-nickname2')||'') : '';
+        var has1=!!(nn1 && nn1.trim().length);
+        var has2=!!(nn2 && nn2.trim().length);
+
+        var level=1;
+        if(parentReplyId){
+          var parentLi=commentLi.querySelector('[data-reply-id="'+parentReplyId+'"]');
+          if(parentLi){
+            var pl=parseInt(getComputedStyle(parentLi).getPropertyValue('--lvl'))||1;
+            level=pl+1;
+          }else{ level=2; }
+        }
+
+        var editorId='reply-reply-editor-'+postId+'-'+commentId+'-'+rid;
+        function identityLabel(obj){
+          var nn=(obj.nickname||'').trim();
+          if(obj.identity==='anonymous') return '匿名';
+          if(obj.identity==='nickname1') return '暱稱 1：'+nn;
+          if(obj.identity==='nickname2') return '暱稱 2：'+nn;
+          return (!nn || nn==='匿名' || nn==='(匿名)') ? '匿名' : ('暱稱：'+nn);
+        }
+
+        var li=document.createElement('li');
         li.setAttribute('data-reply-id', rid);
+        li.className='reply-item position-relative';
+        li.style.setProperty('--lvl', level);
+
+        var menuId='rMenu-'+postId+'-'+rid;
+        var contentAttr=(r.content||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+        var replyDropdownHTML =
+          '<div class="dropdown position-absolute top-0 end-0">' +
+            '<button class="btn btn-link text-muted p-0" type="button" id="'+menuId+'" data-bs-toggle="dropdown">' +
+              '<i class="bi bi-three-dots-vertical"></i>' +
+            '</button>' +
+            '<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="'+menuId+'">' +
+              '<li><a class="dropdown-item text-primary edit-reply-btn" href="#" data-post-id="'+postId+'" data-comment-id="'+commentId+'" data-reply-id="'+rid+'" data-content="'+contentAttr+'"><i class="bi bi-pencil-fill me-2"></i> 編輯</a></li>' +
+              '<li><a class="dropdown-item text-danger delete-reply-btn" href="#" data-post-id="'+postId+'" data-comment-id="'+commentId+'" data-reply-id="'+rid+'"><i class="bi bi-trash-fill me-2"></i> 刪除</a></li>' +
+            '</ul>' +
+          '</div>';
+
         li.innerHTML =
           '<div class="small text-muted d-flex align-items-center gap-2 flex-wrap">' +
-            '<span class="id-badge">'+ identityText(r) +'</span>' +
-            '<span>・ '+ (r.time||'') +'</span>' +
+            '<span class="id-badge">'+ identityLabel(r) +'</span>' +
+            '<span>・ '+ esc(r.time||'') +'</span>' +
           '</div>' +
-          '<div class="mt-1">'+ (r.content||'') +'</div>' +
+          '<div class="mt-1 reply-content">'+ esc(r.content||'') +'</div>' +
+          replyDropdownHTML +
           '<div class="d-flex align-items-center mt-1">' +
-            '<button type="button" class="btn btn-link p-0 reply-like-btn" '+
-              'data-like-url="/post/'+postId+'/comment/like/" '+
-              'data-post-id="'+postId+'" data-comment-id="'+commentId+'" data-reply-id="'+rid+'">' +
+            '<button type="button" class="btn btn-link p-0 reply-like-btn" data-like-url="'+ likeUrl +'" data-post-id="'+postId+'" data-comment-id="'+commentId+'" data-reply-id="'+rid+'">' +
               '<i class="bi bi-heart"></i> <span class="ms-1 like-text">按讚</span> <span class="ms-1 like-count">0</span>' +
             '</button>' +
-          '</div>';
-        replies.appendChild(li);
+            (document.body.classList.contains('authenticated') ? 
+              '<button type="button" class="btn btn-link p-0 ms-3 toggle-reply" data-target="#'+editorId+'"><i class="bi bi-chat"></i> 回覆</button>' :
+              '<button type="button" class="btn btn-link p-0 require-login ms-3"><i class="bi bi-chat"></i> 回覆</button>') +
+          '</div>' +
+          (document.body.classList.contains('authenticated') ?
+            '<div id="'+editorId+'" class="reply-editor mt-2" style="display:none;">' +
+              '<form method="post" action="'+url+'" class="reply-form" data-post-id="'+postId+'" data-comment-id="'+commentId+'" data-parent-reply-id="'+rid+'">' +
+                '<div class="d-flex align-items-center flex-wrap mb-2" style="gap:10px;">' +
+                  '<span class="identity-label">以誰的身分回覆：</span>' +
+                  '<div class="btn-group btn-group-sm identity-group flex-wrap">' +
+                    '<input type="radio" class="btn-check" name="reply_identity" id="dyn-ri1-'+editorId+'" value="nickname1" '+(has1?'checked':'disabled')+'>' +
+                    '<label class="btn" for="dyn-ri1-'+editorId+'"><i class="bi bi-person-badge"></i> 暱稱 1'+(has1?('：'+esc(nn1)):'（未設定）')+'</label>' +
+                    '<input type="radio" class="btn-check" name="reply_identity" id="dyn-ri2-'+editorId+'" value="nickname2" '+((!has1 && has2)?'checked':'')+' '+(has2?'':'disabled')+'>' +
+                    '<label class="btn" for="dyn-ri2-'+editorId+'"><i class="bi bi-person-badge"></i> 暱稱 2'+(has2?('：'+esc(nn2)):'（未設定）')+'</label>' +
+                    '<input type="radio" class="btn-check" name="reply_identity" id="dyn-riA-'+editorId+'" value="anonymous" '+((has1||has2)?'':'checked')+'>' +
+                    '<label class="btn" for="dyn-riA-'+editorId+'"><i class="bi bi-incognito"></i> (匿名)</label>' +
+                  '</div>' +
+                '</div>' +
+                '<div class="input-group">' +
+                  '<input type="text" name="reply" class="form-control" placeholder="寫下回覆…" maxlength="300" required>' +
+                  '<button type="submit" class="btn btn-primary">送出</button>' +
+                '</div>' +
+                '<div class="form-text">最多 300 字。</div>' +
+              '</form>' +
+            '</div>' : ''
+          ) +
+          '<ul class="replies" data-replies></ul>';
 
-        // 清空輸入框
-        var input = form.querySelector('input[name="reply"]'); if(input) input.value='';
+        repliesTarget.appendChild(li);
+
+        // 將這則回覆也同步到「我的留言」，並更新總數
+        rebuildMyCommentsFromDOM();
+        setCommentCounters(postId, getTotalCommentsIncludingReplies(postId));
+
+        var input=form.querySelector('input[name="reply"]');
+        if(input){ input.value=''; input.focus(); }
       })
-      .catch(function(err){ alert(err.message||'回覆失敗'); });
+      .catch(function(err){ alert(err.message||'回覆失敗'); })
+      .finally(function(){ form.dataset.busy=''; });
     });
+
+    // 留言按讚（委派）
+    document.body.addEventListener('click', function(e){
+      var btn=e.target.closest('.comment-like-btn'); if(!btn) return;
+      var url=btn.getAttribute('data-like-url');
+      var commentId=btn.getAttribute('data-comment-id');
+
+      var fd=new FormData(); fd.set('comment_id', commentId);
+      fetch(url,{ method:'POST', body:fd, headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':getCookie('csrftoken')} })
+      .then(function(res){ return res.json(); })
+      .then(function(data){
+        if(!data.success) throw new Error(data.error||'操作失敗');
+        var liked=data.liked, count=data.like_count||0;
+        btn.classList.toggle('liked', liked);
+        var icon=btn.querySelector('i'), textEl=btn.querySelector('.like-text'), num=btn.querySelector('.like-count');
+        if(icon) icon.className='bi ' + (liked ? 'bi-heart-fill text-danger' : 'bi-heart');
+        if(textEl) textEl.textContent = liked ? '收回讚' : '按讚';
+        if(num)  num.textContent  = count;
+      })
+      .catch(function(err){ alert(err.message||'操作失敗'); });
+    });
+
+    // 回覆按讚（委派）
+    document.body.addEventListener('click', function(e){
+      var btn=e.target.closest('.reply-like-btn'); if(!btn) return;
+      var url=btn.getAttribute('data-like-url');
+      var commentId=btn.getAttribute('data-comment-id');
+      var replyId=btn.getAttribute('data-reply-id');
+
+      var fd=new FormData(); fd.set('comment_id', commentId); fd.set('reply_id', replyId);
+      fetch(url,{ method:'POST', body:fd, headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':getCookie('csrftoken')} })
+      .then(function(res){ return res.json(); })
+      .then(function(data){
+        if(!data.success) throw new Error(data.error||'操作失敗');
+        var liked=data.liked, count=data.like_count||0;
+        btn.classList.toggle('liked', liked);
+        var icon=btn.querySelector('i'), textEl=btn.querySelector('.like-text'), num=btn.querySelector('.like-count');
+        if(icon) icon.className='bi ' + (liked ? 'bi-heart-fill text-danger' : 'bi-heart');
+        if(textEl) textEl.textContent = liked ? '收回讚' : '按讚';
+        if(num)  num.textContent  = count;
+      })
+      .catch(function(err){ alert(err.message||'操作失敗'); });
+    });
+
+    // =========================
+    // Offcanvas 跳轉們
+    // =========================
+    function bindOffcanvasJump(listId, ocId, itemSelector){
+      var list=document.getElementById(listId);
+      var ocEl=document.getElementById(ocId);
+      if(!list) return;
+      var pending=null;
+      list.addEventListener('click',function(e){
+        var btn=e.target.closest(itemSelector); if(!btn) return;
+        e.preventDefault();
+        if(window.__closeSearchHistory) window.__closeSearchHistory();
+        pending={ id: btn.getAttribute('data-target-id'), time: btn.getAttribute('data-time') || '' };
+        var inst=bootstrap.Offcanvas.getInstance(ocEl);
+        if(ocEl&&ocEl.classList.contains('show')&&inst){ inst.hide(); }
+        else { scrollToPost(pending.id, pending.time); pending=null; }
+      });
+      if(ocEl){
+        ocEl.addEventListener('hidden.bs.offcanvas',function(){
+          if(pending){ scrollToPost(pending.id, pending.time); pending=null; }
+        });
+      }
+    }
+    bindOffcanvasJump('savedPostsList','savedOffcanvas','.saved-jump');
+    bindOffcanvasJump('likedPostsList','likedOffcanvas','.liked-jump');
+    bindOffcanvasJump('postedPostsList','postedOffcanvas','.posted-jump');
+    bindOffcanvasJump('commentedPostsList','commentedOffcanvas','.commented-jump');
+
+    // =========================
+    // 回頂部按鈕
+    // =========================
+    (function(){
+      var wrap=document.getElementById('scrollTopWrapper');
+      var btn=document.getElementById('scrollToTopNav');
+      if(!wrap || !btn) return;
+
+      function y(){ return window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0; }
+      function atTop(){ return y()<=0; }
+      function toggle(){ wrap.style.display = (y()>100)?'flex':'none'; }
+      window.addEventListener('scroll', toggle, {passive:true}); toggle();
+
+      btn.addEventListener('click', function(e){
+        e.preventDefault();
+        var openOc=document.querySelector('.offcanvas.show');
+        if(openOc && window.bootstrap && window.bootstrap.Offcanvas){
+          var inst=window.bootstrap.Offcanvas.getInstance(openOc) || new window.bootstrap.Offcanvas(openOc);
+          var after=function(){ openOc.removeEventListener('hidden.bs.offcanvas', after); doScroll(); };
+          openOc.addEventListener('hidden.bs.offcanvas', after, {once:true});
+          inst.hide();
+        }else{ doScroll(); }
+      });
+
+      function doScroll(){
+        try{ window.scrollTo({top:0, behavior:'smooth'}); }
+        catch(_){ document.documentElement.scrollTop=0; document.body.scrollTop=0; }
+        var t=setInterval(function(){ if(atTop()){ wrap.style.display='none'; clearInterval(t);} },80);
+      }
+    })();
+
+    // =========================
+    // 刪除/編輯留言（原本流程）
+    // =========================
+    document.querySelectorAll('.delete-comment-btn').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        if(!confirm('確定要刪除這則留言嗎？')) return;
+        var postId=this.dataset.postId, time=this.dataset.time;
+        fetch('/post/'+postId+'/comment/delete/',{
+          method:'POST',
+          headers:{ 'Content-Type':'application/x-www-form-urlencoded','X-Requested-With':'XMLHttpRequest','X-CSRFToken': getCookie('csrftoken') },
+          body:'time='+encodeURIComponent(time)
+        })
+        .then(function(res){ return res.json(); })
+        .then(function(data){
+          if(!data.success) throw new Error(data.error||'刪除失敗');
+          window.location.reload(); // 確保樹狀同步
+        })
+        .catch(function(err){ alert(err.message||'刪除失敗'); });
+      });
+    });
+
+    // ---- 編輯留言 ----
+    (function(){
+      var modalEl=document.getElementById('editCommentModal'); if(!modalEl) return;
+      var modal=new bootstrap.Modal(modalEl);
+      var textarea=document.getElementById('editCommentContent');
+      document.querySelectorAll('.edit-comment-btn').forEach(function(btn){
+        btn.addEventListener('click',function(e){
+          e.preventDefault();
+          window.currentPostId=this.dataset.postId;
+          window.currentTime=this.dataset.time;
+          textarea.value=this.dataset.content||'';
+          modal.show();
+        });
+      });
+      var saveBtn=document.getElementById('saveCommentEdit');
+      if(saveBtn){
+        saveBtn.addEventListener('click',function(){
+          var content=(textarea.value||'').trim(); if(!content){ alert('留言內容不能為空！'); return; }
+          fetch('/edit_comment/'+window.currentPostId+'/'+encodeURIComponent(window.currentTime)+'/',{
+            method:'POST',
+            headers:{ 'X-CSRFToken': (document.querySelector('[name=csrfmiddlewaretoken]')||{}).value, 'Content-Type':'application/json' },
+            body: JSON.stringify({ content:content })
+          })
+          .then(function(res){ return res.json(); })
+          .then(function(data){
+            if(!data.success) throw new Error(data.error||'更新失敗');
+            var commentEls=document.querySelectorAll('#comments-'+window.currentPostId+' .small.text-muted');
+            Array.prototype.forEach.call(commentEls,function(el){
+              if(el.innerText.indexOf(window.currentTime)!==-1){
+                var tgt=el.parentElement.parentElement.querySelector('.mt-1');
+                if(tgt) tgt.innerText=content;
+              }
+            });
+            modal.hide();
+            rebuildMyCommentsFromDOM();
+          })
+          .catch(function(err){ alert(err.message||'更新失敗'); });
+        });
+      }
+    })();
+
+    // ---- 回覆的編輯/刪除（共用 Modal） ----
+    (function(){
+      var modalEl=document.getElementById('editCommentModal'); if(!modalEl) return;
+      var modal=window.bootstrap ? (window.bootstrap.Modal.getInstance(modalEl) || new window.bootstrap.Modal(modalEl)) : null;
+      var textarea=document.getElementById('editCommentContent');
+      var saveBtn=document.getElementById('saveCommentEdit');
+
+      // 開啟回覆編輯
+      document.body.addEventListener('click', function(e){
+        var btn=e.target.closest('.edit-reply-btn'); if(!btn) return;
+        e.preventDefault();
+        window.currentReplyEdit={ postId:btn.getAttribute('data-post-id'), commentId:btn.getAttribute('data-comment-id'), replyId:btn.getAttribute('data-reply-id') };
+        textarea.value=btn.getAttribute('data-content')||'';
+        if(modal) modal.show();
+      });
+
+      // 刪除回覆
+      document.body.addEventListener('click', function(e){
+        var btn=e.target.closest('.delete-reply-btn'); if(!btn) return;
+        e.preventDefault();
+        if(!confirm('確定要刪除這則回覆嗎？')) return;
+        var postId=btn.getAttribute('data-post-id');
+        var commentId=btn.getAttribute('data-comment-id');
+        var replyId=btn.getAttribute('data-reply-id');
+        var fd=new FormData(); fd.set('comment_id', commentId); fd.set('reply_id', replyId);
+        fetch('/post/'+postId+'/reply/delete/', {
+          method:'POST',
+          body: fd,
+          headers:{'X-Requested-With':'XMLHttpRequest', 'X-CSRFToken': (document.cookie.match(/csrftoken=([^;]+)/)||[])[1] || '' }
+        })
+        .then(function(res){ return res.json(); })
+        .then(function(data){
+          if(!data.success) throw new Error(data.error||'刪除失敗');
+          var li=document.querySelector('[id="post-'+postId+'"] [data-reply-id="'+replyId+'"]');
+          if(li){ li.remove(); }
+          setCommentCounters(postId, getTotalCommentsIncludingReplies(postId));
+          rebuildMyCommentsFromDOM();
+        })
+        .catch(function(err){ alert(err.message||'刪除失敗'); });
+      });
+
+      // 覆寫儲存：回覆編輯
+      if(saveBtn){
+        saveBtn.addEventListener('click',function(ev){
+          if(!window.currentReplyEdit) return;
+          ev.preventDefault();
+          var payload={ content:(textarea.value||'').trim(), comment_id:window.currentReplyEdit.commentId, reply_id:window.currentReplyEdit.replyId };
+          if(!payload.content){ alert('內容不能為空！'); return; }
+          fetch('/post/'+window.currentReplyEdit.postId+'/reply/edit/', {
+            method:'POST',
+            headers:{ 'Content-Type':'application/json','X-CSRFToken': (document.cookie.match(/csrftoken=([^;]+)/)||[])[1] || '' },
+            body: JSON.stringify(payload)
+          })
+          .then(function(res){ return res.json(); })
+          .then(function(data){
+            if(!data.success) throw new Error(data.error||'更新失敗');
+            var li=document.querySelector('[id="post-'+window.currentReplyEdit.postId+'"] [data-reply-id="'+window.currentReplyEdit.replyId+'"]');
+            if(li){
+              var contentEl=li.querySelector('.reply-content');
+              if(contentEl) contentEl.textContent=payload.content;
+              var editBtn=li.querySelector('.edit-reply-btn');
+              if(editBtn) editBtn.setAttribute('data-content', payload.content);
+            }
+            if(modal) modal.hide();
+            rebuildMyCommentsFromDOM();
+          })
+          .catch(function(err){ alert(err.message||'更新失敗'); });
+        }, true);
+      }
+    })();
+
+    // =========================
+    // 🔎 搜尋歷史
+    // =========================
+    (function(){
+      var STORAGE_KEY='post_display_search_history_v1';
+      var MAX_ITEMS=20;
+      var form=document.getElementById('searchForm');
+      var input=document.getElementById('searchInput');
+      var panel=document.getElementById('searchHistory');
+
+      function read(){ try{return JSON.parse(localStorage.getItem(STORAGE_KEY))||[]}catch(e){return[];} }
+      function write(arr){ localStorage.setItem(STORAGE_KEY, JSON.stringify(arr.slice(0,MAX_ITEMS))); }
+      function addTerm(term){
+        term=(term||'').trim(); if(!term) return;
+        var list=read().filter(function(t){ return t.toLowerCase()!==term.toLowerCase(); });
+        list.unshift(term); write(list);
+      }
+      function removeTerm(term){ write(read().filter(function(t){ return t!==term; })); }
+      function createItem(term){
+        var row=document.createElement('div');
+        row.className='history-item';
+        row.innerHTML='<span class="icon"><i class="bi bi-clock-history"></i></span><span class="term"></span><button type="button" class="remove" aria-label="刪除"><i class="bi bi-x"></i></button>';
+        row.querySelector('.term').textContent=term;
+        row.addEventListener('mousedown', function(e){
+          if(e.target.closest('.remove')) return;
+          input.value=term; setTimeout(function(){ form.submit(); },0);
+        });
+        row.querySelector('.remove').addEventListener('mousedown', function(e){
+          e.stopPropagation(); removeTerm(term); render(input.value);
+        });
+        return row;
+      }
+      function render(filterText){
+        filterText=(filterText||'').trim().toLowerCase();
+        var list=read().filter(function(t){ return t.toLowerCase().includes(filterText); });
+        panel.innerHTML=''; if(list.length===0){ panel.classList.remove('show'); return; }
+        list.forEach(function(t){ panel.appendChild(createItem(t)); });
+        panel.classList.add('show');
+      }
+      function open(){ render(input.value); }
+      function close(){ panel.classList.remove('show'); }
+
+      if(input){ input.addEventListener('focus', open); input.addEventListener('input', function(){ render(input.value); }); }
+      if(form){ form.addEventListener('submit', function(){ addTerm(input.value); close(); }); }
+      document.addEventListener('mousedown', function(e){ if(!(panel.contains(e.target)) && e.target!==input){ close(); }});
+      if(input){ input.addEventListener('keydown', function(e){ if(e.key==='Escape'){ close(); input.blur(); } }); }
+
+      window.__closeSearchHistory = close;
+      document.querySelectorAll('.saved-trigger,.liked-trigger,.posted-trigger,.commented-trigger').forEach(function(btn){
+        btn.addEventListener('click', function(){ close(); });
+      });
+    })();
+
+    // 初始化 offcanvas 計數
+    updateSavedCount(); updateLikedCount(); updatePostedCount(); updateCommentedCount();
   });
 
-  // 委派：留言按讚
-  document.body.addEventListener('click', function(e){
-    var btn = e.target.closest('.comment-like-btn');
-    if(!btn) return;
-
-    var url = btn.getAttribute('data-like-url');
-    var postId = btn.getAttribute('data-post-id');
-    var commentId = btn.getAttribute('data-comment-id');
-
-    var fd = new FormData();
-    fd.set('comment_id', commentId);
-
-    fetch(url, {
-      method:'POST',
-      body: fd,
-      headers: { 'X-Requested-With':'XMLHttpRequest', 'X-CSRFToken': getCookie('csrftoken') }
-    })
-    .then(function(res){ return res.json(); })
-    .then(function(data){
-      if(!data.success){ throw new Error(data.error||'操作失敗'); }
-      // 更新按鈕外觀與數字
-      var liked = data.liked;
-      var count = data.like_count || 0;
-      btn.classList.toggle('liked', liked);
-      var icon = btn.querySelector('i');
-      var text = btn.querySelector('.like-text');
-      var num  = btn.querySelector('.like-count');
-      if(icon) icon.className = 'bi ' + (liked ? 'bi-heart-fill text-danger' : 'bi-heart');
-      if(text) text.textContent = liked ? '收回讚' : '按讚';
-      if(num)  num.textContent  = count;
-    })
-    .catch(function(err){ alert(err.message||'操作失敗'); });
-  });
-
-  // 委派：回覆按讚
-  document.body.addEventListener('click', function(e){
-    var btn = e.target.closest('.reply-like-btn');
-    if(!btn) return;
-
-    var url = btn.getAttribute('data-like-url');
-    var postId = btn.getAttribute('data-post-id');
-    var commentId = btn.getAttribute('data-comment-id');
-    var replyId = btn.getAttribute('data-reply-id');
-
-    var fd = new FormData();
-    fd.set('comment_id', commentId);
-    fd.set('reply_id', replyId);
-
-    fetch(url, {
-      method:'POST',
-      body: fd,
-      headers: { 'X-Requested-With':'XMLHttpRequest', 'X-CSRFToken': getCookie('csrftoken') }
-    })
-    .then(function(res){ return res.json(); })
-    .then(function(data){
-      if(!data.success){ throw new Error(data.error||'操作失敗'); }
-      var liked = data.liked;
-      var count = data.like_count || 0;
-      btn.classList.toggle('liked', liked);
-      var icon = btn.querySelector('i');
-      var text = btn.querySelector('.like-text');
-      var num  = btn.querySelector('.like-count');
-      if(icon) icon.className = 'bi ' + (liked ? 'bi-heart-fill text-danger' : 'bi-heart');
-      if(text) text.textContent = liked ? '收回讚' : '按讚';
-      if(num)  num.textContent  = count;
-    })
-    .catch(function(err){ alert(err.message||'操作失敗'); });
-  });
-
-  /* —— Offcanvas 跳轉（收藏） —— */
-  (function () {
-    var list=document.getElementById('savedPostsList');
-    var empty=document.getElementById('savedEmpty');
-    var ocEl=document.getElementById('savedOffcanvas');
-    if(!list) return;
-
-    updateSavedCount();
-    if(!list.querySelector('[data-saved="1"]')&&empty) empty.style.display='block';
-
-    var pendingTargetId=null;
-    list.addEventListener('click',function(e){
-      var btn=e.target.closest('.saved-jump'); if(!btn) return;
-      e.preventDefault();
-      pendingTargetId=btn.getAttribute('data-target-id');
-      var ocInstance=bootstrap.Offcanvas.getInstance(ocEl);
-      if(ocEl&&ocEl.classList.contains('show')&&ocInstance){ ocInstance.hide(); }
-      else { scrollToPost(pendingTargetId); pendingTargetId=null; }
-    });
-    if(ocEl){
-      ocEl.addEventListener('hidden.bs.offcanvas',function(){ if(pendingTargetId){ scrollToPost(pendingTargetId); pendingTargetId=null; }});
+  // =========================
+  // navigation/back-forward 緩存處理
+  // =========================
+  (function(){
+    var nav = performance.getEntriesByType && performance.getEntriesByType('navigation')[0];
+    var isReload = nav ? nav.type === 'reload' : (performance.navigation && performance.navigation.type === 1);
+    if(isReload){
+      if(location.hash){ history.replaceState(null,'',location.pathname+location.search); }
+      window.scrollTo(0,0); document.body.scrollTop=0; document.documentElement.scrollTop=0;
     }
+    window.addEventListener('pageshow', function(e){
+      if(e.persisted){
+        if(location.hash){ history.replaceState(null,'',location.pathname+location.search); }
+        window.scrollTo(0,0); document.body.scrollTop=0; document.documentElement.scrollTop=0;
+      }
+    });
   })();
 
-  /* —— Offcanvas 跳轉（按讚） —— */
-  (function () {
-    var list=document.getElementById('likedPostsList');
-    var empty=document.getElementById('likedEmpty');
-    var ocEl=document.getElementById('likedOffcanvas');
-    if(!list) return;
-
-    updateLikedCount();
-    if(!list.querySelector('[data-liked="1"]')&&empty) empty.style.display='block';
-
-    var pendingTargetId=null;
-    list.addEventListener('click',function(e){
-      var btn=e.target.closest('.liked-jump'); if(!btn) return;
-      e.preventDefault();
-      pendingTargetId=btn.getAttribute('data-target-id');
-      var ocInstance=bootstrap.Offcanvas.getInstance(ocEl);
-      if(ocEl&&ocEl.classList.contains('show')&&ocInstance){ ocInstance.hide(); }
-      else { scrollToPost(pendingTargetId); pendingTargetId=null; }
-    });
-    if(ocEl){
-      ocEl.addEventListener('hidden.bs.offcanvas',function(){ if(pendingTargetId){ scrollToPost(pendingTargetId); pendingTargetId=null; }});
-    }
-  })();
-
-  /* —— Offcanvas 跳轉（我的貼文） —— */
-  (function () {
-    var list=document.getElementById('postedPostsList');
-    var empty=document.getElementById('postedEmpty');
-    var ocEl=document.getElementById('postedOffcanvas');
-    if(!list) return;
-
-    updatePostedCount();
-    if(!list.querySelector('[data-posted="1"]')&&empty) empty.style.display='block';
-
-    var pendingTargetId=null;
-    list.addEventListener('click',function(e){
-      var btn=e.target.closest('.posted-jump'); if(!btn) return;
-      e.preventDefault();
-      pendingTargetId=btn.getAttribute('data-target-id');
-      var ocInstance=bootstrap.Offcanvas.getInstance(ocEl);
-      if(ocEl&&ocEl.classList.contains('show')&&ocInstance){ ocInstance.hide(); }
-      else { scrollToPost(pendingTargetId); pendingTargetId=null; }
-    });
-    if(ocEl){
-      ocEl.addEventListener('hidden.bs.offcanvas',function(){ if(pendingTargetId){ scrollToPost(pendingTargetId); pendingTargetId=null; }});
-    }
-  })();
-
-  /* —— Offcanvas 跳轉（我的留言：可帶時間定位） —— */
-  (function () {
-    var list=document.getElementById('commentedPostsList');
-    var empty=document.getElementById('commentedEmpty');
-    var ocEl=document.getElementById('commentedOffcanvas');
-    if(!list) return;
-
-    updateCommentedCount();
-    var hasItems = !!list.querySelector('[data-commented="1"]');
-    if(empty) empty.style.display = hasItems ? 'none' : 'block';
-
-    var pendingTarget=null; // {id, time}
-    list.addEventListener('click',function(e){
-      var btn=e.target.closest('.commented-jump'); if(!btn) return;
-      e.preventDefault();
-      pendingTarget={ id: btn.getAttribute('data-target-id'), time: btn.getAttribute('data-time') };
-      var ocInstance=bootstrap.Offcanvas.getInstance(ocEl);
-      if(ocEl&&ocEl.classList.contains('show')&&ocInstance){ ocInstance.hide(); }
-      else { scrollToPost(pendingTarget.id, pendingTarget.time); pendingTarget=null; }
-    });
-    if(ocEl){
-      ocEl.addEventListener('hidden.bs.offcanvas',function(){ if(pendingTarget){ scrollToPost(pendingTarget.id, pendingTarget.time); pendingTarget=null; }});
-    }
-  })();
-
-  function scrollToPost(targetId, commentTime){
+  // =========================
+  // 協助函式：平滑捲動到貼文/留言
+  // =========================
+  window.scrollToPost = function(targetId, commentTime){
     var el=document.getElementById(targetId);
     if(!el){ alert('此頁找不到該貼文'); return; }
     var headerEl=document.getElementById('header');
     var headerH=headerEl ? headerEl.offsetHeight : 0;
-    var y=el.getBoundingClientRect().top+window.pageYOffset-headerH-8;
+    var y=el.getBoundingClientRect().top + window.pageYOffset - headerH - 8;
     window.scrollTo({ top:y, behavior:'smooth' });
-    el.classList.add('ring-highlight');
-    setTimeout(function(){ el.classList.remove('ring-highlight'); },1500);
+    el.classList.add('ring-highlight'); setTimeout(function(){ el.classList.remove('ring-highlight'); },1500);
 
-    var postId = (targetId||'').replace('post-','');
-    var box = document.getElementById('comments-'+postId);
-    if(box){ box.style.display='block'; }
+    var postId=(targetId||'').replace('post-','');
+    var box=document.getElementById('comments-'+postId); if(box){ box.style.display='block'; }
 
     if(commentTime && box){
       setTimeout(function(){
-        var esc = (window.CSS && typeof window.CSS.escape==='function') ? window.CSS.escape(commentTime) : commentTime;
-        var selector = '[data-comment-time="'+esc+'"]';
-        var li = box.querySelector(selector);
+        var cssEscape=(window.CSS && typeof window.CSS.escape==='function') ? window.CSS.escape(commentTime) : commentTime;
+        var li=box.querySelector('[data-comment-time="'+cssEscape+'"]');
         if(li){
           li.classList.add('comment-highlight');
           li.scrollIntoView({ behavior:'smooth', block:'center' });
@@ -1389,215 +1778,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       }, 250);
     }
-  }
-
-  /* 刪除/編輯留言（原有） */
-  document.querySelectorAll('.delete-comment-btn').forEach(function(btn){
-    btn.addEventListener('click',function(){
-      if(!confirm('確定要刪除這則留言嗎？')) return;
-      var postId=this.dataset.postId; var time=this.dataset.time;
-      fetch('/post/'+postId+'/comment/delete/',{
-        method:'POST',
-        headers:{ 'Content-Type':'application/x-www-form-urlencoded','X-Requested-With':'XMLHttpRequest','X-CSRFToken': getCookie('csrftoken') },
-        body:'time='+encodeURIComponent(time)
-      })
-      .then(function(res){ return res.json(); })
-      .then(function(data){ if(!data.success) throw new Error(data.error||'刪除失敗'); window.location.reload(); })
-      .catch(function(err){ alert(err.message||'刪除失敗'); });
-    });
-  });
-
-  var editModalEl=document.getElementById('editCommentModal');
-  if(editModalEl){
-    var modal=new bootstrap.Modal(editModalEl);
-    var textarea=document.getElementById('editCommentContent');
-    document.querySelectorAll('.edit-comment-btn').forEach(function(btn){
-      btn.addEventListener('click',function(e){
-        e.preventDefault();
-        window.currentPostId=this.dataset.postId;
-        window.currentTime=this.dataset.time;
-        textarea.value=this.dataset.content;
-        modal.show();
-      });
-    });
-    var saveBtn=document.getElementById('saveCommentEdit');
-    if(saveBtn){
-      saveBtn.addEventListener('click',function(){
-        var newContent=textarea.value.trim(); if(!newContent){ alert("留言內容不能為空！"); return; }
-        fetch('/edit_comment/'+window.currentPostId+'/'+encodeURIComponent(window.currentTime)+'/',{
-          method:'POST',
-          headers:{ 'X-CSRFToken': (document.querySelector('[name=csrfmiddlewaretoken]')||{}).value, 'Content-Type':'application/json' },
-          body: JSON.stringify({ content:newContent })
-        })
-        .then(function(res){ return res.json(); })
-        .then(function(data){
-          if(data.success){
-            var commentEls=document.querySelectorAll('#comments-'+window.currentPostId+' .small.text-muted');
-            Array.prototype.forEach.call(commentEls,function(el){
-              if(el.innerText.indexOf(window.currentTime)!==-1){
-                var tgt = el.parentElement.parentElement.querySelector('.mt-1');
-                if(tgt) tgt.innerText=newContent;
-              }
-            });
-            modal.hide();
-          } else { alert(data.error||"更新失敗"); }
-        });
-      });
-    }
-  }
-
-  /* ===== 🔎 搜尋歷史（localStorage） ===== */
-  (function(){
-    var STORAGE_KEY='post_display_search_history_v1';
-    var MAX_ITEMS=20;
-    var form=document.getElementById('searchForm');
-    var input=document.getElementById('searchInput');
-    var panel=document.getElementById('searchHistory');
-
-    function readHistory(){
-      try{ return JSON.parse(localStorage.getItem(STORAGE_KEY))||[]; }catch(e){ return []; }
-    }
-    function writeHistory(arr){
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(arr.slice(0,MAX_ITEMS)));
-    }
-    function addTerm(term){
-      term=(term||'').trim();
-      if(!term) return;
-      var list=readHistory().filter(function(t){ return t.toLowerCase()!==term.toLowerCase(); });
-      list.unshift(term);
-      writeHistory(list);
-    }
-    function removeTerm(term){
-      var list=readHistory().filter(function(t){ return t!==term; });
-      writeHistory(list);
-    }
-    function createItem(term){
-      var row=document.createElement('div');
-      row.className='history-item';
-      row.innerHTML='' +
-        '<span class="icon"><i class="bi bi-clock-history"></i></span>' +
-        '<span class="term"></span>' +
-        '<button type="button" class="remove" aria-label="刪除"><i class="bi bi-x"></i></button>';
-      row.querySelector('.term').textContent=term;
-
-      row.addEventListener('mousedown',function(e){
-        if(e.target.closest('.remove')) return;
-        input.value=term;
-        setTimeout(function(){ form.submit(); },0);
-      });
-      row.querySelector('.remove').addEventListener('mousedown',function(e){
-        e.stopPropagation();
-        removeTerm(term);
-        render(input.value);
-      });
-      return row;
-    }
-    function render(filterText){
-      filterText = (filterText||'').trim().toLowerCase();
-      var list=readHistory().filter(function(t){ return t.toLowerCase().includes(filterText); });
-      panel.innerHTML='';
-      if(list.length===0){ panel.classList.remove('show'); return; }
-      list.forEach(function(t){ panel.appendChild(createItem(t)); });
-      panel.classList.add('show');
-    }
-    function openPanel(){ render(input.value); }
-    function closePanel(){ panel.classList.remove('show'); }
-
-    if(input){ input.addEventListener('focus', openPanel); }
-    if(input){ input.addEventListener('input', function(){ render(input.value); }); }
-
-    if(form){
-      form.addEventListener('submit', function(){
-        addTerm(input.value);
-        closePanel();
-      });
-    }
-
-    document.addEventListener('mousedown', function(e){
-      if(!(panel.contains(e.target)) && e.target!==input){
-        closePanel();
-      }
-    });
-
-    if(input){
-      input.addEventListener('keydown', function(e){
-        if(e.key==='Escape'){ closePanel(); input.blur(); }
-      });
-    }
-  })();
-});
-</script>
-
-<!-- ✅ 回頂部按鈕：先關 Offcanvas 再平滑捲動 -->
-<script>
-(function(){
-  var wrap = document.getElementById('scrollTopWrapper');
-  var btn  = document.getElementById('scrollToTopNav');
-  if (!wrap || !btn) return;
-
-  function pageYOffsetVal(){
-    return window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
-  }
-  function atTop(){ return pageYOffsetVal() <= 0; }
-
-  function toggle(){
-    wrap.style.display = (pageYOffsetVal() > 100) ? 'flex' : 'none';
-  }
-  window.addEventListener('scroll', toggle, { passive: true });
-  toggle();
-
-  btn.addEventListener('click', function(e){
-    e.preventDefault();
-
-    var openOc = document.querySelector('.offcanvas.show');
-    if (openOc && window.bootstrap && window.bootstrap.Offcanvas) {
-      var inst = window.bootstrap.Offcanvas.getInstance(openOc) || new window.bootstrap.Offcanvas(openOc);
-      var afterHide = function(){
-        openOc.removeEventListener('hidden.bs.offcanvas', afterHide);
-        doScroll();
-      };
-      openOc.addEventListener('hidden.bs.offcanvas', afterHide, { once: true });
-      inst.hide();
-    } else {
-      doScroll();
-    }
-  });
-
-  function doScroll(){
-    try {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } catch(_) {
-      document.documentElement.scrollTop = 0;
-      document.body.scrollTop = 0;
-    }
-    var t = setInterval(function(){
-      if (atTop()) { wrap.style.display = 'none'; clearInterval(t); }
-    }, 80);
-  }
+  };
 })();
 </script>
-
-<script>
-(function () {
-  var nav = performance.getEntriesByType && performance.getEntriesByType('navigation')[0];
-  var isReload = nav ? nav.type == 'reload' : (performance.navigation && performance.navigation.type === 1);
-
-  if (isReload) {
-    if (location.hash) { history.replaceState(null, '', location.pathname + location.search); }
-    window.scrollTo(0, 0);
-    document.body.scrollTop = 0;
-    document.documentElement.scrollTop = 0;
-  }
-
-  window.addEventListener('pageshow', function (e) {
-    if (e.persisted) {
-      if (location.hash) { history.replaceState(null, '', location.pathname + location.search); }
-      window.scrollTo(0, 0);
-      document.body.scrollTop = 0;
-      document.documentElement.scrollTop = 0;
-    }
-  });
-})();
-</script>
-</body>
-</html>
