@@ -1900,6 +1900,7 @@ from .models import Admins  # 根據你的 models 路徑
 from django.contrib.auth.hashers import make_password
 
 def admin_register(request):
+    
     message = ""
     if request.method == "POST":
         name = request.POST.get("name")
