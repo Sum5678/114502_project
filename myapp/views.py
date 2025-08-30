@@ -1897,32 +1897,40 @@ def admin_index(request):
 #---------------管理員註冊-----------------------
 from django.shortcuts import render
 from .models import Admins  # 根據你的 models 路徑
-from django.db import IntegrityError
+from django.contrib.auth.hashers import make_password
 
 def admin_register(request):
-    message = None
-    if request.method == 'POST':
-        name = request.POST.get('name')
-        password = request.POST.get('password')
-        phone = request.POST.get('phone')
-        admin_gmail = request.POST.get('admin_gmail')
-        bio = request.POST.get('bio')
+    message = ""
+    if request.method == "POST":
+        name = request.POST.get("name")
+        password = request.POST.get("password")
+        phone = request.POST.get("phone")
+        admin_gmail = request.POST.get("admin_gmail")
+        bio = request.POST.get("bio")
+        security_code = request.POST.get("security_code")
 
-        try:
-            admin = Admins(
-                name=name,
-                password=password,
-                phone=phone,
-                admin_gmail=admin_gmail,
-                bio=bio
-            )
-            admin.save() 
-            message = "註冊成功！"
+        # 允許的安全碼清單
+        valid_codes = ["12345654", "698417", "114502"]
 
-        except IntegrityError:
-            message = "Email 已存在，請使用其他 Email 註冊。"
+        if security_code not in valid_codes:
+            message = "安全碼錯誤,註冊失敗"
+        else:
+            # 檢查帳號是否已存在
+            if Admins.objects.filter(admin_gmail=admin_gmail).exists():
+                message = "此 Email 已存在"
+            else:
+                # 建立帳號
+                Admins.objects.create(
+                    name=name,
+                    password=make_password(password),
+                    phone=phone,
+                    admin_gmail=admin_gmail,
+                    bio=bio,
+                )
+                message = "註冊成功"
 
-    return render(request, 'admin_register.html', {'message': message})
+    return render(request, "admin_register.html", {"message": message})
+
 
 
 #--------管理員看自己審核的-------
