@@ -375,7 +375,7 @@
 
       <!-- Offcanvas：我的貼文 -->
       <div class="offcanvas offcanvas-end offcanvas-posted" tabindex="-1" id="postedOffcanvas">
-        <div class="offcanvas-header" style="背景:#e6f3fb;">
+        <div class="offcanvas-header" style="background:#e6f3fb;">
           <h5 class="offcanvas-title fw-bold text-primary"><i class="bi bi-journal-text me-2"></i>我的貼文</h5>
           <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
         </div>
@@ -703,7 +703,7 @@
                data-post-id="{{ post.interaction_id }}"
                data-comment-id="{{ cid }}"
                data-reply-id="{{ rid }}">
-              <i class="bi bi-trash-fill me-2"></i> 削除
+              <i class="bi bi-trash-fill me-2"></i> 刪除
             </a>
           </li>
         </ul>
@@ -784,10 +784,13 @@
               {% endfor %}
             </ul>
 
-            {% if post.comment_list|length > 3 %}
-              <a class="btn btn-sm btn-outline-primary" style="border-color:#a7e0ff; color:#033e6b;"
-                 href="{% url 'post_comments' post.interaction_id %}">查看全部留言（共 {{ post.comment_list|length }} 則）</a>
-            {% endif %}
+            <!-- ✅ 改為可被 JS 即時更新的「查看全部留言」 -->
+            <a class="btn btn-sm btn-outline-primary view-all-link"
+               href="{% url 'post_comments' post.interaction_id %}"
+               data-post-id="{{ post.interaction_id }}"
+               style="border-color:#a7e0ff; color:#033e6b; display:{% if post.comment_list|length > 3 %}inline-block{% else %}none{% endif %};">
+              查看全部留言（共 <span data-total>{{ post.comment_list|length }}</span> 則）
+            </a>
 
             {% if request.user.is_authenticated %}
               <form method="post" action="{% url 'add_comment' post.interaction_id %}" class="comment-form" data-post-id="{{ post.interaction_id }}">
@@ -898,15 +901,27 @@
     return '暱稱：'+nn;
   }
 
-  // 統一更新一篇貼文的留言數（按鈕 + 標籤）
+  // ✅ 統一更新一篇貼文的留言數（按鈕 + 標籤 + 查看全部留言）
   function setCommentCounters(postId, newCount){
     try{
+      // ① 卡片上的「留言（X）」按鈕
       var btn=document.querySelector('.btn-comment[data-post-id="'+postId+'"]');
       if(btn){ btn.innerHTML='<i class="bi bi-chat-dots"></i> 留言（'+ newCount +'）'; }
+
+      // ② 留言區標題「共有 X 則留言」
       var box=document.getElementById('comments-'+postId);
       if(box){
         var label=box.querySelector('[data-count-label]');
         if(label){ label.textContent='共有 '+ newCount +' 則留言'; }
+      }
+
+      // ③ 「查看全部留言（共 X 則）」按鈕（>3 才顯示）
+      var card=document.getElementById('post-'+postId);
+      var viewAll= card ? card.querySelector('.view-all-link') : null;
+      if(viewAll){
+        var numEl=viewAll.querySelector('[data-total]');
+        if(numEl){ numEl.textContent = newCount; }
+        viewAll.style.display = (newCount > 3 ? 'inline-block' : 'none');
       }
     }catch(e){}
   }

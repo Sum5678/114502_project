@@ -6,7 +6,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>全部留言｜交流區</title>
 
-  <!-- 與貼文總覽一致的資源 -->
   <link href="{% static 'assets/img/favicon.png' %}" rel="icon">
   <link href="{% static 'assets/img/apple-touch-icon.png' %}" rel="apple-touch-icon">
   <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700|Nunito|Poppins" rel="stylesheet">
@@ -27,7 +26,6 @@
     .section-title h2::before,.section-title h2::after{ content:""; position:absolute; top:50%; width:60px; height:2px; background:#0d6efd; }
     .section-title h2::before{ left:-70px; } .section-title h2::after{ right:-70px; }
 
-    /* 卡片與互動列（沿用總覽頁） */
     .card{ border-left:8px solid #ccc; }
     .card .card-body{ background:#fff; border-radius:6px; position:relative; }
     .card .card-title{ font-weight:700; color:#033e6b; }
@@ -36,7 +34,6 @@
     .interaction-bar{ border-top:1px solid #ddd; border-bottom:1px solid #ddd; padding:8px 0;
       display:flex; justify-content:space-between; align-items:center; font-size:14px; color:#555; }
 
-    /* 收藏膠囊按鈕 */
     .save-top-right{ position:absolute; top:12px; right:12px; }
     .save-top-right button{
       background:rgba(255,255,255,.95); border:1px solid #e6f3fb; border-radius:999px;
@@ -45,7 +42,6 @@
     }
     .save-top-right .bi-star-fill{ color:#f0ad4e; }
 
-    /* 留言清單樣式（與總覽內部留言風格一致） */
     .comment-item{ border:1px solid #e1efff; background:#fff; border-radius:12px; padding:12px 14px;
       box-shadow:0 6px 14px rgba(3,62,107,.05); }
     .comment-item + .comment-item{ margin-top:10px; }
@@ -55,20 +51,22 @@
       padding:2px 8px; border-radius:999px; background:#eef6ff; border:1px solid #cfe2ff; color:#0b5ed7;
       font-size:.75rem; font-weight:600;
     }
-    .comment-content{ color:#033e6b; margin-top:6px; }
+    .comment-content{ color:#033e6b; margin-top:6px; white-space:pre-wrap; }
 
-    /* 次要按鈕（與總覽一致） */
+    .reply-ref{
+      font-size:.8rem; color:#6b7280; background:#f3f4f6; border:1px solid #e5e7eb;
+      border-radius:8px; padding:2px 8px; margin-left:6px;
+    }
+
     .btn-outline-primary{ color:#63b3ed; border-color:#63b3ed; }
     .btn-outline-primary:hover{ color:#fff; background:#63b3ed; border-color:#63b3ed; }
 
-    /* 返回按鈕列 */
     .back-row{ display:flex; justify-content:space-between; align-items:center; gap:12px; margin:10px 0 18px; }
     .count-label{ font-weight:600; color:#033e6b; }
   </style>
 </head>
 
 <body class="{% if request.user.is_authenticated %}authenticated{% endif %}">
-  <!-- 與總覽一致的頂部導覽 -->
   <header id="header" class="header d-flex align-items-center fixed-top">
     <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
       <a href="{% url 'home' %}" class="logo d-flex align-items-center me-auto me-xl-0">
@@ -136,23 +134,17 @@
           <h2>全部留言｜交流區</h2>
         </div>
 
-        <!-- 返回列 + 總數 -->
+        <!-- 返回列 + 最終留言總數 -->
         <div class="back-row">
-          <a href="{% url 'post_display' %}" class="btn btn-outline-primary">
-            ← 返回貼文列表
-          </a>
-          <div class="count-label">留言（{{ total_comments }}）</div>
+          <a href="{% url 'post_display' %}" class="btn btn-outline-primary">← 返回貼文列表</a>
+          <div class="count-label">留言（{{ final_total|default:total_including_replies|default:total_comments }}）</div>
         </div>
 
         <!-- 貼文卡片 -->
         <div class="card mb-4" style="border-left: 8px solid #{{ post.bgcolor }};">
           <div class="card-body position-relative">
-
             {% if request.user.is_authenticated %}
-              <form method="post"
-                    action="{% url 'save_post' post.interaction_id %}"
-                    class="save-form save-top-right"
-                    data-post-id="{{ post.interaction_id }}">
+              <form method="post" action="{% url 'save_post' post.interaction_id %}" class="save-form save-top-right" data-post-id="{{ post.interaction_id }}">
                 {% csrf_token %}
                 <button type="submit">
                   <i class="bi {% if post.is_saved %}bi-star-fill{% else %}bi-star{% endif %}"></i> 收藏
@@ -181,43 +173,80 @@
           </div>
         </div>
 
-        <!-- 留言清單 -->
+        <!-- 一次列出「留言 + 所有回覆」；回覆會附上『回覆 → XXX：節錄』 -->
         <div id="commentsList">
-          {% for c in page_obj.object_list %}
-            <div class="comment-item position-relative">
+          {% for item in page_obj.object_list %}
+            <div class="comment-item position-relative" style="margin-left: {{ item.indent_px }}px;">
               <div class="comment-head">
                 <span class="id-badge">
-                  {% if c.nickname and c.nickname != '匿名' and c.nickname != '(匿名)' %}暱稱：{{ c.nickname }}{% else %}匿名{% endif %}
+                  {% if item.identity == 'anonymous' %}
+                    匿名
+                  {% elif item.identity == 'nickname1' %}
+                    暱稱 1：{{ item.nickname }}
+                  {% elif item.identity == 'nickname2' %}
+                    暱稱 2：{{ item.nickname }}
+                  {% else %}
+                    {% if item.nickname and item.nickname != '匿名' and item.nickname != '(匿名)' %}
+                      暱稱：{{ item.nickname }}
+                    {% else %}匿名{% endif %}
+                  {% endif %}
                 </span>
-                <span>・ {{ c.time }}</span>
-              </div>
-              <div class="comment-content">{{ c.content|escape }}</div>
+                <span>・ {{ item.time }}</span>
 
-              {% if request.user.is_authenticated and c.user_id|stringformat:"s" == request.user.id|stringformat:"s" %}
-              <div class="dropdown position-absolute top-0 end-0">
-                <button class="btn btn-link text-muted p-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                  <i class="bi bi-three-dots-vertical"></i>
-                </button>
-                <ul class="dropdown-menu dropdown-menu-end">
-                  <li>
-                    <a class="dropdown-item text-primary edit-comment-btn"
-                       href="#"
-                       data-post-id="{{ post.interaction_id }}"
-                       data-time="{{ c.time }}"
-                       data-content="{{ c.content|escapejs }}">
-                      <i class="bi bi-pencil-fill me-2"></i> 編輯
-                    </a>
-                  </li>
-                  <li>
-                    <a class="dropdown-item text-danger delete-comment-btn"
-                       href="#"
-                       data-post-id="{{ post.interaction_id }}"
-                       data-time="{{ c.time }}">
-                      <i class="bi bi-trash-fill me-2"></i> 刪除
-                    </a>
-                  </li>
-                </ul>
+                {% if item.kind == 'reply' %}
+                  <span class="reply-ref">回覆 → {{ item.parent_nickname }}：{{ item.parent_preview }}</span>
+                {% endif %}
               </div>
+
+              <div class="comment-content">{{ item.content|escape }}</div>
+
+              {% if request.user.is_authenticated and item.user_id|stringformat:"s" == request.user.id|stringformat:"s" %}
+                <div class="dropdown position-absolute top-0 end-0">
+                  <button class="btn btn-link text-muted p-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-three-dots-vertical"></i>
+                  </button>
+                  <ul class="dropdown-menu dropdown-menu-end">
+                    {% if item.kind == 'comment' %}
+                      <li>
+                        <a class="dropdown-item text-primary edit-comment-btn"
+                           href="#"
+                           data-post-id="{{ post.interaction_id }}"
+                           data-time="{{ item.time }}"
+                           data-content="{{ item.content|escapejs }}">
+                          <i class="bi bi-pencil-fill me-2"></i> 編輯
+                        </a>
+                      </li>
+                      <li>
+                        <a class="dropdown-item text-danger delete-comment-btn"
+                           href="#"
+                           data-post-id="{{ post.interaction_id }}"
+                           data-time="{{ item.time }}">
+                          <i class="bi bi-trash-fill me-2"></i> 刪除
+                        </a>
+                      </li>
+                    {% else %}
+                      <li>
+                        <a class="dropdown-item text-primary edit-reply-btn"
+                           href="#"
+                           data-post-id="{{ post.interaction_id }}"
+                           data-comment-id="{{ item.root_comment_id }}"
+                           data-reply-id="{{ item.id }}"
+                           data-content="{{ item.content|escapejs }}">
+                          <i class="bi bi-pencil-fill me-2"></i> 編輯
+                        </a>
+                      </li>
+                      <li>
+                        <a class="dropdown-item text-danger delete-reply-btn"
+                           href="#"
+                           data-post-id="{{ post.interaction_id }}"
+                           data-comment-id="{{ item.root_comment_id }}"
+                           data-reply-id="{{ item.id }}">
+                          <i class="bi bi-trash-fill me-2"></i> 刪除
+                        </a>
+                      </li>
+                    {% endif %}
+                  </ul>
+                </div>
               {% endif %}
             </div>
           {% empty %}
@@ -225,7 +254,6 @@
           {% endfor %}
         </div>
 
-        <!-- 分頁 -->
         {% if page_obj.paginator.num_pages > 1 %}
           <nav aria-label="留言分頁" class="mt-3">
             <ul class="pagination">
@@ -252,7 +280,7 @@
           </nav>
         {% endif %}
 
-        <!-- 新增留言 -->
+        <!-- 新增留言（仍然只新增頂層；回覆請在總覽頁進入互動） -->
         <div class="mt-3">
           {% if request.user.is_authenticated %}
             <form method="post" action="{% url 'add_comment' post.interaction_id %}" id="addCommentForm">
@@ -264,15 +292,13 @@
               <div class="form-text">最多 300 字。</div>
             </form>
           {% else %}
-            <a class="btn btn-sm btn-outline-primary"
-               href="/01userlogin/?next={{ request.get_full_path|urlencode }}">登入後留言</a>
+            <a class="btn btn-sm btn-outline-primary" href="/01userlogin/?next={{ request.get_full_path|urlencode }}">登入後留言</a>
           {% endif %}
         </div>
       </div>
     </section>
   </main>
 
-  <!-- 共用 JS（與總覽一致） -->
   <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
   <script src="{% static 'assets/vendor/aos/aos.js' %}"></script>
   <script src="{% static 'assets/vendor/glightbox/js/glightbox.min.js' %}"></script>
@@ -286,7 +312,7 @@
       form.addEventListener('submit', function(e){
         e.preventDefault();
         fetch(this.action, { method:'POST', body:new FormData(this), headers:{'X-Requested-With':'XMLHttpRequest'} })
-          .then(r=>r.json()).then(data=>{
+          .then(r=>r.json()).then(()=> {
             const icon=this.querySelector('button i');
             if(icon){ icon.className = 'bi ' + (icon.classList.contains('bi-star-fill') ? 'bi-star' : 'bi-star-fill'); }
           }).catch(()=>alert('收藏失敗，請稍後再試'));
@@ -319,18 +345,77 @@
       });
     });
 
-    // 編輯留言（簡單版）
+    // 編輯留言（/edit_comment/<post_id>/<time>/）
     document.querySelectorAll('.edit-comment-btn').forEach(btn=>{
       btn.addEventListener('click', function(e){
         e.preventDefault();
         const newContent = prompt('請輸入新的留言內容：', this.dataset.content);
-        if(newContent===null || newContent.trim()==='') return;
-        fetch(`/post/${this.dataset.postId}/comment/edit/`, {
+        if(newContent === null) return;
+        const trimmed = newContent.trim();
+        if(!trimmed){ alert('內容不能為空'); return; }
+        fetch(`/edit_comment/${this.dataset.postId}/${encodeURIComponent(this.dataset.time)}/`, {
           method:'POST',
-          headers:{ 'Content-Type':'application/x-www-form-urlencoded','X-Requested-With':'XMLHttpRequest','X-CSRFToken': getCookie('csrftoken') },
-          body:`time=${encodeURIComponent(this.dataset.time)}&content=${encodeURIComponent(newContent)}`
+          headers:{
+            'Content-Type':'application/json',
+            'X-Requested-With':'XMLHttpRequest',
+            'X-CSRFToken': getCookie('csrftoken')
+          },
+          body: JSON.stringify({ content: trimmed })
+        })
+        .then(res=>res.json())
+        .then(data=>{
+          if(!data.success) throw new Error(data.error||'編輯失敗');
+          window.location.reload();
+        })
+        .catch(err=>alert(err.message));
+      });
+    });
+
+    // 編輯回覆（/post/<post_id>/reply/edit/）
+    document.querySelectorAll('.edit-reply-btn').forEach(btn=>{
+      btn.addEventListener('click', function(e){
+        e.preventDefault();
+        const newContent = prompt('請輸入新的回覆內容：', this.dataset.content);
+        if(newContent === null) return;
+        const trimmed = newContent.trim();
+        if(!trimmed){ alert('內容不能為空'); return; }
+        fetch(`/post/${this.dataset.postId}/reply/edit/`, {
+          method:'POST',
+          headers:{
+            'Content-Type':'application/json',
+            'X-Requested-With':'XMLHttpRequest',
+            'X-CSRFToken': getCookie('csrftoken')
+          },
+          body: JSON.stringify({
+            comment_id: this.dataset.commentId,
+            reply_id: this.dataset.replyId,
+            content: trimmed
+          })
         }).then(res=>res.json()).then(data=>{
           if(!data.success) throw new Error(data.error||'編輯失敗');
+          window.location.reload();
+        }).catch(err=>alert(err.message));
+      });
+    });
+
+    // 刪除回覆（/post/<post_id>/reply/delete/）
+    document.querySelectorAll('.delete-reply-btn').forEach(btn=>{
+      btn.addEventListener('click', function(e){
+        e.preventDefault();
+        if(!confirm('確定要刪除這則回覆嗎？')) return;
+        const form = new URLSearchParams();
+        form.append('comment_id', this.dataset.commentId);
+        form.append('reply_id', this.dataset.replyId);
+        fetch(`/post/${this.dataset.postId}/reply/delete/`, {
+          method:'POST',
+          headers:{
+            'Content-Type':'application/x-www-form-urlencoded',
+            'X-Requested-With':'XMLHttpRequest',
+            'X-CSRFToken': getCookie('csrftoken')
+          },
+          body: form.toString()
+        }).then(res=>res.json()).then(data=>{
+          if(!data.success) throw new Error(data.error||'刪除失敗');
           window.location.reload();
         }).catch(err=>alert(err.message));
       });

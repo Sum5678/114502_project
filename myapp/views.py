@@ -2137,17 +2137,17 @@ from django.utils import timezone
 from django.db.models import Q
 from django.core.paginator import Paginator
 
-from .models import ChatInteraction, ThisUserProfile  # 使用者檔案 + 貼文
+from .models import ChatInteraction, ThisUserProfile
 import json
 import bleach
-from urllib.parse import quote  # dicebear seed 編碼，避免特殊字元
+from urllib.parse import quote
 from uuid import uuid4
 
 # 允許的貼文 HTML（內容/留言都會用 bleach 過濾）
 ALLOWED_TAGS = ['a']
 ALLOWED_ATTRIBUTES = {'a': ['href', 'target', 'rel']}
 
-# ======== 工具：時間、載入/正規化、搜尋 ========
+# ======== 工具：時間、載入/正規化、搜尋/計數 ========
 
 def _now_str():
     return timezone.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -2175,7 +2175,7 @@ def _ensure_reply_defaults(r):
     r.setdefault('like_user_ids', [])
     r['like_user_ids'] = [str(x) for x in (r.get('like_user_ids') or [])]
     r['like_count'] = len(r['like_user_ids'])
-    # 巢狀 replies
+
     replies = r.get('replies') or []
     if not isinstance(replies, list):
         replies = []
@@ -2197,6 +2197,7 @@ def _ensure_comment_defaults(c):
     c.setdefault('like_user_ids', [])
     c['like_user_ids'] = [str(x) for x in (c.get('like_user_ids') or [])]
     c['like_count'] = len(c['like_user_ids'])
+
     replies = c.get('replies') or []
     if not isinstance(replies, list):
         replies = []
@@ -2229,8 +2230,7 @@ def _find_reply_recursive(replies, reply_id_or_time):
         rid = str(r.get('id') or r.get('time'))
         if rid == target_key:
             return (replies, i, r)
-        child = r.get('replies') or []
-        parent, idx, rr = _find_reply_recursive(child, target_key)
+        parent, idx, rr = _find_reply_recursive(r.get('replies') or [], target_key)
         if rr is not None:
             return (parent, idx, rr)
     return (None, None, None)
@@ -2247,10 +2247,7 @@ def _mark_is_liked_recursive(replies, user_id_str):
 
 
 def _flatten_replies(replies, level=1):
-    """
-    把任意深度的 replies 展平成一個 list，供模板或 API 顯示用。
-    會保留：id/time/content/identity/nickname/user_id/is_liked/like_count/level。
-    """
+    """舊：展平成簡易清單（保留以供其他頁使用）。"""
     flat = []
     if not isinstance(replies, list):
         return flat
@@ -2271,9 +2268,104 @@ def _flatten_replies(replies, level=1):
         flat.extend(_flatten_replies(r.get('replies') or [], level + 1))
     return flat
 
+
+# ===== 新增：用來計算留言總數（頂層 / 含所有回覆） =====
+def _count_replies_recursive(replies):
+    total = 0
+    if not isinstance(replies, list):
+        return 0
+    for r in replies:
+        r = _ensure_reply_defaults(r)
+        total += 1
+        total += _count_replies_recursive(r.get('replies') or [])
+    return total
+
+
+def _count_totals(comments):
+    """回傳 (top_count, all_count)"""
+    top = len(comments or [])
+    all_total = top
+    for c in (comments or []):
+        c = _ensure_comment_defaults(c)
+        all_total += _count_replies_recursive(c.get('replies') or [])
+    return top, all_total
+
+
+# ===== 新增：把「全部留言（含回覆）」展平成一條清單，且附上『回覆對象』資訊 =====
+def _flatten_all_with_parent(comments, indent_step_px=20):
+    """
+    回傳 items（每一筆都有）：
+      - kind: 'comment' 或 'reply'
+      - id: 本筆 id（或 time）
+      - root_comment_id: 所屬頂層留言 id（回覆需要）
+      - time, content, identity, nickname, user_id
+      - level: 巢狀層級（頂層為 0）
+      - indent_px: 建議縮排像素（level * indent_step_px）
+      - parent_id/parent_time/parent_nickname/parent_preview（reply 才有）
+    """
+    items = []
+
+    def _preview(text, length=30):
+        text = (text or '')
+        return text if len(text) <= length else text[:length] + '…'
+
+    for c in comments or []:
+        c = _ensure_comment_defaults(c)
+        root_id = str(c.get('id') or c.get('time'))
+        # 頂層
+        items.append({
+            'kind': 'comment',
+            'id': root_id,
+            'root_comment_id': root_id,
+            'time': c['time'],
+            'content': c['content'],
+            'identity': c['identity'],
+            'nickname': c.get('nickname') or '(匿名)',
+            'user_id': c.get('user_id'),
+            'level': 0,
+            'indent_px': 0,
+            'parent_id': None,
+            'parent_time': None,
+            'parent_nickname': None,
+            'parent_preview': None,
+        })
+
+        # 走訪回覆
+        def walk(replies, parent_obj, parent_level):
+            for r in (replies or []):
+                r = _ensure_reply_defaults(r)
+                rid = str(r.get('id') or r.get('time'))
+                parent_id = str(parent_obj.get('id') or parent_obj.get('time'))
+                parent_nick = parent_obj.get('nickname') or '(匿名)'
+                parent_time = parent_obj.get('time')
+                parent_preview = _preview(parent_obj.get('content'))
+
+                level = parent_level + 1
+                items.append({
+                    'kind': 'reply',
+                    'id': rid,
+                    'root_comment_id': root_id,
+                    'time': r['time'],
+                    'content': r['content'],
+                    'identity': r['identity'],
+                    'nickname': r.get('nickname') or '(匿名)',
+                    'user_id': r.get('user_id'),
+                    'level': level,
+                    'indent_px': level * indent_step_px,
+                    'parent_id': parent_id,
+                    'parent_time': parent_time,
+                    'parent_nickname': parent_nick,
+                    'parent_preview': parent_preview,
+                })
+                walk(r.get('replies') or [], r, level)
+
+        walk(c.get('replies') or [], c, 0)
+
+    return items
+
+
 # ================== 貼文 CRUD / 展示 ==================
 
-# 發文（可選用 暱稱1 / 暱稱2 / 匿名）
 @login_required(login_url='/01userlogin/')
 def post(request):
     prof = ThisUserProfile.objects.filter(gmail=request.user.email).first()
@@ -2327,17 +2419,13 @@ def post(request):
     })
 
 
-# 貼文展示（含搜尋、liked/saved/comment 標記 + 把暱稱帶給前端讓留言可選）
 def post_display(request):
     query = (request.GET.get('q') or '').strip()
-    # ✅ 新增排序參數（預設新→舊）
     sort = request.GET.get('sort', 'desc')
     order_expr = 'created_at' if sort == 'asc' else '-created_at'
 
-    # ===== 全量集合（側欄清單 & 徽章用，不受搜尋影響） =====
     all_posts_qs = ChatInteraction.objects.all().order_by('-created_at')
 
-    # ===== 主清單（可被搜尋過濾；依 sort 排序） =====
     base_qs = ChatInteraction.objects.all()
     if query:
         base_qs = base_qs.filter(
@@ -2347,7 +2435,6 @@ def post_display(request):
 
     user_id_str = str(request.user.id) if request.user.is_authenticated else None
 
-    # 解析主清單每篇的 like/saved/comments 狀態（供卡片/按鈕顯示）
     for post in posts:
         # liked
         try:
@@ -2367,7 +2454,7 @@ def post_display(request):
         post.is_saved = bool(user_id_str and (user_id_str in saved_user_ids))
         post.saved_user_list = saved_user_ids
 
-        # comments（向下相容+補欄位，且遞迴設置 is_liked）
+        # comments
         comments = _load_comments(post)
         fixed_comments = []
         for c in comments:
@@ -2377,14 +2464,12 @@ def post_display(request):
             else:
                 c['is_liked'] = False
             _mark_is_liked_recursive(c.get('replies') or [], user_id_str)
-
-            # ✅ 額外提供扁平化列表（若前端要一次渲染所有層級可使用）
             c['replies_flat'] = _flatten_replies(c.get('replies') or [], 1)
-
             fixed_comments.append(c)
         post.comment_list = fixed_comments
+        post.top_comment_count = len(fixed_comments)
+        post.total_comment_count = sum(1 + len(c.get('replies_flat', [])) for c in fixed_comments)
 
-    # ===== 側欄四個清單：不受搜尋影響，從全量貼文統計 =====
     my_saved_posts = []
     my_liked_posts = []
     my_commented_posts = []
@@ -2393,7 +2478,6 @@ def post_display(request):
 
     if request.user.is_authenticated:
         for p in all_posts_qs:
-            # liked / saved
             try:
                 liked_user_ids_all = json.loads(p.liked_user_ids or '[]')
             except json.JSONDecodeError:
@@ -2406,29 +2490,21 @@ def post_display(request):
                 saved_user_ids_all = []
             saved_user_ids_all = [str(x) for x in saved_user_ids_all]
 
-            # comments 全量（供「我的留言」 offcanvas 渲染）
             c_all = _load_comments(p)
 
-            # 我的發文
-            if str(p.user_id) == user_id_str:
+            if str(p.user_id) == (user_id_str or ''):
                 my_posts.append(p)
-
-            # 我的收藏
-            if user_id_str in saved_user_ids_all:
+            if (user_id_str or '') in saved_user_ids_all:
                 my_saved_posts.append(p)
-
-            # 我的按讚（針對貼文本身）
-            if user_id_str in liked_user_ids_all:
+            if (user_id_str or '') in liked_user_ids_all:
                 my_liked_posts.append(p)
 
-            # 我的留言（貼文內有我留過言）
-            my_comments_num = sum(1 for c in c_all if str(c.get('user_id')) == user_id_str)
+            my_comments_num = sum(1 for c in c_all if str(c.get('user_id')) == (user_id_str or ''))
             if my_comments_num > 0:
                 p.comment_list = c_all
                 my_commented_posts.append(p)
                 commented_total_count += my_comments_num
 
-    # 把暱稱1/2帶給模板（留言單選要用）
     nick1 = ""
     nick2 = ""
     if request.user.is_authenticated:
@@ -2436,7 +2512,6 @@ def post_display(request):
         nick1 = (prof.default_nickname1 or "").strip() if prof else ""
         nick2 = (prof.default_nickname2 or "").strip() if prof else ""
 
-    # context：主清單 + 側欄清單 + 徽章總數 + 暱稱
     context = {
         'posts': posts,
         'profile_nickname1': nick1,
@@ -2449,13 +2524,12 @@ def post_display(request):
             'my_commented_posts': my_commented_posts,
             'my_posts': my_posts,
             'commented_total_count': commented_total_count,
-            'uid': user_id_str,  # 若模板需要用到 uid 字串
+            'uid': user_id_str,
         })
 
     return render(request, 'post_display.html', context)
 
 
-# 編輯貼文
 @login_required(login_url='/01userlogin/')
 def edit_post(request, post_id):
     post = get_object_or_404(ChatInteraction, pk=post_id)
@@ -2472,7 +2546,6 @@ def edit_post(request, post_id):
     return render(request, 'edit_post.html', {'post': post})
 
 
-# 刪除貼文
 @login_required(login_url='/01userlogin/')
 def delete_post(request, post_id):
     post = get_object_or_404(ChatInteraction, pk=post_id)
@@ -2486,7 +2559,6 @@ def delete_post(request, post_id):
     return render(request, 'delete_post_confirm.html', {'post': post})
 
 
-# ❤️ 貼文按讚
 @require_POST
 @login_required(login_url='/01userlogin/')
 def like_post(request, post_id):
@@ -2514,7 +2586,6 @@ def like_post(request, post_id):
     return redirect('post_display')
 
 
-# 🌟 收藏
 @require_POST
 @login_required(login_url='/01userlogin/')
 def save_post(request, post_id):
@@ -2543,7 +2614,6 @@ def save_post(request, post_id):
     return redirect('post_display')
 
 
-# 💬 新增留言（支援 暱稱1／暱稱2／匿名）
 @require_POST
 @login_required(login_url='/01userlogin/')
 def add_comment(request, post_id):
@@ -2554,12 +2624,10 @@ def add_comment(request, post_id):
     if not comment_text:
         return JsonResponse({'error': '留言不能為空'}, status=400)
 
-    # 留言不允許 HTML
     safe_text = bleach.clean(comment_text, tags=[], attributes={}, strip=True)
     if len(safe_text) > 300:
         return JsonResponse({'error': '留言超過 300 字上限'}, status=400)
 
-    # 讀取個人暱稱
     prof = ThisUserProfile.objects.filter(gmail=request.user.email).first()
     nick1 = (prof.default_nickname1 or "").strip() if prof else ""
     nick2 = (prof.default_nickname2 or "").strip() if prof else ""
@@ -2590,11 +2658,16 @@ def add_comment(request, post_id):
     post.comments = json.dumps(comments, ensure_ascii=False)
     post.save(update_fields=['comments'])
 
-    # 回傳完整 comments（與原本行為一致），同時讓前端可讀新欄位
-    return JsonResponse({'success': True, 'comments': comments})
+    top_count, all_count = _count_totals(comments)
+
+    return JsonResponse({
+        'success': True,
+        'comments': comments,
+        'total_comments': top_count,
+        'total_including_replies': all_count
+    })
 
 
-# ❌ 刪除留言（以 user_id + time 匹配）——原邏輯保留
 @require_POST
 @login_required(login_url='/01userlogin/')
 def delete_comment(request, post_id):
@@ -2615,10 +2688,16 @@ def delete_comment(request, post_id):
     post.comments = json.dumps(comments, ensure_ascii=False)
     post.save(update_fields=['comments'])
 
-    return JsonResponse({'success': True, 'comments': comments})
+    top_count, all_count = _count_totals(comments)
+
+    return JsonResponse({
+        'success': True,
+        'comments': comments,
+        'total_comments': top_count,
+        'total_including_replies': all_count
+    })
 
 
-# ✏️ 編輯留言（以 user_id + time 匹配）——原邏輯保留
 @require_POST
 @login_required(login_url='/01userlogin/')
 def edit_comment(request, post_id, time):
@@ -2632,7 +2711,6 @@ def edit_comment(request, post_id, time):
     if not new_content:
         return JsonResponse({"success": False, "error": "內容不能為空"})
 
-    # 不允許 HTML
     safe_text = bleach.clean(new_content, tags=[], attributes={}, strip=True)
     if len(safe_text) > 300:
         return JsonResponse({"success": False, "error": "留言超過 300 字上限"})
@@ -2655,36 +2733,41 @@ def edit_comment(request, post_id, time):
     return JsonResponse({"success": True})
 
 
-# 🧵 查看全部留言（分頁）——原邏輯保留
+# 🧵 查看全部留言（分頁；這裡改為：頂層 + 所有回覆都列出）
 def post_comments(request, post_id):
     post = get_object_or_404(ChatInteraction, pk=post_id)
 
     comments = _load_comments(post)
+    top_count, all_count = _count_totals(comments)
 
-    paginator = Paginator(comments, 10)
+    # 新：把所有留言與回覆展平成含 parent 的清單
+    flat_items = _flatten_all_with_parent(comments, indent_step_px=20)
+    final_total = len(flat_items)
+
+    paginator = Paginator(flat_items, 10)  # 直接對「全部項目」分頁
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
     return render(request, 'post_comments.html', {
         'post': post,
-        'page_obj': page_obj,
-        'total_comments': len(comments),
+        'page_obj': page_obj,                 # 這裡每筆是 comment 或 reply
+        'total_comments': top_count,          # 頂層
+        'total_including_replies': all_count, # 備用
+        'final_total': final_total,           # 供 UI 顯示「留言（N）」的最終數
     })
 
 
 # ============== 巢狀：回覆 & 按讚 & 編輯/刪除 ==============
 
-# 💬 回覆留言 / 回覆的回覆（無限巢狀）
 @require_POST
 @login_required(login_url='/01userlogin/')
 def reply_comment(request, post_id):
     """
-    參數（前端配合）：
+    參數：
       - comment_id: 目標留言 id（或 time）
       - parent_reply_id: 選填；若填，表示「回覆某一則回覆」
       - reply_identity: nickname1 / nickname2 / anonymous
       - reply: 文字內容（<=300）
-    回傳：{ success: True, reply: {...} }
     """
     post = get_object_or_404(ChatInteraction, pk=post_id)
     comment_id = (request.POST.get('comment_id') or '').strip()
@@ -2702,7 +2785,6 @@ def reply_comment(request, post_id):
     if len(safe_text) > 300:
         return JsonResponse({'success': False, 'error': '回覆超過 300 字上限'}, status=400)
 
-    # 取得暱稱
     prof = ThisUserProfile.objects.filter(gmail=request.user.email).first()
     nick1 = (prof.default_nickname1 or "").strip() if prof else ""
     nick2 = (prof.default_nickname2 or "").strip() if prof else ""
@@ -2732,7 +2814,6 @@ def reply_comment(request, post_id):
         'replies': []
     }
 
-    # 決定寫入位置
     if parent_reply_id:
         parent_list, idx, target_r = _find_reply_recursive(c.get('replies') or [], parent_reply_id)
         if target_r is None:
@@ -2740,31 +2821,29 @@ def reply_comment(request, post_id):
         target_r = _ensure_reply_defaults(target_r)
         target_r['replies'] = (target_r.get('replies') or [])
         target_r['replies'].append(reply_dict)
-        parent_list[idx] = target_r  # 回寫
+        parent_list[idx] = target_r
     else:
         c['replies'] = (c.get('replies') or [])
         c['replies'].append(reply_dict)
 
-    # 寫回 comments
     comments[c_idx] = c
     post.comments = json.dumps(comments, ensure_ascii=False)
     post.save(update_fields=['comments'])
 
-    # 回傳補齊欄位
+    top_count, all_count = _count_totals(comments)
+
     reply_out = _ensure_reply_defaults(reply_dict)
-    return JsonResponse({'success': True, 'reply': reply_out})
+    return JsonResponse({
+        'success': True,
+        'reply': reply_out,
+        'total_comments': top_count,
+        'total_including_replies': all_count
+    })
 
 
-# ❤️ 留言/回覆按讚（同一路由；支援巢狀回覆）
 @require_POST
 @login_required(login_url='/01userlogin/')
 def like_comment(request, post_id):
-    """
-    參數：
-      - comment_id（必填）
-      - reply_id（選填，若有則對「該 id 的回覆」（任意深度）按讚）
-    回傳：{ success: True, liked: bool, like_count: int }
-    """
     post = get_object_or_404(ChatInteraction, pk=post_id)
     comment_id = (request.POST.get('comment_id') or '').strip()
     reply_id = (request.POST.get('reply_id') or '').strip()
@@ -2779,7 +2858,6 @@ def like_comment(request, post_id):
         return JsonResponse({'success': False, 'error': '找不到目標留言'}, status=404)
     c = _ensure_comment_defaults(c)
 
-    # 針對「任意深度」的回覆
     if reply_id:
         parent_list, r_idx, r = _find_reply_recursive(c.get('replies') or [], reply_id)
         if r is None:
@@ -2796,13 +2874,12 @@ def like_comment(request, post_id):
         r['like_user_ids'] = list(likers)
         r['like_count'] = len(likers)
 
-        parent_list[r_idx] = r  # 回寫
+        parent_list[r_idx] = r
         comments[c_idx] = c
         post.comments = json.dumps(comments, ensure_ascii=False)
         post.save(update_fields=['comments'])
         return JsonResponse({'success': True, 'liked': liked, 'like_count': r['like_count']})
 
-    # 針對留言本身
     likers = set(str(x) for x in (c.get('like_user_ids') or []))
     if user_id_str in likers:
         likers.remove(user_id_str)
@@ -2819,13 +2896,11 @@ def like_comment(request, post_id):
     return JsonResponse({'success': True, 'liked': liked, 'like_count': c['like_count']})
 
 
-# ✏️ 編輯回覆（支援巢狀）
 @require_POST
 @login_required(login_url='/01userlogin/')
 def edit_reply(request, post_id):
     post = get_object_or_404(ChatInteraction, pk=post_id)
 
-    # 允許 JSON 或表單
     if request.content_type and 'application/json' in request.content_type:
         try:
             payload = json.loads(request.body.decode('utf-8'))
@@ -2869,7 +2944,6 @@ def edit_reply(request, post_id):
     return JsonResponse({'success': True, 'reply': _ensure_reply_defaults(r)})
 
 
-# ❌ 刪除回覆（支援巢狀）
 @require_POST
 @login_required(login_url='/01userlogin/')
 def delete_reply(request, post_id):
@@ -2891,7 +2965,6 @@ def delete_reply(request, post_id):
     if str(r.get('user_id')) != str(request.user.id):
         return JsonResponse({'success': False, 'error': '沒有權限刪除這則回覆'}, status=403)
 
-    # 移除該回覆
     try:
         del parent_list[r_idx]
     except Exception:
@@ -2901,9 +2974,18 @@ def delete_reply(request, post_id):
     post.comments = json.dumps(comments, ensure_ascii=False)
     post.save(update_fields=['comments'])
 
-    return JsonResponse({'success': True})
+    top_count, all_count = _count_totals(comments)
+
+    return JsonResponse({
+        'success': True,
+        'total_comments': top_count,
+        'total_including_replies': all_count
+    })
 
 # ------------ /交流區後端（整合版）------------
+
+
+
 
 
 
