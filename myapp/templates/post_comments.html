@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>全部留言｜交流區</title>
+  <title>整篇貼文完整顯示</title>
 
   <link href="{% static 'assets/img/favicon.png' %}" rel="icon">
   <link href="{% static 'assets/img/apple-touch-icon.png' %}" rel="apple-touch-icon">
@@ -131,7 +131,7 @@
     <section class="mt-5">
       <div class="container">
         <div class="section-title">
-          <h2>全部留言｜交流區</h2>
+          <h2>整篇貼文完整顯示</h2>
         </div>
 
         <!-- 返回列 + 最終留言總數 -->
@@ -345,7 +345,7 @@
       });
     });
 
-    // 編輯留言（/edit_comment/<post_id>/<time>/）
+    // 編輯留言
     document.querySelectorAll('.edit-comment-btn').forEach(btn=>{
       btn.addEventListener('click', function(e){
         e.preventDefault();
@@ -371,7 +371,7 @@
       });
     });
 
-    // 編輯回覆（/post/<post_id>/reply/edit/）
+    // 編輯回覆
     document.querySelectorAll('.edit-reply-btn').forEach(btn=>{
       btn.addEventListener('click', function(e){
         e.preventDefault();
@@ -398,7 +398,7 @@
       });
     });
 
-    // 刪除回覆（/post/<post_id>/reply/delete/）
+    // 刪除回覆
     document.querySelectorAll('.delete-reply-btn').forEach(btn=>{
       btn.addEventListener('click', function(e){
         e.preventDefault();
