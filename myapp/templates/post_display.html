@@ -375,7 +375,7 @@
 
       <!-- Offcanvas：我的貼文 -->
       <div class="offcanvas offcanvas-end offcanvas-posted" tabindex="-1" id="postedOffcanvas">
-        <div class="offcanvas-header" style="background:#e6f3fb;">
+        <div class="offcanvas-header" style="背景:#e6f3fb;">
           <h5 class="offcanvas-title fw-bold text-primary"><i class="bi bi-journal-text me-2"></i>我的貼文</h5>
           <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
         </div>
@@ -450,18 +450,11 @@
                               <span class="dot"></span>
                               <span class="time">{{ c.time }}</span>
                               <span class="id-badge">
-                                {% if c.identity == 'anonymous' %}
-                                  匿名
-                                {% elif c.identity == 'nickname1' %}
-                                  暱稱 1：{{ c.nickname }}
-                                {% elif c.identity == 'nickname2' %}
-                                  暱稱 2：{{ c.nickname }}
+                                {% if c.identity == 'anonymous' %}匿名
+                                {% elif c.identity == 'nickname1' %}暱稱 1：{{ c.nickname }}
+                                {% elif c.identity == 'nickname2' %}暱稱 2：{{ c.nickname }}
                                 {% else %}
-                                  {% if c.nickname and c.nickname != '匿名' and c.nickname != '(匿名)' %}
-                                    暱稱：{{ c.nickname }}
-                                  {% else %}
-                                    匿名
-                                  {% endif %}
+                                  {% if c.nickname and c.nickname != '匿名' and c.nickname != '(匿名)' %}暱稱：{{ c.nickname }}{% else %}匿名{% endif %}
                                 {% endif %}
                               </span>
                             </div>
@@ -558,6 +551,15 @@
             {% endif %}
           </div>
 
+          <!-- 🆕 隱藏的回覆計數容器（收集所有回覆的數量，含未渲染的） -->
+          <div class="d-none" id="replies-meta-{{ post.interaction_id }}">
+            {% for c in post.comment_list %}
+              {% for r in c.replies_flat %}
+                <i data-reply="1"></i>
+              {% endfor %}
+            {% endfor %}
+          </div>
+
           <div class="comments mt-3" id="comments-{{ post.interaction_id }}"
      data-nickname1="{{ profile_nickname1 }}" data-nickname2="{{ profile_nickname2 }}"
      data-top-count="{{ post.comment_list|length }}" style="display:none;">
@@ -569,18 +571,11 @@
                   <div>
                     <div class="small text-muted d-flex align-items-center gap-2 flex-wrap">
                       <span class="id-badge">
-                        {% if c.identity == 'anonymous' %}
-                          匿名
-                        {% elif c.identity == 'nickname1' %}
-                          暱稱 1：{{ c.nickname }}
-                        {% elif c.identity == 'nickname2' %}
-                          暱稱 2：{{ c.nickname }}
+                        {% if c.identity == 'anonymous' %}匿名
+                        {% elif c.identity == 'nickname1' %}暱稱 1：{{ c.nickname }}
+                        {% elif c.identity == 'nickname2' %}暱稱 2：{{ c.nickname }}
                         {% else %}
-                          {% if c.nickname and c.nickname != '匿名' and c.nickname != '(匿名)' %}
-                            暱稱：{{ c.nickname }}
-                          {% else %}
-                            匿名
-                          {% endif %}
+                          {% if c.nickname and c.nickname != '匿名' and c.nickname != '(匿名)' %}暱稱：{{ c.nickname }}{% else %}匿名{% endif %}
                         {% endif %}
                       </span>
                       <span>・ {{ c.time }}</span>
@@ -624,16 +619,11 @@
         style="--lvl: {{ r.level|default:1 }};">
       <div class="small text-muted d-flex align-items-center gap-2 flex-wrap">
         <span class="id-badge">
-          {% if r.identity == 'anonymous' %}
-            匿名
-          {% elif r.identity == 'nickname1' %}
-            暱稱 1：{{ r.nickname }}
-          {% elif r.identity == 'nickname2' %}
-            暱稱 2：{{ r.nickname }}
+          {% if r.identity == 'anonymous' %}匿名
+          {% elif r.identity == 'nickname1' %}暱稱 1：{{ r.nickname }}
+          {% elif r.identity == 'nickname2' %}暱稱 2：{{ r.nickname }}
           {% else %}
-            {% if r.nickname and r.nickname != '匿名' and r.nickname != '(匿名)' %}
-              暱稱：{{ r.nickname }}
-            {% else %} 匿名 {% endif %}
+            {% if r.nickname and r.nickname != '匿名' and r.nickname != '(匿名)' %}暱稱：{{ r.nickname }}{% else %} 匿名 {% endif %}
           {% endif %}
         </span>
         <span>・ {{ r.time }}</span>
@@ -713,7 +703,7 @@
                data-post-id="{{ post.interaction_id }}"
                data-comment-id="{{ cid }}"
                data-reply-id="{{ rid }}">
-              <i class="bi bi-trash-fill me-2"></i> 刪除
+              <i class="bi bi-trash-fill me-2"></i> 削除
             </a>
           </li>
         </ul>
@@ -921,18 +911,26 @@
     }catch(e){}
   }
 
-  // 用 DOM 算頂層留言數
+  // ✅ 從「後端提供」的 data-top-count 取得頂層留言總數
+  function getTopLevelCommentCount(postId){
+    var box = document.getElementById('comments-' + postId);
+    if(!box) return 0;
+    var v = box.getAttribute('data-top-count') || box.dataset.topCount || '0';
+    var n = parseInt(v, 10);
+    return isNaN(n) ? 0 : n;
+  }
+
+  // 備援：用 DOM 算頂層留言數（目前不作為顯示依據）
   function getTopCountFromDOM(box){
     var list=box.querySelector('[data-list]');
     return list ? list.querySelectorAll(':scope > li[data-comment-id]').length : 0;
   }
 
-  // 取得「留言 + 回覆」總數（完全依 DOM，不信任後端數字）
+  // 🆕 留言 + 回覆總數（回覆使用「隱藏容器」確保包含未渲染的）
   function getTotalCommentsIncludingReplies(postId){
-    var box = document.getElementById('comments-' + postId);
-    if(!box) return 0;
-    var topCount   = getTopCountFromDOM(box);
-    var replyCount = box.querySelectorAll('li.reply-item[data-reply-id]').length; // 只算回覆 LI
+    var topCount = getTopLevelCommentCount(postId);
+    var meta = document.getElementById('replies-meta-' + postId);
+    var replyCount = meta ? meta.querySelectorAll('[data-reply]').length : 0;
     return topCount + replyCount;
   }
 
@@ -1010,14 +1008,13 @@
 
     // 清乾淨既有的（避免重複）
     container.querySelectorAll('.my-comment-card').forEach(function(n){ n.remove(); });
-    // 若卡片是舊的但內部清空，也讓它在最後自動被移除
     container.querySelectorAll('[data-commented][data-post-id] ul.my-comment-list').forEach(function(ul){ ul.innerHTML=''; });
 
     // 逐篇貼文掃描
     document.querySelectorAll('.comments[id^="comments-"]').forEach(function(box){
       var postId = box.id.replace('comments-','');
 
-      // 1) 我的「頂層留言」：有 .edit-comment-btn 或 .delete-comment-btn 視為本人
+      // 1) 我的「頂層留言」
       box.querySelectorAll(':scope [data-list] > li[data-comment-id]').forEach(function(li){
         var mine = !!li.querySelector('.edit-comment-btn, .delete-comment-btn');
         if(!mine) return;
@@ -1027,11 +1024,10 @@
         appendMyCommentToCard(postId, time, idLabel, content);
       });
 
-      // 2) 我的「回覆」：回覆項中含 .edit-reply-btn 視為本人
+      // 2) 我的「回覆」
       box.querySelectorAll('li.reply-item[data-reply-id]').forEach(function(rli){
         var mine = !!rli.querySelector('.edit-reply-btn');
         if(!mine) return;
-        // 取時間：小字區第 2 個 span（第一個是 id-badge）
         var meta = rli.querySelector('.small.text-muted');
         var spans = meta ? meta.querySelectorAll('span') : [];
         var time = spans && spans[1] ? spans[1].textContent.trim().replace(/^・\s*/,'') : '';
@@ -1040,7 +1036,7 @@
         appendMyCommentToCard(postId, time, idLabel, content);
       });
 
-      // 3) 更新每篇貼文的留言總數（用 DOM 算）
+      // 3) ✅ 更新每篇貼文的「總數 = 頂層 + 回覆」
       setCommentCounters(postId, getTotalCommentsIncludingReplies(postId));
     });
 
@@ -1224,12 +1220,12 @@
       });
     });
 
-    /* 首次載入：用 DOM 重新計算每篇貼文的留言總數 & 重建「我的留言」（含回覆） */
+    /* ✅ 首次載入：顯示「頂層 + 全部回覆」的總數 */
     document.querySelectorAll('.comments[id^="comments-"]').forEach(function(box){
       var postId = box.id.replace('comments-','');
       setCommentCounters(postId, getTotalCommentsIncludingReplies(postId));
     });
-    rebuildMyCommentsFromDOM(); // ← 這行確保刷新後也會把舊的回覆算進去
+    rebuildMyCommentsFromDOM();
 
     // =========================
     // 新增留言（頂層）
@@ -1277,8 +1273,18 @@
             list.appendChild(li);
           });
 
-          // 更新總數並重建我的留言（把剛發的頂層也算入）
+          // ✅ 更新頂層數據（data-top-count）
+          var currentBox = form.closest('.comments');
+          var newTop = (data.total_comments != null)
+            ? parseInt(data.total_comments, 10)
+            : (parseInt(currentBox.getAttribute('data-top-count') || '0', 10) + 1);
+          if(isNaN(newTop)) newTop = 0;
+          currentBox.setAttribute('data-top-count', newTop);
+
+          // ✅ 顯示：頂層 + 回覆
           setCommentCounters(postId, getTotalCommentsIncludingReplies(postId));
+
+          // 同步「我的留言」
           rebuildMyCommentsFromDOM();
         })
         .catch(function(err){ alert(err.message||'留言失敗，請稍後再試'); });
@@ -1429,7 +1435,11 @@
 
         repliesTarget.appendChild(li);
 
-        // 將這則回覆也同步到「我的留言」，並更新總數
+        // 🆕 同步隱藏回覆計數容器（+1）
+        var meta=document.getElementById('replies-meta-'+postId);
+        if(meta){ var mark=document.createElement('i'); mark.setAttribute('data-reply','1'); meta.appendChild(mark); }
+
+        // ✅ 顯示：頂層 + 回覆
         rebuildMyCommentsFromDOM();
         setCommentCounters(postId, getTotalCommentsIncludingReplies(postId));
 
@@ -1639,6 +1649,11 @@
           if(!data.success) throw new Error(data.error||'刪除失敗');
           var li=document.querySelector('[id="post-'+postId+'"] [data-reply-id="'+replyId+'"]');
           if(li){ li.remove(); }
+          // 🆕 同步隱藏回覆計數容器（-1）
+          var meta=document.getElementById('replies-meta-'+postId);
+          if(meta){ var mark=meta.querySelector('[data-reply]'); if(mark) mark.remove(); }
+
+          // ✅ 顯示：頂層 + 回覆
           setCommentCounters(postId, getTotalCommentsIncludingReplies(postId));
           rebuildMyCommentsFromDOM();
         })
