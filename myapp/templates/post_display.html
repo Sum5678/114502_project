@@ -687,26 +687,24 @@
           <i class="bi bi-three-dots-vertical"></i>
         </button>
         <ul class="dropdown-menu dropdown-menu-end">
-          <li>
-            <a class="dropdown-item text-primary edit-reply-btn"
-               href="#"
-               data-post-id="{{ post.interaction_id }}"
-               data-comment-id="{{ cid }}"
-               data-reply-id="{{ rid }}"
-               data-content="{{ r.content|escapejs }}">
-              <i class="bi bi-pencil-fill me-2"></i> 編輯
-            </a>
-          </li>
-          <li>
-            <a class="dropdown-item text-danger delete-reply-btn"
-               href="#"
-               data-post-id="{{ post.interaction_id }}"
-               data-comment-id="{{ cid }}"
-               data-reply-id="{{ rid }}">
-              <i class="bi bi-trash-fill me-2"></i> 刪除
-            </a>
-          </li>
-        </ul>
+  <li>
+    <button type="button" class="dropdown-item text-primary edit-reply-btn"
+                data-post-id="{{ post.interaction_id }}"
+                data-comment-id="{{ cid }}"
+                data-reply-id="{{ rid }}"
+                data-content="{{ r.content|escapejs }}">
+          <i class="bi bi-pencil-fill me-2"></i> 編輯
+        </button>
+  </li>
+  <li>
+    <button type="button" class="dropdown-item text-danger delete-reply-btn"
+                data-post-id="{{ post.interaction_id }}"
+                data-comment-id="{{ cid }}"
+                data-reply-id="{{ rid }}">
+          <i class="bi bi-trash-fill me-2"></i> 刪除
+        </button>
+  </li>
+</ul>
       </div>
       {% endif %}
     </li>
@@ -753,29 +751,27 @@
 
                   {% if request.user.is_authenticated and c.user_id|stringformat:"s" == request.user.id|stringformat:"s" %}
                   <div class="dropdown position-absolute top-0 end-0">
-                    <button class="btn btn-link text-muted p-0" type="button" id="commentMenu{{ forloop.counter }}" data-bs-toggle="dropdown">
-                      <i class="bi bi-three-dots-vertical"></i>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="commentMenu{{ forloop.counter }}">
-                      <li>
-                        <a class="dropdown-item text-primary edit-comment-btn"
-                           href="#"
-                           data-post-id="{{ post.interaction_id }}"
-                           data-time="{{ c.time }}"
-                           data-content="{{ c.content|escapejs }}">
-                          <i class="bi bi-pencil-fill me-2"></i> 編輯
-                        </a>
-                      </li>
-                      <li>
-                        <a class="dropdown-item text-danger delete-comment-btn"
-                           href="#"
-                           data-post-id="{{ post.interaction_id }}"
-                           data-time="{{ c.time }}">
-                          <i class="bi bi-trash-fill me-2"></i> 刪除
-                        </a>
-                      </li>
-                    </ul>
-                  </div>
+  <button class="btn btn-link text-muted p-0" type="button" id="commentMenu{{ forloop.counter }}" data-bs-toggle="dropdown" aria-expanded="false">
+    <i class="bi bi-three-dots-vertical"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="commentMenu{{ forloop.counter }}">
+    <li>
+      <button type="button" class="dropdown-item text-primary edit-comment-btn"
+              data-post-id="{{ post.interaction_id }}"
+              data-time="{{ c.time }}"
+              data-content="{{ c.content|escapejs }}">
+        <i class="bi bi-pencil-fill me-2"></i> 編輯
+      </button>
+    </li>
+    <li>
+      <button type="button" class="dropdown-item text-danger delete-comment-btn"
+              data-post-id="{{ post.interaction_id }}"
+              data-time="{{ c.time }}">
+        <i class="bi bi-trash-fill me-2"></i> 刪除
+      </button>
+    </li>
+  </ul>
+</div>
                   {% endif %}
                 </li>
                 {% endwith %}
@@ -1398,16 +1394,18 @@
         var menuId='rMenu-'+postId+'-'+rid;
         var contentAttr=(r.content||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
+      
         var replyDropdownHTML =
-          '<div class="dropdown position-absolute top-0 end-0">' +
-            '<button class="btn btn-link text-muted p-0" type="button" id="'+menuId+'" data-bs-toggle="dropdown">' +
-              '<i class="bi bi-three-dots-vertical"></i>' +
-            '</button>' +
-            '<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="'+menuId+'">' +
-              '<li><a class="dropdown-item text-primary edit-reply-btn" href="#" data-post-id="'+postId+'" data-comment-id="'+commentId+'" data-reply-id="'+rid+'" data-content="'+contentAttr+'"><i class="bi bi-pencil-fill me-2"></i> 編輯</a></li>' +
-              '<li><a class="dropdown-item text-danger delete-reply-btn" href="#" data-post-id="'+postId+'" data-comment-id="'+commentId+'" data-reply-id="'+rid+'"><i class="bi bi-trash-fill me-2"></i> 刪除</a></li>' +
-            '</ul>' +
-          '</div>';
+            '<div class="dropdown position-absolute top-0 end-0">' +
+              '<button class="btn btn-link text-muted p-0" type="button" id="'+menuId+'" data-bs-toggle="dropdown">' +
+                '<i class="bi bi-three-dots-vertical"></i>' +
+              '</button>' +
+              '<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="'+menuId+'">' +
+                '<li><button type="button" class="dropdown-item text-primary edit-reply-btn" data-post-id="'+postId+'" data-comment-id="'+commentId+'" data-reply-id="'+rid+'" data-content="'+contentAttr+'"><i class="bi bi-pencil-fill me-2"></i> 編輯</button></li>' +
+                '<li><button type="button" class="dropdown-item text-danger delete-reply-btn" data-post-id="'+postId+'" data-comment-id="'+commentId+'" data-reply-id="'+rid+'"><i class="bi bi-trash-fill me-2"></i> 刪除</button></li>' +
+              '</ul>' +
+            '</div>';
+
 
         li.innerHTML =
           '<div class="small text-muted d-flex align-items-center gap-2 flex-wrap">' +
