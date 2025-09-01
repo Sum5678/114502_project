@@ -1330,7 +1330,7 @@
       if(parentReplyId) fd.set('parent_reply_id', parentReplyId);
 
       fetch(url,{ method:'POST', body:fd, headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':csrf} })
-      .then(function(res){ return res.json(); })
+      .then(safeJSON)
       .then(function(data){
         if(!data.success) throw new Error(data.error||'回覆失敗');
 
@@ -1469,7 +1469,7 @@
 
       var fd=new FormData(); fd.set('comment_id', commentId);
       fetch(url,{ method:'POST', body:fd, headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':getCookie('csrftoken')} })
-      .then(function(res){ return res.json(); })
+      .then(safeJSON)
       .then(function(data){
         if(!data.success) throw new Error(data.error||'操作失敗');
         var liked=data.liked, count=data.like_count||0;
@@ -1491,7 +1491,7 @@
 
       var fd=new FormData(); fd.set('comment_id', commentId); fd.set('reply_id', replyId);
       fetch(url,{ method:'POST', body:fd, headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':getCookie('csrftoken')} })
-      .then(function(res){ return res.json(); })
+      .then(safeJSON)
       .then(function(data){
         if(!data.success) throw new Error(data.error||'操作失敗');
         var liked=data.liked, count=data.like_count||0;
@@ -1575,7 +1575,7 @@
           headers:{ 'Content-Type':'application/x-www-form-urlencoded','X-Requested-With':'XMLHttpRequest','X-CSRFToken': getCookie('csrftoken') },
           body:'time='+encodeURIComponent(time)
         })
-        .then(function(res){ return res.json(); })
+        .then(safeJSON)
         .then(function(data){
           if(!data.success) throw new Error(data.error||'刪除失敗');
           window.location.reload(); // 確保樹狀同步
@@ -1688,7 +1688,7 @@
           body: fd,
           headers:{'X-Requested-With':'XMLHttpRequest', 'X-CSRFToken': (document.cookie.match(/csrftoken=([^;]+)/)||[])[1] || '' }
         })
-        .then(function(res){ return res.json(); })
+        .then(safeJSON)
         .then(function(data){
           if(!data.success) throw new Error(data.error||'刪除失敗');
           var li=document.querySelector('[id="post-'+postId+'"] [data-reply-id="'+replyId+'"]');
@@ -1716,7 +1716,7 @@
             headers:{ 'Content-Type':'application/json','X-CSRFToken': (document.cookie.match(/csrftoken=([^;]+)/)||[])[1] || '' },
             body: JSON.stringify(payload)
           })
-          .then(function(res){ return res.json(); })
+          .then(safeJSON)
           .then(function(data){
             if(!data.success) throw new Error(data.error||'更新失敗');
             var li=document.querySelector('[id="post-'+window.currentReplyEdit.postId+'"] [data-reply-id="'+window.currentReplyEdit.replyId+'"]');
@@ -1838,5 +1838,208 @@
       }, 250);
     }
   };
+})();
+
+</script>
+
+<script>
+(function(){
+  // ===== Utilities =====
+  function getCookie(name){
+    var cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      var cookies = document.cookie.split(';');
+      for (var i = 0; i < cookies.length; i++) {
+        var cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+  function $(sel, root){ return (root||document).querySelector(sel); }
+
+    // ---- Robust JSON helper ----
+    async function safeJSON(res){
+      const ct = (res.headers.get('content-type') || '').toLowerCase();
+      if(ct.includes('application/json')){
+        try { return await res.json(); } catch(e){ return {success:false, error:'JSON parse error'}; }
+      }
+      const text = await res.text();
+      return {success:false, error: '伺服器回應非 JSON（可能未登入或後端錯誤）', html:text.slice(0,500)};
+    }
+    
+  function $all(sel, root){ return Array.prototype.slice.call((root||document).querySelectorAll(sel)); }
+  function text(el){ return el ? el.textContent.trim() : ""; }
+
+  // Safe text set (no HTML injection)
+  function setText(el, value){
+    if(!el) return;
+    el.textContent = value;
+  }
+
+  // Modal pieces (reuse existing modal in your template)
+  var modalEl = document.getElementById('editCommentModal');
+  // If page doesn't have modal, quietly exit
+  if(!modalEl) return;
+  var textarea = document.getElementById('editCommentContent');
+  var saveBtn  = document.getElementById('saveCommentEdit');
+
+  var bsModal = null;
+  try { bsModal = bootstrap.Modal.getOrCreateInstance(modalEl); } catch(e){}
+
+  // State for what to save
+  var currentEdit = null; // {type:'comment'|'reply', postId, key, time, commentId, replyId, originalBtn}
+
+  // Openers (event delegation so dynamically added buttons also work)
+  document.addEventListener('click', function(e){
+    // ---- Edit comment ----
+    var btn = e.target.closest('.edit-comment-btn');
+    if(btn){
+      e.preventDefault();
+      currentEdit = {
+        type: 'comment',
+        postId: btn.getAttribute('data-post-id'),
+        // key: prefer id; fallback to time
+        key: btn.getAttribute('data-comment-id') || btn.getAttribute('data-time') || "",
+        time: btn.getAttribute('data-time') || "", // for offcanvas matching
+        originalBtn: btn
+      };
+      if(textarea) textarea.value = btn.getAttribute('data-content') || "";
+      if(bsModal) bsModal.show();
+      return;
+    }
+    // ---- Edit reply ----
+    var rbtn = e.target.closest('.edit-reply-btn');
+    if(rbtn){
+      e.preventDefault();
+      currentEdit = {
+        type: 'reply',
+        postId: rbtn.getAttribute('data-post-id'),
+        commentId: rbtn.getAttribute('data-comment-id') || "",
+        replyId: rbtn.getAttribute('data-reply-id') || "",
+        time: rbtn.getAttribute('data-time') || "",   // if present we will also try sync offcanvas
+        originalBtn: rbtn
+      };
+      if(textarea) textarea.value = rbtn.getAttribute('data-content') || "";
+      if(bsModal) bsModal.show();
+      return;
+    }
+  });
+
+  // Save
+  if(saveBtn){
+    saveBtn.addEventListener('click', function(){
+      if(!currentEdit) return;
+      var content = (textarea && textarea.value || "").trim();
+      if(!content){
+        alert("內容不能為空！");
+        return;
+      }
+      var csrftoken = getCookie('csrftoken') || getCookie('CSRF-TOKEN') || '';
+
+      if(currentEdit.type === 'comment'){
+        var postId = currentEdit.postId;
+        var key = currentEdit.key || "";
+        var url = "/edit_comment/" + encodeURIComponent(postId) + "/" + encodeURIComponent(key) + "/";
+        fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrftoken
+          },
+          body: JSON.stringify({ content: content })
+        })
+        .then(function(r){ return r.json().catch(function(){ return {}; }); })
+        .then(function(data){
+          if(!data || data.success !== true){
+            throw new Error((data && data.error) || "更新失敗");
+          }
+          // ===== Immediate DOM update (post_display) =====
+          // Scope within the post card if possible
+          var scope = document.getElementById('post-' + postId) || document;
+          // Try match by id first
+          var li = scope.querySelector('[data-comment-id="' + CSS.escape(key) + '"]');
+          // Fallback: match by time (if key was time-like)
+          if(!li && currentEdit.time){
+            li = scope.querySelector('[data-comment-time="' + CSS.escape(currentEdit.time) + '"]');
+          }
+          if(li){
+            // In your template, the text container is the first ".mt-1" under the li (top-level comment text)
+            var contentBox = li.querySelector('.mt-1');
+            setText(contentBox, content);
+            // Also把編輯按鈕上的 data-content 更新，避免下次打開看到舊內容
+            if(currentEdit.originalBtn){
+              currentEdit.originalBtn.setAttribute('data-content', content);
+            }
+          }
+          // ===== Sync right offcanvas "我的留言" if time is present =====
+          if(currentEdit.time){
+            $all('.offcanvas-commented .my-comment-card').forEach(function(card){
+              var t = card.querySelector('.time');
+              if(t && text(t) === currentEdit.time){
+                var c = card.querySelector('.content');
+                setText(c, content);
+              }
+            });
+          }
+          if(bsModal) bsModal.hide();
+        })
+        .catch(function(err){
+          alert(err && err.message ? err.message : "更新失敗");
+        });
+      }else{
+        // reply
+        var postId = currentEdit.postId;
+        var url = "/post/" + encodeURIComponent(postId) + "/reply/edit/";
+        var body = {
+          comment_id: currentEdit.commentId,
+          reply_id: currentEdit.replyId,
+          content: content
+        };
+        fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrftoken
+          },
+          body: JSON.stringify(body)
+        })
+        .then(function(r){ return r.json().catch(function(){ return {}; }); })
+        .then(function(data){
+          if(!data || data.success !== true){
+            throw new Error((data && data.error) || "更新失敗");
+          }
+          // ===== Immediate DOM update =====
+          var scope = document.getElementById('post-' + postId) || document;
+          var rli = scope.querySelector('[data-reply-id="' + CSS.escape(currentEdit.replyId) + '"]');
+          if(rli){
+            var rc = rli.querySelector('.reply-content');
+            setText(rc, content);
+            // 更新該回覆的編輯鈕 data-content
+            if(currentEdit.originalBtn){
+              currentEdit.originalBtn.setAttribute('data-content', content);
+            }
+          }
+          // ===== Sync offcanvas by time (if any) =====
+          if(currentEdit.time){
+            $all('.offcanvas-commented .my-comment-card').forEach(function(card){
+              var t = card.querySelector('.time');
+              if(t && text(t) === currentEdit.time){
+                var c = card.querySelector('.content');
+                setText(c, content);
+              }
+            });
+          }
+          if(bsModal) bsModal.hide();
+        })
+        .catch(function(err){
+          alert(err && err.message ? err.message : "更新失敗");
+        });
+      }
+    });
+  }
 })();
 </script>
