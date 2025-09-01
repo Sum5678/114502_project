@@ -2264,18 +2264,31 @@ def _count_totals(comments):
         all_total += _count_replies_recursive(c.get('replies') or [])
     return top, all_total
 
-# ===== 全部留言（含回覆）扁平化，附上「回覆對象」資訊 =====
-def _flatten_all_with_parent(comments, indent_step_px=20):
+# ===== 全部留言（含回覆）扁平化，附上「回覆對象」資訊 + 喜歡狀態 =====
+def _flatten_all_with_parent(comments, user_id_str=None, indent_step_px=20):
+    """
+    把所有留言與回覆展平成清單，並帶上：
+    - kind: 'comment' / 'reply'
+    - id / root_comment_id
+    - content / time / nickname / identity / user_id
+    - indent_px / level
+    - parent_*（如果是回覆）
+    - like_count / is_liked（這兩個是本頁渲染需要的）
+    """
     items = []
 
     def _preview(text, length=30):
         text = (text or '')
         return text if len(text) <= length else text[:length] + '…'
 
+    uid = str(user_id_str) if user_id_str else None
+
     for c in comments or []:
         c = _ensure_comment_defaults(c)
         root_id = str(c.get('id') or c.get('time'))
-        # 頂層
+
+        # 頂層留言
+        c_like_ids = [str(x) for x in (c.get('like_user_ids') or [])]
         items.append({
             'kind': 'comment',
             'id': root_id,
@@ -2291,13 +2304,17 @@ def _flatten_all_with_parent(comments, indent_step_px=20):
             'parent_time': None,
             'parent_nickname': None,
             'parent_preview': None,
+            'like_count': len(c_like_ids),
+            'is_liked': bool(uid and uid in c_like_ids),
         })
 
-        # 回覆樹
+        # 巢狀回覆遞迴
         def walk(replies, parent_obj, parent_level):
             for r in (replies or []):
                 r = _ensure_reply_defaults(r)
                 rid = str(r.get('id') or r.get('time'))
+
+                r_like_ids = [str(x) for x in (r.get('like_user_ids') or [])]
                 parent_id = str(parent_obj.get('id') or parent_obj.get('time'))
                 parent_nick = parent_obj.get('nickname') or '(匿名)'
                 parent_time = parent_obj.get('time')
@@ -2319,6 +2336,8 @@ def _flatten_all_with_parent(comments, indent_step_px=20):
                     'parent_time': parent_time,
                     'parent_nickname': parent_nick,
                     'parent_preview': parent_preview,
+                    'like_count': len(r_like_ids),
+                    'is_liked': bool(uid and uid in r_like_ids),
                 })
                 walk(r.get('replies') or [], r, level)
 
@@ -2705,8 +2724,10 @@ def post_comments(request, post_id):
     comments = _load_comments(post)
     top_count, all_count = _count_totals(comments)
 
-    # 把所有留言與回覆展平成含 parent 的清單
-    flat_items = _flatten_all_with_parent(comments, indent_step_px=20)
+    user_id_str = str(request.user.id) if request.user.is_authenticated else None
+
+    # 把所有留言與回覆展平成含 parent 的清單（帶 is_liked / like_count）
+    flat_items = _flatten_all_with_parent(comments, user_id_str=user_id_str, indent_step_px=20)
     final_total = len(flat_items)
 
     paginator = Paginator(flat_items, 10)  # 直接對「全部項目」分頁
@@ -2945,6 +2966,7 @@ def delete_reply(request, post_id):
     })
 
 # ------------ /交流區後端（整合版）------------
+
 
 
 
