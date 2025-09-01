@@ -688,23 +688,21 @@
         </button>
         <ul class="dropdown-menu dropdown-menu-end">
           <li>
-            <a class="dropdown-item text-primary edit-reply-btn"
-               href="#"
-               data-post-id="{{ post.interaction_id }}"
-               data-comment-id="{{ cid }}"
-               data-reply-id="{{ rid }}"
-               data-content="{{ r.content|escapejs }}">
-              <i class="bi bi-pencil-fill me-2"></i> 編輯
-            </a>
-          </li>
-          <li>
-            <a class="dropdown-item text-danger delete-reply-btn"
-               href="#"
-               data-post-id="{{ post.interaction_id }}"
-               data-comment-id="{{ cid }}"
-               data-reply-id="{{ rid }}">
-              <i class="bi bi-trash-fill me-2"></i> 刪除
-            </a>
+        <!-- 變更後 -->
+        <button type="button" class="dropdown-item text-primary edit-reply-btn"
+                data-post-id="{{ post.interaction_id }}"
+                data-comment-id="{{ cid }}"
+                data-reply-id="{{ rid }}"
+                data-content="{{ r.content|escapejs }}">
+          <i class="bi bi-pencil-fill me-2"></i> 編輯
+        </button>
+        <button type="button" class="dropdown-item text-danger delete-reply-btn"
+                data-post-id="{{ post.interaction_id }}"
+                data-comment-id="{{ cid }}"
+                data-reply-id="{{ rid }}">
+          <i class="bi bi-trash-fill me-2"></i> 刪除
+        </button>
+
           </li>
         </ul>
       </div>
@@ -753,29 +751,25 @@
 
                   {% if request.user.is_authenticated and c.user_id|stringformat:"s" == request.user.id|stringformat:"s" %}
                   <div class="dropdown position-absolute top-0 end-0">
-                    <button class="btn btn-link text-muted p-0" type="button" id="commentMenu{{ forloop.counter }}" data-bs-toggle="dropdown">
-                      <i class="bi bi-three-dots-vertical"></i>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="commentMenu{{ forloop.counter }}">
-                      <li>
-                        <a class="dropdown-item text-primary edit-comment-btn"
-                           href="#"
-                           data-post-id="{{ post.interaction_id }}"
-                           data-time="{{ c.time }}"
-                           data-content="{{ c.content|escapejs }}">
-                          <i class="bi bi-pencil-fill me-2"></i> 編輯
-                        </a>
-                      </li>
-                      <li>
-                        <a class="dropdown-item text-danger delete-comment-btn"
-                           href="#"
-                           data-post-id="{{ post.interaction_id }}"
-                           data-time="{{ c.time }}">
-                          <i class="bi bi-trash-fill me-2"></i> 刪除
-                        </a>
-                      </li>
-                    </ul>
-                  </div>
+  <button class="btn btn-link text-muted p-0" type="button" id="commentMenu{{ forloop.counter }}" data-bs-toggle="dropdown" aria-expanded="false">
+    <i class="bi bi-three-dots-vertical"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="commentMenu{{ forloop.counter }}">
+    <li>
+      <button type="button" class="dropdown-item text-primary edit-comment-btn"
+              data-post-id="{{ post.interaction_id }}" data-comment-id="{{ cid }}" data-time="{{ c.time }}"
+              data-content="{{ c.content|escapejs }}">
+        <i class="bi bi-pencil-fill me-2"></i> 編輯
+      </button>
+    </li>
+    <li>
+      <button type="button" class="dropdown-item text-danger delete-comment-btn"
+              data-post-id="{{ post.interaction_id }}" data-comment-id="{{ cid }}" data-time="{{ c.time }}">
+        <i class="bi bi-trash-fill me-2"></i> 刪除
+      </button>
+    </li>
+  </ul>
+</div>
                   {% endif %}
                 </li>
                 {% endwith %}
@@ -1398,16 +1392,18 @@
         var menuId='rMenu-'+postId+'-'+rid;
         var contentAttr=(r.content||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
+      
         var replyDropdownHTML =
-          '<div class="dropdown position-absolute top-0 end-0">' +
-            '<button class="btn btn-link text-muted p-0" type="button" id="'+menuId+'" data-bs-toggle="dropdown">' +
-              '<i class="bi bi-three-dots-vertical"></i>' +
-            '</button>' +
-            '<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="'+menuId+'">' +
-              '<li><a class="dropdown-item text-primary edit-reply-btn" href="#" data-post-id="'+postId+'" data-comment-id="'+commentId+'" data-reply-id="'+rid+'" data-content="'+contentAttr+'"><i class="bi bi-pencil-fill me-2"></i> 編輯</a></li>' +
-              '<li><a class="dropdown-item text-danger delete-reply-btn" href="#" data-post-id="'+postId+'" data-comment-id="'+commentId+'" data-reply-id="'+rid+'"><i class="bi bi-trash-fill me-2"></i> 刪除</a></li>' +
-            '</ul>' +
-          '</div>';
+            '<div class="dropdown position-absolute top-0 end-0">' +
+              '<button class="btn btn-link text-muted p-0" type="button" id="'+menuId+'" data-bs-toggle="dropdown">' +
+                '<i class="bi bi-three-dots-vertical"></i>' +
+              '</button>' +
+              '<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="'+menuId+'">' +
+                '<li><button type="button" class="dropdown-item text-primary edit-reply-btn" data-post-id="'+postId+'" data-comment-id="'+commentId+'" data-reply-id="'+rid+'" data-content="'+contentAttr+'"><i class="bi bi-pencil-fill me-2"></i> 編輯</button></li>' +
+                '<li><button type="button" class="dropdown-item text-danger delete-reply-btn" data-post-id="'+postId+'" data-comment-id="'+commentId+'" data-reply-id="'+rid+'"><i class="bi bi-trash-fill me-2"></i> 刪除</button></li>' +
+              '</ul>' +
+            '</div>';
+
 
         li.innerHTML =
           '<div class="small text-muted d-flex align-items-center gap-2 flex-wrap">' +
@@ -1588,48 +1584,81 @@
       });
     });
 
-    // ---- 編輯留言 ----
-    (function(){
-      var modalEl=document.getElementById('editCommentModal'); if(!modalEl) return;
-      var modal=new bootstrap.Modal(modalEl);
-      var textarea=document.getElementById('editCommentContent');
-      document.querySelectorAll('.edit-comment-btn').forEach(function(btn){
-        btn.addEventListener('click',function(e){
-          e.preventDefault();
-          window.currentPostId=this.dataset.postId;
-          window.currentTime=this.dataset.time;
-          textarea.value=this.dataset.content||'';
-          modal.show();
-        });
-      });
-      var saveBtn=document.getElementById('saveCommentEdit');
-      if(saveBtn){
-        saveBtn.addEventListener('click',function(){
-          var content=(textarea.value||'').trim(); if(!content){ alert('留言內容不能為空！'); return; }
-          fetch('/edit_comment/'+window.currentPostId+'/'+encodeURIComponent(window.currentTime)+'/',{
-            method:'POST',
-            headers:{ 'X-CSRFToken': (document.querySelector('[name=csrfmiddlewaretoken]')||{}).value, 'Content-Type':'application/json' },
-            body: JSON.stringify({ content:content })
-          })
-          .then(function(res){ return res.json(); })
-          .then(function(data){
-            if(!data.success) throw new Error(data.error||'更新失敗');
-            var commentEls=document.querySelectorAll('#comments-'+window.currentPostId+' .small.text-muted');
-            Array.prototype.forEach.call(commentEls,function(el){
-              if(el.innerText.indexOf(window.currentTime)!==-1){
-                var tgt=el.parentElement.parentElement.querySelector('.mt-1');
-                if(tgt) tgt.innerText=content;
-              }
-            });
-            modal.hide();
-            rebuildMyCommentsFromDOM();
-          })
-          .catch(function(err){ alert(err.message||'更新失敗'); });
-        });
-      }
-    })();
+    // ---- 編輯留言（只更新目標頂層留言；改用 form-urlencoded 並容錯 JSON） ----
+(function(){
+  var modalEl=document.getElementById('editCommentModal'); if(!modalEl) return;
+  var modal=new bootstrap.Modal(modalEl);
+  var textarea=document.getElementById('editCommentContent');
 
-    // ---- 回覆的編輯/刪除（共用 Modal） ----
+  // 目前編輯的目標（留言）
+  window.__editTarget = { type:'comment', postId:null, commentId:null, time:null };
+
+  // 開啟留言編輯
+  document.querySelectorAll('.edit-comment-btn').forEach(function(btn){
+    btn.addEventListener('click',function(e){
+      e.preventDefault();
+      window.__editTarget = { type:'comment', postId:this.dataset.postId, commentId:this.dataset.commentId||'', time:this.dataset.time||'' };
+      textarea.value=this.dataset.content||'';
+      modal.show();
+    });
+  });
+
+  var saveBtn=document.getElementById('saveCommentEdit');
+  if(!saveBtn) return;
+
+  function getCSRF(){
+    var m=document.cookie.match(/csrftoken=([^;]+)/);
+    return m ? m[1] : ((document.querySelector('[name=csrfmiddlewaretoken]')||{}).value||'');
+  }
+
+  saveBtn.addEventListener('click',function(){
+    var content=(textarea.value||'').trim(); if(!content){ alert('留言內容不能為空！'); return; }
+    if(window.__editTarget.type!=='comment') return;
+
+    var postId=window.__editTarget.postId;
+    var cid=window.__editTarget.commentId||'';
+    var time=window.__editTarget.time||'';
+    var key = cid ? cid : time;
+    var url='/edit_comment/'+postId+'/'+encodeURIComponent(key)+'/';
+
+    fetch(url,{
+      method:'POST',
+      headers:{
+        'X-CSRFToken': getCSRF(),
+        'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8'
+      },
+      body: new URLSearchParams({ content: content, comment_id: cid||'', time: time||'' })
+    })
+    .then(async function(res){
+      var ct=res.headers.get('content-type')||'';
+      var data=ct.includes('application/json') ? await res.json() : { success: res.ok };
+      if(!res.ok || data.success===false){ throw new Error(data.error||'更新失敗'); }
+
+      // 只更新這一則頂層留言（避免動到回覆）
+      var box=document.getElementById('comments-'+postId);
+      if(box){
+        var li=null;
+        if(cid){
+          var escId=(window.CSS && CSS.escape) ? CSS.escape(String(cid)) : String(cid).replace(/"/g,'\\"');
+          li = box.querySelector('[data-list] > li[data-comment-id="'+escId+'"]');
+        }
+        if(!li && time){
+          var escTime=(window.CSS && CSS.escape) ? CSS.escape(time) : time.replace(/"/g,'\\"');
+          li = box.querySelector('[data-list] > li[data-comment-time="'+escTime+'"]');
+        }
+        if(li){
+          var contentEl=li.querySelector(':scope > .mt-1');
+          if(contentEl) contentEl.textContent=content;
+        }
+      }
+      modal.hide();
+      if(typeof rebuildMyCommentsFromDOM==='function') rebuildMyCommentsFromDOM();
+    })
+    .catch(function(err){ alert(err.message||'更新失敗'); });
+  });
+})();
+
+// ---- 回覆的編輯/刪除（共用 Modal） ----
     (function(){
       var modalEl=document.getElementById('editCommentModal'); if(!modalEl) return;
       var modal=window.bootstrap ? (window.bootstrap.Modal.getInstance(modalEl) || new window.bootstrap.Modal(modalEl)) : null;

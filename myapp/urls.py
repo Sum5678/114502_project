@@ -95,9 +95,11 @@ urlpatterns = [
     path('post/<int:post_id>/comments/', views.post_comments, name='post_comments'),
     path('post/<int:post_id>/comment/reply/', views.reply_comment, name='reply_comment'),
     path('post/<int:post_id>/comment/like/', views.like_comment, name='like_comment'),
-    path('post/<int:post_id>/reply/edit/', views.edit_reply, name='edit_reply'),
     path('post/<int:post_id>/reply/delete/', views.delete_reply, name='delete_reply'),
     path('post/<int:post_id>/comment/edit/<str:time>/', views.edit_comment, name='edit_comment'),
+    # 新增：留言編輯（支援 id 或 time）
+    path('edit_comment/<int:post_id>/<str:key>/', views.edit_comment, name='edit_comment'),
+
     
 
 
