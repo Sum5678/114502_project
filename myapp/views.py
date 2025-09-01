@@ -2102,7 +2102,7 @@ def store_data_api(request):
 #     return render(request, 'store_map.html')
 
 
-# ------------ 交流區後端（整合版，支援巢狀回覆 / 巢狀按讚 / 回覆編輯刪除）------------
+# ------------ 交流區後端（整合版，支援巢狀回覆 / 巢狀按讚 / 回覆編輯刪除 / 留言編輯 by id或time）------------
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, HttpResponseForbidden
 from django.contrib.auth.decorators import login_required
@@ -2184,9 +2184,10 @@ def _ensure_comment_defaults(c):
 
 def _find_comment(comments, comment_id_or_time):
     """依 id 或 time 找到留言 dict 與其索引。"""
+    key = str(comment_id_or_time)
     for idx, c in enumerate(comments):
-        cid = c.get('id') or c.get('time')
-        if str(cid) == str(comment_id_or_time) or str(c.get('time')) == str(comment_id_or_time):
+        cid = str(c.get('id') or c.get('time'))
+        if cid == key or str(c.get('time')) == key:
             return idx, c
     return None, None
 
@@ -2243,7 +2244,7 @@ def _flatten_replies(replies, level=1):
     return flat
 
 
-# ===== 新增：用來計算留言總數（頂層 / 含所有回覆） =====
+# ===== 計數 =====
 def _count_replies_recursive(replies):
     total = 0
     if not isinstance(replies, list):
@@ -2265,18 +2266,8 @@ def _count_totals(comments):
     return top, all_total
 
 
-# ===== 新增：把「全部留言（含回覆）」展平成一條清單，且附上『回覆對象』資訊 =====
+# ===== 全部留言（含回覆）扁平化，附上「回覆對象」資訊 =====
 def _flatten_all_with_parent(comments, indent_step_px=20):
-    """
-    回傳 items（每一筆都有）：
-      - kind: 'comment' 或 'reply'
-      - id: 本筆 id（或 time）
-      - root_comment_id: 所屬頂層留言 id（回覆需要）
-      - time, content, identity, nickname, user_id
-      - level: 巢狀層級（頂層為 0）
-      - indent_px: 建議縮排像素（level * indent_step_px）
-      - parent_id/parent_time/parent_nickname/parent_preview（reply 才有）
-    """
     items = []
 
     def _preview(text, length=30):
@@ -2304,7 +2295,7 @@ def _flatten_all_with_parent(comments, indent_step_px=20):
             'parent_preview': None,
         })
 
-        # 走訪回覆
+        # 回覆樹
         def walk(replies, parent_obj, parent_level):
             for r in (replies or []):
                 r = _ensure_reply_defaults(r)
@@ -2672,36 +2663,47 @@ def delete_comment(request, post_id):
     })
 
 
+# ★★★ 留言編輯（支援 id 或 time；JSON 或表單皆可）★★★
 @require_POST
 @login_required(login_url='/01userlogin/')
-def edit_comment(request, post_id, time):
+def edit_comment(request, post_id, key):
+    """
+    URL: /edit_comment/<post_id>/<key>/
+    - key 可放 comment 的 id（推薦）或舊的 time。
+    - Body 可為 JSON: {"content": "..."}，或 x-www-form-urlencoded: content=...
+      （若同時傳 comment_id 或 time 也可，但以 URL 的 key 優先）
+    """
     post = get_object_or_404(ChatInteraction, pk=post_id)
-    try:
-        payload = json.loads(request.body.decode('utf-8'))
-    except json.JSONDecodeError:
-        return JsonResponse({"success": False, "error": "不合法的內容"})
 
-    new_content = (payload.get("content") or "").strip()
+    # 讀 body（支援 JSON 或表單）
+    if request.content_type and 'application/json' in request.content_type:
+        try:
+            payload = json.loads(request.body.decode('utf-8'))
+        except json.JSONDecodeError:
+            return JsonResponse({"success": False, "error": "不合法的內容"}, status=400)
+        new_content = (payload.get("content") or "").strip()
+    else:
+        new_content = (request.POST.get("content") or "").strip()
+
     if not new_content:
-        return JsonResponse({"success": False, "error": "內容不能為空"})
+        return JsonResponse({"success": False, "error": "內容不能為空"}, status=400)
 
     safe_text = bleach.clean(new_content, tags=[], attributes={}, strip=True)
     if len(safe_text) > 300:
-        return JsonResponse({"success": False, "error": "留言超過 300 字上限"})
+        return JsonResponse({"success": False, "error": "留言超過 300 字上限"}, status=400)
 
     comments = _load_comments(post)
-
     user_id_str = str(request.user.id)
-    updated = False
-    for c in comments:
-        if c.get("time") == time and str(c.get("user_id")) == user_id_str:
-            c["content"] = safe_text
-            updated = True
-            break
 
-    if not updated:
-        return JsonResponse({"success": False, "error": "沒有權限編輯這則留言"})
+    # 依 key（id 或 time）找目標留言
+    c_idx, c = _find_comment(comments, key)
+    if c is None:
+        return JsonResponse({"success": False, "error": "找不到這則留言"}, status=404)
+    if str(c.get("user_id")) != user_id_str:
+        return JsonResponse({"success": False, "error": "沒有權限編輯這則留言"}, status=403)
 
+    c["content"] = safe_text
+    comments[c_idx] = c
     post.comments = json.dumps(comments, ensure_ascii=False)
     post.save(update_fields=['comments'])
     return JsonResponse({"success": True})
@@ -2714,7 +2716,7 @@ def post_comments(request, post_id):
     comments = _load_comments(post)
     top_count, all_count = _count_totals(comments)
 
-    # 新：把所有留言與回覆展平成含 parent 的清單
+    # 把所有留言與回覆展平成含 parent 的清單
     flat_items = _flatten_all_with_parent(comments, indent_step_px=20)
     final_total = len(flat_items)
 
@@ -2957,6 +2959,7 @@ def delete_reply(request, post_id):
     })
 
 # ------------ /交流區後端（整合版）------------
+
 
 
 
