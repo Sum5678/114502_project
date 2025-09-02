@@ -201,7 +201,16 @@
       color: #6b7280;
     }
     .search-history .history-item .remove:hover{ color: #dc3545; }
-  </style>
+  
+/* 回覆濃縮樣式 */
+.replies li.reply-item:nth-child(n+3){ display:none; }
+.replies.expanded li.reply-item{ display:block; }
+.show-more-replies{
+  background:none; border:0; color:#0d6efd; font-size:.85rem;
+  cursor:pointer; margin-top:6px; padding:0;
+}
+
+</style>
 </head>
 
 <body class="{% if request.user.is_authenticated %}authenticated{% endif %}"
@@ -1811,6 +1820,23 @@
     })();
 
     updateSavedCount(); updateLikedCount(); updatePostedCount(); updateCommentedCount();
+
+/* 回覆濃縮：顯示更多 */
+document.addEventListener('DOMContentLoaded', function(){
+  document.querySelectorAll('.replies').forEach(function(ul){
+    if(ul.querySelectorAll('li.reply-item').length > 2){
+      var btn=document.createElement('button');
+      btn.className='show-more-replies';
+      btn.textContent='顯示更多回覆';
+      btn.addEventListener('click',function(){
+        ul.classList.add('expanded');
+        btn.remove();
+      });
+      ul.parentNode.insertBefore(btn, ul.nextSibling);
+    }
+  });
+});
+
   });
 
   /* 平滑捲動到貼文/留言（供 offcanvas 跳轉用） */
