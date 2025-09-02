@@ -63,6 +63,21 @@
 
     .back-row{ display:flex; justify-content:space-between; align-items:center; gap:12px; margin:10px 0 18px; }
     .count-label{ font-weight:600; color:#033e6b; }
+
+    /* 大外框 */
+    .comment-board{
+      border:1px solid #cfe2ff;
+      background:#f8fbff;
+      border-radius:16px;
+      padding:16px 16px 12px;
+      box-shadow:0 8px 24px rgba(3,62,107,.06);
+    }
+
+    /* 動作區 */
+    .comment-actions{ display:flex; align-items:center; gap:14px; margin-top:8px; }
+    .action-btn{ background:none; border:none; color:#4b5563; padding:0; display:inline-flex; align-items:center; gap:6px; cursor:pointer; }
+    .action-btn.liked{ color:#dc3545; font-weight:600; }
+    .reply-editor{ display:none; margin-top:8px; }
   </style>
 </head>
 
@@ -173,128 +188,180 @@
           </div>
         </div>
 
-        <!-- 一次列出「留言 + 所有回覆」；回覆會附上『回覆 → XXX：節錄』 -->
-        <div id="commentsList">
-          {% for item in page_obj.object_list %}
-            <div class="comment-item position-relative" style="margin-left: {{ item.indent_px }}px;">
-              <div class="comment-head">
-                <span class="id-badge">
-                  {% if item.identity == 'anonymous' %}
-                    匿名
-                  {% elif item.identity == 'nickname1' %}
-                    暱稱 1：{{ item.nickname }}
-                  {% elif item.identity == 'nickname2' %}
-                    暱稱 2：{{ item.nickname }}
-                  {% else %}
-                    {% if item.nickname and item.nickname != '匿名' and item.nickname != '(匿名)' %}
-                      暱稱：{{ item.nickname }}
-                    {% else %}匿名{% endif %}
-                  {% endif %}
-                </span>
-                <span>・ {{ item.time }}</span>
+        <!-- 大外框把整個留言區包起來 -->
+        <div class="comment-board">
 
-                {% if item.kind == 'reply' %}
-                  <span class="reply-ref">回覆 → {{ item.parent_nickname }}：{{ item.parent_preview }}</span>
-                {% endif %}
-              </div>
-
-              <div class="comment-content">{{ item.content|escape }}</div>
-
-              {% if request.user.is_authenticated and item.user_id|stringformat:"s" == request.user.id|stringformat:"s" %}
-                <div class="dropdown position-absolute top-0 end-0">
-                  <button class="btn btn-link text-muted p-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="bi bi-three-dots-vertical"></i>
-                  </button>
-                  <ul class="dropdown-menu dropdown-menu-end">
-                    {% if item.kind == 'comment' %}
-                      <li>
-                        <a class="dropdown-item text-primary edit-comment-btn"
-                           href="#"
-                           data-post-id="{{ post.interaction_id }}"
-                           data-time="{{ item.time }}"
-                           data-content="{{ item.content|escapejs }}">
-                          <i class="bi bi-pencil-fill me-2"></i> 編輯
-                        </a>
-                      </li>
-                      <li>
-                        <a class="dropdown-item text-danger delete-comment-btn"
-                           href="#"
-                           data-post-id="{{ post.interaction_id }}"
-                           data-time="{{ item.time }}">
-                          <i class="bi bi-trash-fill me-2"></i> 刪除
-                        </a>
-                      </li>
+          <!-- 一次列出「留言 + 所有回覆」；回覆會附上『回覆 → XXX：節錄』 -->
+          <div id="commentsList">
+            {% for item in page_obj.object_list %}
+              <div class="comment-item position-relative" style="margin-left: {{ item.indent_px }}px;">
+                <div class="comment-head">
+                  <span class="id-badge">
+                    {% if item.identity == 'anonymous' %}
+                      匿名
+                    {% elif item.identity == 'nickname1' %}
+                      暱稱 1：{{ item.nickname }}
+                    {% elif item.identity == 'nickname2' %}
+                      暱稱 2：{{ item.nickname }}
                     {% else %}
-                      <li>
-                        <a class="dropdown-item text-primary edit-reply-btn"
-                           href="#"
-                           data-post-id="{{ post.interaction_id }}"
-                           data-comment-id="{{ item.root_comment_id }}"
-                           data-reply-id="{{ item.id }}"
-                           data-content="{{ item.content|escapejs }}">
-                          <i class="bi bi-pencil-fill me-2"></i> 編輯
-                        </a>
-                      </li>
-                      <li>
-                        <a class="dropdown-item text-danger delete-reply-btn"
-                           href="#"
-                           data-post-id="{{ post.interaction_id }}"
-                           data-comment-id="{{ item.root_comment_id }}"
-                           data-reply-id="{{ item.id }}">
-                          <i class="bi bi-trash-fill me-2"></i> 刪除
-                        </a>
-                      </li>
+                      {% if item.nickname and item.nickname != '匿名' and item.nickname != '(匿名)' %}
+                        暱稱：{{ item.nickname }}
+                      {% else %}匿名{% endif %}
                     {% endif %}
-                  </ul>
+                  </span>
+                  <span>・ {{ item.time }}</span>
+
+                  {% if item.kind == 'reply' %}
+                    <span class="reply-ref">回覆 → {{ item.parent_nickname }}：{{ item.parent_preview }}</span>
+                  {% endif %}
                 </div>
-              {% endif %}
-            </div>
-          {% empty %}
-            <div class="text-muted">目前沒有留言</div>
-          {% endfor %}
-        </div>
 
-        {% if page_obj.paginator.num_pages > 1 %}
-          <nav aria-label="留言分頁" class="mt-3">
-            <ul class="pagination">
-              {% if page_obj.has_previous %}
-                <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">上一頁</a></li>
-              {% else %}
-                <li class="page-item disabled"><span class="page-link">上一頁</span></li>
-              {% endif %}
+                <div class="comment-content">{{ item.content|escape }}</div>
 
-              {% for num in page_obj.paginator.page_range %}
-                {% if num == page_obj.number %}
-                  <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-                {% else %}
-                  <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                <!-- 動作列：每筆都可按讚／回覆 -->
+                <div class="comment-actions">
+                  {% if request.user.is_authenticated %}
+                    <button type="button"
+                            class="action-btn like-btn {% if item.is_liked %}liked{% endif %}"
+                            data-like-url="{% url 'like_comment' post.interaction_id %}"
+                            data-comment-id="{{ item.root_comment_id|default:item.id }}"
+                            {% if item.kind == 'reply' %}data-reply-id="{{ item.id }}"{% endif %}>
+                      <i class="bi {% if item.is_liked %}bi-heart-fill text-danger{% else %}bi-heart{% endif %}"></i>
+                      <span class="like-text">{% if item.is_liked %}收回讚{% else %}按讚{% endif %}</span>
+                      <span class="like-count">{{ item.like_count|default:0 }}</span>
+                    </button>
+
+                    <button type="button"
+                            class="action-btn reply-toggle"
+                            data-target="#reply-editor-{{ forloop.counter }}">
+                      <i class="bi bi-chat-dots"></i> 回覆
+                    </button>
+                  {% else %}
+                    <a class="action-btn" href="/01userlogin/?next={{ request.get_full_path|urlencode }}">
+                      <i class="bi bi-heart"></i> 按讚
+                    </a>
+                    <a class="action-btn" href="/01userlogin/?next={{ request.get_full_path|urlencode }}">
+                      <i class="bi bi-chat-dots"></i> 回覆
+                    </a>
+                  {% endif %}
+                </div>
+
+                {% if request.user.is_authenticated %}
+                  <!-- 專屬這筆的回覆輸入框 -->
+                  <div id="reply-editor-{{ forloop.counter }}" class="reply-editor">
+                    <form method="post" action="{% url 'reply_comment' post.interaction_id %}" class="reply-form"
+                          data-comment-id="{{ item.root_comment_id|default:item.id }}"
+                          {% if item.kind == 'reply' %}data-parent-reply-id="{{ item.id }}"{% endif %}>
+                      {% csrf_token %}
+                      <input type="hidden" name="comment_id" value="{{ item.root_comment_id|default:item.id }}">
+                      {% if item.kind == 'reply' %}
+                        <input type="hidden" name="parent_reply_id" value="{{ item.id }}">
+                      {% endif %}
+                      <div class="input-group">
+                        <input type="text" name="reply" class="form-control" placeholder="寫下回覆…" maxlength="300" required>
+                        <button type="submit" class="btn btn-primary">送出</button>
+                      </div>
+                      <div class="form-text">最多 300 字。</div>
+                    </form>
+                  </div>
                 {% endif %}
-              {% endfor %}
 
-              {% if page_obj.has_next %}
-                <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">下一頁</a></li>
-              {% else %}
-                <li class="page-item disabled"><span class="page-link">下一頁</span></li>
-              {% endif %}
-            </ul>
-          </nav>
-        {% endif %}
-
-        <!-- 新增留言（仍然只新增頂層；回覆請在總覽頁進入互動） -->
-        <div class="mt-3">
-          {% if request.user.is_authenticated %}
-            <form method="post" action="{% url 'add_comment' post.interaction_id %}" id="addCommentForm">
-              {% csrf_token %}
-              <div class="input-group">
-                <input type="text" name="comment" class="form-control" placeholder="寫點什麼…" maxlength="300" required>
-                <button type="submit" class="btn btn-primary">送出</button>
+                {% if request.user.is_authenticated and item.user_id|stringformat:"s" == request.user.id|stringformat:"s" %}
+                  <div class="dropdown position-absolute top-0 end-0">
+                    <button class="btn btn-link text-muted p-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                      <i class="bi bi-three-dots-vertical"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                      {% if item.kind == 'comment' %}
+                        <li>
+                          <a class="dropdown-item text-primary edit-comment-btn"
+                             href="#"
+                             data-post-id="{{ post.interaction_id }}"
+                             data-time="{{ item.time }}"
+                             data-content="{{ item.content|escapejs }}">
+                            <i class="bi bi-pencil-fill me-2"></i> 編輯
+                          </a>
+                        </li>
+                        <li>
+                          <a class="dropdown-item text-danger delete-comment-btn"
+                             href="#"
+                             data-post-id="{{ post.interaction_id }}"
+                             data-time="{{ item.time }}">
+                            <i class="bi bi-trash-fill me-2"></i> 刪除
+                          </a>
+                        </li>
+                      {% else %}
+                        <li>
+                          <a class="dropdown-item text-primary edit-reply-btn"
+                             href="#"
+                             data-post-id="{{ post.interaction_id }}"
+                             data-comment-id="{{ item.root_comment_id }}"
+                             data-reply-id="{{ item.id }}"
+                             data-content="{{ item.content|escapejs }}">
+                            <i class="bi bi-pencil-fill me-2"></i> 編輯
+                          </a>
+                        </li>
+                        <li>
+                          <a class="dropdown-item text-danger delete-reply-btn"
+                             href="#"
+                             data-post-id="{{ post.interaction_id }}"
+                             data-comment-id="{{ item.root_comment_id }}"
+                             data-reply-id="{{ item.id }}">
+                            <i class="bi bi-trash-fill me-2"></i> 刪除
+                          </a>
+                        </li>
+                      {% endif %}
+                    </ul>
+                  </div>
+                {% endif %}
               </div>
-              <div class="form-text">最多 300 字。</div>
-            </form>
-          {% else %}
-            <a class="btn btn-sm btn-outline-primary" href="/01userlogin/?next={{ request.get_full_path|urlencode }}">登入後留言</a>
+            {% empty %}
+              <div class="text-muted">目前沒有留言</div>
+            {% endfor %}
+          </div>
+
+          {% if page_obj.paginator.num_pages > 1 %}
+            <nav aria-label="留言分頁" class="mt-3">
+              <ul class="pagination">
+                {% if page_obj.has_previous %}
+                  <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">上一頁</a></li>
+                {% else %}
+                  <li class="page-item disabled"><span class="page-link">上一頁</span></li>
+                {% endif %}
+                {% for num in page_obj.paginator.page_range %}
+                  {% if num == page_obj.number %}
+                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                  {% else %}
+                    <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                  {% endif %}
+                {% endfor %}
+                {% if page_obj.has_next %}
+                  <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">下一頁</a></li>
+                {% else %}
+                  <li class="page-item disabled"><span class="page-link">下一頁</span></li>
+                {% endif %}
+              </ul>
+            </nav>
           {% endif %}
-        </div>
+
+          <!-- 新增留言（頂層） -->
+          <div class="mt-3">
+            {% if request.user.is_authenticated %}
+              <form method="post" action="{% url 'add_comment' post.interaction_id %}" id="addCommentForm">
+                {% csrf_token %}
+                <div class="input-group">
+                  <input type="text" name="comment" class="form-control" placeholder="寫點什麼…" maxlength="300" required>
+                  <button type="submit" class="btn btn-primary">送出</button>
+                </div>
+                <div class="form-text">最多 300 字。</div>
+              </form>
+            {% else %}
+              <a class="btn btn-sm btn-outline-primary" href="/01userlogin/?next={{ request.get_full_path|urlencode }}">登入後留言</a>
+            {% endif %}
+          </div>
+
+        </div><!-- /comment-board -->
+
       </div>
     </section>
   </main>
@@ -319,14 +386,80 @@
       });
     });
 
-    // 新增留言
-    document.getElementById('addCommentForm')?.addEventListener('submit', function(e){
+    // 展開各筆「回覆輸入框」
+    document.addEventListener('click', function(e){
+      const t = e.target.closest('.reply-toggle');
+      if(!t) return;
+      const sel = t.dataset.target;
+      const panel = document.querySelector(sel);
+      if(panel){ panel.style.display = panel.style.display === 'none' || !panel.style.display ? 'block' : 'none'; }
+    });
+
+    // 按讚（留言/回覆）— 以後端回傳為準
+    document.addEventListener('click', function(e){
+      const btn = e.target.closest('.like-btn');
+      if(!btn) return;
       e.preventDefault();
-      fetch(this.action, { method:'POST', body:new FormData(this), headers:{'X-Requested-With':'XMLHttpRequest'} })
-        .then(res=>res.json()).then(data=>{
-          if(!data.success) throw new Error(data.error||'留言失敗');
+
+      const url = btn.dataset.likeUrl;
+
+      // 用 x-www-form-urlencoded 對 Django 預設更友善
+      const body = new URLSearchParams();
+      body.append('csrfmiddlewaretoken', getCookie('csrftoken'));
+      if (btn.dataset.commentId) body.append('comment_id', btn.dataset.commentId);
+      if (btn.dataset.replyId)   body.append('reply_id', btn.dataset.replyId);
+
+      fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: body.toString()
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (!data || data.success === false) throw new Error(data?.error || '按讚失敗');
+
+        // 期待後端回：{success:true, liked:true/false, like_count:int}
+        const liked = !!data.liked;
+        const count = (typeof data.like_count === 'number')
+          ? data.like_count
+          : (function(){
+              const n = parseInt(btn.querySelector('.like-count')?.textContent || '0', 10) || 0;
+              return liked ? n + 1 : Math.max(n - 1, 0);
+            })();
+
+        btn.classList.toggle('liked', liked);
+        const icon = btn.querySelector('i');
+        const text = btn.querySelector('.like-text');
+        const cnt  = btn.querySelector('.like-count');
+        if (icon) icon.className = 'bi ' + (liked ? 'bi-heart-fill text-danger' : 'bi-heart');
+        if (text) text.textContent = liked ? '收回讚' : '按讚';
+        if (cnt)  cnt.textContent = count;
+      })
+      .catch(err => {
+        console.warn(err);
+        alert(err.message || '按讚失敗，請稍後再試');
+      });
+    });
+
+    // 送出回覆（留言 & 回覆都能回）
+    document.addEventListener('submit', function(e){
+      const f = e.target.closest('.reply-form, #addCommentForm');
+      if(!f) return;
+      e.preventDefault();
+
+      const fd = new FormData(f);
+      const url = f.action;
+
+      fetch(url, { method:'POST', body:fd, headers:{'X-Requested-With':'XMLHttpRequest'} })
+        .then(r=>{ if(!r.ok) throw new Error(); return r.json(); })
+        .then(data=>{
+          if(!data || data.success === false) throw new Error(data?.error || '送出失敗');
           window.location.reload();
-        }).catch(err=>alert(err.message));
+        })
+        .catch(err=>alert(err.message || '送出失敗'));
     });
 
     // 刪除留言
@@ -361,13 +494,10 @@
             'X-CSRFToken': getCookie('csrftoken')
           },
           body: JSON.stringify({ content: trimmed })
-        })
-        .then(res=>res.json())
-        .then(data=>{
+        }).then(res=>res.json()).then(data=>{
           if(!data.success) throw new Error(data.error||'編輯失敗');
           window.location.reload();
-        })
-        .catch(err=>alert(err.message));
+        }).catch(err=>alert(err.message));
       });
     });
 
