@@ -201,16 +201,7 @@
       color: #6b7280;
     }
     .search-history .history-item .remove:hover{ color: #dc3545; }
-  
-/* 回覆濃縮樣式 */
-.replies li.reply-item:nth-child(n+3){ display:none; }
-.replies.expanded li.reply-item{ display:block; }
-.show-more-replies{
-  background:none; border:0; color:#0d6efd; font-size:.85rem;
-  cursor:pointer; margin-top:6px; padding:0;
-}
-
-</style>
+  </style>
 </head>
 
 <body class="{% if request.user.is_authenticated %}authenticated{% endif %}"
@@ -654,7 +645,7 @@
                   </div>
 
                   <!-- 回覆串 -->
-                  <ul class="replies" data-replies>
+                  <ul class="replies" data-replies data-backend-count="{{ c.replies_flat|length }}">
                     {% for r in c.replies_flat %}
                       {% with rid=r.id|default:r.time %}
                       <li class="reply-item comment-item position-relative"
@@ -1394,7 +1385,7 @@
                 '</button>' +
                 '<button type="button" class="action-btn toggle-reply" data-target="#reply-editor-'+postId+'-dyn-'+Date.now()+'"><i class="bi bi-chat-dots"></i> 回覆</button>' +
               '</div>' +
-              '<ul class="replies" data-replies></ul>';
+              '<ul class="replies" data-replies data-backend-count="{{ c.replies_flat|length }}"></ul>';
             list.appendChild(li);
           });
 
@@ -1508,7 +1499,7 @@
               '</form>' +
             '</div>' : ''
           ) +
-          '<ul class="replies" data-replies></ul>';
+          '<ul class="replies" data-replies data-backend-count="{{ c.replies_flat|length }}"></ul>';
 
         repliesTarget.appendChild(li);
 
@@ -1820,23 +1811,6 @@
     })();
 
     updateSavedCount(); updateLikedCount(); updatePostedCount(); updateCommentedCount();
-
-/* 回覆濃縮：顯示更多 */
-document.addEventListener('DOMContentLoaded', function(){
-  document.querySelectorAll('.replies').forEach(function(ul){
-    if(ul.querySelectorAll('li.reply-item').length > 2){
-      var btn=document.createElement('button');
-      btn.className='show-more-replies';
-      btn.textContent='顯示更多回覆';
-      btn.addEventListener('click',function(){
-        ul.classList.add('expanded');
-        btn.remove();
-      });
-      ul.parentNode.insertBefore(btn, ul.nextSibling);
-    }
-  });
-});
-
   });
 
   /* 平滑捲動到貼文/留言（供 offcanvas 跳轉用） */
@@ -1866,5 +1840,112 @@ document.addEventListener('DOMContentLoaded', function(){
       }, 250);
     }
   };
+})();
+</script>
+
+<!-- === Collapsible replies CSS (injected) === -->
+<style>
+  /* 預設收合所有回覆區（僅限 .replies[data-replies]） */
+  .comment-board ul.replies[data-replies]{ display:none; }
+  .comment-board ul.replies[data-replies].open{ display:block; }
+
+  /* 「查看回覆」切換 */
+  .view-replies-toggle{
+    display:inline-flex; align-items:center; gap:6px;
+    margin:6px 0 2px 0; padding:2px 8px;
+    border-radius:999px; background:#f3f6ff; border:1px solid #dbe7ff;
+    color:#0b5ed7; font-weight:600; font-size:.85rem; cursor:pointer;
+  }
+  .view-replies-toggle:hover{ background:#eaf2ff; }
+  .view-replies-toggle .spinner{
+    width:14px;height:14px;border:2px solid #9ec5fe;border-top-color:transparent;border-radius:50%;display:none;
+    animation:spin .8s linear infinite;
+  }
+  .view-replies-toggle.loading .spinner{ display:inline-block; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+</style>
+
+<!-- === Collapsible replies JS (injected) === -->
+<script>
+(function(){
+  function getBackendCount(repliesRoot){
+    var v = (repliesRoot && repliesRoot.getAttribute('data-backend-count')) || '0';
+    var n = parseInt(v, 10);
+    return isNaN(n) ? 0 : n;
+  }
+  function setBackendCount(repliesRoot, n){
+    if (!repliesRoot) return;
+    repliesRoot.setAttribute('data-backend-count', String(Math.max(0, n|0)));
+  }
+  function makeToggle(label, count){
+    var btn = document.createElement('button');
+    btn.type='button';
+    btn.className='view-replies-toggle';
+    btn.innerHTML='<span class="txt"></span>';
+    btn.querySelector('.txt').textContent = (label || '查看回覆') + (count > 0 ? '（' + count + '）' : '');
+    return btn;
+  }
+  function updateBtnText(btn, open, count){
+    var t = btn.querySelector('.txt');
+    t.textContent = open ? '收合回覆' : ('查看回覆' + (count > 0 ? '（' + count + '）' : ''));
+  }
+  function attachToggleForComment(topLi){
+    if (!topLi || !topLi.closest('[data-list]')) return;
+    var replies = topLi.querySelector(':scope > ul.replies[data-replies]');
+    if (!replies) return;
+    var backendCount = getBackendCount(replies);
+    if (backendCount <= 0) return;
+    if (topLi.__hasToggle) return;
+    topLi.__hasToggle = true;
+    var toggle = makeToggle('查看回覆', backendCount);
+    var actions = topLi.querySelector(':scope > .comment-actions');
+    if (actions) actions.after(toggle); else replies.parentNode.insertBefore(toggle, replies);
+    toggle.addEventListener('click', function(){
+      var isOpen = replies.classList.toggle('open');
+      updateBtnText(toggle, isOpen, getBackendCount(replies));
+    });
+  }
+  function initAllToggles(scope){
+    (scope || document).querySelectorAll('[data-list] > li.comment-item').forEach(attachToggleForComment);
+  }
+  document.addEventListener('DOMContentLoaded', function(){
+    initAllToggles();
+    document.addEventListener('submit', function(e){
+      var f = e.target.closest('.reply-form'); if(!f) return;
+      setTimeout(function(){
+        var postId  = f.getAttribute('data-post-id');
+        var comment = document.querySelector('[id="post-'+postId+'"] [data-comment-id="'+f.getAttribute('data-comment-id')+'"]');
+        if(!comment) return;
+        var replies = comment.querySelector(':scope > ul.replies[data-replies]');
+        if(!replies) return;
+        var n = getBackendCount(replies) + 1;
+        setBackendCount(replies, n);
+        if (!comment.__hasToggle && n > 0) { attachToggleForComment(comment); }
+        var btn = comment.querySelector('.view-replies-toggle');
+        if (btn) updateBtnText(btn, replies.classList.contains('open'), n);
+      }, 350);
+    });
+    document.body.addEventListener('click', function(e){
+      var del = e.target.closest('.delete-reply-btn'); if(!del) return;
+      setTimeout(function(){
+        var postId   = del.getAttribute('data-post-id');
+        var commentId= del.getAttribute('data-comment-id');
+        var box      = document.querySelector('[id="post-'+postId+'"] [data-comment-id="'+commentId+'"]');
+        if(!box) return;
+        var replies  = box.querySelector(':scope > ul.replies[data-replies]');
+        if(!replies) return;
+        var n = Math.max(0, getBackendCount(replies) - 1);
+        setBackendCount(replies, n);
+        var btn = box.querySelector('.view-replies-toggle');
+        if (n === 0 && btn) {
+          btn.remove();
+          box.__hasToggle = false;
+          replies.classList.remove('open');
+        } else if (btn) {
+          updateBtnText(btn, replies.classList.contains('open'), n);
+        }
+      }, 350);
+    });
+  });
 })();
 </script>
