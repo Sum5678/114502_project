@@ -161,6 +161,49 @@
     .sort-option i{ font-size:.9rem; opacity:.85; }
     .sort-option:hover{ background:#e6f3fb; }
     .btn-check:checked + .sort-option{ background:#63b3ed; color:#fff; }
+    /* === 修正：搜尋歷史面板固定在輸入框正下方，不再飄到右邊 === */
+.section-title .search-form-top .input-group { position: relative; } /* 保險，雖然你已經有寫 */
+
+.search-history{
+  position: absolute !important;
+  left: 0 !important;
+  right: auto !important;              /* 取消可能來自其他元件的 right 對齊 */
+  top: calc(100% + 6px) !important;    /* 貼著輸入框下緣再留 6px 間距 */
+  width: 100% !important;              /* 跟輸入框同寬 */
+  max-height: 260px;
+  overflow: auto;
+  background: #fff;
+  border: 1px solid #cfe8fb;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(3,62,107,.12);
+  display: none;
+  z-index: 1080;                       /* 蓋過卡片/陰影 */
+}
+
+.search-history.show{ display: block; }
+
+/* 列表外觀 */
+.search-history .history-item{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  user-select: none;
+}
+.search-history .history-item:hover{ background: #f0faff; }
+.search-history .history-item .icon{ font-size: 1rem; color: #63b3ed; }
+.search-history .history-item .term{ flex: 1; color: #033e6b; }
+.search-history .history-item .remove{
+  margin-left: auto;
+  background: none;
+  border: 0;
+  padding: 4px;
+  line-height: 1;
+  color: #6b7280;
+}
+.search-history .history-item .remove:hover{ color: #dc3545; }
+
   </style>
 </head>
 
