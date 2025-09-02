@@ -342,7 +342,7 @@
                           <span class="like-count">{{ item.like_count|default:0 }}</span>
                         </button>
 
-                        <!-- ✅ 回覆的回覆：加回按鈕 -->
+                        <!-- 回覆的回覆 -->
                         <button type="button"
                                 class="action-btn reply-toggle"
                                 data-target="#reply-editor-r-{{ item.id }}">
@@ -359,7 +359,6 @@
                     </div>
 
                     {% if request.user.is_authenticated %}
-                      <!-- ✅ 這筆回覆的專屬輸入框（收合/展開） -->
                       <div id="reply-editor-r-{{ item.id }}" class="reply-editor">
                         <form method="post"
                               action="{% url 'reply_comment' post.interaction_id %}"
@@ -416,7 +415,7 @@
             {% endfor %}
           </div>
 
-          <!-- （已依你的要求移除分頁區塊） -->
+          <!-- 分頁已移除 -->
 
           <!-- 新增留言（頂層） -->
           <div class="mt-3">
@@ -469,7 +468,7 @@
       if(panel){ panel.style.display = panel.style.display === 'none' || !panel.style.display ? 'block' : 'none'; }
     });
 
-    // 按讚（留言/回覆）— 以後端回傳為準
+    // 按讚（留言/回覆）— 以後端回傳為準（委派）
     document.addEventListener('click', function(e){
       const btn = e.target.closest('.like-btn');
       if(!btn) return;
@@ -514,7 +513,7 @@
       });
     });
 
-    // 送出回覆（留言 & 回覆都能回）
+    // 送出回覆（留言 & 回覆都能回）—（委派）=> 不重整
     document.addEventListener('submit', function(e){
       const f = e.target.closest('.reply-form, #addCommentForm');
       if(!f) return;
@@ -527,98 +526,122 @@
         .then(r=>{ if(!r.ok) throw new Error(); return r.json(); })
         .then(data=>{
           if(!data || data.success === false) throw new Error(data?.error || '送出失敗');
-          window.location.reload();
+          // 成功後：清空、收起輸入框；（若要即時插入內容，可再加）
+          const input = f.querySelector('input[name="reply"], input[name="comment"]');
+          if(input) input.value = '';
+          const wrapper = f.closest('.reply-editor');
+          if(wrapper) wrapper.style.display = 'none';
         })
         .catch(err=>alert(err.message || '送出失敗'));
     });
 
-    // 刪除留言
-    document.querySelectorAll('.delete-comment-btn').forEach(btn=>{
-      btn.addEventListener('click', function(e){
-        e.preventDefault();
-        if(!confirm('確定要刪除這則留言嗎？')) return;
-        fetch(`/post/${this.dataset.postId}/comment/delete/`, {
-          method:'POST',
-          headers:{ 'Content-Type':'application/x-www-form-urlencoded','X-Requested-With':'XMLHttpRequest','X-CSRFToken': getCookie('csrftoken') },
-          body:`time=${encodeURIComponent(this.dataset.time)}`
-        }).then(res=>res.json()).then(data=>{
-          if(!data.success) throw new Error(data.error||'刪除失敗');
-          window.location.reload();
-        }).catch(err=>alert(err.message));
-      });
+    // 刪除留言（委派；不重整）
+    document.addEventListener('click', function(e){
+      const btn = e.target.closest('.delete-comment-btn');
+      if(!btn) return;
+      e.preventDefault();
+      if(!confirm('確定要刪除這則留言嗎？')) return;
+
+      fetch(`/post/${btn.dataset.postId}/comment/delete/`, {
+        method:'POST',
+        headers:{ 'Content-Type':'application/x-www-form-urlencoded','X-Requested-With':'XMLHttpRequest','X-CSRFToken': getCookie('csrftoken') },
+        body:`time=${encodeURIComponent(btn.dataset.time)}`
+      }).then(res=>res.json()).then(data=>{
+        if(!data.success) throw new Error(data.error||'刪除失敗');
+        // 直接移除該留言區塊與其展開控制
+        const card = btn.closest('.comment-item');
+        if(card){
+          // 調整「查看回覆（n）」數字：如果這是頂層留言，無需處理；刪的是留言本身直接移除整塊
+          card.remove();
+        }
+      }).catch(err=>alert(err.message));
     });
 
-    // 編輯留言
-    document.querySelectorAll('.edit-comment-btn').forEach(btn=>{
-      btn.addEventListener('click', function(e){
-        e.preventDefault();
-        const newContent = prompt('請輸入新的留言內容：', this.dataset.content);
-        if(newContent === null) return;
-        const trimmed = newContent.trim();
-        if(!trimmed){ alert('內容不能為空'); return; }
-        fetch(`/edit_comment/${this.dataset.postId}/${encodeURIComponent(this.dataset.time)}/`, {
-          method:'POST',
-          headers:{
-            'Content-Type':'application/json',
-            'X-Requested-With':'XMLHttpRequest',
-            'X-CSRFToken': getCookie('csrftoken')
-          },
-          body: JSON.stringify({ content: trimmed })
-        }).then(res=>res.json()).then(data=>{
-          if(!data.success) throw new Error(data.error||'編輯失敗');
-          window.location.reload();
-        }).catch(err=>alert(err.message));
-      });
+    // 編輯留言（委派；不重整）
+    document.addEventListener('click', function(e){
+      const btn = e.target.closest('.edit-comment-btn');
+      if(!btn) return;
+      e.preventDefault();
+      const card = btn.closest('.comment-item');
+      const contentEl = card?.querySelector('.comment-content');
+      const current = contentEl?.textContent || btn.dataset.content || '';
+      const newContent = prompt('請輸入新的留言內容：', current);
+      if(newContent === null) return;
+      const trimmed = newContent.trim();
+      if(!trimmed){ alert('內容不能為空'); return; }
+
+      fetch(`/edit_comment/${btn.dataset.postId}/${encodeURIComponent(btn.dataset.time)}/`, {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest','X-CSRFToken': getCookie('csrftoken') },
+        body: JSON.stringify({ content: trimmed })
+      }).then(res=>res.json()).then(data=>{
+        if(!data.success) throw new Error(data.error||'編輯失敗');
+        if(contentEl){ contentEl.textContent = trimmed; }
+      }).catch(err=>alert(err.message));
     });
 
-    // 編輯回覆
-    document.querySelectorAll('.edit-reply-btn').forEach(btn=>{
-      btn.addEventListener('click', function(e){
-        e.preventDefault();
-        const newContent = prompt('請輸入新的回覆內容：', this.dataset.content);
-        if(newContent === null) return;
-        const trimmed = newContent.trim();
-        if(!trimmed){ alert('內容不能為空'); return; }
-        fetch(`/post/${this.dataset.postId}/reply/edit/`, {
-          method:'POST',
-          headers:{
-            'Content-Type':'application/json',
-            'X-Requested-With':'XMLHttpRequest',
-            'X-CSRFToken': getCookie('csrftoken')
-          },
-          body: JSON.stringify({
-            comment_id: this.dataset.commentId,
-            reply_id: this.dataset.replyId,
-            content: trimmed
-          })
-        }).then(res=>res.json()).then(data=>{
-          if(!data.success) throw new Error(data.error||'編輯失敗');
-          window.location.reload();
-        }).catch(err=>alert(err.message));
-      });
+    // 編輯回覆（委派；不重整）
+    document.addEventListener('click', function(e){
+      const btn = e.target.closest('.edit-reply-btn');
+      if(!btn) return;
+      e.preventDefault();
+      const card = btn.closest('.comment-item');
+      const contentEl = card?.querySelector('.comment-content');
+      const current = contentEl?.textContent || btn.dataset.content || '';
+      const newContent = prompt('請輸入新的回覆內容：', current);
+      if(newContent === null) return;
+      const trimmed = newContent.trim();
+      if(!trimmed){ alert('內容不能為空'); return; }
+
+      fetch(`/post/${btn.dataset.postId}/reply/edit/`, {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest','X-CSRFToken': getCookie('csrftoken') },
+        body: JSON.stringify({
+          comment_id: btn.dataset.commentId,
+          reply_id: btn.dataset.replyId,
+          content: trimmed
+        })
+      }).then(res=>res.json()).then(data=>{
+        if(!data.success) throw new Error(data.error||'編輯失敗');
+        if(contentEl){ contentEl.textContent = trimmed; }
+      }).catch(err=>alert(err.message));
     });
 
-    // 刪除回覆
-    document.querySelectorAll('.delete-reply-btn').forEach(btn=>{
-      btn.addEventListener('click', function(e){
-        e.preventDefault();
-        if(!confirm('確定要刪除這則回覆嗎？')) return;
-        const form = new URLSearchParams();
-        form.append('comment_id', this.dataset.commentId);
-        form.append('reply_id', this.dataset.replyId);
-        fetch(`/post/${this.dataset.postId}/reply/delete/`, {
-          method:'POST',
-          headers:{
-            'Content-Type':'application/x-www-form-urlencoded',
-            'X-Requested-With':'XMLHttpRequest',
-            'X-CSRFToken': getCookie('csrftoken')
-          },
-          body: form.toString()
-        }).then(res=>res.json()).then(data=>{
-          if(!data.success) throw new Error(data.error||'刪除失敗');
-          window.location.reload();
-        }).catch(err=>alert(err.message));
-      });
+    // 刪除回覆（委派；不重整）
+    document.addEventListener('click', function(e){
+      const btn = e.target.closest('.delete-reply-btn');
+      if(!btn) return;
+      e.preventDefault();
+      if(!confirm('確定要刪除這則回覆嗎？')) return;
+
+      const form = new URLSearchParams();
+      form.append('comment_id', btn.dataset.commentId);
+      form.append('reply_id', btn.dataset.replyId);
+
+      fetch(`/post/${btn.dataset.postId}/reply/delete/`, {
+        method:'POST',
+        headers:{ 'Content-Type':'application/x-www-form-urlencoded','X-Requested-With':'XMLHttpRequest','X-CSRFToken': getCookie('csrftoken') },
+        body: form.toString()
+      }).then(res=>res.json()).then(data=>{
+        if(!data.success) throw new Error(data.error||'刪除失敗');
+        // 直接移除這個回覆項目，並更新「查看回覆（n）」
+        const li = btn.closest('li');
+        const list = li?.parentElement;
+        if(li){ li.remove(); }
+        if(list){
+          const count = list.querySelectorAll(':scope > li').length;
+          const rootId = list.getAttribute('data-replies-for');
+          const toggle = document.querySelector(`.view-replies-toggle[data-root-id="${CSS.escape(rootId)}"]`);
+          if(toggle){
+            if(count === 0){
+              list.style.display = 'none';
+              toggle.style.display = 'none';
+            }else{
+              toggle.textContent = `查看回覆（${count}）`;
+            }
+          }
+        }
+      }).catch(err=>alert(err.message));
     });
 
     // 回覆收合/展開：搬運 template、計數、綁定按鈕
