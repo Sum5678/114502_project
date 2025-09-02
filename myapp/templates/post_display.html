@@ -1949,3 +1949,132 @@
   });
 })();
 </script>
+
+<!-- === Blue Confirm Modal (non-blocking) === -->
+<div class="modal fade" id="blueConfirmModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border:0; border-radius:14px; background:#f0faff;">
+      <div class="modal-body text-center p-4" style="color:#033e6b;">
+        <div class="mb-2"><i class="bi bi-question-circle-fill fs-1" style="color:#2f8be6;"></i></div>
+        <h5 class="mb-2" id="blueConfirmTitle">請確認</h5>
+        <p class="mb-3" id="blueConfirmMsg">確定要執行這個操作嗎？</p>
+        <div class="d-flex gap-2 justify-content-center">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+          <button type="button" class="btn btn-primary" id="blueConfirmOK" style="background:linear-gradient(180deg,#63b3ed,#2f8be6); border:none;">確定</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Promise-based blue confirm using Bootstrap Modal
+(function(){
+  var modalEl = document.getElementById('blueConfirmModal');
+  if(!modalEl){ return; }
+  var okBtn = document.getElementById('blueConfirmOK');
+  var msgEl = document.getElementById('blueConfirmMsg');
+  var titleEl = document.getElementById('blueConfirmTitle');
+  var bsModal = bootstrap.Modal.getOrCreateInstance(modalEl);
+  window.showBlueConfirm = function(message, title){
+    return new Promise(function(resolve){
+      if(titleEl) titleEl.textContent = title || '請確認';
+      if(msgEl) msgEl.textContent = message || '確定要執行這個操作嗎？';
+      var onOk = function(){
+        okBtn.removeEventListener('click', onOk);
+        modalEl.removeEventListener('hidden.bs.modal', onCancel);
+        resolve(true);
+      };
+      var onCancel = function(){
+        okBtn.removeEventListener('click', onOk);
+        modalEl.removeEventListener('hidden.bs.modal', onCancel);
+        resolve(false);
+      };
+      okBtn.addEventListener('click', function(){
+        bsModal.hide(); onOk();
+      }, { once: true });
+      modalEl.addEventListener('hidden.bs.modal', onCancel, { once: true });
+      bsModal.show();
+    });
+  };
+
+  // Capture-phase interceptor for delete buttons, without touching existing code
+  document.addEventListener('click', function(e){
+    var delBtn = e.target.closest('.delete-comment-btn, .delete-reply-btn');
+    if(!delBtn) return;
+    // stop original handlers; we'll handle the action
+    e.preventDefault();
+    e.stopImmediatePropagation();
+
+    // decide type
+    var isReply = delBtn.classList.contains('delete-reply-btn');
+    var message = isReply ? '確定要刪除這則回覆嗎？' : '確定要刪除這則留言嗎？';
+
+    showBlueConfirm(message, '確認刪除').then(function(ok){
+      if(!ok) return;
+
+      // perform original fetches
+      if(isReply){
+        var postId = delBtn.getAttribute('data-post-id');
+        var commentId = delBtn.getAttribute('data-comment-id');
+        var replyId = delBtn.getAttribute('data-reply-id');
+        var fd = new FormData();
+        fd.set('comment_id', commentId);
+        fd.set('reply_id', replyId);
+
+        fetch('/post/'+postId+'/reply/delete/', {
+          method:'POST',
+          body: fd,
+          headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken': (document.cookie.match(/csrftoken=([^;]+)/)||[])[1]||'' }
+        })
+        .then(function(res){ return res.json().catch(function(){ return {}; }); })
+        .then(function(data){
+          if(!data.success) throw new Error(data.error||'刪除失敗');
+          var li = document.querySelector('[id="post-'+postId+'"] [data-reply-id="'+replyId+'"]');
+          if(li){ li.remove(); }
+          var meta=document.getElementById('replies-meta-'+postId);
+          if(meta){ var mark=meta.querySelector('[data-reply]'); if(mark) mark.remove(); }
+          if(window.setCommentCounters && window.getTotalCommentsIncludingReplies){
+            window.setCommentCounters(postId, window.getTotalCommentsIncludingReplies(postId));
+          }
+          if(typeof window.rebuildMyCommentsFromDOM==='function'){ window.rebuildMyCommentsFromDOM(); }
+
+          // update collapsible counter if present
+          try{
+            var topLi = document.querySelector('[id="post-'+postId+'"] [data-comment-id="'+commentId+'"]');
+            var replies = topLi ? topLi.querySelector(':scope > ul.replies[data-replies]') : null;
+            var getBackendCount = function(r){ var v=(r&&r.getAttribute('data-backend-count'))||'0'; v=parseInt(v,10); return isNaN(v)?0:v; };
+            var setBackendCount = function(r,n){ if(r) r.setAttribute('data-backend-count', String(Math.max(0, n|0))); };
+            if(replies){
+              var n = Math.max(0, getBackendCount(replies) - 1);
+              setBackendCount(replies, n);
+              var btn = topLi ? topLi.querySelector('.view-replies-toggle') : null;
+              if(n===0 && btn){ btn.remove(); replies.classList.remove('open'); topLi.__hasToggle=false; }
+              else if(btn){
+                var open = replies.classList.contains('open');
+                var t = btn.querySelector('.txt'); if(t){ t.textContent = open ? '收合回覆' : ('查看回覆' + (n > 0 ? '（' + n + '）' : '')); }
+              }
+            }
+          }catch(_){}
+        })
+        .catch(function(err){ alert(err.message||'刪除失敗'); });
+      }else{
+        // comment delete: follow original behavior (POST then reload)
+        var postId = delBtn.getAttribute('data-post-id');
+        var time = delBtn.getAttribute('data-time');
+        fetch('/post/'+postId+'/comment/delete/', {
+          method:'POST',
+          headers:{ 'Content-Type':'application/x-www-form-urlencoded','X-Requested-With':'XMLHttpRequest','X-CSRFToken': (document.cookie.match(/csrftoken=([^;]+)/)||[])[1]||'' },
+          body: 'time='+encodeURIComponent(time||'')
+        })
+        .then(function(res){ return res.json().catch(function(){ return {}; }); })
+        .then(function(data){
+          if(!data.success) throw new Error(data.error||'刪除失敗');
+          window.location.reload();
+        })
+        .catch(function(err){ alert(err.message||'刪除失敗'); });
+      }
+    });
+  }, true); // capture phase
+})();
+</script>
