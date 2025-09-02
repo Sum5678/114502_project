@@ -387,3 +387,19 @@ class FavoriteChatRoom(models.Model):
 #     def __str__(self):
 #         return f"{self.user} @ {self.region}: {self.message[:20]}"
 
+
+# ----------------商家廣告--------------------
+from django.db import models
+
+class StoreAd(models.Model):
+    st_id = models.IntegerField(primary_key=True)
+    ad_content = models.TextField(blank=True, null=True)
+    ad_radius = models.IntegerField(default=10)
+    enabled = models.BooleanField(default=True)
+    created_at = models.DateTimeField()
+    updated_at = models.DateTimeField()
+
+    class Meta:
+        db_table = 'store_ad'
+        managed = False  # Django 不會建立或修改這張表
+
