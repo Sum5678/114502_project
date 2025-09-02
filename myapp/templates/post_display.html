@@ -161,49 +161,46 @@
     .sort-option i{ font-size:.9rem; opacity:.85; }
     .sort-option:hover{ background:#e6f3fb; }
     .btn-check:checked + .sort-option{ background:#63b3ed; color:#fff; }
-    /* === 修正：搜尋歷史面板固定在輸入框正下方，不再飄到右邊 === */
-.section-title .search-form-top .input-group { position: relative; } /* 保險，雖然你已經有寫 */
 
-.search-history{
-  position: absolute !important;
-  left: 0 !important;
-  right: auto !important;              /* 取消可能來自其他元件的 right 對齊 */
-  top: calc(100% + 6px) !important;    /* 貼著輸入框下緣再留 6px 間距 */
-  width: 100% !important;              /* 跟輸入框同寬 */
-  max-height: 260px;
-  overflow: auto;
-  background: #fff;
-  border: 1px solid #cfe8fb;
-  border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(3,62,107,.12);
-  display: none;
-  z-index: 1080;                       /* 蓋過卡片/陰影 */
-}
+    /* 搜尋歷史面板固定在輸入框正下方 */
+    .section-title .search-form-top .input-group { position: relative; }
 
-.search-history.show{ display: block; }
-
-/* 列表外觀 */
-.search-history .history-item{
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  cursor: pointer;
-  user-select: none;
-}
-.search-history .history-item:hover{ background: #f0faff; }
-.search-history .history-item .icon{ font-size: 1rem; color: #63b3ed; }
-.search-history .history-item .term{ flex: 1; color: #033e6b; }
-.search-history .history-item .remove{
-  margin-left: auto;
-  background: none;
-  border: 0;
-  padding: 4px;
-  line-height: 1;
-  color: #6b7280;
-}
-.search-history .history-item .remove:hover{ color: #dc3545; }
-
+    .search-history{
+      position: absolute !important;
+      left: 0 !important;
+      right: auto !important;
+      top: calc(100% + 6px) !important;
+      width: 100% !important;
+      max-height: 260px;
+      overflow: auto;
+      background: #fff;
+      border: 1px solid #cfe8fb;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(3,62,107,.12);
+      display: none;
+      z-index: 1080;
+    }
+    .search-history.show{ display: block; }
+    .search-history .history-item{
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .search-history .history-item:hover{ background: #f0faff; }
+    .search-history .history-item .icon{ font-size: 1rem; color: #63b3ed; }
+    .search-history .history-item .term{ flex: 1; color: #033e6b; }
+    .search-history .history-item .remove{
+      margin-left: auto;
+      background: none;
+      border: 0;
+      padding: 4px;
+      line-height: 1;
+      color: #6b7280;
+    }
+    .search-history .history-item .remove:hover{ color: #dc3545; }
   </style>
 </head>
 
@@ -283,6 +280,12 @@
         <!-- 搜尋 -->
         <form id="searchForm" method="get" action="{% url 'post_display' %}" class="search-form-top d-flex justify-content-center">
           <div class="input-group w-60 position-relative">
+            <!-- ★ 返回箭頭（固定導回 /post_display/） -->
+            <a id="backToAllBtn" class="input-group-text" href="{% url 'post_display' %}"
+               title="返回全部貼文" style="cursor:pointer;">
+              <i class="bi bi-arrow-left"></i>
+            </a>
+
             <span class="input-group-text" style="background-color:#e6f3fb; border:none;">
               <i class="bi bi-search" style="color:#63b3ed; font-size:1.2rem;"></i>
             </span>
@@ -891,6 +894,7 @@
   </div>
 </div>
 
+<!-- Vendor scripts（保留） -->
 <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
 <script src="{% static 'assets/vendor/aos/aos.js' %}"></script>
 <script src="{% static 'assets/vendor/glightbox/js/glightbox.min.js' %}"></script>
@@ -1154,6 +1158,18 @@
 
   /* DOM Ready */
   document.addEventListener('DOMContentLoaded', function(){
+
+    /* ★ 返回箭頭：固定回到 /post_display/（不帶查詢參數） */
+    (function(){
+      var backBtn = document.getElementById('backToAllBtn');
+      if(!backBtn) return;
+      backBtn.addEventListener('click', function(e){
+        // 直接導回 server 端的「貼文總覽」路由，不理會目前 URL 的 ?q & sort
+        e.preventDefault();
+        try{ window.location.assign("{% url 'post_display' %}"); }
+        catch(_){ window.location.href="{% url 'post_display' %}"; }
+      });
+    })();
 
     /* 排序切換 */
     (function(){
@@ -1625,6 +1641,9 @@
       });
 
       document.getElementById('saveCommentEdit').addEventListener('click',function(){
+        // 若 currentReplyEdit 存在，下面「回覆的編輯/刪除」會攔截；這裡先處理留言編輯
+        if(window.currentReplyEdit) return;
+
         var content=(textarea.value||'').trim(); if(!content){ alert('留言內容不能為空！'); return; }
         var postId=window.__editTarget.postId;
         var cid=window.__editTarget.commentId||'';
@@ -1708,12 +1727,7 @@
         .catch(function(err){ alert(err.message||'刪除失敗'); });
       });
 
-      document.getElementById('saveCommentEdit').addEventListener('click',function(ev){
-        if(!window.currentReplyEdit) return;
-        // 已在前面的留言儲存 listener 裡處理留言；這裡覆寫回覆的儲存
-      }, true);
-
-      // 真正送出回覆編輯
+      // 真正送出回覆編輯（覆寫 Modal 的儲存按鈕行為）
       modalEl.addEventListener('click', function(e){
         if(e.target.id !== 'saveCommentEdit') return;
         if(!window.currentReplyEdit) return;
@@ -1739,6 +1753,7 @@
           }
           modal.hide();
           rebuildMyCommentsFromDOM();
+          window.currentReplyEdit = null;
         })
         .catch(function(err){ alert(err.message||'更新失敗'); });
       });
@@ -1798,7 +1813,7 @@
     updateSavedCount(); updateLikedCount(); updatePostedCount(); updateCommentedCount();
   });
 
-  /* 平滑捲動到貼文/留言 */
+  /* 平滑捲動到貼文/留言（供 offcanvas 跳轉用） */
   window.scrollToPost = function(targetId, commentTime){
     var el=document.getElementById(targetId);
     if(!el){ alert('此頁找不到該貼文'); return; }
@@ -1827,5 +1842,3 @@
   };
 })();
 </script>
-</body>
-</html>
