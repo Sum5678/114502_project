@@ -86,18 +86,27 @@ urlpatterns = [
     path('community/', views.community, name='community'),
     path('post/', views.post, name='post'),
     path('post_display/', views.post_display, name='post_display'),
-    path('edit_post/<int:post_id>/', views.edit_post, name='edit_post'),
-    path('delete_post/<int:post_id>/', views.delete_post, name='delete_post'),
-    path('like_post/<int:post_id>/', views.like_post, name='like_post'),
-    path('save_post/<int:post_id>/', views.save_post, name='save_post'), 
-    path('post/<int:post_id>/comment/', views.add_comment, name='add_comment'),
-    path('post/<int:post_id>/comment/delete/', views.delete_comment, name='delete_comment'),
-    path('post/<int:post_id>/comments/', views.post_comments, name='post_comments'),
-    path('post/<int:post_id>/comment/reply/', views.reply_comment, name='reply_comment'),
-    path('post/<int:post_id>/comment/like/', views.like_comment, name='like_comment'),
-    path('post/<int:post_id>/reply/edit/', views.edit_reply, name='edit_reply'),
-    path('post/<int:post_id>/reply/delete/', views.delete_reply, name='delete_reply'),
-    path('post/<int:post_id>/comment/edit/<str:time>/', views.edit_comment, name='edit_comment'),
+   # 文章
+    path('edit_post/<str:post_id>/', views.edit_post, name='edit_post'),
+    path('delete_post/<str:post_id>/', views.delete_post, name='delete_post'),
+    path('like_post/<str:post_id>/', views.like_post, name='like_post'),
+    path('save_post/<str:post_id>/', views.save_post, name='save_post'),
+    # 留言
+    path('post/<str:post_id>/comment/', views.add_comment, name='add_comment'),
+    path('post/<str:post_id>/comment/delete/', views.delete_comment, name='delete_comment'),
+    path('post/<str:post_id>/comments/', views.post_comments, name='post_comments'),
+    path('post/<str:post_id>/comment/reply/', views.reply_comment, name='reply_comment'),
+    path('post/<str:post_id>/comment/like/', views.like_comment, name='like_comment'),
+    path('post/<str:post_id>/reply/delete/', views.delete_reply, name='delete_reply'),
+
+    # ✅ 留言編輯（你已經有）
+    path('edit_comment/<str:post_id>/<str:key>/', views.edit_comment, name='edit_comment'),
+
+    # ✅ 新增/確認：回覆編輯
+    path('post/<str:post_id>/reply/edit/', views.edit_reply, name='edit_reply'),
+
+
+
     
 
 
