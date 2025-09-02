@@ -79,6 +79,12 @@
     .action-btn.liked{ color:#dc3545; font-weight:600; }
     .reply-editor{ display:none; margin-top:8px; }
 
+    /* 身分選擇（對齊 post_display） */
+    .identity-group .btn{ border-color:#a7e0ff; color:#033e6b; background:#f0faff; padding:4px 10px; border-radius:999px!important; }
+    .identity-group .btn:hover{ background:#e6f3fb; }
+    .identity-group .btn-check:checked + .btn{ background:#63b3ed; color:#fff; border-color:#63b3ed; }
+    .identity-label{ font-size:12px; color:#5a7ca9; margin-right:8px; }
+
     /* === 回覆收合/展開 === */
     .view-replies-toggle{
       margin-top:8px; background:#eef6ff; border:1px solid #cfe2ff;
@@ -257,6 +263,24 @@
                           data-comment-id="{{ item.root_comment_id|default:item.id }}">
                       {% csrf_token %}
                       <input type="hidden" name="comment_id" value="{{ item.root_comment_id|default:item.id }}">
+
+                      <!-- 身分選擇（與 post_display 一致） -->
+                      <div class="d-flex align-items-center flex-wrap mb-2" style="gap:10px;">
+                        <span class="identity-label">以誰的身分回覆：</span>
+                        <div class="btn-group btn-group-sm identity-group flex-wrap">
+                          {% with has1=profile_nickname1|length has2=profile_nickname2|length %}
+                            <input type="radio" class="btn-check" name="reply_identity" id="ri1-{{ post.interaction_id }}-c{{ forloop.counter }}" value="nickname1" {% if has1 %}checked{% else %}disabled{% endif %}>
+                            <label class="btn" for="ri1-{{ post.interaction_id }}-c{{ forloop.counter }}"><i class="bi bi-person-badge"></i> 暱稱 1{% if has1 %}：{{ profile_nickname1 }}{% else %}（未設定）{% endif %}</label>
+
+                            <input type="radio" class="btn-check" name="reply_identity" id="ri2-{{ post.interaction_id }}-c{{ forloop.counter }}" value="nickname2" {% if not has1 and has2 %}checked{% endif %} {% if not has2 %}disabled{% endif %}>
+                            <label class="btn" for="ri2-{{ post.interaction_id }}-c{{ forloop.counter }}"><i class="bi bi-person-badge"></i> 暱稱 2{% if has2 %}：{{ profile_nickname2 }}{% else %}（未設定）{% endif %}</label>
+
+                            <input type="radio" class="btn-check" name="reply_identity" id="riA-{{ post.interaction_id }}-c{{ forloop.counter }}" value="anonymous" {% if not has1 and not has2 %}checked{% endif %}>
+                            <label class="btn" for="riA-{{ post.interaction_id }}-c{{ forloop.counter }}"><i class="bi bi-incognito"></i> (匿名)</label>
+                          {% endwith %}
+                        </div>
+                      </div>
+
                       <div class="input-group">
                         <input type="text" name="reply" class="form-control" placeholder="寫下回覆…" maxlength="300" required>
                         <button type="submit" class="btn btn-primary">送出</button>
@@ -368,6 +392,24 @@
                           {% csrf_token %}
                           <input type="hidden" name="comment_id" value="{{ item.root_comment_id }}">
                           <input type="hidden" name="parent_reply_id" value="{{ item.id }}">
+
+                          <!-- 身分選擇（與 post_display 一致） -->
+                          <div class="d-flex align-items-center flex-wrap mb-2" style="gap:10px;">
+                            <span class="identity-label">以誰的身分回覆：</span>
+                            <div class="btn-group btn-group-sm identity-group flex-wrap">
+                              {% with has1=profile_nickname1|length has2=profile_nickname2|length %}
+                                <input type="radio" class="btn-check" name="reply_identity" id="ri1-{{ post.interaction_id }}-r{{ item.id }}" value="nickname1" {% if has1 %}checked{% else %}disabled{% endif %}>
+                                <label class="btn" for="ri1-{{ post.interaction_id }}-r{{ item.id }}"><i class="bi bi-person-badge"></i> 暱稱 1{% if has1 %}：{{ profile_nickname1 }}{% else %}（未設定）{% endif %}</label>
+
+                                <input type="radio" class="btn-check" name="reply_identity" id="ri2-{{ post.interaction_id }}-r{{ item.id }}" value="nickname2" {% if not has1 and has2 %}checked{% endif %} {% if not has2 %}disabled{% endif %}>
+                                <label class="btn" for="ri2-{{ post.interaction_id }}-r{{ item.id }}"><i class="bi bi-person-badge"></i> 暱稱 2{% if has2 %}：{{ profile_nickname2 }}{% else %}（未設定）{% endif %}</label>
+
+                                <input type="radio" class="btn-check" name="reply_identity" id="riA-{{ post.interaction_id }}-r{{ item.id }}" value="anonymous" {% if not has1 and not has2 %}checked{% endif %}>
+                                <label class="btn" for="riA-{{ post.interaction_id }}-r{{ item.id }}"><i class="bi bi-incognito"></i> (匿名)</label>
+                              {% endwith %}
+                            </div>
+                          </div>
+
                           <div class="input-group">
                             <input type="text" name="reply" class="form-control" placeholder="寫下回覆…" maxlength="300" required>
                             <button type="submit" class="btn btn-primary">送出</button>
@@ -415,13 +457,29 @@
             {% endfor %}
           </div>
 
-          <!-- 分頁已移除 -->
-
           <!-- 新增留言（頂層） -->
           <div class="mt-3">
             {% if request.user.is_authenticated %}
               <form method="post" action="{% url 'add_comment' post.interaction_id %}" id="addCommentForm">
                 {% csrf_token %}
+
+                <!-- 身分選擇（與 post_display 一致） -->
+                <div class="d-flex align-items-center flex-wrap mb-2" style="gap:10px;">
+                  <span class="identity-label">以誰的身分留言：</span>
+                  <div class="btn-group btn-group-sm identity-group flex-wrap">
+                    {% with has1=profile_nickname1|length has2=profile_nickname2|length %}
+                      <input type="radio" class="btn-check" name="comment_identity" id="ci1-{{ post.interaction_id }}" value="nickname1" {% if has1 %}checked{% else %}disabled{% endif %}>
+                      <label class="btn" for="ci1-{{ post.interaction_id }}"><i class="bi bi-person-badge"></i> 暱稱 1{% if has1 %}：{{ profile_nickname1 }}{% else %}（未設定）{% endif %}</label>
+
+                      <input type="radio" class="btn-check" name="comment_identity" id="ci2-{{ post.interaction_id }}" value="nickname2" {% if not has1 and has2 %}checked{% endif %} {% if not has2 %}disabled{% endif %}>
+                      <label class="btn" for="ci2-{{ post.interaction_id }}"><i class="bi bi-person-badge"></i> 暱稱 2{% if has2 %}：{{ profile_nickname2 }}{% else %}（未設定）{% endif %}</label>
+
+                      <input type="radio" class="btn-check" name="comment_identity" id="ciA-{{ post.interaction_id }}" value="anonymous" {% if not has1 and not has2 %}checked{% endif %}>
+                      <label class="btn" for="ciA-{{ post.interaction_id }}"><i class="bi bi-incognito"></i> (匿名)</label>
+                    {% endwith %}
+                  </div>
+                </div>
+
                 <div class="input-group">
                   <input type="text" name="comment" class="form-control" placeholder="寫點什麼…" maxlength="300" required>
                   <button type="submit" class="btn btn-primary">送出</button>
@@ -466,6 +524,28 @@
       const sel = t.dataset.target;
       const panel = document.querySelector(sel);
       if(panel){ panel.style.display = panel.style.display === 'none' || !panel.style.display ? 'block' : 'none'; }
+    });
+
+    // 記住身分選擇（localStorage）— 對齊 post_display（radio）
+    const IDENTITY_KEY='post_identity_choice_v1';
+    function applyIdentityChoice(value){
+      if(!value) return;
+      // 頂層留言
+      const comments = document.querySelectorAll('input[type="radio"][name="comment_identity"]');
+      comments.forEach(r => { if(r.value===value && !r.disabled) r.checked = true; });
+      // 回覆
+      const replies = document.querySelectorAll('input[type="radio"][name="reply_identity"]');
+      replies.forEach(r => { if(r.value===value && !r.disabled) r.checked = true; });
+    }
+    document.addEventListener('change', function(e){
+      const t=e.target;
+      if(t && (t.name === 'comment_identity' || t.name === 'reply_identity') && t.checked){
+        localStorage.setItem(IDENTITY_KEY, t.value);
+      }
+    });
+    document.addEventListener('DOMContentLoaded', function(){
+      const v = localStorage.getItem(IDENTITY_KEY);
+      applyIdentityChoice(v);
     });
 
     // 按讚（留言/回覆）— 以後端回傳為準（委派）
@@ -513,7 +593,7 @@
       });
     });
 
-    // 送出回覆（留言 & 回覆都能回）—（委派）=> 不重整
+    // 送出回覆/留言 — 不重整
     document.addEventListener('submit', function(e){
       const f = e.target.closest('.reply-form, #addCommentForm');
       if(!f) return;
@@ -526,7 +606,7 @@
         .then(r=>{ if(!r.ok) throw new Error(); return r.json(); })
         .then(data=>{
           if(!data || data.success === false) throw new Error(data?.error || '送出失敗');
-          // 成功後：清空、收起輸入框；（若要即時插入內容，可再加）
+          // 成功後：清空、收起輸入框
           const input = f.querySelector('input[name="reply"], input[name="comment"]');
           if(input) input.value = '';
           const wrapper = f.closest('.reply-editor');
@@ -548,12 +628,8 @@
         body:`time=${encodeURIComponent(btn.dataset.time)}`
       }).then(res=>res.json()).then(data=>{
         if(!data.success) throw new Error(data.error||'刪除失敗');
-        // 直接移除該留言區塊與其展開控制
         const card = btn.closest('.comment-item');
-        if(card){
-          // 調整「查看回覆（n）」數字：如果這是頂層留言，無需處理；刪的是留言本身直接移除整塊
-          card.remove();
-        }
+        if(card){ card.remove(); }
       }).catch(err=>alert(err.message));
     });
 
@@ -624,7 +700,6 @@
         body: form.toString()
       }).then(res=>res.json()).then(data=>{
         if(!data.success) throw new Error(data.error||'刪除失敗');
-        // 直接移除這個回覆項目，並更新「查看回覆（n）」
         const li = btn.closest('li');
         const list = li?.parentElement;
         if(li){ li.remove(); }
