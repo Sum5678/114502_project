@@ -2607,20 +2607,13 @@ def add_comment(request, post_id):
     nick1 = (prof.default_nickname1 or "").strip() if prof else ""
     nick2 = (prof.default_nickname2 or "").strip() if prof else ""
 
-    # ★ 相容 comments 頁使用的 name="identity"
-    identity = (
-        request.POST.get('comment_identity')
-        or request.POST.get('identity')
-        or 'anonymous'
-    )
-
+    identity = request.POST.get('comment_identity', 'anonymous')
     if identity == 'nickname1' and nick1:
         nickname = nick1
     elif identity == 'nickname2' and nick2:
         nickname = nick2
     else:
         nickname = "(匿名)"
-        identity = 'anonymous'
 
     comments = _load_comments(post)
 
@@ -2741,22 +2734,12 @@ def post_comments(request, post_id):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    # ★把使用者的預設暱稱傳給 template（與 post_display 同名）
-    nick1 = ""
-    nick2 = ""
-    if request.user.is_authenticated:
-        prof = ThisUserProfile.objects.filter(gmail=request.user.email).first()
-        nick1 = (prof.default_nickname1 or "").strip() if prof else ""
-        nick2 = (prof.default_nickname2 or "").strip() if prof else ""
-
     return render(request, 'post_comments.html', {
         'post': post,
         'page_obj': page_obj,                 # 這裡每筆是 comment 或 reply
         'total_comments': top_count,          # 頂層
         'total_including_replies': all_count, # 備用
         'final_total': final_total,           # 供 UI 顯示「留言（N）」的最終數
-        'profile_nickname1': nick1,           # ★ for 身分標籤
-        'profile_nickname2': nick2,           # ★ for 身分標籤
     })
 
 # ============== 巢狀：回覆 & 按讚 & 編輯/刪除 ==============
@@ -2768,19 +2751,14 @@ def reply_comment(request, post_id):
     參數：
       - comment_id: 目標留言 id（或 time）
       - parent_reply_id: 選填；若填，表示「回覆某一則回覆」
-      - reply_identity / identity: nickname1 / nickname2 / anonymous
+      - reply_identity: nickname1 / nickname2 / anonymous
       - reply: 文字內容（<=300）
     """
     post = _get_post_by_any_id(post_id)
     comment_id = (request.POST.get('comment_id') or '').strip()
     parent_reply_id = (request.POST.get('parent_reply_id') or '').strip()
     reply_text = (request.POST.get('reply') or '').strip()
-    # ★ 相容兩種欄位名
-    identity = (
-        (request.POST.get('reply_identity') or '').strip()
-        or (request.POST.get('identity') or '').strip()
-        or 'anonymous'
-    )
+    identity = (request.POST.get('reply_identity') or 'anonymous').strip()
     user_id_str = str(request.user.id)
 
     if not comment_id:
@@ -2988,7 +2966,6 @@ def delete_reply(request, post_id):
     })
 
 # ------------ /交流區後端（整合版）------------
-
 
 
 
@@ -3362,23 +3339,34 @@ def public_profile(request, gmail):
 
 
 
-
-
-# -------------商家廣告---------------
-from django.http import JsonResponse
+# --------商家廣告-------s
+from django.shortcuts import render, redirect
 from .models import StoreAll, StoreAd
+from .forms import StoreAdForm
 
-def stores_with_ads(request):
-    data = []
-    stores = StoreAll.objects.filter(review_status='approved')
-    for store in stores:
-        ad = StoreAd.objects.filter(st_id=store.st_id, enabled=True).first()
-        data.append({
-            "st_id": store.st_id,
-            "store_name": store.store_name,
-            "latitude": store.latitude,
-            "longitude": store.longitude,
-            "ad_content": ad.ad_content if ad else None,
-            "ad_radius": ad.ad_radius if ad else 10,
-        })
-    return JsonResponse(data, safe=False)
+def upload_store_ad(request):
+    if request.method == 'POST':
+        form = StoreAdForm(request.POST)
+        if form.is_valid():
+            st_id = form.cleaned_data['st_id']
+
+            # 確認商家存在
+            try:
+                store = StoreAll.objects.get(st_id=st_id)
+            except StoreAll.DoesNotExist:
+                form.add_error('st_id', '找不到此商家編號')
+                return render(request, 'store_upload_ad.html', {'form': form})
+
+            # 找是否已有廣告，若有就更新
+            ad, created = StoreAd.objects.get_or_create(st_id=store.st_id)
+            ad.ad_content = form.cleaned_data['ad_content']
+            ad.ad_radius = form.cleaned_data['ad_radius']
+            ad.enabled = form.cleaned_data['enabled']
+            ad.save()
+
+            return redirect('store_map')  # 儲存完成後回到商家地圖
+    else:
+        form = StoreAdForm()
+
+    return render(request, 'store_upload_ad.html', {'form': form})
+
