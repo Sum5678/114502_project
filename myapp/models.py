@@ -417,13 +417,13 @@ class AbuseReport(models.Model):
     交流區檢舉單。
     - target_type：被檢舉的是 貼文/留言/回覆
     - post：對應的貼文（若 target 是留言/回覆，一樣會指向其所屬貼文）
-    - comment_id / reply_id：你前端/儲存留言樹用的識別字串（可為空）
+    - comment_id / reply_id：前端留言樹用的識別字串（可為空）
     - reason：檢舉理由（提供常見選項，保留 other）
     - details：檢舉人補充說明
     - snapshot_text：當下被檢舉內容的快照（避免後續被修改而查不到）
     - reporter：檢舉人（可為匿名 -> null）
     - status：審核狀態（待審/已處置/已駁回）
-    - admin / admin_note / decided_at：處理者、備註與處理時間
+    - admin / admin_note / decided_at：處理者、備註與處理時間（admin 連到 Admins.admin_id）
     """
 
     # === 枚舉 ===
@@ -449,20 +449,20 @@ class AbuseReport(models.Model):
         OTHER      = "other", "其他"
 
     # === 關聯/主欄位 ===
-    target_type   = models.CharField(
+    target_type = models.CharField(
         max_length=20,
         choices=TargetType.choices,
         db_index=True,
     )
     # ⬇️ 若你的貼文模型不是 ChatInteraction，請改成正確的模型名稱字串
-    post          = models.ForeignKey(
+    post = models.ForeignKey(
         "ChatInteraction",
         on_delete=models.CASCADE,
         null=True, blank=True,
         related_name="abuse_reports",
     )
-    comment_id    = models.CharField(max_length=64, blank=True, default="", db_index=True)
-    reply_id      = models.CharField(max_length=64, blank=True, default="", db_index=True)
+    comment_id = models.CharField(max_length=64, blank=True, default="", db_index=True)
+    reply_id   = models.CharField(max_length=64, blank=True, default="", db_index=True)
 
     reason        = models.CharField(
         max_length=32,
@@ -473,35 +473,41 @@ class AbuseReport(models.Model):
     details       = models.TextField(blank=True, default="")
     snapshot_text = models.TextField(blank=True, default="")
 
-    reporter      = models.ForeignKey(
+    reporter = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True, blank=True,
         related_name="reports_made",
     )
 
-    status        = models.CharField(
+    status = models.CharField(
         max_length=20,
         choices=Status.choices,
         default=Status.PENDING,
         db_index=True,
     )
-    admin         = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
+
+    # ★ 連到 Admins，沿用資料庫欄位 admin_id
+    admin = models.ForeignKey(
+        "Admins",
         on_delete=models.SET_NULL,
         null=True, blank=True,
+        db_column="admin_id",
         related_name="reports_handled",
     )
-    admin_note    = models.TextField(blank=True, default="")
 
-    created_at    = models.DateTimeField(auto_now_add=True, db_index=True)
-    decided_at    = models.DateTimeField(null=True, blank=True)
+    admin_note = models.TextField(blank=True, default="")
+
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    decided_at = models.DateTimeField(null=True, blank=True)
 
     # === 顯示與索引 ===
     def __str__(self):
         return f"[{self.get_target_type_display()}] #{self.pk} - {self.reason}"
 
     class Meta:
+        managed = False                      # ✅ 不讓 Django 建表/改表
+        db_table = "myapp_abusereport"             # ✅ 資料庫實際表名
         ordering = ["-created_at"]
         indexes = [
             models.Index(fields=["status"]),
