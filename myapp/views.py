@@ -3338,3 +3338,24 @@ def public_profile(request, gmail):
     return render(request, "public_profile.html", {"profile_user": user})
 
 
+
+
+
+# -------------商家廣告---------------
+from django.http import JsonResponse
+from .models import StoreAll, StoreAd
+
+def stores_with_ads(request):
+    data = []
+    stores = StoreAll.objects.filter(review_status='approved')
+    for store in stores:
+        ad = StoreAd.objects.filter(st_id=store.st_id, enabled=True).first()
+        data.append({
+            "st_id": store.st_id,
+            "store_name": store.store_name,
+            "latitude": store.latitude,
+            "longitude": store.longitude,
+            "ad_content": ad.ad_content if ad else None,
+            "ad_radius": ad.ad_radius if ad else 10,
+        })
+    return JsonResponse(data, safe=False)

@@ -124,117 +124,123 @@
     </section>
 
     <script>
-        let map;
+      function getDistance(lat1, lng1, lat2, lng2) {
+          const R = 6371000; // 地球半徑公尺
+          const toRad = x => x * Math.PI / 180;
+          const dLat = toRad(lat2 - lat1);
+          const dLng = toRad(lng2 - lng1);
+          const a = Math.sin(dLat / 2) ** 2 +
+                    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+                    Math.sin(dLng / 2) ** 2;
+          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+          return R * c;
+      }
 
+      let userLatLng = null;
 
-        function initMap() {
-          console.log("initMap called");
+      function initMap() {
           const map = new google.maps.Map(document.getElementById("map"), {
               center: { lat: 25.0330, lng: 121.5654 }, // 預設台北
               zoom: 12,
           });
 
-          // ✅ 嘗試取得使用者當前位置
+          // 1️⃣ 取得使用者位置
           if (navigator.geolocation) {
               navigator.geolocation.getCurrentPosition(
                   (position) => {
-                      const userLatLng = {
+                      userLatLng = {
                           lat: position.coords.latitude,
                           lng: position.coords.longitude
                       };
 
-                      // 在地圖上加一個 marker
+                      // 在地圖上標出使用者位置
                       new google.maps.Marker({
                           position: userLatLng,
                           map: map,
                           title: "您的位置",
                           icon: {
-                              url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png", // 藍色定位點
+                              url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
                               scaledSize: new google.maps.Size(40, 40)
                           }
                       });
 
-                      // 把地圖移動到使用者位置
                       map.setCenter(userLatLng);
                       map.setZoom(15);
+
+                      // 2️⃣ 抓商家資料顯示地圖
+                      fetchStores();
+
+                      // 3️⃣ 抓廣告資料判斷距離
+                      fetchAds();
                   },
                   (error) => {
                       console.error("無法取得定位：", error);
+                      fetchStores(); // 沒有定位也先抓商家
                   }
               );
           } else {
               console.warn("此瀏覽器不支援定位功能");
+              fetchStores();
           }
 
-          // ✅ 商家資料
-          fetch('/api/stores/')
-              .then(response => {
-                  if (!response.ok) throw new Error("API 請求失敗");
-                  return response.json();
-              })
-              .then(data => {
-                  console.log("取得商家資料：", data);
-                  data.forEach(store => {
-                      const lat = parseFloat(store.latitude);
-                      const lng = parseFloat(store.longitude);
+          // 抓所有商家 API，顯示在地圖
+          function fetchStores() {
+              fetch('/api/stores/')
+                  .then(res => res.json())
+                  .then(data => {
+                      data.forEach(store => {
+                          const lat = parseFloat(store.latitude);
+                          const lng = parseFloat(store.longitude);
+                          if (!isNaN(lat) && !isNaN(lng)) {
+                              const marker = new google.maps.Marker({
+                                  position: { lat, lng },
+                                  map,
+                                  title: store.store_name,
+                                  icon: {
+                                      url: "{% static 'assets/img/shop_icon.png' %}",
+                                      scaledSize: new google.maps.Size(30, 30)
+                                  }
+                              });
 
-                      if (!isNaN(lat) && !isNaN(lng)) {
-                          const marker = new google.maps.Marker({
-                              position: { lat, lng },
-                              map,
-                              title: store.store_name,
-                              icon: {
-                                  url: "{% static 'assets/img/shop_icon.png' %}",
-                                  scaledSize: new google.maps.Size(30, 30),
-                                  origin: new google.maps.Point(0, 0),
-                                  anchor: new google.maps.Point(15, 15)
+                              const infoWindow = new google.maps.InfoWindow({
+                                  content: `<strong>${store.store_name}</strong><br>地址: ${store.address}<br>電話: ${store.phone}`
+                              });
+
+                              marker.addListener('click', () => {
+                                  infoWindow.open(map, marker);
+                              });
+                          }
+                      });
+                  })
+                  .catch(err => { console.error("抓取商家資料錯誤：", err); });
+          }
+
+          // 抓有廣告的商家資料，判斷距離
+          function fetchAds() {
+              if (!userLatLng) return;
+
+              fetch('/api/stores-with-ads/')
+                  .then(res => res.json())
+                  .then(data => {
+                      data.forEach(store => {
+                          const lat = parseFloat(store.latitude);
+                          const lng = parseFloat(store.longitude);
+                          if (!isNaN(lat) && !isNaN(lng) && store.ad_content) {
+                              const dist = getDistance(userLatLng.lat, userLatLng.lng, lat, lng);
+                              if (dist <= store.ad_radius) {
+                                  alert(`你靠近 ${store.store_name}：${store.ad_content}`);
                               }
-                          });
-
-                          const infoWindow = new google.maps.InfoWindow({
-                              content: `<strong>${store.store_name}</strong><br>地址: ${store.address}<br>電話: ${store.phone}`
-                          });
-
-                          marker.addListener('click', () => {
-                              infoWindow.open(map, marker);
-                          });
-                      } else {
-                          console.warn("無效的經緯度：", store.latitude, store.longitude);
-                      }
-                  });
-              })
-              .catch(err => {
-                  console.error("抓取商家資料錯誤：", err);
-              });
+                          }
+                      });
+                  })
+                  .catch(err => { console.error("抓取廣告資料錯誤：", err); });
+          }
       }
+      </script>
 
-
-        // function initMap() {
-        //     map = new google.maps.Map(document.getElementById("map"), {
-        //         center: { lat: 25.0330, lng: 121.5654 },  // 台北市中心
-        //         zoom: 12,
-        //     });
-
-        //     fetch('/api/approved_stores/')
-        //         .then(response => response.json())
-        //         .then(data => {
-        //             data.forEach(store => {
-        //                 new google.maps.Marker({
-        //                     position: {
-        //                         lat: parseFloat(store.latitude),
-        //                         lng: parseFloat(store.longitude)
-        //                     },
-        //                     map,
-        //                     title: store.store_name
-        //                 });
-        //             });
-        //         });
-        // }
-    </script>
-
-    <script async defer
-        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAUuPZMMJvgVWftmqVyzfX8mKTwMX4kA6o&callback=initMap">
-    </script>
+      <script async defer
+          src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAUuPZMMJvgVWftmqVyzfX8mKTwMX4kA6o&callback=initMap">
+      </script>
 
 
     <!-- 其他區塊如 Team / CTA 保持不變（略） -->
