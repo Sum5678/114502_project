@@ -36,3 +36,18 @@ class ThisUserProfileForm(forms.ModelForm):
             "user_images": forms.Textarea(attrs={"rows": 2, "class": "form-control"}),
             "status_color": forms.TextInput(attrs={"type": "color", "class": "form-control"}),
         }
+
+
+
+
+from django import forms
+from .models import StoreAd
+
+class StoreAdForm(forms.ModelForm):
+    class Meta:
+        model = StoreAd
+        fields = ['ad_content', 'ad_radius', 'enabled']
+        widgets = {
+            'ad_content': forms.Textarea(attrs={'rows': 3, 'placeholder': '請輸入廣告內容'}),
+            'ad_radius': forms.NumberInput(attrs={'min': 1, 'placeholder': '觸發距離 (公尺)'}),
+        }
