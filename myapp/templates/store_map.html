@@ -35,11 +35,34 @@
 
   <style>
     #map {
-        width: 100%;
-        height: 600px;
-        border-radius: 8px;
+      height: 100vh;
+      width: 100%;
     }
-    </style>
+    /* Toast 容器 */
+    #toast-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+    }
+    /* 單個 Toast */
+    .toast {
+      background: rgba(0, 0, 0, 0.85);
+      color: #fff;
+      padding: 12px 18px;
+      margin-top: 10px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      font-size: 14px;
+      opacity: 0;
+      transform: translateX(100%);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  </style>
 
 
 </head>
@@ -70,6 +93,7 @@
             <ul>
               <li><a href="{% url 'map' %}">事件地圖</a></li>
               <li><a href="{% url 'store_map' %}">商家地圖</a></li>
+              <li><a href="{% url 'upload_store_ad' %}">商家廣告</a></li>
             </ul> 
           </li>
           
@@ -121,6 +145,7 @@
 
     <section>
         <div id="map"></div>
+        <div id="toast-container"></div>
     </section>
 
     <script>
@@ -137,6 +162,26 @@
       }
 
       let userLatLng = null;
+      let triggeredAds = new Set();
+
+      // ✅ Toast 函數
+      function showToast(message) {
+          const container = document.getElementById("toast-container");
+          const toast = document.createElement("div");
+          toast.className = "toast";
+          toast.innerHTML = message;
+
+          container.appendChild(toast);
+
+          // 顯示動畫
+          setTimeout(() => toast.classList.add("show"), 50);
+
+          // 3 秒後消失
+          setTimeout(() => {
+              toast.classList.remove("show");
+              setTimeout(() => container.removeChild(toast), 400);
+          }, 3000);
+      }
 
       function initMap() {
           const map = new google.maps.Map(document.getElementById("map"), {
@@ -144,99 +189,106 @@
               zoom: 12,
           });
 
-          // 1️⃣ 取得使用者位置
+          // ✅ 持續監控使用者位置
           if (navigator.geolocation) {
-              navigator.geolocation.getCurrentPosition(
+              navigator.geolocation.watchPosition(
                   (position) => {
                       userLatLng = {
                           lat: position.coords.latitude,
                           lng: position.coords.longitude
                       };
 
-                      // 在地圖上標出使用者位置
-                      new google.maps.Marker({
-                          position: userLatLng,
-                          map: map,
-                          title: "您的位置",
-                          icon: {
-                              url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
-                              scaledSize: new google.maps.Size(40, 40)
-                          }
-                      });
+                      // 更新或建立使用者位置 Marker
+                      if (!window.userMarker) {
+                          window.userMarker = new google.maps.Marker({
+                              position: userLatLng,
+                              map: map,
+                              title: "您的位置",
+                              icon: {
+                                  url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+                                  scaledSize: new google.maps.Size(40, 40)
+                              }
+                          });
+                          map.setCenter(userLatLng);
+                          map.setZoom(15);
 
-                      map.setCenter(userLatLng);
-                      map.setZoom(15);
+                          // 初始載入商家
+                          fetchStores(map);
+                      } else {
+                          window.userMarker.setPosition(userLatLng);
+                      }
 
-                      // 2️⃣ 抓商家資料顯示地圖
-                      fetchStores();
-
-                      // 3️⃣ 抓廣告資料判斷距離
+                      // 每次位置更新 → 檢查廣告
                       fetchAds();
                   },
                   (error) => {
                       console.error("無法取得定位：", error);
-                      fetchStores(); // 沒有定位也先抓商家
-                  }
+                      fetchStores(map);
+                  },
+                  { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
               );
           } else {
               console.warn("此瀏覽器不支援定位功能");
-              fetchStores();
-          }
-
-          // 抓所有商家 API，顯示在地圖
-          function fetchStores() {
-              fetch('/api/stores/')
-                  .then(res => res.json())
-                  .then(data => {
-                      data.forEach(store => {
-                          const lat = parseFloat(store.latitude);
-                          const lng = parseFloat(store.longitude);
-                          if (!isNaN(lat) && !isNaN(lng)) {
-                              const marker = new google.maps.Marker({
-                                  position: { lat, lng },
-                                  map,
-                                  title: store.store_name,
-                                  icon: {
-                                      url: "{% static 'assets/img/shop_icon.png' %}",
-                                      scaledSize: new google.maps.Size(30, 30)
-                                  }
-                              });
-
-                              const infoWindow = new google.maps.InfoWindow({
-                                  content: `<strong>${store.store_name}</strong><br>地址: ${store.address}<br>電話: ${store.phone}`
-                              });
-
-                              marker.addListener('click', () => {
-                                  infoWindow.open(map, marker);
-                              });
-                          }
-                      });
-                  })
-                  .catch(err => { console.error("抓取商家資料錯誤：", err); });
-          }
-
-          // 抓有廣告的商家資料，判斷距離
-          function fetchAds() {
-              if (!userLatLng) return;
-
-              fetch('/api/stores-with-ads/')
-                  .then(res => res.json())
-                  .then(data => {
-                      data.forEach(store => {
-                          const lat = parseFloat(store.latitude);
-                          const lng = parseFloat(store.longitude);
-                          if (!isNaN(lat) && !isNaN(lng) && store.ad_content) {
-                              const dist = getDistance(userLatLng.lat, userLatLng.lng, lat, lng);
-                              if (dist <= store.ad_radius) {
-                                  alert(`你靠近 ${store.store_name}：${store.ad_content}`);
-                              }
-                          }
-                      });
-                  })
-                  .catch(err => { console.error("抓取廣告資料錯誤：", err); });
+              fetchStores(map);
           }
       }
-      </script>
+
+      // 抓所有商家 API，顯示在地圖
+      function fetchStores(map) {
+          fetch('/api/stores/')
+              .then(res => res.json())
+              .then(data => {
+                  data.forEach(store => {
+                      const lat = parseFloat(store.latitude);
+                      const lng = parseFloat(store.longitude);
+                      if (!isNaN(lat) && !isNaN(lng)) {
+                          const marker = new google.maps.Marker({
+                              position: { lat, lng },
+                              map,
+                              title: store.store_name,
+                              icon: {
+                                  url: "{% static 'assets/img/shop_icon.png' %}",
+                                  scaledSize: new google.maps.Size(30, 30)
+                              }
+                          });
+
+                          const infoWindow = new google.maps.InfoWindow({
+                              content: `<strong>${store.store_name}</strong><br>地址: ${store.address}<br>電話: ${store.phone}`
+                          });
+
+                          marker.addListener('click', () => {
+                              infoWindow.open(map, marker);
+                          });
+                      }
+                  });
+              })
+              .catch(err => { console.error("抓取商家資料錯誤：", err); });
+      }
+
+      // 抓有廣告的商家資料，判斷距離
+      function fetchAds() {
+          if (!userLatLng) return;
+
+          fetch('/api/stores-with-ads/')
+              .then(res => res.json())
+              .then(data => {
+                  data.forEach(store => {
+                      const lat = parseFloat(store.latitude);
+                      const lng = parseFloat(store.longitude);
+                      if (!isNaN(lat) && !isNaN(lng) && store.ad_content) {
+                          const dist = getDistance(userLatLng.lat, userLatLng.lng, lat, lng);
+                          if (dist <= store.ad_radius) {
+                              if (!triggeredAds.has(store.st_id)) { // 避免重複觸發
+                                  showToast(`<strong>${store.store_name}</strong><br>${store.ad_content}`);
+                                  triggeredAds.add(store.st_id);
+                              }
+                          }
+                      }
+                  });
+              })
+              .catch(err => { console.error("抓取廣告資料錯誤：", err); });
+      }
+    </script>
 
       <script async defer
           src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAUuPZMMJvgVWftmqVyzfX8mKTwMX4kA6o&callback=initMap">
