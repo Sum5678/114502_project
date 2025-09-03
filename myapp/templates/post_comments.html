@@ -764,5 +764,198 @@
       return cookieValue;
     }
   </script>
+
+  <!-- ====== 新增：淺藍色 Confirm / Edit Modal + 攔截器（不改你的原程式） ====== -->
+  <!-- Confirm -->
+  <div class="modal fade" id="blueConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0" style="border-radius:14px; background:#f0faff;">
+        <div class="modal-header" style="background:#e6f3fb; border-bottom:0;">
+          <h5 class="modal-title fw-bold text-primary"><i class="bi bi-question-circle-fill me-2"></i> 確認操作</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" style="color:#033e6b;">
+          <div id="blueConfirmMsg">您確定要執行這個動作嗎？</div>
+        </div>
+        <div class="modal-footer" style="border-top:0;">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+          <button type="button" class="btn btn-primary" id="blueConfirmOK" style="background:linear-gradient(180deg,#63b3ed,#2f8be6); border:none;">確定</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit -->
+  <div class="modal fade" id="blueEditModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0" style="border-radius:14px; background:#f0faff;">
+        <div class="modal-header" style="background:#e6f3fb; border-bottom:0;">
+          <h5 class="modal-title fw-bold text-primary" id="blueEditTitle"><i class="bi bi-pencil-square me-2"></i> 編輯內容</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="form-text mb-1" id="blueEditHint" style="color:#5a7ca9;">請輸入新的內容（最多 300 字）。</div>
+          <textarea id="blueEditTextarea" class="form-control" rows="5" maxlength="300" placeholder="寫點什麼…"></textarea>
+        </div>
+        <div class="modal-footer" style="border-top:0;">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+          <button type="button" class="btn btn-primary" id="blueEditOK" style="background:linear-gradient(180deg,#63b3ed,#2f8be6); border:none;">儲存</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (function(){
+    // helpers
+    function cookie(name){
+      return (document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'))||[])[1] || '';
+    }
+    function showBlueConfirm(message){
+      return new Promise(function(resolve){
+        var el = document.getElementById('blueConfirmModal');
+        var msg = document.getElementById('blueConfirmMsg');
+        var ok  = document.getElementById('blueConfirmOK');
+        if(msg) msg.textContent = message || '您確定要執行這個動作嗎？';
+        var inst = bootstrap.Modal.getOrCreateInstance(el);
+        function onOk(){ cleanup(); inst.hide(); resolve(true); }
+        function onHide(){ cleanup(); resolve(false); }
+        function cleanup(){ ok.removeEventListener('click', onOk); el.removeEventListener('hidden.bs.modal', onHide); }
+        ok.addEventListener('click', onOk, { once:true });
+        el.addEventListener('hidden.bs.modal', onHide, { once:true });
+        inst.show();
+      });
+    }
+    function showBluePrompt(opts){
+      opts = opts || {};
+      return new Promise(function(resolve){
+        var el   = document.getElementById('blueEditModal');
+        var ta   = document.getElementById('blueEditTextarea');
+        var ok   = document.getElementById('blueEditOK');
+        var ttl  = document.getElementById('blueEditTitle');
+        var hint = document.getElementById('blueEditHint');
+        if(ttl)  ttl.innerHTML = '<i class="bi bi-pencil-square me-2"></i> ' + (opts.title || '編輯內容');
+        if(hint) hint.textContent = opts.hint || '請輸入新的內容（最多 300 字）。';
+        ta.value = opts.initial || '';
+        ta.placeholder = opts.placeholder || '寫點什麼…';
+        ta.maxLength = opts.max || 300;
+        var inst = bootstrap.Modal.getOrCreateInstance(el);
+        function onOk(){ cleanup(); inst.hide(); resolve(ta.value.trim()); }
+        function onCancel(){ cleanup(); resolve(null); }
+        function cleanup(){ ok.removeEventListener('click', onOk); el.removeEventListener('hidden.bs.modal', onCancel); }
+        ok.addEventListener('click', onOk, { once:true });
+        el.addEventListener('hidden.bs.modal', onCancel, { once:true });
+        inst.show(); ta.focus();
+      });
+    }
+
+    // ========= 攔截器（捕獲階段） =========
+    document.addEventListener('click', function(e){
+      var btn = e.target.closest('.delete-comment-btn');
+      if(!btn) return;
+      e.preventDefault(); e.stopImmediatePropagation();
+      showBlueConfirm('確定要刪除這則留言嗎？').then(function(ok){
+        if(!ok) return;
+        fetch('/post/'+btn.dataset.postId+'/comment/delete/', {
+          method:'POST',
+          headers:{ 'Content-Type':'application/x-www-form-urlencoded','X-Requested-With':'XMLHttpRequest','X-CSRFToken': cookie('csrftoken') },
+          body:'time='+encodeURIComponent(btn.dataset.time||'')
+        }).then(function(r){ return r.json(); })
+        .then(function(data){
+          if(!data.success) throw new Error(data.error||'刪除失敗');
+          var card = btn.closest('.comment-item'); if(card) card.remove();
+        }).catch(function(err){ alert(err.message||'刪除失敗'); });
+      });
+    }, true);
+
+    document.addEventListener('click', function(e){
+      var btn = e.target.closest('.delete-reply-btn');
+      if(!btn) return;
+      e.preventDefault(); e.stopImmediatePropagation();
+      showBlueConfirm('確定要刪除這則回覆嗎？').then(function(ok){
+        if(!ok) return;
+        var form = new URLSearchParams();
+        form.append('comment_id', btn.dataset.commentId||'');
+        form.append('reply_id', btn.dataset.replyId||'');
+        fetch('/post/'+btn.dataset.postId+'/reply/delete/', {
+          method:'POST',
+          headers:{ 'Content-Type':'application/x-www-form-urlencoded','X-Requested-With':'XMLHttpRequest','X-CSRFToken': cookie('csrftoken') },
+          body: form.toString()
+        }).then(function(r){ return r.json(); })
+        .then(function(data){
+          if(!data.success) throw new Error(data.error||'刪除失敗');
+          var li   = btn.closest('li');
+          var list = li && li.parentElement;
+          if(li) li.remove();
+          if(list){
+            var count  = list.querySelectorAll(':scope > li').length;
+            var rootId = list.getAttribute('data-replies-for');
+            var toggle = document.querySelector('.view-replies-toggle[data-root-id="'+CSS.escape(rootId)+'"]');
+            if(toggle){
+              if(count===0){ list.style.display='none'; toggle.style.display='none'; }
+              else{ toggle.textContent = '查看回覆（'+count+'）'; }
+            }
+          }
+        }).catch(function(err){ alert(err.message||'刪除失敗'); });
+      });
+    }, true);
+
+    document.addEventListener('click', function(e){
+      var btn = e.target.closest('.edit-comment-btn');
+      if(!btn) return;
+      e.preventDefault(); e.stopImmediatePropagation();
+      var card = btn.closest('.comment-item');
+      var contentEl = card && card.querySelector('.comment-content');
+      var current = (contentEl && contentEl.textContent) || btn.dataset.content || '';
+      showBluePrompt({
+        title:'編輯留言',
+        initial: current,
+        hint:'請輸入新的留言內容（最多 300 字）。'
+      }).then(function(val){
+        if(val===null) return;
+        if(!val.trim()){ alert('內容不能為空'); return; }
+        fetch('/edit_comment/'+btn.dataset.postId+'/'+encodeURIComponent(btn.dataset.time)+'/', {
+          method:'POST',
+          headers:{ 'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest','X-CSRFToken': cookie('csrftoken') },
+          body: JSON.stringify({ content: val.trim() })
+        }).then(function(r){ return r.json(); })
+        .then(function(data){
+          if(!data.success) throw new Error(data.error||'編輯失敗');
+          if(contentEl) contentEl.textContent = val.trim();
+        }).catch(function(err){ alert(err.message||'編輯失敗'); });
+      });
+    }, true);
+
+    document.addEventListener('click', function(e){
+      var btn = e.target.closest('.edit-reply-btn');
+      if(!btn) return;
+      e.preventDefault(); e.stopImmediatePropagation();
+      var card = btn.closest('.comment-item');
+      var contentEl = card && card.querySelector('.comment-content');
+      var current = (contentEl && contentEl.textContent) || btn.dataset.content || '';
+      showBluePrompt({
+        title:'編輯回覆',
+        initial: current,
+        hint:'請輸入新的回覆內容（最多 300 字）。'
+      }).then(function(val){
+        if(val===null) return;
+        if(!val.trim()){ alert('內容不能為空'); return; }
+        fetch('/post/'+btn.dataset.postId+'/reply/edit/', {
+          method:'POST',
+          headers:{ 'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest','X-CSRFToken': cookie('csrftoken') },
+          body: JSON.stringify({
+            comment_id: btn.dataset.commentId,
+            reply_id:   btn.dataset.replyId,
+            content:    val.trim()
+          })
+        }).then(function(r){ return r.json(); })
+        .then(function(data){
+          if(!data.success) throw new Error(data.error||'編輯失敗');
+          if(contentEl) contentEl.textContent = val.trim();
+        }).catch(function(err){ alert(err.message||'編輯失敗'); });
+      });
+    }, true);
+  })();
+  </script>
 </body>
 </html>
