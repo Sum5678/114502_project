@@ -403,3 +403,112 @@ class StoreAd(models.Model):
         db_table = 'store_ad'
         managed = False  # Django 不會建立或修改這張表
 
+
+
+
+
+
+# myapp/models.py
+from django.db import models
+from django.conf import settings
+
+class AbuseReport(models.Model):
+    """
+    交流區檢舉單。
+    - target_type：被檢舉的是 貼文/留言/回覆
+    - post：對應的貼文（若 target 是留言/回覆，一樣會指向其所屬貼文）
+    - comment_id / reply_id：你前端/儲存留言樹用的識別字串（可為空）
+    - reason：檢舉理由（提供常見選項，保留 other）
+    - details：檢舉人補充說明
+    - snapshot_text：當下被檢舉內容的快照（避免後續被修改而查不到）
+    - reporter：檢舉人（可為匿名 -> null）
+    - status：審核狀態（待審/已處置/已駁回）
+    - admin / admin_note / decided_at：處理者、備註與處理時間
+    """
+
+    # === 枚舉 ===
+    class TargetType(models.TextChoices):
+        POST    = "post", "貼文"
+        COMMENT = "comment", "留言"
+        REPLY   = "reply", "回覆"
+
+    class Status(models.TextChoices):
+        PENDING      = "pending", "待審"
+        ACTION_TAKEN = "action_taken", "已處置"
+        REJECTED     = "rejected", "已駁回"
+
+    class Reason(models.TextChoices):
+        SPAM       = "spam", "垃圾訊息/廣告"
+        ABUSE      = "abuse", "辱罵/騷擾"
+        HATE       = "hate", "仇恨/歧視"
+        VIOLENCE   = "violence", "暴力/威脅"
+        NUDITY     = "nudity", "裸露/色情"
+        ILLEGAL    = "illegal", "違法內容"
+        DOXXING    = "doxxing", "人身資訊外流"
+        MISINFO    = "misinfo", "錯誤資訊"
+        OTHER      = "other", "其他"
+
+    # === 關聯/主欄位 ===
+    target_type   = models.CharField(
+        max_length=20,
+        choices=TargetType.choices,
+        db_index=True,
+    )
+    # ⬇️ 若你的貼文模型不是 ChatInteraction，請改成正確的模型名稱字串
+    post          = models.ForeignKey(
+        "ChatInteraction",
+        on_delete=models.CASCADE,
+        null=True, blank=True,
+        related_name="abuse_reports",
+    )
+    comment_id    = models.CharField(max_length=64, blank=True, default="", db_index=True)
+    reply_id      = models.CharField(max_length=64, blank=True, default="", db_index=True)
+
+    reason        = models.CharField(
+        max_length=32,
+        choices=Reason.choices,
+        default=Reason.OTHER,
+        db_index=True,
+    )
+    details       = models.TextField(blank=True, default="")
+    snapshot_text = models.TextField(blank=True, default="")
+
+    reporter      = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name="reports_made",
+    )
+
+    status        = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.PENDING,
+        db_index=True,
+    )
+    admin         = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name="reports_handled",
+    )
+    admin_note    = models.TextField(blank=True, default="")
+
+    created_at    = models.DateTimeField(auto_now_add=True, db_index=True)
+    decided_at    = models.DateTimeField(null=True, blank=True)
+
+    # === 顯示與索引 ===
+    def __str__(self):
+        return f"[{self.get_target_type_display()}] #{self.pk} - {self.reason}"
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["status"]),
+            models.Index(fields=["reason"]),
+            models.Index(fields=["created_at"]),
+            models.Index(fields=["comment_id"]),
+            models.Index(fields=["reply_id"]),
+        ]
+        verbose_name = "檢舉"
+        verbose_name_plural = "檢舉"
