@@ -433,7 +433,8 @@
                       </div>
                     </div>
 
-                    <div class="card-text mt-2">{{ post.message_content|safe }}</div>
+                    <div class="card-text mt-2">{{ post.message_content|escape }}</div>
+
 
                     <div class="interaction-bar mt-3">
                       <div><i class="bi bi-heart"></i> {{ post.like_heart_count }}</div>
