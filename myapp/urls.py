@@ -104,6 +104,16 @@ urlpatterns = [
 
     # ✅ 新增/確認：回覆編輯
     path('post/<str:post_id>/reply/edit/', views.edit_reply, name='edit_reply'),
+        # 交流區檢舉（前台送出）
+    path('report/create/', views.create_report, name='create_report'),
+    path("reports/", views.review_reports, name="review_reports"),   # ← 交流區檢舉審核
+    path("reports/act/", views.act_on_report, name="act_on_report"), # ← 管理員動作
+    path('report/create/', views.create_report, name='create_report'),
+
+
+
+
+
 
 
 
