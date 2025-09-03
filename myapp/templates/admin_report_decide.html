@@ -151,7 +151,7 @@
                         <span class="badge bg-danger">已駁回</span>
                       {% endif %}
                     </td>
-                    <td>{{ r.admin|default:"—" }}</td>
+                    <td>{% if r.admin_id %}ID {{ r.admin_id }}{% else %}—{% endif %}</td>
                     <td>{{ r.admin_note|default:"—" }}</td>
                     <td>{{ r.decided_at|date:"Y-m-d H:i" }}</td>
                   </tr>
