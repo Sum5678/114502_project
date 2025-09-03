@@ -435,7 +435,6 @@
 
                     <div class="card-text mt-2">{{ post.message_content|escape }}</div>
 
-
                     <div class="interaction-bar mt-3">
                       <div><i class="bi bi-heart"></i> {{ post.like_heart_count }}</div>
                       {% if request.user.id|stringformat:"s" == post.user_id|stringformat:"s" %}
@@ -575,9 +574,7 @@
                 <i class="bi bi-chat-dots"></i> 留言（{{ post.comment_list|length }}）
               </button>
 
-              <button type="button" class="btn-share" data-post-id="{{ post.interaction_id }}">
-                <i class="bi bi-share"></i> 分享
-              </button>
+              
             </div>
 
             {% if request.user.id|stringformat:"s" == post.user_id|stringformat:"s" %}
