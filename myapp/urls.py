@@ -109,6 +109,7 @@ urlpatterns = [
     path("reports/", views.review_reports, name="review_reports"),   # ← 交流區檢舉審核
     path("reports/act/", views.act_on_report, name="act_on_report"), # ← 管理員動作
     path('report/create/', views.create_report, name='create_report'),
+    path('reports/decide/', views.report_decide, name='report_decide'),
 
 
 

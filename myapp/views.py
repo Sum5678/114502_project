@@ -2964,62 +2964,68 @@ def delete_reply(request, post_id):
         'total_comments': top_count,
         'total_including_replies': all_count
     })
-    # ====== 管理員登入保護（沿用你的 session 機制）=========================
+# ====== 管理員登入保護（沿用你的 session 機制）=========================
 from functools import wraps
 from urllib.parse import quote
-from django.shortcuts import redirect
+
+from django.shortcuts import redirect, render
 from django.urls import reverse
+from django.views.decorators.http import require_POST, require_http_methods
+from django.http import JsonResponse, Http404
+from django.utils.datastructures import MultiValueDictKeyError
+from django.utils import timezone
+from django.db.models import Q
+from django.contrib import messages  # ✅ 新增：顯示成功/錯誤訊息
+import json, bleach
+
+# 你的模型
+try:
+    from .models import AbuseReport
+except Exception:
+    AbuseReport = None
+
+# ===== 你專案原有的工具函式（請確保存在；名稱不同就自己對應） =====
+# _get_post_by_any_id(post_id)              -> 回傳貼文物件 (e.g., ChatInteraction)
+# _load_comments(post)                      -> 回傳留言樹
+# _find_comment(comments, comment_id)       -> (index, comment_dict or None)
+# _find_reply_recursive(replies, reply_id)  -> (parent_list, index, reply_dict or None)
+
 
 def admin_login_required(view_func):
+    """以 session['admin_id'] 判斷是否已登入管理員；未登入導至 admin_login。"""
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
-        # 你的登入判斷：session 內是否有 admin_id
         if request.session.get('admin_id'):
             return view_func(request, *args, **kwargs)
-        # 沒登入 → 導向 admin_login，並保留 next（登入成功後導回）
         login_url = reverse('admin_login')
         next_url = request.get_full_path()  # e.g. /reports/?status=pending
         return redirect(f"{login_url}?next={quote(next_url)}")
     return wrapper
 
 
-# ===== 檢舉 API（前台用）========================================================
-try:
-    from .models import AbuseReport
-except Exception:
-    AbuseReport = None
-
-from django.views.decorators.http import require_POST, require_http_methods
-from django.http import JsonResponse, Http404
-from django.utils.datastructures import MultiValueDictKeyError
-from django.utils import timezone
-from django.db.models import Q
-from django.shortcuts import render
-import json, bleach
-
-# 這些工具函式是你專案原本就有的；名稱不同請對應修改
-# _get_post_by_any_id, _load_comments, _find_comment, _find_reply_recursive
-
+# ===== 內部：產生被檢舉目標快照 =====
 def _snapshot_for_target(post, target_type, comment_id='', reply_id=''):
-    """產生被檢舉目標的快照文字"""
+    """
+    回傳目標內容的文字快照，用於審核時避免內容後改找不到。
+    """
     if target_type == 'post':
         title = getattr(post, 'title', '') or ''
         content = getattr(post, 'message_content', '') or ''
         return f"[{title}]\n{content}".strip()
 
     comments = _load_comments(post)
-    c_idx, c = _find_comment(comments, comment_id)
+    _, c = _find_comment(comments, comment_id)
     if not c:
         return None
 
     if target_type == 'comment':
         return str(c.get('content', ''))
 
-    parent_list, r_idx, r = _find_reply_recursive(c.get('replies') or [], reply_id)
+    _, _, r = _find_reply_recursive(c.get('replies') or [], reply_id)
     return str(r.get('content', '')) if r else None
 
 
-# ===== 前台送檢舉（仍維持需要一般使用者登入；你若要開放匿名再說） =====
+# ===== 前台送檢舉（需一般使用者登入） =====
 @require_POST
 def create_report(request):
     if not getattr(request, 'user', None) or not request.user.is_authenticated:
@@ -3028,6 +3034,7 @@ def create_report(request):
     if AbuseReport is None:
         return JsonResponse({'ok': False, 'msg': '尚未建立 AbuseReport 模型'}, status=501)
 
+    # 解析 JSON
     try:
         data = json.loads(request.body.decode('utf-8'))
     except Exception:
@@ -3050,17 +3057,21 @@ def create_report(request):
     if target_type == 'reply' and (not comment_id or not reply_id):
         return JsonResponse({'ok': False, 'msg': '檢舉回覆需提供 comment_id 與 reply_id'}, status=400)
 
+    # 取得貼文
     try:
         post = _get_post_by_any_id(post_id)
     except Http404:
         return JsonResponse({'ok': False, 'msg': '找不到貼文'}, status=404)
 
+    # 產生快照
     snapshot_text = _snapshot_for_target(post, target_type, comment_id, reply_id)
     if snapshot_text is None:
         return JsonResponse({'ok': False, 'msg': '找不到被檢舉的目標內容'}, status=404)
 
+    # 清理補充說明
     details = bleach.clean(details_raw, tags=[], attributes={}, strip=True)
 
+    # 建立檢舉
     try:
         AbuseReport.objects.create(
             target_type=target_type,
@@ -3070,7 +3081,7 @@ def create_report(request):
             reason=reason,
             details=details,
             snapshot_text=snapshot_text,
-            reporter=request.user,   # FK: 一般使用者
+            reporter=request.user,
         )
     except Exception as e:
         return JsonResponse({'ok': False, 'msg': f'建立檢舉失敗：{e}'}, status=400)
@@ -3078,11 +3089,10 @@ def create_report(request):
     return JsonResponse({'ok': True, 'msg': '已送出檢舉，等待管理員審核'})
 
 
-# ===== 管理員檢舉審核（改用你的 admin_login_required；傳 admin_name / admin_id 給前端） =====
+# ===== 管理員檢舉清單頁（待審 / 已處置 / 已駁回） =====
 @admin_login_required
 @require_http_methods(["GET"])
 def review_reports(request):
-    # 從 session 取管理員資訊（你的登入流程請在 admin_login 時寫入）
     admin_id = request.session.get('admin_id')
     admin_name = request.session.get('admin_name') or '管理員'
 
@@ -3125,7 +3135,41 @@ def review_reports(request):
     })
 
 
-# ===== 管理員動作（改用你的 admin_login_required） =====
+# ===== 管理員「最終審核紀錄」頁（僅顯示 action_taken / rejected） =====
+@admin_login_required
+@require_http_methods(["GET"])
+def report_decide(request):
+    admin_id = request.session.get('admin_id')
+    admin_name = request.session.get('admin_name') or '管理員'
+
+    if AbuseReport is None:
+        return render(request, 'admin_report_decide.html', {
+            'reports': [], 'status': '', 'q': '',
+            'admin_name': admin_name, 'admin_id': admin_id,
+        })
+
+    status = (request.GET.get('status') or '').strip()   # 可選：action_taken / rejected / 空(全部)
+    q = (request.GET.get('q') or '').strip()
+
+    qs = AbuseReport.objects.exclude(status='pending').order_by('-decided_at', '-created_at')
+    if status in {'action_taken', 'rejected'}:
+        qs = qs.filter(status=status)
+    if q:
+        qs = qs.filter(
+            Q(snapshot_text__icontains=q) |
+            Q(details__icontains=q) |
+            Q(reason__icontains=q)
+        )
+
+    reports = list(qs[:300])
+
+    return render(request, 'admin_report_decide.html', {
+        'reports': reports, 'status': status, 'q': q,
+        'admin_name': admin_name, 'admin_id': admin_id,
+    })
+
+
+# ===== 管理員動作（採取行動 / 駁回） =====
 @admin_login_required
 @require_POST
 def act_on_report(request):
@@ -3148,20 +3192,25 @@ def act_on_report(request):
         return JsonResponse({'ok': False, 'msg': '找不到檢舉'}, status=404)
 
     report.status = 'action_taken' if action == 'take_action' else 'rejected'
-    # 你有自訂管理員系統 → 模型若允許可設 None；若需要 Django User，可視情況關聯 request.user
     report.admin_note = admin_note
     report.decided_at = timezone.now()
-    # 若 AbuseReport.admin 是可為空：不寫入；若你想記錄 Django 管理員：
+
+    # 記錄處理者（若模型有 admin FK 且你使用 Django 使用者）
     if getattr(request, 'user', None) and request.user.is_authenticated:
         try:
-            # 若欄位存在且是 FK User
             setattr(report, 'admin', request.user)
         except Exception:
             pass
 
-    report.save()  # 若模型有限制欄位，改成 update_fields=['status','admin_note','decided_at','admin']
+    report.save()
 
-    return JsonResponse({'ok': True, 'msg': '已更新檢舉狀態', 'status': report.status})
+    # ✅ 成功後直接導向審核紀錄頁，並顯示提示
+    status_label = '已處置' if report.status == 'action_taken' else '已駁回'
+    messages.success(request, f'檢舉 #{report.id} {status_label}。')
+    return redirect('report_decide')
+
+
+
 
 
 # ------------ /交流區後端（整合版）------------
