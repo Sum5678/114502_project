@@ -2106,12 +2106,10 @@ def store_data_api(request):
 from django.shortcuts import render, redirect
 from django.http import JsonResponse, Http404, HttpResponseForbidden
 from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import require_POST, require_http_methods
+from django.views.decorators.http import require_POST
 from django.utils import timezone
-from django.utils.datastructures import MultiValueDictKeyError
 from django.db.models import Q
 from django.core.paginator import Paginator
-from django.urls import reverse
 
 from .models import ChatInteraction, ThisUserProfile
 import json
@@ -2609,20 +2607,13 @@ def add_comment(request, post_id):
     nick1 = (prof.default_nickname1 or "").strip() if prof else ""
     nick2 = (prof.default_nickname2 or "").strip() if prof else ""
 
-    # ★ 相容 comments 頁使用的 name="identity"
-    identity = (
-        request.POST.get('comment_identity')
-        or request.POST.get('identity')
-        or 'anonymous'
-    )
-
+    identity = request.POST.get('comment_identity', 'anonymous')
     if identity == 'nickname1' and nick1:
         nickname = nick1
     elif identity == 'nickname2' and nick2:
         nickname = nick2
     else:
         nickname = "(匿名)"
-        identity = 'anonymous'
 
     comments = _load_comments(post)
 
@@ -2743,22 +2734,12 @@ def post_comments(request, post_id):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    # ★把使用者的預設暱稱傳給 template（與 post_display 同名）
-    nick1 = ""
-    nick2 = ""
-    if request.user.is_authenticated:
-        prof = ThisUserProfile.objects.filter(gmail=request.user.email).first()
-        nick1 = (prof.default_nickname1 or "").strip() if prof else ""
-        nick2 = (prof.default_nickname2 or "").strip() if prof else ""
-
     return render(request, 'post_comments.html', {
         'post': post,
         'page_obj': page_obj,                 # 這裡每筆是 comment 或 reply
         'total_comments': top_count,          # 頂層
         'total_including_replies': all_count, # 備用
         'final_total': final_total,           # 供 UI 顯示「留言（N）」的最終數
-        'profile_nickname1': nick1,           # ★ for 身分標籤
-        'profile_nickname2': nick2,           # ★ for 身分標籤
     })
 
 # ============== 巢狀：回覆 & 按讚 & 編輯/刪除 ==============
@@ -2770,19 +2751,14 @@ def reply_comment(request, post_id):
     參數：
       - comment_id: 目標留言 id（或 time）
       - parent_reply_id: 選填；若填，表示「回覆某一則回覆」
-      - reply_identity / identity: nickname1 / nickname2 / anonymous
+      - reply_identity: nickname1 / nickname2 / anonymous
       - reply: 文字內容（<=300）
     """
     post = _get_post_by_any_id(post_id)
     comment_id = (request.POST.get('comment_id') or '').strip()
     parent_reply_id = (request.POST.get('parent_reply_id') or '').strip()
     reply_text = (request.POST.get('reply') or '').strip()
-    # ★ 相容兩種欄位名
-    identity = (
-        (request.POST.get('reply_identity') or '').strip()
-        or (request.POST.get('identity') or '').strip()
-        or 'anonymous'
-    )
+    identity = (request.POST.get('reply_identity') or 'anonymous').strip()
     user_id_str = str(request.user.id)
 
     if not comment_id:
@@ -2988,211 +2964,20 @@ def delete_reply(request, post_id):
         'total_comments': top_count,
         'total_including_replies': all_count
     })
-# ====== 管理員登入保護（沿用你的 session 機制）=========================
-from functools import wraps
-from urllib.parse import quote
-from django.shortcuts import redirect
-from django.urls import reverse
-
-def admin_login_required(view_func):
-    @wraps(view_func)
-    def wrapper(request, *args, **kwargs):
-        # 你的登入判斷：session 內是否有 admin_id
-        if request.session.get('admin_id'):
-            return view_func(request, *args, **kwargs)
-        # 沒登入 → 導向 admin_login，並保留 next（登入成功後導回）
-        login_url = reverse('admin_login')
-        next_url = request.get_full_path()  # e.g. /reports/?status=pending
-        return redirect(f"{login_url}?next={quote(next_url)}")
-    return wrapper
-
-
-# ===== 檢舉 API（前台用）========================================================
-try:
-    from .models import AbuseReport
-except Exception:
-    AbuseReport = None
-
-from django.views.decorators.http import require_POST, require_http_methods
-from django.http import JsonResponse, Http404
-from django.utils.datastructures import MultiValueDictKeyError
-from django.utils import timezone
-from django.db.models import Q
-from django.shortcuts import render
-import json, bleach
-
-# 這些工具函式是你專案原本就有的；名稱不同請對應修改
-# _get_post_by_any_id, _load_comments, _find_comment, _find_reply_recursive
-
-def _snapshot_for_target(post, target_type, comment_id='', reply_id=''):
-    """產生被檢舉目標的快照文字"""
-    if target_type == 'post':
-        title = getattr(post, 'title', '') or ''
-        content = getattr(post, 'message_content', '') or ''
-        return f"[{title}]\n{content}".strip()
-
-    comments = _load_comments(post)
-    c_idx, c = _find_comment(comments, comment_id)
-    if not c:
-        return None
-
-    if target_type == 'comment':
-        return str(c.get('content', ''))
-
-    parent_list, r_idx, r = _find_reply_recursive(c.get('replies') or [], reply_id)
-    return str(r.get('content', '')) if r else None
-
-
-# ===== 前台送檢舉（仍維持需要一般使用者登入；你若要開放匿名再說） =====
-@require_POST
-def create_report(request):
-    if not getattr(request, 'user', None) or not request.user.is_authenticated:
-        return JsonResponse({'ok': False, 'msg': '請先登入才能檢舉'}, status=403)
-
-    if AbuseReport is None:
-        return JsonResponse({'ok': False, 'msg': '尚未建立 AbuseReport 模型'}, status=501)
-
-    try:
-        data = json.loads(request.body.decode('utf-8'))
-    except Exception:
-        return JsonResponse({'ok': False, 'msg': '格式錯誤（需為 JSON）'}, status=400)
-
-    target_type = (data.get('target_type') or '').strip()
-    if target_type not in ('post', 'comment', 'reply'):
-        return JsonResponse({'ok': False, 'msg': '不支援的檢舉類型'}, status=400)
-
-    post_id     = (data.get('post_id') or '').strip()
-    comment_id  = (data.get('comment_id') or '').strip()
-    reply_id    = (data.get('reply_id') or '').strip()
-    reason      = (data.get('reason') or 'other').strip()
-    details_raw = (data.get('details') or '').strip()
-
-    if not post_id:
-        return JsonResponse({'ok': False, 'msg': '缺少 post_id'}, status=400)
-    if target_type == 'comment' and not comment_id:
-        return JsonResponse({'ok': False, 'msg': '檢舉留言需提供 comment_id'}, status=400)
-    if target_type == 'reply' and (not comment_id or not reply_id):
-        return JsonResponse({'ok': False, 'msg': '檢舉回覆需提供 comment_id 與 reply_id'}, status=400)
-
-    try:
-        post = _get_post_by_any_id(post_id)
-    except Http404:
-        return JsonResponse({'ok': False, 'msg': '找不到貼文'}, status=404)
-
-    snapshot_text = _snapshot_for_target(post, target_type, comment_id, reply_id)
-    if snapshot_text is None:
-        return JsonResponse({'ok': False, 'msg': '找不到被檢舉的目標內容'}, status=404)
-
-    details = bleach.clean(details_raw, tags=[], attributes={}, strip=True)
-
-    try:
-        AbuseReport.objects.create(
-            target_type=target_type,
-            post=post,
-            comment_id=str(comment_id or ''),
-            reply_id=str(reply_id or ''),
-            reason=reason,
-            details=details,
-            snapshot_text=snapshot_text,
-            reporter=request.user,   # FK: 一般使用者
-        )
-    except Exception as e:
-        return JsonResponse({'ok': False, 'msg': f'建立檢舉失敗：{e}'}, status=400)
-
-    return JsonResponse({'ok': True, 'msg': '已送出檢舉，等待管理員審核'})
-
-
-# ===== 管理員檢舉審核（改用你的 admin_login_required；傳 admin_name / admin_id 給前端） =====
-@admin_login_required
-@require_http_methods(["GET"])
-def review_reports(request):
-    # 從 session 取管理員資訊（你的登入流程請在 admin_login 時寫入）
-    admin_id = request.session.get('admin_id')
-    admin_name = request.session.get('admin_name') or '管理員'
-
-    if AbuseReport is None:
-        return render(request, 'admin_review_reports.html', {
-            'error': '尚未建立 AbuseReport 模型，請先 migrate。',
-            'reports': [], 'status': 'pending', 'q': '',
-            'report_counts': {'pending': 0, 'action_taken': 0, 'rejected': 0},
-            'latest_reports': [],
-            'admin_name': admin_name, 'admin_id': admin_id,
-        })
-
-    status = (request.GET.get('status') or 'pending').strip()
-    if status not in {'pending', 'action_taken', 'rejected'}:
-        status = 'pending'
-    q = (request.GET.get('q') or '').strip()
-
-    qs = AbuseReport.objects.all().order_by('-created_at')
-    if status:
-        qs = qs.filter(status=status)
-    if q:
-        qs = qs.filter(
-            Q(snapshot_text__icontains=q) |
-            Q(details__icontains=q) |
-            Q(reason__icontains=q)
-        )
-
-    reports = list(qs[:200])
-    report_counts = {
-        'pending': AbuseReport.objects.filter(status='pending').count(),
-        'action_taken': AbuseReport.objects.filter(status='action_taken').count(),
-        'rejected': AbuseReport.objects.filter(status='rejected').count(),
-    }
-    latest_reports = list(AbuseReport.objects.all().order_by('-created_at')[:10])
-
-    return render(request, 'admin_review_reports.html', {
-        'reports': reports, 'status': status, 'q': q,
-        'report_counts': report_counts, 'latest_reports': latest_reports,
-        'admin_name': admin_name, 'admin_id': admin_id,
-    })
-
-
-# ===== 管理員動作（改用你的 admin_login_required） =====
-@admin_login_required
-@require_POST
-def act_on_report(request):
-    if AbuseReport is None:
-        return JsonResponse({'ok': False, 'msg': '尚未建立 AbuseReport 模型'}, status=501)
-
-    try:
-        report_id = request.POST['report_id']
-        action = (request.POST.get('action') or '').strip()
-        admin_note = (request.POST.get('admin_note') or '').strip()
-    except MultiValueDictKeyError:
-        return JsonResponse({'ok': False, 'msg': '缺少必要欄位'}, status=400)
-
-    if action not in ('take_action', 'reject'):
-        return JsonResponse({'ok': False, 'msg': '不支援的動作'}, status=400)
-
-    try:
-        report = AbuseReport.objects.get(pk=report_id)
-    except AbuseReport.DoesNotExist:
-        return JsonResponse({'ok': False, 'msg': '找不到檢舉'}, status=404)
-
-    report.status = 'action_taken' if action == 'take_action' else 'rejected'
-    # 你有自訂管理員系統 → 模型若允許可設 None；若需要 Django User，可視情況關聯 request.user
-    report.admin_note = admin_note
-    report.decided_at = timezone.now()
-    # 若 AbuseReport.admin 是可為空：不寫入；若你想記錄 Django 管理員：
-    if getattr(request, 'user', None) and request.user.is_authenticated:
-        try:
-            # 若欄位存在且是 FK User
-            setattr(report, 'admin', request.user)
-        except Exception:
-            pass
-
-    report.save()  # 若模型有限制欄位，改成 update_fields=['status','admin_note','decided_at','admin']
-
-    return JsonResponse({'ok': True, 'msg': '已更新檢舉狀態', 'status': report.status})
-
-
-
-
-
 
 # ------------ /交流區後端（整合版）------------
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -3552,4 +3337,36 @@ def public_profile(request, gmail):
     user = get_object_or_404(ThisUserProfile, gmail=gmail)
     return render(request, "public_profile.html", {"profile_user": user})
 
+
+
+# --------商家廣告-------s
+from django.shortcuts import render, redirect
+from .models import StoreAll, StoreAd
+from .forms import StoreAdForm
+
+def upload_store_ad(request):
+    if request.method == 'POST':
+        form = StoreAdForm(request.POST)
+        if form.is_valid():
+            st_id = form.cleaned_data['st_id']
+
+            # 確認商家存在
+            try:
+                store = StoreAll.objects.get(st_id=st_id)
+            except StoreAll.DoesNotExist:
+                form.add_error('st_id', '找不到此商家編號')
+                return render(request, 'store_upload_ad.html', {'form': form})
+
+            # 找是否已有廣告，若有就更新
+            ad, created = StoreAd.objects.get_or_create(st_id=store.st_id)
+            ad.ad_content = form.cleaned_data['ad_content']
+            ad.ad_radius = form.cleaned_data['ad_radius']
+            ad.enabled = form.cleaned_data['enabled']
+            ad.save()
+
+            return redirect('store_map')  # 儲存完成後回到商家地圖
+    else:
+        form = StoreAdForm()
+
+    return render(request, 'store_upload_ad.html', {'form': form})
 

@@ -160,7 +160,7 @@ urlpatterns = [
     path('user_data/', views.user_data_view, name='user_data'),  #   非第一次登入看資料頁
     path("user/<int:pk>/", views.public_profile, name="public_profile"), #給別人看的
     path('public_profile/gmail/<str:gmail>/', views.public_profile, name='public_profile'),#給別人看的
-
+    path('store/upload-ad/', views.upload_store_ad, name='upload_store_ad'),  #商家廣告
 
     path('profile/', views.profile, name='profile'),
 
