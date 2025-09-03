@@ -147,17 +147,17 @@
             <table class="table table-bordered table-hover align-middle text-center">
               <thead class="table-primary">
                 <tr>
-                  <th>檢舉ID</th>
-                  <th>目標</th>
-                  <th>快照</th>
-                  <th>理由</th>
-                  <th>補充說明</th>
-                  <th>檢舉人</th>
-                  <th>建立時間</th>
-                  <th>狀態</th>
-                  <th>操作</th>
+                    <th>檢舉編號</th>
+                    <th>被檢舉編號</th>
+                    <th>當時的內容</th>
+                    <th>檢舉原因</th>
+                    <th>詳細說明</th>
+                    <th>檢舉者</th>
+                    <th>檢舉時間</th>
+                    <th>審核狀態</th>
+                    <th>管理操作</th>
                 </tr>
-              </thead>
+                </thead>
               <tbody>
                 {% for r in reports %}
                   <tr>
@@ -177,7 +177,8 @@
                     <td class="text-start" style="max-width:320px;">
                       <div class="text-truncate" title="{{ r.snapshot_text }}">{{ r.snapshot_text }}</div>
                     </td>
-                    <td><span class="badge bg-secondary">{{ r.reason }}</span></td>
+                    <!-- ★ 改成中文理由 -->
+                    <td><span class="badge bg-secondary">{{ r.get_reason_display }}</span></td>
                     <td class="text-start" style="max-width:220px;">
                       <div class="text-truncate" title="{{ r.details }}">{{ r.details|default:"—" }}</div>
                     </td>
@@ -198,7 +199,7 @@
                         <input type="hidden" name="report_id" value="{{ r.id }}">
                         <textarea name="admin_note" class="form-control form-control-sm mb-2" placeholder="備註（選填）"></textarea>
                         <div class="d-flex gap-1 justify-content-center">
-                          <button name="action" value="take_action" class="btn btn-success btn-sm">採取行動</button>
+                          <button name="action" value="take_action" class="btn btn-success btn-sm">確認違規</button>
                           <button name="action" value="reject" class="btn btn-danger btn-sm">駁回</button>
                         </div>
                       </form>
@@ -219,7 +220,7 @@
             <ul class="list-group">
               {% for r in latest_reports %}
                 <li class="list-group-item d-flex justify-content-between align-items-center">
-                  <span class="text-truncate" style="max-width:70%;">[{{ r.target_type }}] {{ r.snapshot_text|truncatechars:60 }}</span>
+                  <span class="text-truncate" style="max-width:70%;">[{{ r.target_type }}] [{{ r.get_reason_display }}] {{ r.snapshot_text|truncatechars:60 }}</span>
                   <small class="text-muted">{{ r.created_at|date:"Y-m-d H:i" }}</small>
                 </li>
               {% endfor %}
