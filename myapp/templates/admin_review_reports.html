@@ -1,0 +1,257 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>交流區檢舉清單審核</title>
+
+  <link href="{% static 'assets/img/favicon.png' %}" rel="icon">
+  <link href="{% static 'assets/img/apple-touch-icon.png' %}" rel="apple-touch-icon">
+
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700|Nunito:300,400,600,700,800|Poppins:300,400,500,600,700" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/boxicons/2.1.0/css/boxicons.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css" rel="stylesheet">
+
+  <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/boxicons/css/boxicons.min.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/quill/quill.snow.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/quill/quill.bubble.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/simple-datatables/style.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/css/main.css' %}" rel="stylesheet">
+</head>
+<body class="index-page">
+
+  <!-- 導覽列 -->
+  <header id="header" class="header d-flex align-items-center fixed-top">
+    <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
+      <a href="{% url 'admin_index' %}" class="logo d-flex flex-column align-items-start me-auto me-xl-0">
+        <h1 class="sitename">交流區檢舉審核</h1>
+        <!-- ★ 管理員顯示（安全版） -->
+        <small class="text-muted">
+          <strong>
+            {% if admin_name %}
+              {{ admin_name }}
+            {% elif request.user.is_authenticated %}
+              {{ request.user.get_username }}
+            {% else %}
+              訪客
+            {% endif %}
+          </strong> 管理員　
+          <span>
+            您的管理員id是:
+            {% if admin_id %}
+              {{ admin_id }}
+            {% elif request.user.is_authenticated %}
+              {{ request.user.id }}
+            {% else %}
+              —
+            {% endif %}
+          </span>
+        </small>
+      </a>
+
+      <nav id="navmenu" class="navmenu">
+        <ul>
+          <li><a href="{% url 'admin_index' %}#hero">管理員主頁</a></li>
+          <li><a href="{% url 'admin_interview' %}">管理員自我介紹</a></li>
+          <li class="dropdown"><a href="#"><span>清單審核</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+            <ul>
+              <li><a href="{% url 'pemap_judge' %}">事件清單審核</a></li>
+              <li><a href="{% url 'store_judge' %}">商家清單審核</a></li>
+              <li><a href="{% url 'review_reports' %}" class="active">交流區檢舉清單</a></li>
+            </ul>
+          </li>
+          <li class="dropdown"><a href="#"><span>我的審核紀錄</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+            <ul>
+              <li><a href="{% url 'admin_decide' %}">事件審核紀錄</a></li>
+              <li><a href="{% url 'store_decide' %}">商家審核紀錄</a></li>
+            </ul>
+          </li>
+          <li class="dropdown"><a href="#"><span>管理工具</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+            <ul>
+              <li><a href="{% url 'user_admin_list' %}">用戶管理</a></li>
+              <li><a href="{% url 'education_list' %}">教育網頁管理</a></li>
+              <li><a href="{% url 'taiwan_regions_admin' %}">台灣縣市管理</a></li>
+              <li><a href="{% url 'police_address_list' %}">最近警局管理</a></li>
+            </ul>
+          </li>
+        </ul>
+        <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+      </nav>
+      <a class="btn-getstarted" href="{% url 'admin_logout' %}">登出</a>
+    </div>
+  </header>
+
+  <main class="main" style="padding-top: 80px;">
+
+    <!-- Hero 圖 -->
+    <section class="hero">
+      <img src="{% static 'assets/img/1.png' %}" alt="Hero Image">
+    </section>
+
+    <!-- 檢舉清單 -->
+    <section id="report-list" class="report-list section light-background">
+      <div class="container" data-aos="fade-up">
+        <div class="bg-white p-4 shadow rounded">
+
+          <!-- 篩選區塊 -->
+          <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+            <h2 class="m-0">交流區檢舉清單</h2>
+            <form class="d-flex gap-2" method="get" action="{% url 'review_reports' %}">
+              <select name="status" class="form-select form-select-sm" style="width:auto;">
+                <option value="pending" {% if status == 'pending' %}selected{% endif %}>待審</option>
+                <option value="action_taken" {% if status == 'action_taken' %}selected{% endif %}>已處置</option>
+                <option value="rejected" {% if status == 'rejected' %}selected{% endif %}>已駁回</option>
+              </select>
+              <input type="text" name="q" value="{{ q }}" class="form-control form-control-sm" placeholder="搜尋理由 / 詳細 / 快照">
+              <button class="btn btn-primary btn-sm" type="submit">篩選</button>
+            </form>
+          </div>
+
+          <!-- 統計卡片 -->
+          <div class="row g-3 mb-3">
+            <div class="col-12 col-md-4">
+              <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                  <div class="text-muted">待審</div>
+                  <div class="fs-4 fw-bold">{{ report_counts.pending|default:0 }}</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-12 col-md-4">
+              <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                  <div class="text-muted">已處置</div>
+                  <div class="fs-4 fw-bold">{{ report_counts.action_taken|default:0 }}</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-12 col-md-4">
+              <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                  <div class="text-muted">已駁回</div>
+                  <div class="fs-4 fw-bold">{{ report_counts.rejected|default:0 }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {% if error %}
+            <div class="alert alert-danger">{{ error }}</div>
+          {% endif %}
+
+          <!-- 表格 -->
+          <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle text-center">
+              <thead class="table-primary">
+                <tr>
+                  <th>檢舉ID</th>
+                  <th>目標</th>
+                  <th>快照</th>
+                  <th>理由</th>
+                  <th>補充說明</th>
+                  <th>檢舉人</th>
+                  <th>建立時間</th>
+                  <th>狀態</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for r in reports %}
+                  <tr>
+                    <td>{{ r.id }}</td>
+                    <td class="text-start">
+                      <div class="small text-muted">{{ r.target_type|upper }}</div>
+                      {% if r.post_id %}
+                        <a href="{% url 'post_comments' r.post_id %}?focus={{ r.comment_id|default:'' }}{% if r.reply_id %}&reply={{ r.reply_id }}{% endif %}" class="link-primary">
+                          Post #{{ r.post_id }}
+                          {% if r.comment_id %} / C: {{ r.comment_id|truncatechars:8 }}{% endif %}
+                          {% if r.reply_id %} / R: {{ r.reply_id|truncatechars:8 }}{% endif %}
+                        </a>
+                      {% else %}
+                        <span class="text-muted">無貼文連結</span>
+                      {% endif %}
+                    </td>
+                    <td class="text-start" style="max-width:320px;">
+                      <div class="text-truncate" title="{{ r.snapshot_text }}">{{ r.snapshot_text }}</div>
+                    </td>
+                    <td><span class="badge bg-secondary">{{ r.reason }}</span></td>
+                    <td class="text-start" style="max-width:220px;">
+                      <div class="text-truncate" title="{{ r.details }}">{{ r.details|default:"—" }}</div>
+                    </td>
+                    <td>{{ r.reporter|default:"(匿名)" }}</td>
+                    <td>{{ r.created_at|date:"Y-m-d H:i" }}</td>
+                    <td>
+                      {% if r.status == 'pending' %}
+                        <span class="badge bg-warning text-dark">待審</span>
+                      {% elif r.status == 'action_taken' %}
+                        <span class="badge bg-success">已處置</span>
+                      {% else %}
+                        <span class="badge bg-secondary">已駁回</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      <form method="post" action="{% url 'act_on_report' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="report_id" value="{{ r.id }}">
+                        <textarea name="admin_note" class="form-control form-control-sm mb-2" placeholder="備註（選填）"></textarea>
+                        <div class="d-flex gap-1 justify-content-center">
+                          <button name="action" value="take_action" class="btn btn-success btn-sm">採取行動</button>
+                          <button name="action" value="reject" class="btn btn-danger btn-sm">駁回</button>
+                        </div>
+                      </form>
+                    </td>
+                  </tr>
+                {% empty %}
+                  <tr>
+                    <td colspan="9">目前尚無檢舉資料</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          {% if latest_reports %}
+          <div class="mt-4">
+            <h5 class="mb-3">最近檢舉</h5>
+            <ul class="list-group">
+              {% for r in latest_reports %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                  <span class="text-truncate" style="max-width:70%;">[{{ r.target_type }}] {{ r.snapshot_text|truncatechars:60 }}</span>
+                  <small class="text-muted">{{ r.created_at|date:"Y-m-d H:i" }}</small>
+                </li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% endif %}
+
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer id="footer" class="footer position-relative light-background">
+    <div class="container copyright text-center mt-4">
+      <p>© <span>Copyright</span> <strong class="sitename">Append</strong> <span>All Rights Reserved</span></p>
+      <div class="credits">Designed by <a href="https://bootstrapmade.com/">BootstrapMade</a></div>
+    </div>
+  </footer>
+
+  <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center">
+    <i class="bi bi-arrow-up-short"></i>
+  </a>
+  <div id="preloader"></div>
+
+  <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/php-email-form/validate.js' %}"></script>
+  <script src="{% static 'assets/vendor/aos/aos.js' %}"></script>
+  <script src="{% static 'assets/vendor/glightbox/js/glightbox.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/purecounter/purecounter_vanilla.js' %}"></script>
+  <script src="{% static 'assets/vendor/imagesloaded/imagesloaded.pkgd.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/isotope-layout/isotope.pkgd.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/swiper/swiper-bundle.min.js' %}"></script>
+  <script src="{% static 'assets/js/main.js' %}"></script>
+</body>
+</html>
