@@ -2975,20 +2975,21 @@ from django.http import JsonResponse, Http404
 from django.utils.datastructures import MultiValueDictKeyError
 from django.utils import timezone
 from django.db.models import Q
-from django.contrib import messages  # ✅ 新增：顯示成功/錯誤訊息
+from django.contrib import messages
 import json, bleach
 
 # 你的模型
 try:
-    from .models import AbuseReport
+    from .models import AbuseReport, Admins
 except Exception:
     AbuseReport = None
+    Admins = None
 
 # ===== 你專案原有的工具函式（請確保存在；名稱不同就自己對應） =====
-# _get_post_by_any_id(post_id)              -> 回傳貼文物件 (e.g., ChatInteraction)
-# _load_comments(post)                      -> 回傳留言樹
-# _find_comment(comments, comment_id)       -> (index, comment_dict or None)
-# _find_reply_recursive(replies, reply_id)  -> (parent_list, index, reply_dict or None)
+# _get_post_by_any_id(post_id)
+# _load_comments(post)
+# _find_comment(comments, comment_id)
+# _find_reply_recursive(replies, reply_id)
 
 
 def admin_login_required(view_func):
@@ -3005,9 +3006,7 @@ def admin_login_required(view_func):
 
 # ===== 內部：產生被檢舉目標快照 =====
 def _snapshot_for_target(post, target_type, comment_id='', reply_id=''):
-    """
-    回傳目標內容的文字快照，用於審核時避免內容後改找不到。
-    """
+    """回傳目標內容的文字快照，用於審核時避免內容後改找不到。"""
     if target_type == 'post':
         title = getattr(post, 'title', '') or ''
         content = getattr(post, 'message_content', '') or ''
@@ -3098,7 +3097,7 @@ def review_reports(request):
 
     if AbuseReport is None:
         return render(request, 'admin_review_reports.html', {
-            'error': '尚未建立 AbuseReport 模型，請先 migrate。',
+            'error': '尚未建立 AbuseReport 模型，請先確認模型設定。',
             'reports': [], 'status': 'pending', 'q': '',
             'report_counts': {'pending': 0, 'action_taken': 0, 'rejected': 0},
             'latest_reports': [],
@@ -3191,14 +3190,24 @@ def act_on_report(request):
     except AbuseReport.DoesNotExist:
         return JsonResponse({'ok': False, 'msg': '找不到檢舉'}, status=404)
 
+    # 更新狀態與備註
     report.status = 'action_taken' if action == 'take_action' else 'rejected'
     report.admin_note = admin_note
     report.decided_at = timezone.now()
 
-    # 記錄處理者（若模型有 admin FK 且你使用 Django 使用者）
-    if getattr(request, 'user', None) and request.user.is_authenticated:
+    # ✅ 只使用 session 的 admin_id，綁定到 Admins；不再使用 request.user
+    sess_admin_id = request.session.get('admin_id')
+    if sess_admin_id:
         try:
-            setattr(report, 'admin', request.user)
+            # 1) 直接把外鍵欄位寫入 DB（最保險）
+            AbuseReport.objects.filter(pk=report.pk).update(admin_id=int(sess_admin_id))
+            # 2) 同步到記憶體 model 實例
+            report.admin_id = int(sess_admin_id)
+            # 3) 盡量也綁定外鍵物件（有就設，沒有就算了）
+            if Admins is not None:
+                admin_obj = Admins.objects.filter(pk=sess_admin_id).first()
+                if admin_obj:
+                    report.admin = admin_obj
         except Exception:
             pass
 
@@ -3208,6 +3217,8 @@ def act_on_report(request):
     status_label = '已處置' if report.status == 'action_taken' else '已駁回'
     messages.success(request, f'檢舉 #{report.id} {status_label}。')
     return redirect('report_decide')
+
+
 
 
 
