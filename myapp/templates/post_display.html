@@ -575,7 +575,17 @@
               </button>
 
               
-            </div>
+            
+              {% if request.user.is_authenticated and post.user_id|stringformat:"s" != request.user.id|stringformat:"s" %}
+                <button type="button" class="report-post-btn {% if post.user_rejected_report %}report-blocked{% endif %}" data-post-id="{{ post.interaction_id }}" data-rejected="{% if post.user_rejected_report %}1{% else %}0{% endif %}" data-reject-msg="已被駁回過的貼文不得重複檢舉">
+                  <i class="bi bi-flag"></i> 檢舉
+                </button>
+              {% elif not request.user.is_authenticated %}
+                <button type="button" class="require-login">
+                  <i class="bi bi-flag"></i> 檢舉
+                </button>
+              {% endif %}
+</div>
 
             {% if request.user.id|stringformat:"s" == post.user_id|stringformat:"s" %}
             <div class="interaction-actions-right">
@@ -2076,3 +2086,196 @@
   }, true); // capture phase
 })();
 </script>
+
+
+<!-- ===== 檢舉 Modal（與 AbuseReport.Reason 對應） ===== -->
+<div class="modal fade" id="reportModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header" style="background:#e6f3fb;">
+        <h5 class="modal-title fw-bold text-primary"><i class="bi bi-flag me-2"></i>檢舉內容</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label">檢舉類型</label>
+          <input type="text" class="form-control" id="reportTargetLabel" disabled>
+        </div>
+        <div class="mb-3">
+          <label for="reportReasonSelect" class="form-label">理由</label>
+          <select id="reportReasonSelect" class="form-select" required>
+            <option value="spam">垃圾訊息/廣告</option>
+            <option value="abuse">辱罵/騷擾</option>
+            <option value="hate">仇恨/歧視</option>
+            <option value="violence">暴力/威脅</option>
+            <option value="nudity">裸露/色情</option>
+            <option value="illegal">違法內容</option>
+            <option value="doxxing">人身資訊外流</option>
+            <option value="misinfo">錯誤資訊</option>
+            <option value="other" selected>其他</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label for="reportDetails" class="form-label">補充說明（選填）</label>
+          <textarea id="reportDetails" class="form-control" rows="3" maxlength="500"></textarea>
+          <div class="form-text">最多 500 字。</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+        <button type="button" class="btn btn-primary" id="submitReportBtn">送出</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  // helpers
+  function getCookie(name){
+    const m = document.cookie.match('(?:^|; )' + name.replace(/([.$?*|{}()[\]\\/+^])/g, '\\$1') + '=([^;]*)');
+    return m ? decodeURIComponent(m[1]) : '';
+  }
+
+  var reportModalEl = document.getElementById('reportModal');
+  if(!reportModalEl){ return; }
+  var bsReportModal = new bootstrap.Modal(reportModalEl);
+  var targetLabel = document.getElementById('reportTargetLabel');
+  var reasonSel   = document.getElementById('reportReasonSelect');
+  var detailsEl   = document.getElementById('reportDetails');
+  var submitBtn   = document.getElementById('submitReportBtn');
+
+  // 暫存要送到後端的 payload
+  var payload = { target_type:'post', post_id:'', comment_id:'', reply_id:'' };
+
+  // 掛載所有「檢舉貼文」按鈕（委派，避免影響既有邏輯）
+  document.addEventListener('click', function(e){
+    var btn = e.target.closest('.report-post-btn');
+    if(!btn) return;
+    e.preventDefault();
+
+    // 從貼文卡取必要資訊
+    var postId = btn.getAttribute('data-post-id');
+    if(!postId){ return; }
+    var card = btn.closest('[id^="post-"]');
+    var title = card ? (card.querySelector('.title a')?.textContent || card.querySelector('.title')?.textContent || '').trim() : '';
+    var nick  = card ? (card.querySelector('.text-muted small')?.textContent || '').trim() : '';
+
+    payload.target_type = 'post';
+    payload.post_id = postId;
+    payload.comment_id = '';
+    payload.reply_id = '';
+
+    // 顯示在 Modal 上
+    if(targetLabel){ targetLabel.value = '貼文：' + (title || ('#'+postId)); }
+    if(reasonSel){ reasonSel.value = 'other'; }
+    if(detailsEl){ detailsEl.value = ''; }
+
+    bsReportModal.show();
+  });
+
+  // 送出檢舉
+  submitBtn && submitBtn.addEventListener('click', function(){
+    if(!payload.post_id){ alert('缺少貼文 ID'); return; }
+    var body = {
+      target_type: payload.target_type,
+      post_id: payload.post_id,
+      comment_id: payload.comment_id,
+      reply_id: payload.reply_id,
+      reason: (reasonSel && reasonSel.value) || 'other',
+      details: (detailsEl && detailsEl.value || '').trim()
+    };
+
+    submitBtn.disabled = true;
+    fetch("{% url 'create_report' %}", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken'),
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: JSON.stringify(body)
+    })
+    .then(function(res){ return res.json().catch(function(){ return {ok:false, msg:'格式錯誤'}; }); })
+    .then(function(data){
+      if(!data.ok){ throw new Error(data.msg || '送出失敗'); }
+      // 成功後關閉並提示
+      bsReportModal.hide();
+      setTimeout(function(){ alert('已送出檢舉，等待管理員審核'); }, 150);
+    })
+    .catch(function(err){
+      alert(err.message || '送出失敗');
+    })
+    .finally(function(){ submitBtn.disabled = false; });
+  });
+
+})();
+</script>
+
+
+
+
+<script>
+// --- Block re-reporting on rejected targets (post level): capture + pretty modal ---
+(function(){
+  var getModal = function(){
+    var el = document.getElementById('appAlertModal');
+    if(!el) return null;
+    if (!window.bootstrap) return null;
+    return window.bootstrap.Modal.getOrCreateInstance(el, {backdrop: 'static'});
+  };
+  var setMessage = function(msg){
+    var el = document.getElementById('appAlertMessage');
+    if(el){ el.textContent = msg || '已被駁回過的貼文不得重複檢舉'; }
+  };
+
+  document.addEventListener('click', function(e){
+    var btn = e.target && e.target.closest && e.target.closest('.report-post-btn');
+    if(!btn) return;
+    var isBlocked = (btn.getAttribute('data-rejected') === '1') || btn.classList.contains('report-blocked');
+    if(isBlocked){
+      e.preventDefault();
+      if(e.stopImmediatePropagation) e.stopImmediatePropagation();
+      if(e.stopPropagation) e.stopPropagation();
+
+      var msg = btn.getAttribute('data-reject-msg') || '已被駁回過的貼文不得重複檢舉';
+      setMessage(msg);
+      var modal = getModal();
+      if(modal){ modal.show(); }
+
+      // 保險：若其他處理器已打開別的 modal，把它關掉
+      try {
+        var open = document.querySelector('.modal.show');
+        if(open && open.id !== 'appAlertModal' && window.bootstrap){
+          window.bootstrap.Modal.getOrCreateInstance(open).hide();
+        }
+      } catch(_) {}
+      return false;
+    }
+  }, true); // capture
+})();
+</script>
+
+
+
+
+<!-- Reusable Alert Modal -->
+<div class="modal fade" id="appAlertModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header" style="background:#e9f4ff;">
+        <div class="d-flex align-items-center gap-2">
+          <i class="bi bi-info-circle-fill" style="font-size:1.2rem;color:#0d6efd;"></i>
+          <h5 class="modal-title fw-semibold" id="appAlertTitle">提示</h5>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-0" id="appAlertMessage">已被駁回過的貼文不得重複檢舉</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary px-4" data-bs-dismiss="modal">確定</button>
+      </div>
+    </div>
+  </div>
+</div>
