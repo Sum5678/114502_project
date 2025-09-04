@@ -1857,6 +1857,7 @@ def review_detail(request, pk):
     })
 
 #--------- 管理員登入後首頁 ----------
+#但是現在數字不會更著變動啊啊啊
 from django.shortcuts import render, redirect
 from myapp.models import PemapAll, StoreAll, AbuseReport
 
