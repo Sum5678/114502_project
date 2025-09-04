@@ -2407,6 +2407,12 @@ def post(request):
     })
 
 def post_display(request):
+    # 🔸 這裡加：保守引入 AbuseReport（若沒定義就忽略）
+    try:
+        from .models import AbuseReport as _AbuseReport
+    except Exception:
+        _AbuseReport = None
+
     query = (request.GET.get('q') or '').strip()
     sort = request.GET.get('sort', 'desc')
     order_expr = 'created_at' if sort == 'asc' else '-created_at'
@@ -2421,6 +2427,21 @@ def post_display(request):
     posts = base_qs.order_by(order_expr)
 
     user_id_str = str(request.user.id) if request.user.is_authenticated else None
+
+    # 🔸 這裡加：把「此使用者被駁回過的檢舉目標」做成 key set，供前端判斷是否顯示檢舉鈕
+    rejected_keys = set()
+    if request.user.is_authenticated and _AbuseReport is not None:
+        qs = _AbuseReport.objects.filter(
+            reporter=request.user,
+            status='rejected'
+        ).values('target_type', 'post_id', 'comment_id', 'reply_id')
+        for r in qs:
+            rejected_keys.add((
+                r['target_type'],
+                r['post_id'],
+                (r['comment_id'] or ''),
+                (r['reply_id'] or ''),
+            ))
 
     for post in posts:
         # liked
@@ -2456,6 +2477,10 @@ def post_display(request):
         post.comment_list = fixed_comments
         post.top_comment_count = len(fixed_comments)
         post.total_comment_count = sum(1 + len(c.get('replies_flat', [])) for c in fixed_comments)
+
+        # 🔸 這裡加：這篇「貼文」是否被此使用者的檢舉駁回過（用於前端關閉檢舉鈕）
+        key_post = ('post', getattr(post, 'interaction_id', None), '', '')
+        post.user_rejected_report = key_post in rejected_keys
 
     my_saved_posts = []
     my_liked_posts = []
@@ -2971,6 +2996,8 @@ def delete_reply(request, post_id):
         'total_comments': top_count,
         'total_including_replies': all_count
     })
+    
+    
 # ====== 管理員登入保護（沿用你的 session 機制）=========================
 from functools import wraps
 from urllib.parse import quote
@@ -3074,6 +3101,18 @@ def create_report(request):
     if snapshot_text is None:
         return JsonResponse({'ok': False, 'msg': '找不到被檢舉的目標內容'}, status=404)
 
+    # 🚫 禁止同一使用者對同一目標在「已駁回」後重複檢舉
+    already_rejected = AbuseReport.objects.filter(
+        reporter=request.user,
+        target_type=target_type,
+        post=post,
+        comment_id=str(comment_id or ''),
+        reply_id=str(reply_id or ''),
+        status='rejected',
+    ).exists()
+    if already_rejected:
+        return JsonResponse({'ok': False, 'msg': '此內容你先前的檢舉已被駁回，暫不接受重複檢舉。'}, status=400)
+
     # 清理補充說明
     details = bleach.clean(details_raw, tags=[], attributes={}, strip=True)
 
@@ -3164,7 +3203,7 @@ def report_decide(request):
         qs = qs.filter(
             Q(snapshot_text__icontains=q) |
             Q(details__icontains=q) |
-            Q(reason__icontains=q)
+            Q(reason__icontains=q)     # ← 修正這裡
         )
 
     reports = list(qs[:300])
@@ -3206,11 +3245,10 @@ def act_on_report(request):
     sess_admin_id = request.session.get('admin_id')
     if sess_admin_id:
         try:
-            # 1) 直接把外鍵欄位寫入 DB（最保險）
+            # 直接把外鍵欄位寫入 DB 並同步記憶體
             AbuseReport.objects.filter(pk=report.pk).update(admin_id=int(sess_admin_id))
-            # 2) 同步到記憶體 model 實例
             report.admin_id = int(sess_admin_id)
-            # 3) 盡量也綁定外鍵物件（有就設，沒有就算了）
+            # 能對應到 Admins 物件就設；沒有也不阻塞
             if Admins is not None:
                 admin_obj = Admins.objects.filter(pk=sess_admin_id).first()
                 if admin_obj:
@@ -3225,13 +3263,8 @@ def act_on_report(request):
     messages.success(request, f'檢舉 #{report.id} {status_label}。')
     return redirect('report_decide')
 
-
-
-
-
-
-
 # ------------ /交流區後端（整合版）------------
+
 
 
 
