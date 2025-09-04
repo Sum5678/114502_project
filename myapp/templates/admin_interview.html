@@ -46,6 +46,8 @@
             <ul>
               <li><a href="{% url 'pemap_judge' %}">事件清單審核</a></li>
               <li><a href="{% url 'store_judge' %}">商家清單審核</a></li>
+              <!-- ✅ 新增：交流區檢舉審核 -->
+              <li><a href="{% url 'review_reports' %}?status=pending">交流區檢舉審核</a></li>
             </ul> 
           </li>
           
@@ -139,8 +141,3 @@
   <script src="{% static 'assets/js/main.js' %}"></script>
 </body>
 </html>
-
-
-
-
-
