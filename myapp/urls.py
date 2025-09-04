@@ -113,30 +113,6 @@ urlpatterns = [
 
 
 
-
-
-
-
-
-    
-
-
-
-
-
-
-
-    
-
-
-    
-
-    
-    
-    
-
-
-
     #想的
     # 一般頁面
     path('announcement/', views.announcement, name='announcement'),
@@ -191,13 +167,6 @@ urlpatterns = [
     path('api/reports.json', views.reports_with_subkind_json, name='reports_with_subkind_json'),
 
 
-
-    
-
-
-    
-
-
     # Pemap 管理員相關
     path('pemap/approve/<int:p_id>/<int:stage>/', views.pemap_approve, name='pemap_approve'),#處理管理員對pemap資料狀態
     # path('admin/pemap/approve/<int:p_id>/<int:stage>/', views.pemap_approve, name='pemap_approve'),#處理管理員對pemap資料狀態
@@ -229,10 +198,6 @@ urlpatterns = [
 
     
 
-
-
-
-
     # 登入後判斷跳轉
     path('login/redirect/', views.login_redirect, name='login_redirect'),
 
@@ -248,79 +213,6 @@ urlpatterns = [
 
 
 # 原本沒有這些路徑
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 # 整理#想的
