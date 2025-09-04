@@ -144,6 +144,7 @@
                   <th>處理管理員</th>
                   <th>管理員備註</th>
                   <th>處理時間</th>
+                  <th>操作</th>
                 </tr>
               </thead>
               <tbody>
@@ -174,15 +175,77 @@
                         <span class="badge bg-success">已處置</span>
                       {% elif r.status == 'rejected' %}
                         <span class="badge bg-danger">已駁回</span>
+                      {% else %}
+                        <span class="badge bg-warning text-dark">待審</span>
                       {% endif %}
                     </td>
                     <td>{% if r.admin_id %}ID {{ r.admin_id }}{% else %}—{% endif %}</td>
                     <td>{{ r.admin_note|default:"—" }}</td>
                     <td>{{ r.decided_at|date:"Y-m-d H:i" }}</td>
+                    <td>
+                      <!-- 編輯按鈕（彈出 Modal） -->
+                      <button type="button"
+                              class="btn btn-outline-primary btn-sm"
+                              data-bs-toggle="modal"
+                              data-bs-target="#editModal-{{ r.id }}">
+                        編輯
+                      </button>
+                    </td>
                   </tr>
+
+                  <!-- 編輯 Modal -->
+                  <div class="modal fade" id="editModal-{{ r.id }}" tabindex="-1" aria-labelledby="editModalLabel-{{ r.id }}" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                      <div class="modal-content">
+                        <form method="post" action="{% url 'edit_report' r.id %}">
+                          {% csrf_token %}
+                          <div class="modal-header">
+                            <h5 class="modal-title" id="editModalLabel-{{ r.id }}">編輯檢舉 #{{ r.id }}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                          </div>
+                          <div class="modal-body text-start">
+
+                            <!-- 狀態 -->
+                            <div class="mb-3">
+                              <label class="form-label">處理狀態</label>
+                              <select name="status" class="form-select">
+                                <option value="pending" {% if r.status == 'pending' %}selected{% endif %}>待審</option>
+                                <option value="action_taken" {% if r.status == 'action_taken' %}selected{% endif %}>已處置</option>
+                                <option value="rejected" {% if r.status == 'rejected' %}selected{% endif %}>已駁回</option>
+                              </select>
+                              <div class="form-text">改成「待審」會清空處理時間；改為非待審會更新處理時間為現在。</div>
+                            </div>
+
+                            <!-- 理由：只讀展示，不送出 -->
+                            <div class="mb-3">
+                              <label class="form-label">檢舉理由（原始）</label>
+                              <div class="form-control-plaintext">
+                                <span class="badge bg-secondary">{{ r.get_reason_display }}</span>
+                                <span class="text-muted ms-2 small">鍵值：{{ r.reason }}</span>
+                              </div>
+                              <div class="form-text">此為檢舉人提交的理由，管理員不可修改。</div>
+                            </div>
+
+                            <!-- 備註 -->
+                            <div class="mb-3">
+                              <label class="form-label">管理員備註</label>
+                              <textarea name="admin_note" class="form-control" rows="3" placeholder="輸入備註（選填）">{{ r.admin_note }}</textarea>
+                            </div>
+
+                          </div>
+                          <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                            <button type="submit" class="btn btn-primary">儲存</button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- /編輯 Modal -->
+
                 {% empty %}
                   <tr>
-                    <td colspan="11">目前沒有審核紀錄</td>
+                    <td colspan="12">目前沒有審核紀錄</td>
                   </tr>
                 {% endfor %}
               </tbody>
