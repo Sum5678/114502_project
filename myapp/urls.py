@@ -113,6 +113,9 @@ urlpatterns = [
     path('reports/decide/', views.report_decide, name='report_decide'),
     # 交流區檢舉：編輯紀錄（只改 status / reason / admin_note）
     path("reports/edit/<int:report_id>/", views.edit_report, name="edit_report"),
+    # 交流區檢舉：刪除被檢舉的目標（僅限已處置後）
+    path("reports/delete-target/<int:report_id>/", views.delete_report_target, name="delete_report_target"),
+
 
 
 
