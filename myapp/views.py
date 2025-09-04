@@ -1857,16 +1857,31 @@ def review_detail(request, pk):
     })
 
 #--------- 管理員登入後首頁 ----------
+from django.shortcuts import render, redirect
+from myapp.models import PemapAll, StoreAll, AbuseReport
+
 def admin_index(request):
     if 'admin_id' not in request.session:
         return redirect('admin_login')
 
+    # PemapAll 未審核事件數量 (review_status="待審核")
+    unreviewed_events_count = PemapAll.objects.filter(review_status="待審核").count()
+
+    # 舉報處理統計 (AbuseReport 使用 status 欄位)
+    pending_reports = AbuseReport.objects.filter(status='pending').count()
+    approved_reports = AbuseReport.objects.filter(status='approved').count()
+    rejected_reports = AbuseReport.objects.filter(status='rejected').count()
+
     context = {
         'admin_id': request.session.get('admin_id'),
         'admin_name': request.session.get('admin_name'),
+        'unreviewed_events_count': unreviewed_events_count,
+        'pending_reports': pending_reports,
+        'approved_reports': approved_reports,
+        'rejected_reports': rejected_reports,
     }
-
     return render(request, 'admin_index.html', context)
+
 
 #---------------管理員註冊-----------------------
 from django.shortcuts import render
@@ -1987,21 +2002,13 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
 from .models import PemapWithSubkind, PemapAll
-from django.views.decorators.csrf import csrf_exempt
-from django.http import JsonResponse
-import json
-from .models import PemapWithSubkind, PemapAll
 
 
 # 可以跑分類的,但是有億點久
 
 
 from django.shortcuts import render
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-import json
 from datetime import datetime, date
-from .models import PemapAll, PemapWithSubkind
 
 def datetime_handler(obj):
     if isinstance(obj, (datetime, date)):
