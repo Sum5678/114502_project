@@ -3338,7 +3338,58 @@ def act_on_report(request):
     messages.success(request, f'檢舉 #{report.id} {status_label}。')
     return redirect('report_decide')
 
+# ===== 管理員：編輯審核紀錄（僅允許改 status / admin_note；reason 不可改） =====
+@admin_login_required
+@require_POST
+def edit_report(request, report_id):
+    if AbuseReport is None:
+        return JsonResponse({'ok': False, 'msg': '尚未建立 AbuseReport 模型'}, status=501)
+
+    # 取資料
+    try:
+        report = AbuseReport.objects.get(pk=report_id)
+    except AbuseReport.DoesNotExist:
+        messages.error(request, f'找不到檢舉 #{report_id}')
+        return redirect('report_decide')
+
+    # 僅接收狀態與備註
+    status_new = (request.POST.get('status') or '').strip()
+    admin_note = (request.POST.get('admin_note') or '').strip()
+
+    # 驗證狀態
+    allowed_status = {'pending', 'action_taken', 'rejected'}
+    if status_new not in allowed_status:
+        messages.error(request, '不支援的狀態值')
+        return redirect('report_decide')
+
+    # 更新欄位（不動 reason）
+    report.status = status_new
+    report.admin_note = admin_note
+
+    # 狀態→時間：pending 清空；其餘更新為現在
+    report.decided_at = None if status_new == 'pending' else timezone.now()
+
+    # 紀錄處理管理員（沿用 session）
+    sess_admin_id = request.session.get('admin_id')
+    if sess_admin_id:
+        try:
+            AbuseReport.objects.filter(pk=report.pk).update(admin_id=int(sess_admin_id))
+            report.admin_id = int(sess_admin_id)
+            if Admins is not None:
+                admin_obj = Admins.objects.filter(pk=sess_admin_id).first()
+                if admin_obj:
+                    report.admin = admin_obj
+        except Exception:
+            pass
+
+    report.save()
+    messages.success(request, f'已更新檢舉 #{report.id}（狀態：{report.status}）。')
+    return redirect('report_decide')
+
+
+
 # ------------ /交流區後端（整合版）------------
+
 
 
 

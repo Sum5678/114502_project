@@ -7,6 +7,7 @@ from django.conf.urls.static import static
 from django.urls import path
 from .views import PemapAllListView, PemapAllUpdateView
 from django.views.generic import TemplateView
+from .views import edit_report 
 
 urlpatterns = [
     # #思璇
@@ -110,6 +111,9 @@ urlpatterns = [
     path("reports/act/", views.act_on_report, name="act_on_report"), # ← 管理員動作
     path('report/create/', views.create_report, name='create_report'),
     path('reports/decide/', views.report_decide, name='report_decide'),
+    # 交流區檢舉：編輯紀錄（只改 status / reason / admin_note）
+    path("reports/edit/<int:report_id>/", views.edit_report, name="edit_report"),
+
 
 
 
