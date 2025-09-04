@@ -1866,7 +1866,8 @@ def admin_index(request):
         return redirect('admin_login')
 
     # PemapAll 未審核事件數量 (review_status="待審核")
-    unreviewed_events_count = PemapAll.objects.filter(review_status="待審核").count()
+    #unreviewed_events_count = PemapAll.objects.filter(review_status="待審核").count()
+    #unreviewed_events_count = PemapAll.objects.filter(review_status="0").count()
 
     # 舉報處理統計 (AbuseReport 使用 status 欄位)
     pending_reports = AbuseReport.objects.filter(status='pending').count()
