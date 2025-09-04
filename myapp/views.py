@@ -3385,6 +3385,107 @@ def edit_report(request, report_id):
     report.save()
     messages.success(request, f'已更新檢舉 #{report.id}（狀態：{report.status}）。')
     return redirect('report_decide')
+@admin_login_required
+@require_POST
+def delete_report_target(request, report_id):
+    """已處置案件的後續動作：刪除被檢舉目標（貼文 / 留言 / 回覆）"""
+    if AbuseReport is None:
+        messages.error(request, '尚未建立 AbuseReport 模型')
+        return redirect('report_decide')
+
+    # 取檢舉
+    try:
+        report = AbuseReport.objects.get(pk=report_id)
+    except AbuseReport.DoesNotExist:
+        messages.error(request, f'找不到檢舉 #{report_id}')
+        return redirect('report_decide')
+
+    # 僅允許「已處置」才可刪目標
+    if report.status != 'action_taken':
+        messages.error(request, '僅限狀態為「已處置」的案件才能刪除目標。')
+        return redirect('report_decide')
+
+    # 取貼文
+    post = getattr(report, 'post', None)
+    if post is None:
+        # 後備：以 id 再查一次
+        try:
+            post = _get_post_by_any_id(getattr(report, 'post_id', ''))
+        except Exception:
+            post = None
+    if post is None and report.target_type != 'post':
+        messages.error(request, '找不到對應貼文，無法刪除留言/回覆。')
+        return redirect('report_decide')
+
+    target_type = report.target_type
+    try:
+        if target_type == 'post':
+            # 直接刪除整篇貼文
+            if post is None:
+                messages.error(request, '貼文已不存在。')
+                return redirect('report_decide')
+            post.delete()
+            done_msg = '已刪除貼文'
+
+        elif target_type == 'comment':
+            comments = _load_comments(post)
+            idx, c = _find_comment(comments, report.comment_id)
+            if c is None:
+                messages.error(request, '找不到要刪除的留言（可能已被刪除）。')
+                return redirect('report_decide')
+            del comments[idx]
+            post.comments = json.dumps(comments, ensure_ascii=False)
+            post.save(update_fields=['comments'])
+            done_msg = '已刪除留言'
+
+        elif target_type == 'reply':
+            comments = _load_comments(post)
+            cidx, c = _find_comment(comments, report.comment_id)
+            if c is None:
+                messages.error(request, '找不到要刪除的回覆（上層留言可能已被刪除）。')
+                return redirect('report_decide')
+
+            parent_list, ridx, r = _find_reply_recursive(c.get('replies') or [], report.reply_id)
+            if r is None:
+                messages.error(request, '找不到要刪除的回覆（可能已被刪除）。')
+                return redirect('report_decide')
+
+            del parent_list[ridx]
+            comments[cidx] = c
+            post.comments = json.dumps(comments, ensure_ascii=False)
+            post.save(update_fields=['comments'])
+            done_msg = '已刪除回覆'
+
+        else:
+            messages.error(request, '不支援的檢舉類型')
+            return redirect('report_decide')
+
+    except Exception as e:
+        messages.error(request, f'刪除失敗：{e}')
+        return redirect('report_decide')
+
+    # 記錄操作者到 report（沿用你的作法）
+    sess_admin_id = request.session.get('admin_id')
+    if sess_admin_id:
+        try:
+            AbuseReport.objects.filter(pk=report.pk).update(admin_id=int(sess_admin_id))
+            report.admin_id = int(sess_admin_id)
+        except Exception:
+            pass
+
+    # 在備註追加一行紀錄（可省略）
+    try:
+        ts = timezone.now().strftime("%Y-%m-%d %H:%M:%S")
+        note = (report.admin_note or '').strip()
+        note_line = f"[{ts}] {done_msg}"
+        report.admin_note = f"{note}\n{note_line}" if note else note_line
+        report.save(update_fields=['admin_note'])
+    except Exception:
+        pass
+
+    messages.success(request, f"檢舉 #{report.id}：{done_msg}")
+    return redirect('report_decide')
+
 
 
 
