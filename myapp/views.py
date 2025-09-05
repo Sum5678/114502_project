@@ -1871,7 +1871,7 @@ def admin_index(request):
     # unreviewed_events_count = PemapAll.objects.filter(review_status="0").count()
     
     # 計算 review_status 為 0 或 3 的事件
-    unreviewed_events_count = PemapAll.objects.filter(Q(review_status="0")|Q(review_status="3")).count()
+    unreviewed_events_count = PemapAll.objects.filter(Q(review_status="待審核")|Q(review_status="描述內容過短，不足以判斷")|Q(review_status="需再由人工審核")).count()
 
     # StoreAll 未審核商家數量
     unreviewed_stores_count = StoreAll.objects.filter(review_status="pending").count()
