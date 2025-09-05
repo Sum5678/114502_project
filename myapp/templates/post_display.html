@@ -646,9 +646,23 @@
                               data-target="#reply-editor-{{ post.interaction_id }}-{{ forloop.counter }}">
                         <i class="bi bi-chat-dots"></i> 回覆
                       </button>
+                      <button type="button"
+                              class="action-btn report-btn"
+                              data-target-type="comment"
+                              data-post-id="{{ post.interaction_id }}"
+                              data-comment-id="{{ cid }}"
+                              data-rejected="{% if c.user_rejected_report %}1{% else %}0{% endif %}"
+                              data-reject-msg="已被駁回過的留言不得重複檢舉">
+                        <i class="bi bi-flag"></i> 檢舉
+                      </button>
+    
                     {% else %}
                       <a class="action-btn require-login"><i class="bi bi-heart"></i> 按讚</a>
                       <a class="action-btn require-login"><i class="bi bi-chat-dots"></i> 回覆</a>
+                            <a class="action-btn require-login"><i class="bi bi-flag"></i> 檢舉</a>
+    
+                    
+    
                     {% endif %}
                   </div>
 
@@ -695,9 +709,25 @@
                                     data-target="#reply-reply-editor-{{ post.interaction_id }}-{{ cid }}-{{ rid }}">
                               <i class="bi bi-chat-dots"></i> 回覆
                             </button>
+                      <button type="button"
+                                class="action-btn report-btn"
+                                data-target-type="reply"
+                                data-post-id="{{ post.interaction_id }}"
+                                data-comment-id="{{ cid }}"
+                                data-reply-id="{{ rid }}"
+                                data-rejected="{% if r.user_rejected_report %}1{% else %}0{% endif %}"
+                                data-reject-msg="已被駁回過的回覆不得重複檢舉">
+                          <i class="bi bi-flag"></i> 檢舉
+                        </button>
+
+    
                           {% else %}
                             <a class="action-btn require-login"><i class="bi bi-heart"></i> 按讚</a>
                             <a class="action-btn require-login"><i class="bi bi-chat-dots"></i> 回覆</a>
+                            <a class="action-btn require-login"><i class="bi bi-flag"></i> 檢舉</a>
+    
+                    
+    
                           {% endif %}
                         </div>
 
@@ -2279,3 +2309,140 @@
     </div>
   </div>
 </div>
+
+
+<!-- === Patch: ensure comment report button exists + wire .report-btn to #reportModal === -->
+<script>
+(function(){
+  // Helper
+  function esc(t){ return (t||'').replace(/\s+/g,' ').trim(); }
+  function getCookie(name){
+    const m = document.cookie.match('(?:^|; )' + name.replace(/([.$?*|{}()[\]\\/+^])/g, '\\$1') + '=([^;]*)');
+    return m ? decodeURIComponent(m[1]) : '';
+  }
+  function excerpt(txt, n){
+    txt = (txt||'').trim();
+    return txt.length > n ? txt.slice(0,n) + '…' : txt;
+  }
+  // Safely get Bootstrap Modal instance
+  function getReportModal(){
+    var el = document.getElementById('reportModal');
+    if(!el || !window.bootstrap) return null;
+    return window.bootstrap.Modal.getOrCreateInstance(el);
+  }
+
+  // 1) 注入缺失的「留言檢舉」按鈕（僅登入時）
+  document.addEventListener('DOMContentLoaded', function(){
+    if(!document.body.classList.contains('authenticated')) return;
+    document.querySelectorAll('[data-list] > li.comment-item').forEach(function(li){
+      var actions = li.querySelector(':scope > .comment-actions');
+      if(!actions) return;
+      if(!actions.querySelector('.report-btn')){
+        var card = li.closest('[id^="post-"]');
+        var postId = card ? (card.id||'').replace('post-','') : '';
+        var cid = li.getAttribute('data-comment-id') || '';
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'action-btn report-btn';
+        btn.setAttribute('data-target-type', 'comment');
+        btn.setAttribute('data-post-id', postId);
+        btn.setAttribute('data-comment-id', cid);
+        btn.innerHTML = '<i class="bi bi-flag"></i> 檢舉';
+        actions.appendChild(btn);
+      }
+    });
+  });
+
+  // 2) 全面接管「送出檢舉」按鈕（避免舊監聽造成重複送出）
+  var lastPayload = null;
+  document.addEventListener('click', function(e){
+    if(e.target && e.target.id === 'submitReportBtn' && lastPayload){
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      var reasonSel = document.getElementById('reportReasonSelect');
+      var detailsEl = document.getElementById('reportDetails');
+      var reason  = reasonSel ? (reasonSel.value || 'other') : 'other';
+      var details = detailsEl ? (detailsEl.value || '').trim() : '';
+
+      var body = Object.assign({}, lastPayload, { reason: reason, details: details });
+
+      // POST
+      var url = (function(){
+        try { return JSON.parse(document.getElementById('django_urls__create_report')?.textContent||'{}').create_report; }
+        catch(_){ return null; }
+      })() || "{% url 'create_report' %}"
+ || (window.CREATE_REPORT_URL || "");
+
+      fetch(url, {
+        method:'POST',
+        headers:{
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCookie('csrftoken'),
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify(body)
+      }).then(function(res){ return res.json().catch(function(){ return { ok:false, msg:'格式錯誤' }; }); })
+      .then(function(data){
+        if(!data.ok){ throw new Error(data.msg || '送出失敗'); }
+        var modal = getReportModal();
+        if(modal){ modal.hide(); }
+        setTimeout(function(){ alert('已送出檢舉，等待管理員審核'); }, 120);
+      })
+      .catch(function(err){ alert(err && err.message || '送出失敗'); });
+    }
+  }, true); // capture to override old handler
+
+  // 3) 綁定 .report-btn（留言/回覆） → 叫出 Modal 並填入標籤與 payload
+  document.addEventListener('click', function(e){
+    var btn = e.target && e.target.closest && e.target.closest('.report-btn');
+    if(!btn) return;
+    // 若是「駁回後阻擋檢舉」樣式，放行給既有攔截器處理
+    if(btn.getAttribute('data-rejected') === '1' || btn.classList.contains('report-blocked')) return;
+
+    e.preventDefault();
+
+    var targetType = btn.getAttribute('data-target-type') || '';
+    var postId  = btn.getAttribute('data-post-id') || '';
+    var cId     = btn.getAttribute('data-comment-id') || '';
+    var rId     = btn.getAttribute('data-reply-id') || '';
+
+    var labelEl = document.getElementById('reportTargetLabel');
+    var reasonSel = document.getElementById('reportReasonSelect');
+    var detailsEl = document.getElementById('reportDetails');
+
+    // 預設值
+    if(reasonSel) reasonSel.value = 'other';
+    if(detailsEl) detailsEl.value = '';
+
+    var labelText = '內容';
+    if(targetType === 'comment'){
+      var li = btn.closest('li.comment-item');
+      var time = li ? (li.getAttribute('data-comment-time') || '') : '';
+      var content = li ? (li.querySelector(':scope > .comment-content')?.textContent || '') : '';
+      labelText = '留言：' + (time ? time + '｜' : '') + excerpt(content, 40);
+      lastPayload = { target_type:'comment', post_id: postId, comment_id: cId, reply_id:'' };
+    }else if(targetType === 'reply'){
+      var rli = btn.closest('li.reply-item');
+      var time2 = rli ? (rli.querySelector(':scope > .comment-head span:nth-child(2)')?.textContent || '').replace(/^・\s*/, '') : '';
+      var content2 = rli ? (rli.querySelector(':scope > .reply-content')?.textContent || '') : '';
+      labelText = '回覆：' + (time2 ? time2 + '｜' : '') + excerpt(content2, 40);
+      lastPayload = { target_type:'reply', post_id: postId, comment_id: cId, reply_id: rId };
+    }else if(targetType === 'post'){
+      // 後備；一般貼文由原有 .report-post-btn 處理
+      var card = btn.closest('[id^="post-"]');
+      var title = card ? (card.querySelector('.card-title')?.textContent || '').trim() : '';
+      labelText = '貼文：' + (title || ('#' + postId));
+      lastPayload = { target_type:'post', post_id: postId, comment_id:'', reply_id:'' };
+    }else{
+      // 無法判別，安全起見不開啟
+      lastPayload = null;
+      return;
+    }
+
+    if(labelEl){ labelEl.value = labelText; }
+    var modal = getReportModal();
+    if(modal){ modal.show(); }
+  });
+
+})();
+</script>
