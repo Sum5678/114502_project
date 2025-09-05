@@ -93,7 +93,7 @@
             <ul>
               <li><a href="{% url 'map' %}">事件地圖</a></li>
               <li><a href="{% url 'store_map' %}">商家地圖</a></li>
-              <li><a href="{% url 'upload_store_ad' %}">商家廣告</a></li>
+              <li><a href="{% url 'store_map' %}">商家廣告</a></li>
             </ul> 
           </li>
           
@@ -235,35 +235,52 @@
 
       // 抓所有商家 API，顯示在地圖
       function fetchStores(map) {
-          fetch('/api/stores/')
-              .then(res => res.json())
-              .then(data => {
-                  data.forEach(store => {
-                      const lat = parseFloat(store.latitude);
-                      const lng = parseFloat(store.longitude);
-                      if (!isNaN(lat) && !isNaN(lng)) {
-                          const marker = new google.maps.Marker({
-                              position: { lat, lng },
-                              map,
-                              title: store.store_name,
-                              icon: {
-                                  url: "{% static 'assets/img/shop_icon.png' %}",
-                                  scaledSize: new google.maps.Size(30, 30)
-                              }
-                          });
+        fetch('/api/stores-with-ads/')
+            .then(res => res.json())
+            .then(data => {
+                data.forEach(store => {
+                    const lat = parseFloat(store.latitude);
+                    const lng = parseFloat(store.longitude);
+                    if (!isNaN(lat) && !isNaN(lng)) {
+                        const marker = new google.maps.Marker({
+                            position: { lat, lng },
+                            map,
+                            title: store.store_name,
+                            icon: {
+                                url: "{% static 'assets/img/shop_icon.png' %}",
+                                scaledSize: new google.maps.Size(30, 30)
+                            }
+                        });
 
-                          const infoWindow = new google.maps.InfoWindow({
-                              content: `<strong>${store.store_name}</strong><br>地址: ${store.address}<br>電話: ${store.phone}`
-                          });
+                        // 建立 infoWindow 內容
+                        let imagesHtml = '';
+                        if (store.images && store.images.length > 0) {
+                            store.images.forEach(imgUrl => {
+                                imagesHtml += `<img src="${imgUrl}" style="width:100px;height:auto;margin:2px;">`;
+                            });
+                        }
 
-                          marker.addListener('click', () => {
-                              infoWindow.open(map, marker);
-                          });
-                      }
-                  });
-              })
-              .catch(err => { console.error("抓取商家資料錯誤：", err); });
-      }
+                        const contentHtml = `
+                            <strong>${store.store_name}</strong><br>
+                            地址: ${store.address}<br>
+                            電話: ${store.phone}<br>
+                            ${store.ad_content ? `<em>廣告: ${store.ad_content}</em><br>` : ''}
+                            ${imagesHtml}
+                        `;
+
+                        const infoWindow = new google.maps.InfoWindow({
+                            content: contentHtml
+                        });
+
+                        marker.addListener('click', () => {
+                            infoWindow.open(map, marker);
+                        });
+                    }
+                });
+            })
+            .catch(err => { console.error("抓取商家資料錯誤：", err); });
+    }
+
 
       // 抓有廣告的商家資料，判斷距離
       function fetchAds() {

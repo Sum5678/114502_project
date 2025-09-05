@@ -2108,10 +2108,41 @@ def store_data_api(request):
             'phone': store.phone,
             'latitude': store.latitude,
             'longitude': store.longitude,
+            
         }
         for store in approved_stores
         if store.latitude is not None and store.longitude is not None
     ]
+    return JsonResponse(data, safe=False)
+
+# API：取得審核通過的商家資料（含廣告）
+def stores_with_ads_api(request):
+    approved_stores = StoreAll.objects.filter(review_status='approved')
+
+    data = []
+    for store in approved_stores:
+        try:
+            ad = StoreAd.objects.get(st_id=store.st_id)
+            images = [
+                request.build_absolute_uri(settings.MEDIA_URL + img.image_url)
+                for img in ad.images.all()
+            ]
+        except StoreAd.DoesNotExist:
+            ad = None
+            images = []
+
+        data.append({
+            'st_id': store.st_id,
+            'store_name': store.store_name,
+            'address': store.address,
+            'phone': store.phone,
+            'latitude': store.latitude,
+            'longitude': store.longitude,
+            'ad_content': ad.ad_content if ad else '',
+            'ad_radius': ad.ad_radius if ad else 200,
+            'images': images
+        })
+
     return JsonResponse(data, safe=False)
 
 
