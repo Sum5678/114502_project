@@ -2116,6 +2116,8 @@ def store_data_api(request):
     return JsonResponse(data, safe=False)
 
 # API：取得審核通過的商家資料（含廣告）
+from django.conf import settings
+
 def stores_with_ads_api(request):
     approved_stores = StoreAll.objects.filter(review_status='approved')
 
@@ -2123,10 +2125,15 @@ def stores_with_ads_api(request):
     for store in approved_stores:
         try:
             ad = StoreAd.objects.get(st_id=store.st_id)
-            images = [
-                request.build_absolute_uri(settings.MEDIA_URL + img.image_url)
-                for img in ad.images.all()
-            ]
+            images = []
+            for img in ad.images.all():
+                # 移除重複的 'media/'，只保留一個
+                img_url = img.image_url.lstrip('/')
+                if img_url.startswith('media/'):
+                    full_url = request.build_absolute_uri('/' + img_url)
+                else:
+                    full_url = request.build_absolute_uri(settings.MEDIA_URL + img_url)
+                images.append(full_url)
         except StoreAd.DoesNotExist:
             ad = None
             images = []
@@ -2139,12 +2146,11 @@ def stores_with_ads_api(request):
             'latitude': store.latitude,
             'longitude': store.longitude,
             'ad_content': ad.ad_content if ad else '',
-            'ad_radius': ad.ad_radius if ad else 200,
+            'ad_radius': 200,
             'images': images
         })
 
     return JsonResponse(data, safe=False)
-
 
 
 

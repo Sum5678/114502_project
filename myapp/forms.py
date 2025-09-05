@@ -45,6 +45,11 @@ from .models import StoreAd
 
 class StoreAdForm(forms.ModelForm):
     st_id = forms.IntegerField(label="商家編號")  # 額外輸入商家編號
+    images = forms.FileField(
+        widget=forms.ClearableFileInput(attrs={'multiple': True}),
+        required=False,
+        label="廣告圖片"
+    )
 
     class Meta:
         model = StoreAd

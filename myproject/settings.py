@@ -220,7 +220,9 @@ LOGIN_REDIRECT_URL = '/this_user_profile'  # 登出後的轉址
 
 # 確保在 settings.py 中配置 MEDIA_URL 和 MEDIA_ROOT
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_ROOT = BASE_DIR / 'media'
+
+# MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 
 
