@@ -1859,6 +1859,7 @@ def review_detail(request, pk):
 #--------- 管理員登入後首頁 ----------
 #但是現在數字不會更著變動啊啊啊
 from django.shortcuts import render, redirect
+#from django.db.models import Q
 from myapp.models import PemapAll, StoreAll, AbuseReport
 
 def admin_index(request):
@@ -1866,7 +1867,19 @@ def admin_index(request):
         return redirect('admin_login')
 
     # PemapAll 未審核事件數量 (review_status="待審核")
-    unreviewed_events_count = PemapAll.objects.filter(review_status="待審核").count()
+    # unreviewed_events_count = PemapAll.objects.filter(review_status="待審核").count()
+    # unreviewed_events_count = PemapAll.objects.filter(review_status="0").count()
+    
+    # 計算 review_status 為 0 或 3 的事件
+    unreviewed_events_count = PemapAll.objects.filter(
+        Q(review_status=0) | Q(review_status=3)
+    ).count()
+
+    # StoreAll 未審核商家數量
+   
+    unreviewed_stores_count = StoreAll.objects.filter(review_status="pending").count()
+    
+
 
     # 舉報處理統計 (AbuseReport 使用 status 欄位)
     pending_reports = AbuseReport.objects.filter(status='pending').count()
@@ -1877,6 +1890,7 @@ def admin_index(request):
         'admin_id': request.session.get('admin_id'),
         'admin_name': request.session.get('admin_name'),
         'unreviewed_events_count': unreviewed_events_count,
+        'unreviewed_stores_count': unreviewed_stores_count,  # 👈 商家紅點
         'pending_reports': pending_reports,
         'approved_reports': approved_reports,
         'rejected_reports': rejected_reports,
@@ -2114,16 +2128,20 @@ def store_data_api(request):
 from django.shortcuts import render, redirect
 from django.http import JsonResponse, Http404, HttpResponseForbidden
 from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_http_methods
 from django.utils import timezone
 from django.db.models import Q
 from django.core.paginator import Paginator
+from django.urls import reverse
+from django.utils.datastructures import MultiValueDictKeyError
+from django.contrib import messages
 
 from .models import ChatInteraction, ThisUserProfile
 import json
 import bleach
 from urllib.parse import quote
 from uuid import uuid4
+from functools import wraps
 
 # 允許的貼文 HTML（內容/留言都會用 bleach 過濾）
 ALLOWED_TAGS = ['a']
@@ -2358,6 +2376,10 @@ def _flatten_all_with_parent(comments, user_id_str=None, indent_step_px=20):
 @login_required(login_url='/01userlogin/')
 def post(request):
     prof = ThisUserProfile.objects.filter(gmail=request.user.email).first()
+    # --- 後備查法：維持原邏輯，僅在找不到時補救 ---
+    if not prof and request.user.is_authenticated:
+        prof = ThisUserProfile.objects.filter(user=request.user).first() \
+               or ThisUserProfile.objects.filter(gmail__iexact=(request.user.email or "")).first()
     nick1 = (prof.default_nickname1 or "").strip() if prof else ""
     nick2 = (prof.default_nickname2 or "").strip() if prof else ""
 
@@ -2408,7 +2430,7 @@ def post(request):
     })
 
 def post_display(request):
-    # 🔸 這裡加：保守引入 AbuseReport（若沒定義就忽略）
+    # 🔸 保守引入 AbuseReport（若沒定義就忽略）
     try:
         from .models import AbuseReport as _AbuseReport
     except Exception:
@@ -2429,7 +2451,7 @@ def post_display(request):
 
     user_id_str = str(request.user.id) if request.user.is_authenticated else None
 
-    # 🔸 這裡加：把「此使用者被駁回過的檢舉目標」做成 key set，供前端判斷是否顯示檢舉鈕
+    # 🔸 此使用者被駁回過的檢舉目標 key set（target_type, post_id, comment_id, reply_id）
     rejected_keys = set()
     if request.user.is_authenticated and _AbuseReport is not None:
         qs = _AbuseReport.objects.filter(
@@ -2463,23 +2485,52 @@ def post_display(request):
         post.is_saved = bool(user_id_str and (user_id_str in saved_user_ids))
         post.saved_user_list = saved_user_ids
 
-        # comments
+        # comments（同時標記「被駁回過→不可再檢舉」的旗標）
         comments = _load_comments(post)
         fixed_comments = []
+
         for c in comments:
             c = _ensure_comment_defaults(c)
-            if user_id_str:
-                c['is_liked'] = str(user_id_str) in c['like_user_ids']
-            else:
-                c['is_liked'] = False
+
+            # is_liked
+            c['is_liked'] = bool(user_id_str and (str(user_id_str) in c['like_user_ids']))
+
+            # 標記留言是否已被駁回過（此使用者對此留言的檢舉）
+            cid = str(c.get('id') or c.get('time'))
+            key_comment = ('comment', getattr(post, 'interaction_id', None), cid, '')
+            c['user_rejected_report'] = key_comment in rejected_keys
+
+            # 遞迴標記所有回覆是否已被駁回過，並補 is_liked
+            def mark_rejected_on_replies(replies, root_comment_id):
+                if not isinstance(replies, list):
+                    return []
+                out = []
+                for r in replies:
+                    r = _ensure_reply_defaults(r)
+                    rid = str(r.get('id') or r.get('time'))
+                    key_reply = ('reply', getattr(post, 'interaction_id', None), root_comment_id, rid)
+                    r['user_rejected_report'] = key_reply in rejected_keys
+
+                    like_ids = [str(x) for x in (r.get('like_user_ids') or [])]
+                    r['is_liked'] = bool(user_id_str and (user_id_str in like_ids))
+
+                    r['replies'] = mark_rejected_on_replies(r.get('replies') or [], root_comment_id)
+                    out.append(r)
+                return out
+
+            c['replies'] = mark_rejected_on_replies(c.get('replies') or [], cid)
+
+            # 舊 UI 需要的平面 replies_flat
             _mark_is_liked_recursive(c.get('replies') or [], user_id_str)
             c['replies_flat'] = _flatten_replies(c.get('replies') or [], 1)
+
             fixed_comments.append(c)
+
         post.comment_list = fixed_comments
         post.top_comment_count = len(fixed_comments)
         post.total_comment_count = sum(1 + len(c.get('replies_flat', [])) for c in fixed_comments)
 
-        # 🔸 這裡加：這篇「貼文」是否被此使用者的檢舉駁回過（用於前端關閉檢舉鈕）
+        # 🔸 這篇貼文是否被此使用者檢舉且已駁回（用於前端關閉檢舉鈕）
         key_post = ('post', getattr(post, 'interaction_id', None), '', '')
         post.user_rejected_report = key_post in rejected_keys
 
@@ -2522,6 +2573,10 @@ def post_display(request):
     nick2 = ""
     if request.user.is_authenticated:
         prof = ThisUserProfile.objects.filter(gmail=request.user.email).first()
+        # 後備查法（只在找不到時使用；不影響原有邏輯）
+        if not prof:
+            prof = ThisUserProfile.objects.filter(user=request.user).first() \
+                   or ThisUserProfile.objects.filter(gmail__iexact=(request.user.email or "")).first()
         nick1 = (prof.default_nickname1 or "").strip() if prof else ""
         nick2 = (prof.default_nickname2 or "").strip() if prof else ""
 
@@ -2637,6 +2692,9 @@ def add_comment(request, post_id):
         return JsonResponse({'error': '留言超過 300 字上限'}, status=400)
 
     prof = ThisUserProfile.objects.filter(gmail=request.user.email).first()
+    if not prof:
+        prof = ThisUserProfile.objects.filter(user=request.user).first() \
+               or ThisUserProfile.objects.filter(gmail__iexact=(request.user.email or "")).first()
     nick1 = (prof.default_nickname1 or "").strip() if prof else ""
     nick2 = (prof.default_nickname2 or "").strip() if prof else ""
 
@@ -2759,21 +2817,35 @@ def post_comments(request, post_id):
 
     user_id_str = str(request.user.id) if request.user.is_authenticated else None
 
-    # 把所有留言與回覆展平成含 parent 的清單（帶 is_liked / like_count）
+    # 扁平化（帶 parent / like 狀態）
     flat_items = _flatten_all_with_parent(comments, user_id_str=user_id_str, indent_step_px=20)
     final_total = len(flat_items)
 
-    paginator = Paginator(flat_items, 10)  # 直接對「全部項目」分頁
+    paginator = Paginator(flat_items, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
+    # ★ 加：把暱稱帶給模板（與 post_display 同步）
+    nick1 = ""
+    nick2 = ""
+    if request.user.is_authenticated:
+        prof = ThisUserProfile.objects.filter(gmail=request.user.email).first() or \
+               ThisUserProfile.objects.filter(user=request.user).first() or \
+               ThisUserProfile.objects.filter(gmail__iexact=request.user.email).first()
+        if prof:
+            nick1 = (prof.default_nickname1 or "").strip()
+            nick2 = (prof.default_nickname2 or "").strip()
+
     return render(request, 'post_comments.html', {
         'post': post,
-        'page_obj': page_obj,                 # 這裡每筆是 comment 或 reply
-        'total_comments': top_count,          # 頂層
-        'total_including_replies': all_count, # 備用
-        'final_total': final_total,           # 供 UI 顯示「留言（N）」的最終數
+        'page_obj': page_obj,
+        'total_comments': top_count,
+        'total_including_replies': all_count,
+        'final_total': final_total,
+        'profile_nickname1': nick1,          # ← 新增
+        'profile_nickname2': nick2,          # ← 新增
     })
+
 
 # ============== 巢狀：回覆 & 按讚 & 編輯/刪除 ==============
 
@@ -2804,6 +2876,9 @@ def reply_comment(request, post_id):
         return JsonResponse({'success': False, 'error': '回覆超過 300 字上限'}, status=400)
 
     prof = ThisUserProfile.objects.filter(gmail=request.user.email).first()
+    if not prof:
+        prof = ThisUserProfile.objects.filter(user=request.user).first() \
+               or ThisUserProfile.objects.filter(gmail__iexact=(request.user.email or "")).first()
     nick1 = (prof.default_nickname1 or "").strip() if prof else ""
     nick2 = (prof.default_nickname2 or "").strip() if prof else ""
 
@@ -2997,8 +3072,8 @@ def delete_reply(request, post_id):
         'total_comments': top_count,
         'total_including_replies': all_count
     })
-    
-    
+
+
 # ====== 管理員登入保護（沿用你的 session 機制）=========================
 from functools import wraps
 from urllib.parse import quote
@@ -3025,7 +3100,6 @@ except Exception:
 # _load_comments(post)
 # _find_comment(comments, comment_id)
 # _find_reply_recursive(replies, reply_id)
-
 
 def admin_login_required(view_func):
     """以 session['admin_id'] 判斷是否已登入管理員；未登入導至 admin_login。"""
@@ -3264,7 +3338,162 @@ def act_on_report(request):
     messages.success(request, f'檢舉 #{report.id} {status_label}。')
     return redirect('report_decide')
 
+# ===== 管理員：編輯審核紀錄（僅允許改 status / admin_note；reason 不可改） =====
+@admin_login_required
+@require_POST
+def edit_report(request, report_id):
+    if AbuseReport is None:
+        return JsonResponse({'ok': False, 'msg': '尚未建立 AbuseReport 模型'}, status=501)
+
+    # 取資料
+    try:
+        report = AbuseReport.objects.get(pk=report_id)
+    except AbuseReport.DoesNotExist:
+        messages.error(request, f'找不到檢舉 #{report_id}')
+        return redirect('report_decide')
+
+    # 僅接收狀態與備註
+    status_new = (request.POST.get('status') or '').strip()
+    admin_note = (request.POST.get('admin_note') or '').strip()
+
+    # 驗證狀態
+    allowed_status = {'pending', 'action_taken', 'rejected'}
+    if status_new not in allowed_status:
+        messages.error(request, '不支援的狀態值')
+        return redirect('report_decide')
+
+    # 更新欄位（不動 reason）
+    report.status = status_new
+    report.admin_note = admin_note
+
+    # 狀態→時間：pending 清空；其餘更新為現在
+    report.decided_at = None if status_new == 'pending' else timezone.now()
+
+    # 紀錄處理管理員（沿用 session）
+    sess_admin_id = request.session.get('admin_id')
+    if sess_admin_id:
+        try:
+            AbuseReport.objects.filter(pk=report.pk).update(admin_id=int(sess_admin_id))
+            report.admin_id = int(sess_admin_id)
+            if Admins is not None:
+                admin_obj = Admins.objects.filter(pk=sess_admin_id).first()
+                if admin_obj:
+                    report.admin = admin_obj
+        except Exception:
+            pass
+
+    report.save()
+    messages.success(request, f'已更新檢舉 #{report.id}（狀態：{report.status}）。')
+    return redirect('report_decide')
+@admin_login_required
+@require_POST
+def delete_report_target(request, report_id):
+    """已處置案件的後續動作：刪除被檢舉目標（貼文 / 留言 / 回覆）"""
+    if AbuseReport is None:
+        messages.error(request, '尚未建立 AbuseReport 模型')
+        return redirect('report_decide')
+
+    # 取檢舉
+    try:
+        report = AbuseReport.objects.get(pk=report_id)
+    except AbuseReport.DoesNotExist:
+        messages.error(request, f'找不到檢舉 #{report_id}')
+        return redirect('report_decide')
+
+    # 僅允許「已處置」才可刪目標
+    if report.status != 'action_taken':
+        messages.error(request, '僅限狀態為「已處置」的案件才能刪除目標。')
+        return redirect('report_decide')
+
+    # 取貼文
+    post = getattr(report, 'post', None)
+    if post is None:
+        # 後備：以 id 再查一次
+        try:
+            post = _get_post_by_any_id(getattr(report, 'post_id', ''))
+        except Exception:
+            post = None
+    if post is None and report.target_type != 'post':
+        messages.error(request, '找不到對應貼文，無法刪除留言/回覆。')
+        return redirect('report_decide')
+
+    target_type = report.target_type
+    try:
+        if target_type == 'post':
+            # 直接刪除整篇貼文
+            if post is None:
+                messages.error(request, '貼文已不存在。')
+                return redirect('report_decide')
+            post.delete()
+            done_msg = '已刪除貼文'
+
+        elif target_type == 'comment':
+            comments = _load_comments(post)
+            idx, c = _find_comment(comments, report.comment_id)
+            if c is None:
+                messages.error(request, '找不到要刪除的留言（可能已被刪除）。')
+                return redirect('report_decide')
+            del comments[idx]
+            post.comments = json.dumps(comments, ensure_ascii=False)
+            post.save(update_fields=['comments'])
+            done_msg = '已刪除留言'
+
+        elif target_type == 'reply':
+            comments = _load_comments(post)
+            cidx, c = _find_comment(comments, report.comment_id)
+            if c is None:
+                messages.error(request, '找不到要刪除的回覆（上層留言可能已被刪除）。')
+                return redirect('report_decide')
+
+            parent_list, ridx, r = _find_reply_recursive(c.get('replies') or [], report.reply_id)
+            if r is None:
+                messages.error(request, '找不到要刪除的回覆（可能已被刪除）。')
+                return redirect('report_decide')
+
+            del parent_list[ridx]
+            comments[cidx] = c
+            post.comments = json.dumps(comments, ensure_ascii=False)
+            post.save(update_fields=['comments'])
+            done_msg = '已刪除回覆'
+
+        else:
+            messages.error(request, '不支援的檢舉類型')
+            return redirect('report_decide')
+
+    except Exception as e:
+        messages.error(request, f'刪除失敗：{e}')
+        return redirect('report_decide')
+
+    # 記錄操作者到 report（沿用你的作法）
+    sess_admin_id = request.session.get('admin_id')
+    if sess_admin_id:
+        try:
+            AbuseReport.objects.filter(pk=report.pk).update(admin_id=int(sess_admin_id))
+            report.admin_id = int(sess_admin_id)
+        except Exception:
+            pass
+
+    # 在備註追加一行紀錄（可省略）
+    try:
+        ts = timezone.now().strftime("%Y-%m-%d %H:%M:%S")
+        note = (report.admin_note or '').strip()
+        note_line = f"[{ts}] {done_msg}"
+        report.admin_note = f"{note}\n{note_line}" if note else note_line
+        report.save(update_fields=['admin_note'])
+    except Exception:
+        pass
+
+    messages.success(request, f"檢舉 #{report.id}：{done_msg}")
+    return redirect('report_decide')
+
+
+
+
 # ------------ /交流區後端（整合版）------------
+
+
+
+
 
 
 

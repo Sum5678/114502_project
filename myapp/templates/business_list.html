@@ -109,6 +109,7 @@
           <thead>
             <tr>
               <th>#</th>
+              <th>商家ID</th>
               <th>商家店名</th>
               <th>營業時間</th>
               <th>地址</th>
@@ -122,6 +123,7 @@
           {% for store in stores %}
           <tr>
             <td>{{ store.reverse_id }}</td>  <!-- 這是反向編號 -->
+            <td>{{ store.st_id }}</td>
             <td>{{ store.store_name }}</td>
             <td>{{ store.business_hours }}</td>
             <td>{{ store.address }}</td>
@@ -131,7 +133,7 @@
             <td>{{ store.review_status }}</td> <!-- 審核狀態欄位 -->
           </tr>
           {% empty %}
-          <tr><td colspan="6">尚無商家資料</td></tr>
+          <tr><td colspan="9">尚無商家資料</td></tr>
           {% endfor %}
         </tbody>
         </table>
