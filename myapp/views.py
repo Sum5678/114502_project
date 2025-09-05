@@ -1757,8 +1757,13 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
 from .models import StoreAll
 
+from .models import StoreAll, StoreAd
+
 def store_judge_step1(request, st_id):
     store = get_object_or_404(StoreAll, st_id=st_id)
+
+    # 抓對應的廣告（可能沒有廣告就 None）
+    store_ad = StoreAd.objects.prefetch_related('images').filter(st_id=store.st_id).first()
 
     # 抓登入管理員資訊
     admin_id = request.session.get('admin_id')
@@ -1774,16 +1779,16 @@ def store_judge_step1(request, st_id):
             store.review_status = new_status
             store.reviewed_at = timezone.now()
             store.admin_id = admin_id
-
-            print(f"店家 {st_id} 被 {admin_name} 審核為 {new_status}")
             store.save()
             return redirect('store_judge')  # 審核完返回列表頁
 
     return render(request, 'store_judge_step1.html', {
         'store': store,
+        'store_ad': store_ad,
         'admin_id': admin_id,
         'admin_name': admin_name,
     })
+
 
 
 #--商家表單拒絕後--
