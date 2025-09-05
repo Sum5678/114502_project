@@ -1190,36 +1190,70 @@ from django.contrib.auth.decorators import login_required
 def business_upload(request):
     return render(request, 'business_upload.html')
 
+from .models import StoreAll, StoreAd, StoreAdImage
+
 @login_required(login_url='/01userlogin/')
 @csrf_exempt
 def submit_store(request):
     if request.method == 'POST':
         try:
-            data = json.loads(request.body)
+            # 使用 FormData 傳送，所以用 request.POST / request.FILES
+            bs_name = request.POST.get('store_name')
+            bs_address = request.POST.get('address')
+            latitude = request.POST.get('latitude')
+            longitude = request.POST.get('longitude')
+            business_hours = request.POST.get('business_hours')
+            phone = request.POST.get('phone')
+            poster_id = int(request.POST.get('poster_id', 1))
+            created_at = request.POST.get('created_at')
+            ad_content = request.POST.get('ad_content', '')
 
-            timestamp = int(timezone.now().timestamp())
+            st_id = int(request.POST.get('st_id'))  # ⚡ 直接用 st_id 整數
 
-            store = StoreAll(
+            # 建立商家
+            store = StoreAll.objects.create(
                 user=request.user,
-                st_id=timestamp,
-                poster_id=int(data.get('poster_id')),  # 從前端傳入 1 或 2 等已存在的 ID
-                store_name=data.get('store_name') or data.get('bs_name'),
-                address=data.get('address') or data.get('bs_address'),
-                latitude=data.get('latitude'),
-                longitude=data.get('longitude'),
-                business_hours=data.get('business_hours'),
-                phone=data.get('phone') or data.get('bs_phone'),
-                created_at=data.get('created_at'),
+                st_id=str(st_id),
+                poster_id=str(poster_id),
+                store_name=bs_name,
+                address=bs_address,
+                latitude=float(latitude),
+                longitude=float(longitude),
+                business_hours=business_hours,
+                phone=phone,
+                created_at=created_at,
                 reviewed_at=None,
                 review_status="pending",
-                admin_id = 9999,
-                poster_gmail=data.get("poster_gmail"),
+                admin_id=9999,
+                poster_gmail=request.user.email,
             )
-            store.save()
+
+            # 建立廣告
+            store_ad = StoreAd.objects.create(
+                st_id=int(store.st_id),  # ⚡ 用整數
+                ad_content=ad_content,
+                created_at=timezone.now(),
+                updated_at=timezone.now(),
+            )
+
+            # 處理多張圖片
+            images = request.FILES.getlist('ad_images')
+            for img in images:
+                StoreAdImage.objects.create(
+                    st_id=store_ad.st_id,
+                    image_url=img.name,  # ⚡ 這裡暫存名稱或你可以改成上傳到 media
+                )
+
             return JsonResponse({'status': 'success'})
+
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)})
+
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
+
+
+
+
 
 from django.contrib.auth.decorators import login_required
 @login_required(login_url='/01userlogin/')
@@ -1717,44 +1751,6 @@ def pemap_judge_step1(request, p_id):
     })
 
 
-#     return render(request, 'pemap_judge_step1.html', {
-#         'item': form_data,
-#         'admin_id': admin_id,
-#         'admin_name': admin_name,
-#     })
-
-# from django.shortcuts import render, get_object_or_404, redirect
-# from .models import PemapAll
-# from django.utils import timezone  # ⚠️ 別忘記引入這行！
-
-# def pemap_judge_step1(request, p_id):
-#     form_data = get_object_or_404(PemapAll, p_id=p_id)
-
-#     # ✅ 抓出 session 中的管理員資料
-#     admin_id = request.session.get('admin_id')
-#     admin_name = request.session.get('admin_name', '未知管理員')
-
-#     if not admin_id:
-#         return redirect('admin_login')  # 尚未登入就導向登入頁
-
-#     if request.method == 'POST':
-#         new_status = request.POST.get('review_status')
-#         if new_status is not None and new_status.isdigit():
-#             form_data.review_status = int(new_status)
-#             form_data.time_reviewed = timezone.now()
-#             form_data.admin_id = admin_id  
-
-
-#             print(f"表單 {p_id} 被 {admin_name} 修改狀態為 {new_status}")
-
-#             form_data.save()
-#             return redirect('pemap_judge')
-
-#     return render(request, 'pemap_judge_step1.html', {
-#         'item': form_data,
-#         'admin_id': admin_id,
-#         'admin_name': admin_name,
-#     })
 
 
 from django.shortcuts import render, get_object_or_404, redirect

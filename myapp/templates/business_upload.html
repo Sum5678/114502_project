@@ -113,6 +113,21 @@
           <div id="map" style="height: 300px;"></div>
         </div>
 
+
+
+        <div class="mb-3">
+          <label for="ad_content">廣告語</label>
+          <textarea class="form-control" id="ad_content" name="ad_content" rows="3"></textarea>
+        </div>
+
+        <div class="mb-3">
+          <label for="ad_images">廣告圖片（可多選）</label>
+          <input type="file" class="form-control" id="ad_images" name="ad_images" multiple accept="image/*">
+        </div>
+
+        <!-- 預覽區塊 -->
+        <div id="image-preview" class="row mt-2"></div>
+
         <input type="hidden" id="bs_address" name="bs_address" required>
         <input type="hidden" id="latitude" name="latitude" required>
         <input type="hidden" id="longitude" name="longitude" required>
@@ -140,6 +155,7 @@
 <div id="preloader"></div>
 
 <script>
+// ➕ 新增/刪除營業時間
 document.getElementById("add-hour-btn").addEventListener("click", () => {
   const container = document.getElementById("business-hours-group");
   const row = document.createElement("div");
@@ -168,41 +184,62 @@ document.getElementById("business-hours-group").addEventListener("click", (e) =>
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
 <script>
-  const map = L.map('map').setView([25.033964, 121.564472], 13);
+// 地圖選點
+const map = L.map('map').setView([25.033964, 121.564472], 13);
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap contributors'
-  }).addTo(map);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '&copy; OpenStreetMap contributors'
+}).addTo(map);
 
-  let marker = null;
+let marker = null;
 
-  map.on('click', function (e) {
-    const { lat, lng } = e.latlng;
-    window.selectedLat = lat.toFixed(6);
-    window.selectedLng = lng.toFixed(6);
+map.on('click', function (e) {
+  const { lat, lng } = e.latlng;
+  window.selectedLat = lat.toFixed(6);
+  window.selectedLng = lng.toFixed(6);
 
-    if (marker) {
-      marker.setLatLng([lat, lng]);
-    } else {
-      marker = L.marker([lat, lng]).addTo(map);
-    }
-    // ✅ 更新隱藏欄位
-    document.getElementById("bs_address").value = `Lat: ${lat}, Lng: ${lng}`;
-    document.getElementById("latitude").value = lat.toFixed(6);
-    document.getElementById("longitude").value = lng.toFixed(6);
+  if (marker) {
+    marker.setLatLng([lat, lng]);
+  } else {
+    marker = L.marker([lat, lng]).addTo(map);
+  }
 
-    // ✅ 顯示在上方區塊
-    document.getElementById("lat-val").textContent = lat.toFixed(6);
-    document.getElementById("lng-val").textContent = lng.toFixed(6);
-    document.getElementById("latlng-display").style.display = "block";
-    });
+  // 更新隱藏欄位
+  document.getElementById("bs_address").value = `Lat: ${lat}, Lng: ${lng}`;
+  document.getElementById("latitude").value = lat.toFixed(6);
+  document.getElementById("longitude").value = lng.toFixed(6);
+
+  // 顯示在提示框
+  document.getElementById("lat-val").textContent = lat.toFixed(6);
+  document.getElementById("lng-val").textContent = lng.toFixed(6);
+  document.getElementById("latlng-display").style.display = "block";
+});
 </script>
 
 <script>
+// 圖片預覽
+document.getElementById("ad_images").addEventListener("change", function() {
+  const preview = document.getElementById("image-preview");
+  preview.innerHTML = "";
+  [...this.files].forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const col = document.createElement("div");
+      col.className = "col-4 mb-2";
+      col.innerHTML = `<img src="${e.target.result}" class="img-fluid rounded">`;
+      preview.appendChild(col);
+    };
+    reader.readAsDataURL(file);
+  });
+});
+</script>
+
+<script>
+// 表單送出
 document.getElementById("businessForm").addEventListener("submit", function(e) {
   e.preventDefault();
 
-  // 驗證基本欄位
+  // 驗證必填
   const bsName = document.getElementById("bs_name").value.trim();
   const bsAddress = document.getElementById("bs_address").value.trim();
   const bsPhone = document.getElementById("bs_phone").value.trim();
@@ -211,10 +248,9 @@ document.getElementById("businessForm").addEventListener("submit", function(e) {
     return;
   }
 
-  // 處理多段營業時間
+  // 營業時間處理
   const startInputs = document.getElementsByName("bs_time_start");
   const endInputs = document.getElementsByName("bs_time_end");
-
   const businessHours = [];
   for (let i = 0; i < startInputs.length; i++) {
     const start = startInputs[i].value;
@@ -223,28 +259,35 @@ document.getElementById("businessForm").addEventListener("submit", function(e) {
       businessHours.push(`${start} - ${end}`);
     }
   }
-
   if (businessHours.length === 0) {
     alert("❗ 至少需填寫一段營業時間");
     return;
   }
 
-  const data = {
-    store_name: bsName,
-    phone: bsPhone,
-    address: bsAddress,
-    latitude: window.selectedLat || null,
-    longitude: window.selectedLng || null,
-    business_hours: businessHours.join(" / "),
-    st_id: Math.floor(Date.now() / 1000),
-    poster_id: 1,
-    created_at: new Date().toISOString().slice(0, 19).replace("T", " ")
-  };
+  // ✅ 用 FormData 包裝資料
+  const formData = new FormData();
+  formData.append("store_name", bsName);
+  formData.append("phone", bsPhone);
+  formData.append("address", bsAddress);
+  formData.append("latitude", window.selectedLat || "");
+  formData.append("longitude", window.selectedLng || "");
+  formData.append("business_hours", businessHours.join(" / "));
+  formData.append("st_id", Math.floor(Date.now() / 1000));
+  formData.append("poster_id", 1);
+  formData.append("created_at", new Date().toISOString().slice(0, 19).replace("T", " "));
+
+  // 廣告語
+  formData.append("ad_content", document.getElementById("ad_content").value.trim());
+
+  // 廣告圖片（多選）
+  const files = document.getElementById("ad_images").files;
+  for (let i = 0; i < files.length; i++) {
+    formData.append("ad_images", files[i]);
+  }
 
   fetch("/api/submit_store/", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data)
+    body: formData  // 不要設定 headers，瀏覽器會自動帶上 multipart/form-data
   })
   .then(res => res.json())
   .then(result => {
@@ -260,6 +303,7 @@ document.getElementById("businessForm").addEventListener("submit", function(e) {
   });
 });
 </script>
+
 
 <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
 <script src="{% static 'assets/vendor/aos/aos.js' %}"></script>
