@@ -93,7 +93,7 @@
             <ul>
               <li><a href="{% url 'map' %}">事件地圖</a></li>
               <li><a href="{% url 'store_map' %}">商家地圖</a></li>
-              <li><a href="{% url 'store_map' %}">商家廣告</a></li>
+              <li><a href="{% url 'upload_store_ad' %}">商家廣告</a></li>
             </ul> 
           </li>
           
@@ -238,7 +238,7 @@
         fetch('/api/stores-with-ads/')
             .then(res => res.json())
             .then(data => {
-                data.forEach(store => {
+                data.forEach((store, index) => {
                     const lat = parseFloat(store.latitude);
                     const lng = parseFloat(store.longitude);
                     if (!isNaN(lat) && !isNaN(lng)) {
@@ -252,24 +252,48 @@
                             }
                         });
 
-                        // 建立 infoWindow 內容
-                        let imagesHtml = '';
-                        if (store.images && store.images.length > 0) {
-                            store.images.forEach(imgUrl => {
-                                imagesHtml += `<img src="${imgUrl}" style="width:100px;height:auto;margin:2px;">`;
-                            });
-                        }
-
-                        const contentHtml = `
-                            <strong>${store.store_name}</strong><br>
-                            地址: ${store.address}<br>
-                            電話: ${store.phone}<br>
-                            ${store.ad_content ? `<em>廣告: ${store.ad_content}</em><br>` : ''}
-                            ${imagesHtml}
+                        // 🔹 InfoWindow 內容
+                        let content = `
+                            <div style="max-width:260px;">
+                                <strong>${store.store_name}</strong><br>
+                                地址: ${store.address}<br>
+                                電話: ${store.phone}<br>
+                                <p>廣告:${store.ad_content || ''}</p>
                         `;
 
+                        // 如果有圖片，做 Bootstrap Carousel
+                        if (store.images && store.images.length > 0) {
+                            const carouselId = `carousel-${index}`;
+                            content += `
+                                <div id="${carouselId}" class="carousel slide" data-bs-ride="carousel" style="max-width:240px;">
+                                    <div class="carousel-inner">
+                            `;
+                            store.images.forEach((imgUrl, i) => {
+                                content += `
+                                    <div class="carousel-item ${i === 0 ? 'active' : ''}">
+                                        <img src="${imgUrl}" class="d-block w-100" 
+                                            style="height:150px; object-fit:cover; border-radius:6px;">
+                                    </div>
+                                `;
+                            });
+                            content += `
+                                    </div>
+                                    <button class="carousel-control-prev" type="button" data-bs-target="#${carouselId}" data-bs-slide="prev">
+                                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                        <span class="visually-hidden">上一張</span>
+                                    </button>
+                                    <button class="carousel-control-next" type="button" data-bs-target="#${carouselId}" data-bs-slide="next">
+                                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                        <span class="visually-hidden">下一張</span>
+                                    </button>
+                                </div>
+                            `;
+                        }
+
+                        content += `</div>`;
+
                         const infoWindow = new google.maps.InfoWindow({
-                            content: contentHtml
+                            content: content
                         });
 
                         marker.addListener('click', () => {
