@@ -45,16 +45,17 @@ from .models import StoreAd
 
 class StoreAdForm(forms.ModelForm):
     st_id = forms.IntegerField(label="商家編號")  # 額外輸入商家編號
-    images = forms.FileField(
-        widget=forms.ClearableFileInput(attrs={'multiple': True}),
-        required=False,
-        label="廣告圖片"
+    ad_content = forms.CharField(
+        widget=forms.Textarea(attrs={'rows': 3, 'placeholder': '請輸入廣告內容'}),
+        required=False
     )
+    ad_radius = forms.IntegerField(
+        min_value=1,
+        widget=forms.NumberInput(attrs={'placeholder': '觸發距離 (公尺)'}),
+        required=False
+    )
+    enabled = forms.BooleanField(required=False, initial=True)
 
     class Meta:
         model = StoreAd
         fields = ['st_id', 'ad_content', 'ad_radius', 'enabled']
-        widgets = {
-            'ad_content': forms.Textarea(attrs={'rows': 3, 'placeholder': '請輸入廣告內容'}),
-            'ad_radius': forms.NumberInput(attrs={'min': 1, 'placeholder': '觸發距離 (公尺)'}),
-        }

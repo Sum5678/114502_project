@@ -3900,8 +3900,10 @@ def public_profile(request, gmail):
 
 # --------商家廣告-------s
 from django.shortcuts import render, redirect
-from .models import StoreAll, StoreAd
+from django.conf import settings
+from .models import StoreAll, StoreAd, StoreAdImage
 from .forms import StoreAdForm
+import os
 
 def upload_store_ad(request):
     if request.method == 'POST':
@@ -3916,14 +3918,38 @@ def upload_store_ad(request):
                 form.add_error('st_id', '找不到此商家編號')
                 return render(request, 'store_upload_ad.html', {'form': form})
 
-            # 找是否已有廣告，若有就更新
+            # 如果已有廣告，就覆蓋
             ad, created = StoreAd.objects.get_or_create(st_id=store.st_id)
             ad.ad_content = form.cleaned_data['ad_content']
             ad.ad_radius = form.cleaned_data['ad_radius']
             ad.enabled = form.cleaned_data['enabled']
             ad.save()
 
-            return redirect('store_map')  # 儲存完成後回到商家地圖
+            # 先刪掉舊的圖片
+            old_images = ad.images.all()
+            for img in old_images:
+                # 刪檔案
+                img_path = os.path.join(settings.BASE_DIR, img.image_url.strip("/"))
+                if os.path.exists(img_path):
+                    os.remove(img_path)
+                img.delete()
+
+            # 儲存新圖片
+            for img_file in request.FILES.getlist('images'):
+                upload_dir = os.path.join(settings.MEDIA_ROOT, 'ads')
+                os.makedirs(upload_dir, exist_ok=True)
+
+                filepath = os.path.join(upload_dir, img_file.name)
+                with open(filepath, 'wb+') as dest:
+                    for chunk in img_file.chunks():
+                        dest.write(chunk)
+
+                StoreAdImage.objects.create(
+                    st=ad,
+                    image_url=f"/media/ads/{img_file.name}"
+                )
+
+            return redirect('store_map')
     else:
         form = StoreAdForm()
 
