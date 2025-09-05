@@ -1855,7 +1855,7 @@ def review_detail(request, pk):
 #--------- 管理員登入後首頁 ----------
 #但是現在數字不會更著變動啊啊啊
 from django.shortcuts import render, redirect
-#from django.db.models import Q
+from django.db.models import Q
 from myapp.models import PemapAll, StoreAll, AbuseReport
 
 def admin_index(request):
@@ -1867,15 +1867,10 @@ def admin_index(request):
     # unreviewed_events_count = PemapAll.objects.filter(review_status="0").count()
     
     # 計算 review_status 為 0 或 3 的事件
-    unreviewed_events_count = PemapAll.objects.filter(
-        Q(review_status=0) | Q(review_status=3)
-    ).count()
+    unreviewed_events_count = PemapAll.objects.filter(Q(review_status="待審核")|Q(review_status="描述內容過短，不足以判斷")|Q(review_status="需再由人工審核")).count()
 
     # StoreAll 未審核商家數量
-   
     unreviewed_stores_count = StoreAll.objects.filter(review_status="pending").count()
-    
-
 
     # 舉報處理統計 (AbuseReport 使用 status 欄位)
     pending_reports = AbuseReport.objects.filter(status='pending').count()
