@@ -1190,6 +1190,13 @@ from django.contrib.auth.decorators import login_required
 def business_upload(request):
     return render(request, 'business_upload.html')
 
+
+from django.conf import settings
+from django.http import JsonResponse
+from django.utils import timezone
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_exempt
+import os
 from .models import StoreAll, StoreAd, StoreAdImage
 
 @login_required(login_url='/01userlogin/')
@@ -1197,7 +1204,7 @@ from .models import StoreAll, StoreAd, StoreAdImage
 def submit_store(request):
     if request.method == 'POST':
         try:
-            # 使用 FormData 傳送，所以用 request.POST / request.FILES
+            # 取表單資料
             bs_name = request.POST.get('store_name')
             bs_address = request.POST.get('address')
             latitude = request.POST.get('latitude')
@@ -1208,7 +1215,7 @@ def submit_store(request):
             created_at = request.POST.get('created_at')
             ad_content = request.POST.get('ad_content', '')
 
-            st_id = int(request.POST.get('st_id'))  # ⚡ 直接用 st_id 整數
+            st_id = int(request.POST.get('st_id'))
 
             # 建立商家
             store = StoreAll.objects.create(
@@ -1230,18 +1237,29 @@ def submit_store(request):
 
             # 建立廣告
             store_ad = StoreAd.objects.create(
-                st_id=int(store.st_id),  # ⚡ 用整數
+                st_id=int(store.st_id),
                 ad_content=ad_content,
                 created_at=timezone.now(),
                 updated_at=timezone.now(),
             )
 
-            # 處理多張圖片
+            # 處理多張圖片，上傳到 media/ads/
             images = request.FILES.getlist('ad_images')
+            ad_folder = os.path.join(settings.MEDIA_ROOT, 'ads')
+            os.makedirs(ad_folder, exist_ok=True)
+
             for img in images:
+                # 保存檔案
+                file_path = os.path.join(ad_folder, img.name)
+                with open(file_path, 'wb+') as f:
+                    for chunk in img.chunks():
+                        f.write(chunk)
+                # 存資料庫 URL
+                image_url = f"{settings.MEDIA_URL}ads/{img.name}"
                 StoreAdImage.objects.create(
                     st_id=store_ad.st_id,
-                    image_url=img.name,  # ⚡ 這裡暫存名稱或你可以改成上傳到 media
+                    image_url=image_url,
+                    created_at=timezone.now()
                 )
 
             return JsonResponse({'status': 'success'})
@@ -2097,27 +2115,6 @@ def store_data_api(request):
     return JsonResponse(data, safe=False)
 
 
-
-# from .models import StoreAll
-
-# def store_data_api(request):
-#     approved_stores = StoreAll.objects.filter(review_status='approved')
-#     data = [
-#         {
-#             'st_id': store.st_id,
-#             'store_name': store.store_name,
-#             'address': store.address,
-#             'phone': store.phone,
-#             'latitude': store.latitude,
-#             'longitude': store.longitude,
-#         }
-#         for store in approved_stores
-#         if hasattr(store, 'latitude') and hasattr(store, 'longitude')  # 如果你有這兩欄
-#     ]
-#     return JsonResponse(data, safe=False)
-
-# def store_map_view(request):
-#     return render(request, 'store_map.html')
 
 
 # ------------ 交流區後端（整合版，支援巢狀回覆 / 巢狀按讚 / 回覆編輯刪除 / 留言編輯 by id或time）------------

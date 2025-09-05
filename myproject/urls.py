@@ -27,8 +27,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('myapp.urls')),  # 讓應用程式的路由生效
     path('oauth/', include('social_django.urls', namespace='social')),  # Google 登入
-    path('admin/', admin.site.urls), #自動撥號的
-    path('', include('myapp.urls')), #自動撥號的
     
 ]
 
