@@ -404,6 +404,16 @@ class StoreAd(models.Model):
         managed = False  # Django 不會建立或修改這張表
 
 
+class StoreAdImage(models.Model):
+    img_id = models.AutoField(primary_key=True)
+    st = models.ForeignKey(StoreAd, on_delete=models.CASCADE, db_column="st_id", related_name="images")
+    image_url = models.CharField(max_length=500)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "store_ad_image"
+        managed = False
+
 
 
 
