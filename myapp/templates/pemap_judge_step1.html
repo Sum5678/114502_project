@@ -138,12 +138,20 @@
           <div class="form-group mb-0">
             <label for="review_status" class="form-label fw-bold">審核狀態</label>
             <select name="review_status" id="review_status" class="form-select">
+              <option value="未審核" {% if item.review_status == "未審核" %}selected{% endif %}>未審核</option>
+              <option value="AI 審核通過" {% if item.review_status == "AI 審核通過" %}selected{% endif %}>AI 審核通過</option>
+              <option value="AI 審核未通過，需人工審核" {% if item.review_status == "AI 審核未通過，需人工審核" %}selected{% endif %}>AI 審核未通過，需人工審核</option>
+              <option value="人工審核通過" {% if item.review_status == "人工審核通過" %}selected{% endif %}>人工審核通過</option>
+              <option value="人工審核未通過" {% if item.review_status == "人工審核未通過" %}selected{% endif %}>人工審核未通過</option>
+            </select>
+
+            <!-- <select name="review_status" id="review_status" class="form-select">
               <option value="0" {% if item.review_status == 0 %}selected{% endif %}>未審核</option>
               <option value="1" {% if item.review_status == 1 %}selected{% endif %}>AI 審核通過</option>
               <option value="2" {% if item.review_status == 2 %}selected{% endif %}>AI 審核未通過，需人工審核</option>
               <option value="3" {% if item.review_status == 3 %}selected{% endif %}>人工審核通過</option>
               <option value="4" {% if item.review_status == 4 %}selected{% endif %}>人工審核未通過</option>
-            </select>
+            </select> -->
           </div>
           <button type="submit" class="btn btn-primary">儲存變更</button>
         </form>
