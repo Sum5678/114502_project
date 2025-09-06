@@ -92,18 +92,74 @@
           <input type="text" class="form-control" id="bs_name" name="bs_name" required>
         </div>
 
-        <label>營業時間（至少一段）</label>
-        <div id="business-hours-group">
-          <div class="row mb-2 business-hour-row">
-            <div class="col">
-              <input type="time" class="form-control time-start" name="bs_time_start" required>
+        <label>營業時間</label>
+        <div id="schedule-container" class="border rounded p-3">
+          <!-- 自動列出一週 -->
+          <div class="weekday-row mb-2" data-day="週一">
+            <strong class="me-2">週一</strong>
+            <input type="checkbox" class="open-checkbox"> 營業
+            <div class="hours d-inline-block ms-3" style="display:none;">
+              <input type="time" class="time-start"> -
+              <input type="time" class="time-end">
+              <button type="button" class="btn btn-secondary btn-sm add-hour">➕</button>
             </div>
-            <div class="col">
-              <input type="time" class="form-control time-end" name="bs_time_end" required>
+          </div>
+          <div class="weekday-row mb-2" data-day="週二">
+            <strong class="me-2">週二</strong>
+            <input type="checkbox" class="open-checkbox"> 營業
+            <div class="hours d-inline-block ms-3" style="display:none;">
+              <input type="time" class="time-start"> -
+              <input type="time" class="time-end">
+              <button type="button" class="btn btn-secondary btn-sm add-hour">➕</button>
+            </div>
+          </div>
+          <div class="weekday-row mb-2" data-day="週三">
+            <strong class="me-2">週三</strong>
+            <input type="checkbox" class="open-checkbox"> 營業
+            <div class="hours d-inline-block ms-3" style="display:none;">
+              <input type="time" class="time-start"> -
+              <input type="time" class="time-end">
+              <button type="button" class="btn btn-secondary btn-sm add-hour">➕</button>
+            </div>
+          </div>
+          <div class="weekday-row mb-2" data-day="週四">
+            <strong class="me-2">週四</strong>
+            <input type="checkbox" class="open-checkbox"> 營業
+            <div class="hours d-inline-block ms-3" style="display:none;">
+              <input type="time" class="time-start"> -
+              <input type="time" class="time-end">
+              <button type="button" class="btn btn-secondary btn-sm add-hour">➕</button>
+            </div>
+          </div>
+          <div class="weekday-row mb-2" data-day="週五">
+            <strong class="me-2">週五</strong>
+            <input type="checkbox" class="open-checkbox"> 營業
+            <div class="hours d-inline-block ms-3" style="display:none;">
+              <input type="time" class="time-start"> -
+              <input type="time" class="time-end">
+              <button type="button" class="btn btn-secondary btn-sm add-hour">➕</button>
+            </div>
+          </div>
+          <div class="weekday-row mb-2" data-day="週六">
+            <strong class="me-2">週六</strong>
+            <input type="checkbox" class="open-checkbox"> 營業
+            <div class="hours d-inline-block ms-3" style="display:none;">
+              <input type="time" class="time-start"> -
+              <input type="time" class="time-end">
+              <button type="button" class="btn btn-secondary btn-sm add-hour">➕</button>
+            </div>
+          </div>
+          <div class="weekday-row mb-2" data-day="週日">
+            <strong class="me-2">週日</strong>
+            <input type="checkbox" class="open-checkbox"> 營業
+            <div class="hours d-inline-block ms-3" style="display:none;">
+              <input type="time" class="time-start"> -
+              <input type="time" class="time-end">
+              <button type="button" class="btn btn-secondary btn-sm add-hour">➕</button>
             </div>
           </div>
         </div>
-        <button type="button" class="btn btn-secondary btn-sm mt-2" id="add-hour-btn">➕ 新增一段時間</button>
+
 
         <div class="mb-3">
           <label for="map">選擇地址</label>
@@ -155,30 +211,61 @@
 <div id="preloader"></div>
 
 <script>
-// ➕ 新增/刪除營業時間
-document.getElementById("add-hour-btn").addEventListener("click", () => {
-  const container = document.getElementById("business-hours-group");
-  const row = document.createElement("div");
-  row.className = "row mb-2 business-hour-row";
-  row.innerHTML = `
-    <div class="col">
-      <input type="time" class="form-control time-start" name="bs_time_start" required>
-    </div>
-    <div class="col">
-      <input type="time" class="form-control time-end" name="bs_time_end" required>
-    </div>
-    <div class="col-auto">
-      <button type="button" class="btn btn-danger remove-hour">刪除</button>
-    </div>
-  `;
-  container.appendChild(row);
-});
+  // 切換「營業 / 休息」
+  document.querySelectorAll(".open-checkbox").forEach(chk => {
+    chk.addEventListener("change", function() {
+      const hoursDiv = this.closest(".weekday-row").querySelector(".hours");
+      hoursDiv.style.display = this.checked ? "inline-block" : "none";
+    });
+  });
 
-document.getElementById("business-hours-group").addEventListener("click", (e) => {
-  if (e.target.classList.contains("remove-hour")) {
-    e.target.closest(".business-hour-row").remove();
-  }
-});
+  // ➕ 新增一段時段
+  document.getElementById("schedule-container").addEventListener("click", function(e) {
+    if (e.target.classList.contains("add-hour")) {
+      const div = e.target.closest(".hours");
+      const newRow = document.createElement("div");
+      newRow.className = "mt-2";
+      newRow.innerHTML = `
+        <input type="time" class="time-start"> -
+        <input type="time" class="time-end">
+        <button type="button" class="btn btn-danger btn-sm remove-hour">刪除</button>
+      `;
+      div.appendChild(newRow);
+    } else if (e.target.classList.contains("remove-hour")) {
+      e.target.closest("div").remove();
+    }
+  });
+
+  const businessHours = [];
+  document.querySelectorAll(".weekday-row").forEach(row => {
+    const day = row.dataset.day;
+    const open = row.querySelector(".open-checkbox").checked;
+    if (!open) {
+      businessHours.push(`${day} 休息`);
+    } else {
+      const times = [];
+      row.querySelectorAll(".hours").forEach(hoursDiv => {
+        const startInputs = hoursDiv.querySelectorAll(".time-start");
+        const endInputs = hoursDiv.querySelectorAll(".time-end");
+        for (let i = 0; i < startInputs.length; i++) {
+          const start = startInputs[i].value;
+          const end = endInputs[i].value;
+          if (start && end) {
+            times.push(`${start}-${end}`);
+          }
+        }
+      });
+      if (times.length > 0) {
+        businessHours.push(`${day} ${times.join(" / ")}`);
+      } else {
+        businessHours.push(`${day} 休息`);
+      }
+    }
+  });
+
+  // 存入 formData
+  formData.append("business_hours", businessHours.join(" | "));
+
 </script>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
@@ -245,22 +332,6 @@ document.getElementById("businessForm").addEventListener("submit", function(e) {
   const bsPhone = document.getElementById("bs_phone").value.trim();
   if (!bsName || !bsAddress || !bsPhone) {
     alert("❗ 請填寫所有必填欄位");
-    return;
-  }
-
-  // 營業時間處理
-  const startInputs = document.getElementsByName("bs_time_start");
-  const endInputs = document.getElementsByName("bs_time_end");
-  const businessHours = [];
-  for (let i = 0; i < startInputs.length; i++) {
-    const start = startInputs[i].value;
-    const end = endInputs[i].value;
-    if (start && end) {
-      businessHours.push(`${start} - ${end}`);
-    }
-  }
-  if (businessHours.length === 0) {
-    alert("❗ 至少需填寫一段營業時間");
     return;
   }
 
