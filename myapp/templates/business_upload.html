@@ -259,26 +259,33 @@
 
   // 收集營業時間 → 儲存成字串
   function collectBusinessHours() {
-    const rows = document.querySelectorAll(".weekday-row");
-    const hours = [];
-    rows.forEach(row => {
-      const day = row.dataset.day;
-      const isOpen = row.querySelector(".open-checkbox").checked;
-      if (isOpen) {
-        const hourRows = row.querySelectorAll(".hour-row");
-        const timeRanges = [];
-        hourRows.forEach(hr => {
-          const start = hr.querySelector(".time-start").value;
-          const end = hr.querySelector(".time-end").value;
-          if (start && end) timeRanges.push(`${start}-${end}`);
-        });
-        if (timeRanges.length > 0) {
-          hours.push(`${day} ${timeRanges.join(" / ")}`);
-        }
+  const rows = document.querySelectorAll(".weekday-row");
+  const hours = [];
+
+  rows.forEach(row => {
+    const day = row.dataset.day;
+    const isOpen = row.querySelector(".open-checkbox").checked;
+    const hourRows = row.querySelectorAll(".hour-row");
+    const timeRanges = [];
+
+    if (isOpen && hourRows.length > 0) {
+      hourRows.forEach(hr => {
+        const start = hr.querySelector(".time-start").value;
+        const end = hr.querySelector(".time-end").value;
+        if (start && end) timeRanges.push(`${start}-${end}`);
+      });
+      if (timeRanges.length > 0) {
+        hours.push(`${day} ${timeRanges.join(" / ")}`);
+      } else {
+        hours.push(`${day} 休息`); // 有勾選但沒填時間 → 休息
       }
-    });
-    return hours.join(" | ");
-  }
+    } else {
+      hours.push(`${day} 休息`); // 沒勾選 → 休息
+    }
+  });
+
+  return hours.join(" | ");
+}
 
 </script>
 
