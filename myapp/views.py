@@ -1701,41 +1701,11 @@ def store_judge(request):
 
 #--step1
 
-
-
-# from django.urls import reverse
-
-# def pemap_judge_step1(request, p_id):
-#     form_data = get_object_or_404(PemapAll, p_id=p_id)
-
-#     admin_id = request.session.get('admin_id')
-#     admin_name = request.session.get('admin_name', '未知管理員')
-
-#     if not admin_id:
-#         return redirect('admin_login')
-
-#     if request.method == 'POST':
-#         new_status = request.POST.get('review_status')
-#         if new_status is not None and new_status.isdigit():
-#             new_status_int = int(new_status)
-#             form_data.review_status = new_status_int
-#             form_data.time_reviewed = timezone.now()
-#             form_data.admin_id = admin_id  
-
-#             print(f"表單 {p_id} 被 {admin_name} 修改狀態為 {new_status_int}")
-
-#             form_data.save()
-
-#             if new_status_int == 4:  # 人工審核未通過
-#                 url = reverse('admin_send_email') + f'?p_id={p_id}'
-#                 return redirect(url)
-
-#             return redirect('pemap_judge')
-
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils import timezone
 from django.shortcuts import get_object_or_404, render
+from .models import PemapAll
 
 def pemap_judge_step1(request, p_id):
     form_data = get_object_or_404(PemapAll, p_id=p_id)
@@ -1748,15 +1718,13 @@ def pemap_judge_step1(request, p_id):
 
     if request.method == 'POST':
         new_status = request.POST.get('review_status')
-        if new_status is not None and new_status.isdigit():
-            new_status_int = int(new_status)
-            form_data.review_status = new_status_int
+        if new_status:  # 直接存文字
+            form_data.review_status = new_status
             form_data.time_reviewed = timezone.now()
             form_data.admin_id = admin_id  
-
             form_data.save()
 
-            if new_status_int == 4:  # 人工審核未通過
+            if new_status == "人工審核未通過":  # 用文字比對
                 url = reverse('admin_send_email', kwargs={'p_id': p_id})
                 return redirect(url)
 
@@ -1767,6 +1735,7 @@ def pemap_judge_step1(request, p_id):
         'admin_id': admin_id,
         'admin_name': admin_name,
     })
+
 
 
 
