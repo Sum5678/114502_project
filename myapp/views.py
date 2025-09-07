@@ -1615,7 +1615,7 @@ def admin_login(request):
 #--------管理員自介-------
 from .forms import AdminProfileForm
 from django.db.models import Q
-from myapp.models import PemapAll, StoreAll, AbuseReport, Admins
+from .utils import get_unreviewed_counts   # 匯入共用函式
 
 def admin_interview(request):
     admin_id = request.session.get('admin_id')
@@ -1638,28 +1638,14 @@ def admin_interview(request):
         form = AdminProfileForm(instance=admin)
         message = None
 
-    # 🔹 跟首頁一樣計算紅點數
-    unreviewed_events_count = PemapAll.objects.filter(
-        Q(review_status="待審核") |
-        Q(review_status="描述內容過短，不足以判斷") |
-        Q(review_status="需再由人工審核") |
-        Q(review_status="未審核") |
-        Q(review_status="AI 審核未通過，需人工審核")
-    ).count()
-
-    unreviewed_stores_count = StoreAll.objects.filter(review_status="pending").count()
-    unreviewed_review_count = AbuseReport.objects.filter(status="pending").count()
-
-    return render(request, 'admin_interview.html', {
+    context = {
         'form': form,
         'message': message,
         'admin_name': admin.name,
         'admin_id': admin.admin_id,
-        # 🔹 把紅點數量也傳去模板
-        'unreviewed_events_count': unreviewed_events_count,
-        'unreviewed_stores_count': unreviewed_stores_count,
-        'unreviewed_review_count': unreviewed_review_count,
-    })
+    }
+    context.update(get_unreviewed_counts())  # 🔹 加入紅點數
+    return render(request, 'admin_interview.html', context)
 
 #-------管理員登出-----
 from django.shortcuts import redirect
@@ -1864,34 +1850,17 @@ def review_detail(request, pk):
 #--------- 管理員登入後首頁 ----------
 from django.shortcuts import render, redirect
 from django.db.models import Q
-from myapp.models import PemapAll, StoreAll, AbuseReport
+from .utils import get_unreviewed_counts   # 匯入共用函式
 
 def admin_index(request):
     if 'admin_id' not in request.session:
         return redirect('admin_login')
-    
-    # 計算 review_status 未審核或AI未審核通過的事件
-    unreviewed_events_count = PemapAll.objects.filter(
-    Q(review_status="待審核") |
-    Q(review_status="描述內容過短，不足以判斷") |
-    Q(review_status="需再由人工審核") |
-    Q(review_status="未審核") |
-    Q(review_status="AI 審核未通過，需人工審核")
-    ).count()
-
-    # StoreAll 未審核商家數量
-    unreviewed_stores_count = StoreAll.objects.filter(review_status="pending").count()
-
-    # AbuseReport 未審核交流區貼文數量
-    unreviewed_review_count = AbuseReport.objects.filter(status="pending").count()
 
     context = {
         'admin_id': request.session.get('admin_id'),
         'admin_name': request.session.get('admin_name'),
-        'unreviewed_events_count': unreviewed_events_count,  # 事件紅點
-        'unreviewed_stores_count': unreviewed_stores_count,  # 商家紅點
-        'unreviewed_review_count': unreviewed_review_count,  # 交流區紅點
     }
+    context.update(get_unreviewed_counts())  # 🔹 加入紅點數
     return render(request, 'admin_index.html', context)
 
 
