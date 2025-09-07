@@ -1866,18 +1866,15 @@ def admin_index(request):
     unreviewed_stores_count = StoreAll.objects.filter(review_status="pending").count()
 
     # 舉報處理統計 (AbuseReport 使用 status 欄位)
-    pending_reports = AbuseReport.objects.filter(status='pending').count()
-    approved_reports = AbuseReport.objects.filter(status='approved').count()
-    rejected_reports = AbuseReport.objects.filter(status='rejected').count()
+    unreviewed_review_count = AbuseReport.objects.filter(status="pending").count()
 
     context = {
         'admin_id': request.session.get('admin_id'),
         'admin_name': request.session.get('admin_name'),
         'unreviewed_events_count': unreviewed_events_count,
         'unreviewed_stores_count': unreviewed_stores_count,  # 👈 商家紅點
-        'pending_reports': pending_reports,
-        'approved_reports': approved_reports,
-        'rejected_reports': rejected_reports,
+        'unreviewed_review_count': unreviewed_review_count,
+        
     }
     return render(request, 'admin_index.html', context)
 
