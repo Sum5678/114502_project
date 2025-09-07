@@ -1684,6 +1684,7 @@ def pemap_judge(request):
 
 from django.shortcuts import render, redirect
 from .models import StoreAll
+from .utils import get_unreviewed_counts
 
 def store_judge(request):
     admin_id = request.session.get('admin_id')
@@ -1694,11 +1695,13 @@ def store_judge(request):
 
     store_list = StoreAll.objects.all().order_by('-created_at')  # 最新在最上面
 
-    return render(request, 'store_judge.html', {
+    context =  {
         'store_list': store_list,
         'admin_id': admin_id,
         'admin_name': admin_name,
-    })
+    }
+    context.update(get_unreviewed_counts())
+    return render(request, 'store_judge.html',context)
 
 
 
