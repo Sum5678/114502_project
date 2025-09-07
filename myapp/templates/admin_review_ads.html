@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>待審核廣告</h2>
+<table class="table">
+  <thead>
+    <tr>
+      <th>商家編號</th>
+      <th>廣告文字</th>
+      <th>圖片</th>
+      <th>操作</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for ad in ads %}
+    <tr>
+      <td>{{ ad.st_id.st_id }}</td>
+      <td>{{ ad.ad_content }}</td>
+      <td>
+        {% for img in ad.images.all %}
+          <img src="{{ img.image_url }}" width="100">
+        {% empty %}
+          無圖片
+        {% endfor %}
+      </td>
+      <td>
+        <a href="{% url 'review_store_ad' ad.st_id.st_id 'approve' %}" class="btn btn-success btn-sm">批准</a>
+        <a href="{% url 'review_store_ad' ad.st_id.st_id 'reject' %}" class="btn btn-danger btn-sm">拒絕</a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
