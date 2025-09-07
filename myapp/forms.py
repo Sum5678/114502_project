@@ -38,8 +38,6 @@ class ThisUserProfileForm(forms.ModelForm):
         }
 
 
-
-
 from django import forms
 from .models import StoreAd
 
@@ -50,8 +48,7 @@ class StoreAdForm(forms.ModelForm):
         required=False
     )
     ad_radius = forms.IntegerField(
-        min_value=1,
-        widget=forms.NumberInput(attrs={'placeholder': '觸發距離 (公尺)'}),
+        widget=forms.NumberInput(attrs={'min': 1, 'placeholder': '觸發距離 (公尺)'}),
         required=False
     )
     enabled = forms.BooleanField(required=False, initial=True)

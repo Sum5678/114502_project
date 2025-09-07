@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0" name="viewport">
-  <title>{% block title %}上傳廣告{% endblock %}</title>
+  <title>上傳廣告</title>
 
   <!-- Favicons -->
   <link href="{% static 'assets/img/favicon.png' %}" rel="icon">
@@ -46,49 +46,31 @@
     .btn-primary:hover {
       background-color: #4299e1;
     }
+    .carousel-item img {
+      max-height: 300px;
+      object-fit: cover;
+    }
   </style>
 </head>
 
 <body class="index-page">
 
-  <!-- 🔹 直接放 header，不用 include -->
+  <!-- Header -->
   <header id="header" class="header d-flex align-items-center fixed-top">
     <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
       <a href="index.html" class="logo d-flex align-items-center me-auto me-xl-0">
-        <h1 class="sitename">怪怪走開，護您安全</h1><span></span>
+        <h1 class="sitename">怪怪走開，護您安全</h1>
       </a>
       <nav id="navmenu" class="navmenu">
         <ul>
           <li><a href="{% url 'home' %}#hero">主頁</a></li>
-          <li><a href="index.html#services">簡介及功能介紹</a></li>
           <li><a href="{% url 'report' %}">填寫表單</a></li>
           <li><a href="{% url 'business_upload' %}">商家填單</a></li>
-          <li><a href="{% url 'about' %}">個人資料設定</a></li>
-          <li><a href="{% url 'chatroom_page' %}">聊天室</a></li>
-        <li class="dropdown">
-          <a href="#"><span>交流區</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
-          <ul>
-            <li><a href="{% url 'post' %}#hero">我要發文</a></li>
-            <li><a href="{% url 'post_display' %}">貼文總覽</a></li>
-          </ul>
-        </li>
-          
-          <li class="dropdown"><a href="#"><span>地圖</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
-            <ul>
-              <li><a href="{% url 'map' %}">事件地圖</a></li>
-              <li><a href="{% url 'store_map' %}">商家地圖</a></li>
-              <li><a href="{% url 'upload_store_ad' %}">商家廣告</a></li>
-            </ul> 
-          </li>
-          
-          <li><a href="{% url 'harassment_prevention' %}">防騷指南</a></li>
-
+          <li><a href="{% url 'upload_store_ad' %}">商家廣告</a></li>
         </ul>
         <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
       </nav>
-      
-      <!-- ✅ 登入狀態 dropdown 按鈕 -->
-    {% if request.user.is_authenticated %}
+      {% if request.user.is_authenticated %}
       <div class="dropdown">
         <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown"
            style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
@@ -98,7 +80,7 @@
           <li><a class="dropdown-item" href="{% url '01_userlogin_out' %}">登出</a></li>
         </ul>
       </div>
-    {% else %}
+      {% else %}
       <div class="dropdown">
         <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown"
            style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
@@ -109,23 +91,25 @@
           <li><a class="dropdown-item" href="{% url 'admin_login' %}">管理員登入</a></li>
         </ul>
       </div>
-    {% endif %}
-  </div>
-</header>
+      {% endif %}
+    </div>
+  </header>
 
+  <!-- Main -->
   <main class="main">
     <section class="upload-ad-section">
       <div class="container">
         <div class="card upload-ad-card p-4">
           <h2 class="text-center">上傳廣告</h2>
+          
           <form method="post" enctype="multipart/form-data">
-            {% csrf_token %}
-            {{ form.as_p }}
+              {% csrf_token %}
+              {{ form.as_p }}
 
-            <label for="images">廣告圖片 (可多選)</label>
-            <input type="file" name="images" id="images" multiple>
+              <label for="images">廣告圖片 (可多選)</label>
+              <input type="file" name="images" id="images" multiple>
 
-            <button type="submit" class="btn btn-primary mt-3">儲存廣告</button>
+              <button type="submit" class="btn btn-primary mt-3">儲存廣告</button>
           </form>
 
 
@@ -134,7 +118,7 @@
     </section>
   </main>
 
-  <!-- 🔹 直接放 footer -->
+  <!-- Footer -->
   <footer id="footer" class="footer position-relative light-background">
     <div class="container text-center">
       <p>© 2025 怪怪走開 | All Rights Reserved</p>
