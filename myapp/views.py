@@ -3857,7 +3857,6 @@ from .models import StoreAll, StoreAd, StoreAdImage
 from .forms import StoreAdForm
 import os
 
-
 def upload_store_ad(request):
     if request.method == 'POST':
         form = StoreAdForm(request.POST)
@@ -3871,12 +3870,9 @@ def upload_store_ad(request):
                 form.add_error('st_id', '找不到此商家編號')
                 return render(request, 'store_upload_ad.html', {'form': form})
 
-            # 🚀 強制轉 int (因為 StoreAd.st_id 是 IntegerField)
-            store_ad_id = int(store.st_id)
-
-            # ✅ 更新或新增廣告
+            # 用 update_or_create 覆蓋廣告
             ad, created = StoreAd.objects.update_or_create(
-                st_id=store_ad_id,
+                st_id=store.st_id,
                 defaults={
                     'ad_content': form.cleaned_data['ad_content'],
                     'ad_radius': form.cleaned_data['ad_radius'],
@@ -3884,7 +3880,7 @@ def upload_store_ad(request):
                 }
             )
 
-            # 先刪掉舊的圖片
+            # 刪除舊圖片
             old_images = ad.images.all()
             for img in old_images:
                 img_path = os.path.join(settings.BASE_DIR, img.image_url.strip("/"))
@@ -3912,5 +3908,3 @@ def upload_store_ad(request):
         form = StoreAdForm()
 
     return render(request, 'store_upload_ad.html', {'form': form})
-
-
