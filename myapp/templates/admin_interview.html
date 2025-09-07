@@ -44,10 +44,22 @@
           
           <li class="dropdown"><a href="#"><span>清單審核</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
             <ul>
-              <li><a href="{% url 'pemap_judge' %}">事件清單審核</a></li>
-              <li><a href="{% url 'store_judge' %}">商家清單審核</a></li>
+              <li><a href="{% url 'pemap_judge' %}">事件清單審核
+                {% if unreviewed_events_count > 0 %}
+                  <span class="badge bg-danger ms-2">{{ unreviewed_events_count }}</span>
+                {% endif %}
+              </a></li>
+              <li><a href="{% url 'store_judge' %}">商家清單審核
+                {% if unreviewed_stores_count > 0 %}
+                  <span class="badge bg-danger ms-2">{{ unreviewed_stores_count }}</span>
+                {% endif %}
+              </a></li>
               <!-- ✅ 新增：交流區檢舉審核 -->
-              <li><a href="{% url 'review_reports' %}?status=pending">交流區檢舉審核</a></li>
+              <li><a href="{% url 'review_reports' %}?status=pending">交流區檢舉審核
+                {% if unreviewed_review_count > 0 %}
+                  <span class="badge bg-danger ms-2">{{ unreviewed_review_count }}</span>
+                {% endif %}
+              </a></li>
             </ul> 
           </li>
           
