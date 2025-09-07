@@ -3856,13 +3856,14 @@ def public_profile(request, gmail):
 # --------商家廣告-------s
 from django.shortcuts import render, redirect
 from django.conf import settings
+from django.http import JsonResponse
 from .models import StoreAll, StoreAd, StoreAdImage
 from .forms import StoreAdForm
 import os
 
 def upload_store_ad(request):
     if request.method == 'POST':
-        form = StoreAdForm(request.POST)
+        form = StoreAdForm(request.POST, request.FILES)  # ⚠️ 一定要加 request.FILES
         if form.is_valid():
             st_id = form.cleaned_data['st_id']
 
@@ -3873,7 +3874,7 @@ def upload_store_ad(request):
                 form.add_error('st_id', '找不到此商家編號')
                 return render(request, 'store_upload_ad.html', {'form': form})
 
-            # 用 update_or_create 覆蓋廣告
+            # 建立或更新廣告
             ad, created = StoreAd.objects.update_or_create(
                 st_id=store.st_id,
                 defaults={
@@ -3884,8 +3885,7 @@ def upload_store_ad(request):
             )
 
             # 刪除舊圖片
-            old_images = ad.images.all()
-            for img in old_images:
+            for img in ad.images.all():
                 img_path = os.path.join(settings.BASE_DIR, img.image_url.strip("/"))
                 if os.path.exists(img_path):
                     os.remove(img_path)
@@ -3895,12 +3895,10 @@ def upload_store_ad(request):
             for img_file in request.FILES.getlist('images'):
                 upload_dir = os.path.join(settings.MEDIA_ROOT, 'ads')
                 os.makedirs(upload_dir, exist_ok=True)
-
                 filepath = os.path.join(upload_dir, img_file.name)
                 with open(filepath, 'wb+') as dest:
                     for chunk in img_file.chunks():
                         dest.write(chunk)
-
                 StoreAdImage.objects.create(
                     st=ad,
                     image_url=f"/media/ads/{img_file.name}"
@@ -3911,3 +3909,23 @@ def upload_store_ad(request):
         form = StoreAdForm()
 
     return render(request, 'store_upload_ad.html', {'form': form})
+
+
+# --------- API: 根據商家編號取得廣告 ---------
+def get_store_ad(request):
+    st_id = request.GET.get('st_id')
+    if not st_id:
+        return JsonResponse({'error': 'st_id is required'}, status=400)
+    try:
+        store = StoreAll.objects.get(st_id=st_id)
+        ad = StoreAd.objects.get(st_id=store.st_id)
+        images = [img.image_url for img in ad.images.all()]
+        return JsonResponse({
+            'ad_content': ad.ad_content,
+            'ad_radius': ad.ad_radius,
+            'enabled': ad.enabled,
+            'images': images,
+        })
+    except (StoreAll.DoesNotExist, StoreAd.DoesNotExist):
+        return JsonResponse({'ad_content': '', 'ad_radius': 200, 'enabled': True, 'images': []})
+

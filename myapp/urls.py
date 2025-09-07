@@ -145,6 +145,8 @@ urlpatterns = [
     path("user/<int:pk>/", views.public_profile, name="public_profile"), #給別人看的
     path('public_profile/gmail/<str:gmail>/', views.public_profile, name='public_profile'),#給別人看的
     path('store/upload-ad/', views.upload_store_ad, name='upload_store_ad'),  #商家廣告
+    path('upload_store_ad/', views.upload_store_ad, name='upload_store_ad'),#商家廣告
+    path('get_store_ad', views.get_store_ad, name='get_store_ad'),
 
     path('profile/', views.profile, name='profile'),
 
@@ -163,6 +165,7 @@ urlpatterns = [
     # path('api/reports_with_subkind/', views.reports_with_subkind_json, name='reports_with_subkind_json'),
     path('api/reports_with_subkind_json/', views.reports_with_subkind_json, name='reports_with_subkind_json'),
     path('api/stores-with-ads/', views.stores_with_ads_api, name='stores_with_ads_api'),
+    path('api/get_store_ad/', views.get_store_ad, name='get_store_ad'),
 
     path('api/chatrooms/', views.chatrooms_api, name='chatrooms_api'),
     path('chatrooms_api/', views.chatrooms_api, name='chatrooms_api'),

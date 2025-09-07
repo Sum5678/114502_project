@@ -418,6 +418,8 @@ class StoreAdImage(models.Model):
 
 
 
+
+
 # myapp/models.py
 from django.db import models
 from django.conf import settings
