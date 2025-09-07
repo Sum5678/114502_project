@@ -3934,33 +3934,16 @@ def upload_store_ad(request):
 
 
 # --------- API: 根據商家編號取得廣告 ---------
-from django.http import JsonResponse
-from .models import StoreAll, StoreAd
-
 def get_store_ad(request):
     st_id = request.GET.get('st_id')
     if not st_id:
         return JsonResponse({'error': 'st_id is required'}, status=400)
 
     try:
-        st_id = int(st_id)  # 轉成整數
-    except ValueError:
-        return JsonResponse({'error': 'st_id must be an integer'}, status=400)
-
-    try:
         store = StoreAll.objects.get(st_id=st_id)
-    except StoreAll.DoesNotExist:
-        return JsonResponse({
-            'ad_content': '',
-            'images': [],
-            'ad_radius': 200,
-            'enabled': True,
-            'status': None,
-        })
-
-    try:
         ad = StoreAd.objects.get(st=store)
         images = [img.image_url for img in ad.images.all()]
+
         return JsonResponse({
             'ad_content': ad.ad_content,
             'images': images,
@@ -3968,7 +3951,7 @@ def get_store_ad(request):
             'enabled': ad.enabled,
             'status': ad.status,
         })
-    except StoreAd.DoesNotExist:
+    except (StoreAll.DoesNotExist, StoreAd.DoesNotExist):
         return JsonResponse({
             'ad_content': '',
             'images': [],
@@ -3976,6 +3959,8 @@ def get_store_ad(request):
             'enabled': True,
             'status': None,
         })
+
+
 
 
 # ------------------審核廣告--------------------
