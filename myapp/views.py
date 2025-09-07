@@ -3934,24 +3934,20 @@ def upload_store_ad(request):
 
 
 # --------- API: 根據商家編號取得廣告 ---------
+
+from django.shortcuts import get_object_or_404
+from django.http import JsonResponse
+from .models import StoreAll, StoreAd
+
 def get_store_ad(request):
     st_id = request.GET.get('st_id')
     if not st_id:
         return JsonResponse({'error': 'st_id is required'}, status=400)
 
     try:
+        # 先取得商家
         store = StoreAll.objects.get(st_id=st_id)
-        ad = StoreAd.objects.get(st=store)
-        images = [img.image_url for img in ad.images.all()]
-
-        return JsonResponse({
-            'ad_content': ad.ad_content,
-            'images': images,
-            'ad_radius': ad.ad_radius,
-            'enabled': ad.enabled,
-            'status': ad.status,
-        })
-    except (StoreAll.DoesNotExist, StoreAd.DoesNotExist):
+    except StoreAll.DoesNotExist:
         return JsonResponse({
             'ad_content': '',
             'images': [],
@@ -3960,6 +3956,26 @@ def get_store_ad(request):
             'status': None,
         })
 
+    try:
+        # 嘗試取得廣告
+        ad = StoreAd.objects.get(st=store)
+        images = [img.image_url for img in ad.images.all()] if hasattr(ad, 'images') else []
+        return JsonResponse({
+            'ad_content': ad.ad_content or '',
+            'images': images,
+            'ad_radius': ad.ad_radius,
+            'enabled': ad.enabled,
+            'status': ad.status,  # pending / approved / rejected
+        })
+    except StoreAd.DoesNotExist:
+        # 如果商家沒有廣告
+        return JsonResponse({
+            'ad_content': '',
+            'images': [],
+            'ad_radius': 200,
+            'enabled': True,
+            'status': None,
+        })
 
 
 
@@ -3980,3 +3996,44 @@ def review_store_ad(request, st_id, action):
         ad.enabled = False
     ad.save()
     return redirect('admin_review_ads')
+
+# views.py
+from django.http import JsonResponse
+from .models import StoreAll, StoreAd
+
+def stores_with_ads(request):
+    try:
+        stores = StoreAll.objects.all()
+        result = []
+
+        for store in stores:
+            ad_data = {
+                'st_id': store.st_id,
+                'store_name': store.store_name,
+                'ad_content': '',
+                'ad_radius': 200,
+                'enabled': True,
+                'status': None,
+                'images': []
+            }
+
+            try:
+                ad = StoreAd.objects.get(st=store)
+                ad_data.update({
+                    'ad_content': ad.ad_content or '',
+                    'ad_radius': ad.ad_radius or 200,
+                    'enabled': ad.enabled,
+                    'status': ad.status,
+                    'images': [img.image_url for img in getattr(ad, 'images').all()] if hasattr(ad, 'images') else []
+                })
+            except StoreAd.DoesNotExist:
+                # 商家沒有廣告，保留預設值
+                pass
+
+            result.append(ad_data)
+
+        return JsonResponse(result, safe=False)
+    
+    except Exception as e:
+        # 任何其他錯誤都會被捕捉，避免 500
+        return JsonResponse({'error': str(e)}, status=500)

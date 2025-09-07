@@ -147,6 +147,8 @@ urlpatterns = [
     path('store/upload-ad/', views.upload_store_ad, name='upload_store_ad'),  #商家廣告
     path('upload_store_ad/', views.upload_store_ad, name='upload_store_ad'),#商家廣告
     path('get_store_ad', views.get_store_ad, name='get_store_ad'),
+    path('api/get_store_ad/', views.get_store_ad, name='get_store_ad'),      # JS fetch 呼叫 API
+
 
     path('profile/', views.profile, name='profile'),
 
@@ -204,7 +206,6 @@ urlpatterns = [
     path('store/judge/<str:st_id>/', views.store_judge_view, name='store_judge_view'),
     path('store/reject/<str:st_id>/', views.store_step2_view, name='store_step2'),   #商家幾天
     # path('send-email/', views.admin_send_email, name='admin_send_email'), #事件拒絕後跳轉頁面
-    path('upload_store_ad/', views.upload_store_ad, name='upload_store_ad'),
     path('admin_review_ads/', views.admin_review_ads, name='admin_review_ads'),
     path('review_store_ad/<int:st_id>/<str:action>/', views.review_store_ad, name='review_store_ad'),    #廣告審核
 
