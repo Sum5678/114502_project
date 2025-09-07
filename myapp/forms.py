@@ -38,11 +38,11 @@ class ThisUserProfileForm(forms.ModelForm):
         }
 
 
+# forms.py
 from django import forms
 from .models import StoreAd
 
 class StoreAdForm(forms.ModelForm):
-    # st_id 從表單輸入，但不放到 Meta.fields
     st_id = forms.IntegerField(label="商家編號")  
 
     class Meta:
