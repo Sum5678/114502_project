@@ -3,129 +3,105 @@
 <html lang="zh-Hant">
 
 <head>
-  <meta charset="utf-8">
-  <meta content="width=device-width, initial-scale=1.0" name="viewport">
-  <title>上傳廣告</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>上傳廣告</title>
 
-  <!-- Favicons -->
-  <link href="{% static 'assets/img/favicon.png' %}" rel="icon">
-  <link href="{% static 'assets/img/apple-touch-icon.png' %}" rel="apple-touch-icon">
+<link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+<link href="{% static 'assets/css/main.css' %}" rel="stylesheet">
 
-  <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700|Nunito:300,400,600,700,800|Poppins:300,400,500,600,700" rel="stylesheet">
-
-  <!-- Vendor CSS -->
-  <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
-  <link href="{% static 'assets/vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet">
-  <link href="{% static 'assets/vendor/boxicons/css/boxicons.min.css' %}" rel="stylesheet">
-  <link href="{% static 'assets/css/main.css' %}" rel="stylesheet">
-
-  <style>
-    .upload-ad-section {
-      padding: 60px 20px;
-      background-color: #f8f9fa;
-    }
-    .upload-ad-card {
-      max-width: 700px;
-      margin: auto;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-    .upload-ad-card h2 {
-      font-weight: 600;
-      color: #2c3e50;
-      margin-bottom: 20px;
-    }
-    .btn-primary {
-      background-color: #63b3ed;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 8px;
-      transition: 0.3s;
-    }
-    .btn-primary:hover {
-      background-color: #4299e1;
-    }
-    .carousel-item img {
-      max-height: 300px;
-      object-fit: cover;
-    }
-  </style>
+<style>
+.upload-ad-section { padding: 60px 20px; background-color: #f8f9fa; }
+.upload-ad-card { max-width: 700px; margin: auto; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);}
+.upload-ad-card h2 { font-weight: 600; color: #2c3e50; margin-bottom: 20px;}
+.btn-primary { background-color: #63b3ed; border: none; padding: 10px 20px; border-radius: 8px; transition: 0.3s;}
+.btn-primary:hover { background-color: #4299e1;}
+.carousel-item img { max-height: 300px; object-fit: cover; width: 100%;}
+</style>
 </head>
 
-<body class="index-page">
+<body>
 
-  <!-- Header -->
-  <header id="header" class="header d-flex align-items-center fixed-top">
-    <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
-      <a href="index.html" class="logo d-flex align-items-center me-auto me-xl-0">
-        <h1 class="sitename">怪怪走開，護您安全</h1>
-      </a>
-      <nav id="navmenu" class="navmenu">
-        <ul>
-          <li><a href="{% url 'home' %}#hero">主頁</a></li>
-          <li><a href="{% url 'report' %}">填寫表單</a></li>
-          <li><a href="{% url 'business_upload' %}">商家填單</a></li>
-          <li><a href="{% url 'upload_store_ad' %}">商家廣告</a></li>
-        </ul>
-        <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
-      </nav>
-      {% if request.user.is_authenticated %}
-      <div class="dropdown">
-        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown"
-           style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
-          {{ request.user.username }}
-        </a>
-        <ul class="dropdown-menu dropdown-menu-end">
-          <li><a class="dropdown-item" href="{% url '01_userlogin_out' %}">登出</a></li>
-        </ul>
-      </div>
-      {% else %}
-      <div class="dropdown">
-        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown"
-           style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
-          登入
-        </a>
-        <ul class="dropdown-menu dropdown-menu-end">
-          <li><a class="dropdown-item" href="{% url 'userlogin' %}">一般使用者登入</a></li>
-          <li><a class="dropdown-item" href="{% url 'admin_login' %}">管理員登入</a></li>
-        </ul>
-      </div>
-      {% endif %}
-    </div>
-  </header>
+<main class="main">
+<section class="upload-ad-section">
+<div class="container">
+<div class="card upload-ad-card p-4">
+<h2 class="text-center">上傳廣告</h2>
 
-  <!-- Main -->
-  <main class="main">
-    <section class="upload-ad-section">
-      <div class="container">
-        <div class="card upload-ad-card p-4">
-          <h2 class="text-center">上傳廣告</h2>
-          
-          <form method="post" enctype="multipart/form-data">
-              {% csrf_token %}
-              {{ form.as_p }}
-
-              <label for="images">廣告圖片 (可多選)</label>
-              <input type="file" name="images" id="images" multiple>
-
-              <button type="submit" class="btn btn-primary mt-3">儲存廣告</button>
-          </form>
-
-
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    
+    <label for="st_id">商家編號</label>
+    <input type="number" name="st_id" id="st_id" class="form-control" placeholder="輸入商家編號">
+    
+    <label for="ad_content">廣告文字</label>
+    <textarea name="ad_content" id="ad_content" class="form-control" rows="3"></textarea>
+    
+    <label>現有廣告圖片</label>
+    <div id="current_images" class="carousel slide mb-3" data-bs-ride="carousel">
+        <div class="carousel-inner" id="carousel_inner">
+            <!-- JS動態生成 -->
         </div>
-      </div>
-    </section>
-  </main>
-
-  <!-- Footer -->
-  <footer id="footer" class="footer position-relative light-background">
-    <div class="container text-center">
-      <p>© 2025 怪怪走開 | All Rights Reserved</p>
+        <button class="carousel-control-prev" type="button" data-bs-target="#current_images" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon"></span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#current_images" data-bs-slide="next">
+            <span class="carousel-control-next-icon"></span>
+        </button>
     </div>
-  </footer>
+    
+    <label for="images">上傳新圖片 (可多選)</label>
+    <input type="file" name="images" id="images" multiple>
+    
+    <label for="ad_radius">觸發距離(公尺)</label>
+    <input type="number" name="ad_radius" id="ad_radius" class="form-control" min="1">
 
-  <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
-  <script src="{% static 'assets/js/main.js' %}"></script>
+    <label for="enabled">啟用</label>
+    <input type="checkbox" name="enabled" id="enabled">
+
+    <button type="submit" class="btn btn-primary mt-3">儲存廣告</button>
+</form>
+
+</div>
+</div>
+</section>
+</main>
+
+<script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+<script>
+// 輸入商家編號後自動載入廣告
+document.getElementById('st_id').addEventListener('blur', function() {
+    const st_id = this.value;
+    if (!st_id) return;
+
+    fetch(`/api/get_store_ad/?st_id=${st_id}`)
+    .then(res => res.json())
+    .then(data => {
+        document.getElementById('ad_content').value = data.ad_content || '';
+        document.getElementById('ad_radius').value = data.ad_radius || 200;
+        document.getElementById('enabled').checked = data.enabled;
+
+        const carouselInner = document.getElementById('carousel_inner');
+        carouselInner.innerHTML = '';
+
+        if (data.images.length > 0) {
+            data.images.forEach((url, idx) => {
+                const div = document.createElement('div');
+                div.classList.add('carousel-item');
+                if (idx===0) div.classList.add('active');
+                const img = document.createElement('img');
+                img.src = url;
+                div.appendChild(img);
+                carouselInner.appendChild(div);
+            });
+        } else {
+            const div = document.createElement('div');
+            div.classList.add('carousel-item','active');
+            div.innerHTML = '<div style="height:300px; background:#eee;" class="d-flex justify-content-center align-items-center">無廣告圖片</div>';
+            carouselInner.appendChild(div);
+        }
+    });
+});
+</script>
 </body>
 </html>
