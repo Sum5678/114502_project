@@ -3901,21 +3901,19 @@ def upload_store_ad(request):
                 form.add_error('st_id', '找不到此商家編號')
                 return render(request, 'store_upload_ad.html', {'form': form})
 
-            # 如果已有廣告，就覆蓋
-            ad, created = StoreAd.objects.get_or_create(st_id=store.st_id)
+            # ✅ 直接取代 get_or_create
+            try:
+                ad = StoreAd.objects.get(st_id=store.st_id)
+            except StoreAd.DoesNotExist:
+                ad = StoreAd(st_id=store.st_id)
+
             ad.ad_content = form.cleaned_data['ad_content']
             ad.ad_radius = form.cleaned_data['ad_radius']
             ad.enabled = form.cleaned_data['enabled']
             ad.save()
 
-            # 先刪掉舊的圖片
-            old_images = ad.images.all()
-            for img in old_images:
-                # 刪檔案
-                img_path = os.path.join(settings.BASE_DIR, img.image_url.strip("/"))
-                if os.path.exists(img_path):
-                    os.remove(img_path)
-                img.delete()
+            # 先刪掉舊圖片
+            ad.images.all().delete()
 
             # 儲存新圖片
             for img_file in request.FILES.getlist('images'):
