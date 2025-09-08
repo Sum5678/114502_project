@@ -3856,50 +3856,40 @@ def public_profile(request, gmail):
 # --------商家廣告-------s
 from django.shortcuts import render, redirect, get_object_or_404
 from django.conf import settings
-from django.http import JsonResponse
 from .models import StoreAll, StoreAd, StoreAdImage
 from .forms import StoreAdForm
 import os
 
-# 上傳廣告
 def upload_store_ad(request):
     if request.method == 'POST':
         form = StoreAdForm(request.POST)
         if form.is_valid():
             st_id = form.cleaned_data['st_id']
 
+            # 取得商家
             try:
                 store = StoreAll.objects.get(st_id=st_id)
             except StoreAll.DoesNotExist:
                 form.add_error('st_id', '找不到此商家編號')
                 return render(request, 'store_upload_ad.html', {'form': form})
 
-            # 取得廣告，如果已批准，商家不能改
-            ad = None
-            try:
-                ad = StoreAd.objects.get(st=store)
-                if ad.status == 'approved':
-                    form.add_error(None, '廣告已批准，無法修改')
-                    return render(request, 'store_upload_ad.html', {'form': form})
-            except StoreAd.DoesNotExist:
-                pass
+            # 建立或更新廣告
+            ad, created = StoreAd.objects.get_or_create(
+                st=store,
+                defaults={
+                    'ad_content': form.cleaned_data['ad_content'],
+                    'ad_radius': form.cleaned_data['ad_radius'],
+                    'enabled': form.cleaned_data['enabled'],
+                    'status': 'pending',
+                }
+            )
 
-            # 如果廣告不存在，建立新廣告
-            if not ad:
-                ad = StoreAd.objects.create(
-                    st=store,
-                    status='pending',
-                    ad_content=form.cleaned_data['ad_content'],
-                    ad_radius=form.cleaned_data['ad_radius'],
-                    enabled=form.cleaned_data['enabled']
-                )
-            else:
-                # 更新欄位，不覆蓋空白文字
-                if form.cleaned_data['ad_content']:
-                    ad.ad_content = form.cleaned_data['ad_content']
+            if not created:
+                # 更新廣告欄位
+                ad.ad_content = form.cleaned_data['ad_content'] or ad.ad_content
                 ad.ad_radius = form.cleaned_data['ad_radius']
                 ad.enabled = form.cleaned_data['enabled']
-                ad.status = 'pending'
+                ad.status = 'pending'  # 更新後自動送審
                 ad.save()
 
             # 刪除舊圖片
@@ -3980,27 +3970,26 @@ def get_store_ad(request):
 
 
 # ------------------審核廣告--------------------
-# 管理員審核廣告
+# 顯示所有待審核廣告
 def admin_review_ads(request):
     ads = StoreAd.objects.filter(status='pending')
     return render(request, 'admin_review_ads.html', {'ads': ads})
 
-
+# 審核單一廣告
+@admin_login_required
 def review_store_ad(request, st_id, action):
-    ad = get_object_or_404(StoreAd, st__st_id=st_id)
-    if action == 'approve':
-        ad.status = 'approved'
-        ad.enabled = True
-    elif action == 'reject':
-        ad.status = 'rejected'
-        ad.enabled = False
+    ad = get_object_or_404(StoreAd, pk=st_id)
+
+    if action == "approve":
+        ad.status = "approved"
+    elif action == "reject":
+        ad.status = "rejected"
+
     ad.save()
-    return redirect('admin_review_ads')
+    return redirect("admin_review_ads")
 
-# views.py
-from django.http import JsonResponse
-from .models import StoreAll, StoreAd
 
+# API: 取得商家廣告
 def stores_with_ads(request):
     try:
         stores = StoreAll.objects.all()
@@ -4024,16 +4013,19 @@ def stores_with_ads(request):
                     'ad_radius': ad.ad_radius or 200,
                     'enabled': ad.enabled,
                     'status': ad.status,
-                    'images': [img.image_url for img in getattr(ad, 'images').all()] if hasattr(ad, 'images') else []
+                    'images': [img.image_url for img in ad.images.all()]
                 })
             except StoreAd.DoesNotExist:
-                # 商家沒有廣告，保留預設值
                 pass
 
             result.append(ad_data)
 
         return JsonResponse(result, safe=False)
-    
+
     except Exception as e:
-        # 任何其他錯誤都會被捕捉，避免 500
         return JsonResponse({'error': str(e)}, status=500)
+
+
+# 頁面：上傳廣告
+def upload_ad_page(request):
+    return render(request, "store_upload_ad.html")
