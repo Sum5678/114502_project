@@ -83,10 +83,10 @@ document.getElementById('st_id').addEventListener('blur', function() {
             return res.json();
         })
         .then(data => {
-            // 廣告文字
+            // 更新廣告文字
             document.getElementById('ad_content').value = data.ad_content || '';
 
-            // 廣告狀態
+            // 更新廣告狀態
             const statusMap = {
                 'pending': '待審核',
                 'approved': '已批准',
@@ -95,7 +95,7 @@ document.getElementById('st_id').addEventListener('blur', function() {
             };
             document.getElementById('ad_status').value = statusMap[data.status];
 
-            // 載入圖片
+            // 更新圖片輪播
             const carouselInner = document.getElementById('carousel_inner');
             carouselInner.innerHTML = '';
 
@@ -119,7 +119,7 @@ document.getElementById('st_id').addEventListener('blur', function() {
         })
         .catch(err => {
             console.error('載入廣告失敗', err);
-            // 若抓不到廣告，清空欄位
+            // 清空欄位與圖片
             document.getElementById('ad_content').value = '';
             document.getElementById('ad_status').value = '尚未提交廣告';
             document.getElementById('carousel_inner').innerHTML =
@@ -127,6 +127,7 @@ document.getElementById('st_id').addEventListener('blur', function() {
         });
 });
 </script>
+
 
 </body>
 </html>
