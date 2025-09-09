@@ -1,14 +1,13 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from .models import TaiwanRegion, PoliceAddress #資料表的
+from .models import TaiwanRegion, PoliceAddress, PemapAll, StoreAll#資料表的
 from django.views.decorators.http import require_GET
 from django.http import JsonResponse, HttpResponse
 from .forms import AutoDialForm
 from django.views.decorators.csrf import csrf_exempt
-from .models import PemapAll
-from .models import StoreAll
 from django.utils import timezone
 import json
 from datetime import datetime
+from .utils import get_unreviewed_counts  
 
 
 def report_view(request):
@@ -98,7 +97,11 @@ def education_page(request):
 @admin_login_required
 def education_list(request):
     pages = EducationPage.objects.all()
-    return render(request, 'education_list.html', {'pages': pages})
+    context = {
+        'pages': pages,
+    }
+    context.update(get_unreviewed_counts())
+    return render(request, 'education_list.html', context)
 
 @admin_login_required
 def education_create(request):
@@ -109,7 +112,12 @@ def education_create(request):
             return redirect('education_list')
     else:
         form = EducationPageUploadForm()
-    return render(request, 'education_form.html', {'form': form})
+
+    context = {
+        'form': form,
+    }
+    context.update(get_unreviewed_counts())
+    return render(request, 'education_form.html', context)
 
 @admin_login_required
 def education_update(request, pk):
@@ -121,7 +129,11 @@ def education_update(request, pk):
             return redirect('education_list')
     else:
         form = EducationPageUploadForm(instance=page)
-    return render(request, 'education_form.html', {'form': form})
+    context = {
+        'form': form,
+    }
+    context.update(get_unreviewed_counts())
+    return render(request, 'education_form.html', context)
 
 # 顯示確認刪除畫面
 def education_delete_confirm(request, pk):
