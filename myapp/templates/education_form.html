@@ -56,13 +56,24 @@
         <ul>
           <li><a href="{% url 'admin_index' %}#hero" class="active">管理員主頁</a></li>
           <li><a href="{% url 'admin_interview' %}">管理員自我介紹</a></li>
-          <!-- <li><a href="{% url 'show_judge_page' %}">審核表單</a></li> -->
-          <!-- <li><a href="{% url 'pemap_judge' %}">事件清單審核</a></li> -->
           
           <li class="dropdown"><a href="#"><span>清單審核</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
             <ul>
-              <li><a href="{% url 'pemap_judge' %}">事件清單審核</a></li>
-              <li><a href="{% url 'store_judge' %}">商家清單審核</a></li>
+              <li><a href="{% url 'pemap_judge' %}">事件清單審核
+                {% if unreviewed_events_count > 0 %}
+                  <span class="badge bg-danger ms-2">{{ unreviewed_events_count }}</span>
+                {% endif %}
+              </a></li>
+              <li><a href="{% url 'store_judge' %}">商家清單審核
+                {% if unreviewed_stores_count > 0 %}
+                  <span class="badge bg-danger ms-2">{{ unreviewed_stores_count }}</span>
+                {% endif %}
+              </a></li>
+              <li><a href="{% url 'review_reports' %}">交流區檢舉清單
+                {% if unreviewed_review_count > 0 %}
+                  <span class="badge bg-danger ms-2">{{ unreviewed_review_count }}</span>
+                {% endif %}
+              </a></li>
             </ul> 
           </li>
           

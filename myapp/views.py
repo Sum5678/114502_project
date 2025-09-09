@@ -112,7 +112,12 @@ def education_create(request):
             return redirect('education_list')
     else:
         form = EducationPageUploadForm()
-    return render(request, 'education_form.html', {'form': form})
+
+    context = {
+        'form': form,
+    }
+    context.update(get_unreviewed_counts())
+    return render(request, 'education_form.html', context)
 
 @admin_login_required
 def education_update(request, pk):
@@ -124,7 +129,11 @@ def education_update(request, pk):
             return redirect('education_list')
     else:
         form = EducationPageUploadForm(instance=page)
-    return render(request, 'education_form.html', {'form': form})
+    context = {
+        'form': form,
+    }
+    context.update(get_unreviewed_counts())
+    return render(request, 'education_form.html', context)
 
 # 顯示確認刪除畫面
 def education_delete_confirm(request, pk):
