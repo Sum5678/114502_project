@@ -3857,12 +3857,11 @@ def public_profile(request, gmail):
 
 
 # --------商家廣告-------s
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.conf import settings
 from .models import StoreAll, StoreAd, StoreAdImage
 from .forms import StoreAdForm
 import os
-
 
 def upload_store_ad(request):
     if request.method == 'POST':
@@ -3870,27 +3869,33 @@ def upload_store_ad(request):
         if form.is_valid():
             st_id = form.cleaned_data['st_id']
 
-            # 確認商家存在
+            # 取得商家
             try:
                 store = StoreAll.objects.get(st_id=st_id)
             except StoreAll.DoesNotExist:
                 form.add_error('st_id', '找不到此商家編號')
                 return render(request, 'store_upload_ad.html', {'form': form})
 
-            # 🚀 強制轉 int (因為 StoreAd.st_id 是 IntegerField)
-            store_ad_id = int(store.st_id)
-
-            # ✅ 更新或新增廣告
-            ad, created = StoreAd.objects.update_or_create(
-                st_id=store_ad_id,
+            # 建立或更新廣告
+            ad, created = StoreAd.objects.get_or_create(
+                st=store,
                 defaults={
                     'ad_content': form.cleaned_data['ad_content'],
                     'ad_radius': form.cleaned_data['ad_radius'],
                     'enabled': form.cleaned_data['enabled'],
+                    'status': 'pending',
                 }
             )
 
-            # 先刪掉舊的圖片
+            if not created:
+                # 更新廣告欄位
+                ad.ad_content = form.cleaned_data['ad_content'] or ad.ad_content
+                ad.ad_radius = form.cleaned_data['ad_radius']
+                ad.enabled = form.cleaned_data['enabled']
+                ad.status = 'pending'  # 更新後自動送審
+                ad.save()
+
+            # 刪除舊圖片
             old_images = ad.images.all()
             for img in old_images:
                 img_path = os.path.join(settings.BASE_DIR, img.image_url.strip("/"))
@@ -3914,9 +3919,116 @@ def upload_store_ad(request):
                 )
 
             return redirect('store_map')
+
     else:
         form = StoreAdForm()
 
     return render(request, 'store_upload_ad.html', {'form': form})
 
 
+# --------- API: 根據商家編號取得廣告 ---------
+
+from django.shortcuts import get_object_or_404
+from django.http import JsonResponse
+from .models import StoreAll, StoreAd
+
+def get_store_ad(request):
+    st_id = request.GET.get('st_id')
+    if not st_id:
+        return JsonResponse({'error': 'st_id is required'}, status=400)
+
+    try:
+        # 先取得商家
+        store = StoreAll.objects.get(st_id=st_id)
+    except StoreAll.DoesNotExist:
+        return JsonResponse({
+            'ad_content': '',
+            'images': [],
+            'ad_radius': 200,
+            'enabled': True,
+            'status': None,
+        })
+
+    try:
+        # 嘗試取得廣告
+        ad = StoreAd.objects.get(st=store)
+        images = [img.image_url for img in ad.images.all()] if hasattr(ad, 'images') else []
+        return JsonResponse({
+            'ad_content': ad.ad_content or '',
+            'images': images,
+            'ad_radius': ad.ad_radius,
+            'enabled': ad.enabled,
+            'status': ad.status,  # pending / approved / rejected
+        })
+    except StoreAd.DoesNotExist:
+        # 如果商家沒有廣告
+        return JsonResponse({
+            'ad_content': '',
+            'images': [],
+            'ad_radius': 200,
+            'enabled': True,
+            'status': None,
+        })
+
+
+
+# ------------------審核廣告--------------------
+# 顯示所有待審核廣告
+def admin_review_ads(request):
+    ads = StoreAd.objects.filter(status='pending')
+    return render(request, 'admin_review_ads.html', {'ads': ads})
+
+# 審核單一廣告
+@admin_login_required
+def review_store_ad(request, st_id, action):
+    ad = get_object_or_404(StoreAd, pk=st_id)
+
+    if action == "approve":
+        ad.status = "approved"
+    elif action == "reject":
+        ad.status = "rejected"
+
+    ad.save()
+    return redirect("admin_review_ads")
+
+
+# API: 取得商家廣告
+def stores_with_ads(request):
+    try:
+        stores = StoreAll.objects.all()
+        result = []
+
+        for store in stores:
+            ad_data = {
+                'st_id': store.st_id,
+                'store_name': store.store_name,
+                'ad_content': '',
+                'ad_radius': 200,
+                'enabled': True,
+                'status': None,
+                'images': []
+            }
+
+            try:
+                ad = StoreAd.objects.get(st=store)
+                ad_data.update({
+                    'ad_content': ad.ad_content or '',
+                    'ad_radius': ad.ad_radius or 200,
+                    'enabled': ad.enabled,
+                    'status': ad.status,
+                    'images': [img.image_url for img in ad.images.all()]
+                })
+            except StoreAd.DoesNotExist:
+                pass
+
+            result.append(ad_data)
+
+        return JsonResponse(result, safe=False)
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+# 頁面：上傳廣告
+def upload_ad_page(request):
+    return render(request, "store_upload_ad.html")
