@@ -171,15 +171,19 @@
   <div class="container">
     <div class="row gy-4">
 
-      <div class="col-lg-6" data-aos="fade-up" data-aos-delay="100">
+   <div class="col-lg-6" data-aos="fade-up" data-aos-delay="100">
         <div class="service-item d-flex">
           <div class="icon flex-shrink-0"><i class="ri-chat-3-line"></i></div>
           <div>
-            <h4 class="title">聊天室</h4>
+            <h4 class="title">
+              <a href="{% url 'chatroom_page' %}" class="stretched-link" style="text-decoration: none; color: inherit;">聊天室</a>
+            </h4>
             <p class="description">提供即時聊天功能，供使用者回報事件與其他用戶互動。</p>
           </div>
         </div>
       </div>
+
+
 
       <div class="col-lg-6" data-aos="fade-up" data-aos-delay="200">
           <div class="service-item d-flex">
