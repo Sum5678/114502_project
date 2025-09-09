@@ -1664,6 +1664,7 @@ def admin_logout(request):
 #     return render(request, 'pemap_judge.html', {'data': all_data})
 from django.shortcuts import render, redirect
 from .models import PemapAll, Admins
+from .utils import get_unreviewed_counts
 
 def pemap_judge(request):
     admin_id = request.session.get('admin_id')
@@ -1674,11 +1675,13 @@ def pemap_judge(request):
 
     all_data = PemapAll.objects.all().order_by('-time_created')  # 最新的在上
 
-    return render(request, 'pemap_judge.html', {
+    context = {
         'data': all_data,
         'admin_id': admin_id,
         'admin_name': admin_name,
-    })
+    }
+    context.update(get_unreviewed_counts())
+    return render(request, 'pemap_judge.html',context )
 
 
 
