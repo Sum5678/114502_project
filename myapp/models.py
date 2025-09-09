@@ -182,28 +182,7 @@ class PemapAll(models.Model):
 
     class Meta:
         db_table = 'pemap_all'
-#-----------------------------------store----------------------------------------------------------
-from django.contrib.auth.models import User
-class StoreAll(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    st_id = models.CharField(max_length=50, primary_key=True)
-    poster_id = models.CharField(max_length=255, blank=True)
-    store_name = models.CharField(max_length=100)
-    address = models.CharField(max_length=255, default="尚未提供")
-    latitude = models.FloatField()
-    longitude = models.FloatField()
-    business_hours = models.CharField(max_length=50)
-    phone = models.CharField(max_length=20)
-    created_at = models.DateTimeField(auto_now_add=True)
-    reviewed_at = models.DateTimeField(null=True, blank=True)
-    review_status = models.CharField(max_length=20, default='pending')  # 審核狀態（預設 pending）
-    admin_id = models.IntegerField(default=99999)
-    poster_gmail = models.EmailField(max_length=255, null=True, blank=True)
 
-
-
-    class Meta:
-        db_table = 'store_all'  # << 指定實際的 MySQL 資料表名稱
 
 
 #-------------------登入資料----------------------------------------------
@@ -389,19 +368,56 @@ class FavoriteChatRoom(models.Model):
 
 
 # ----------------商家廣告--------------------
-from django.db import models
+
+class StoreAll(models.Model):
+    st_id = models.AutoField(primary_key=True)
+    poster_id = models.IntegerField(blank=True, null=True)
+    store_name = models.CharField(max_length=255)
+    address = models.CharField(max_length=255)
+    latitude = models.FloatField(blank=True, null=True)
+    longitude = models.FloatField(blank=True, null=True)
+    business_hours = models.CharField(max_length=100)
+    phone = models.CharField(max_length=20)
+    created_at = models.DateTimeField(auto_now_add=True)
+    reviewed_at = models.DateTimeField(blank=True, null=True)
+    review_status = models.CharField(max_length=50, default='unreviewed')
+    admin_id = models.IntegerField()
+    user_id = models.IntegerField()
+    poster_gmail = models.CharField(max_length=255, blank=True, null=True)
+
+    class Meta:
+        managed = False  # 已經有 SQL 建表
+        db_table = 'store_all'
+
 
 class StoreAd(models.Model):
-    st_id = models.IntegerField(primary_key=True)
+    st = models.OneToOneField(
+        StoreAll,
+        on_delete=models.CASCADE,
+        db_column='st_id',
+        primary_key=True,
+        related_name='ad'
+    )
     ad_content = models.TextField(blank=True, null=True)
     ad_radius = models.IntegerField(default=10)
     enabled = models.BooleanField(default=True)
-    created_at = models.DateTimeField()
-    updated_at = models.DateTimeField()
+    
+    STATUS_CHOICES = [
+        ('pending', '待審核'),
+        ('approved', '已批准'),
+        ('rejected', '已拒絕'),
+    ]
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='pending'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        managed = False
         db_table = 'store_ad'
-        managed = False  # Django 不會建立或修改這張表
 
 
 class StoreAdImage(models.Model):
@@ -413,6 +429,8 @@ class StoreAdImage(models.Model):
     class Meta:
         db_table = "store_ad_image"
         managed = False
+
+
 
 
 

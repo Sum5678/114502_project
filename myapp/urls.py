@@ -144,7 +144,15 @@ urlpatterns = [
     path('user_data/', views.user_data_view, name='user_data'),  #   非第一次登入看資料頁
     path("user/<int:pk>/", views.public_profile, name="public_profile"), #給別人看的
     path('public_profile/gmail/<str:gmail>/', views.public_profile, name='public_profile'),#給別人看的
-    path('store/upload-ad/', views.upload_store_ad, name='upload_store_ad'),  #商家廣告
+    # 商家廣告：上傳處理
+    path("store/upload-ad/", views.upload_store_ad, name="upload_store_ad"),
+    # 商家廣告：上傳頁面
+    path("store/upload-ad-page/", views.upload_ad_page, name="upload_store_ad_page"),
+    # API
+    path("api/get_store_ad/", views.get_store_ad, name="api_get_store_ad"),
+    path("/api/stores-with-ads/", views.stores_with_ads, name="stores_with_ads"),
+
+
 
     path('profile/', views.profile, name='profile'),
 
@@ -163,6 +171,7 @@ urlpatterns = [
     # path('api/reports_with_subkind/', views.reports_with_subkind_json, name='reports_with_subkind_json'),
     path('api/reports_with_subkind_json/', views.reports_with_subkind_json, name='reports_with_subkind_json'),
     path('api/stores-with-ads/', views.stores_with_ads_api, name='stores_with_ads_api'),
+    path('api/get_store_ad/', views.get_store_ad, name='get_store_ad'),
 
     path('api/chatrooms/', views.chatrooms_api, name='chatrooms_api'),
     path('chatrooms_api/', views.chatrooms_api, name='chatrooms_api'),
@@ -201,6 +210,11 @@ urlpatterns = [
     path('store/judge/<str:st_id>/', views.store_judge_view, name='store_judge_view'),
     path('store/reject/<str:st_id>/', views.store_step2_view, name='store_step2'),   #商家幾天
     # path('send-email/', views.admin_send_email, name='admin_send_email'), #事件拒絕後跳轉頁面
+    path("adminad/review-ads/", views.admin_review_ads, name="admin_review_ads"),
+    path("adminad/review-ads/<int:st_id>/<str:action>/", views.review_store_ad, name="review_store_ad"),  #廣告審核
+
+
+
     # urls.py
     path('send-email/<int:p_id>/', views.admin_send_email, name='admin_send_email'), 
 

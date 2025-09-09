@@ -38,24 +38,17 @@ class ThisUserProfileForm(forms.ModelForm):
         }
 
 
-
-
+# forms.py
 from django import forms
 from .models import StoreAd
 
 class StoreAdForm(forms.ModelForm):
-    st_id = forms.IntegerField(label="商家編號")  # 額外輸入商家編號
-    ad_content = forms.CharField(
-        widget=forms.Textarea(attrs={'rows': 3, 'placeholder': '請輸入廣告內容'}),
-        required=False
-    )
-    ad_radius = forms.IntegerField(
-        min_value=1,
-        widget=forms.NumberInput(attrs={'placeholder': '觸發距離 (公尺)'}),
-        required=False
-    )
-    enabled = forms.BooleanField(required=False, initial=True)
+    st_id = forms.IntegerField(label="商家編號")  
 
     class Meta:
         model = StoreAd
-        fields = ['st_id', 'ad_content', 'ad_radius', 'enabled']
+        fields = ['ad_content', 'ad_radius', 'enabled']  # 不放 st_id
+        widgets = {
+            'ad_content': forms.Textarea(attrs={'rows': 3, 'placeholder': '請輸入廣告內容'}),
+            'ad_radius': forms.NumberInput(attrs={'min': 1, 'placeholder': '觸發距離 (公尺)'}),
+        }
