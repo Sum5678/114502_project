@@ -546,3 +546,56 @@ class AbuseReport(models.Model):
         ]
         verbose_name = "檢舉"
         verbose_name_plural = "檢舉"
+        
+        
+        
+
+# myapp/models.py
+from django.db import models
+from django.conf import settings
+
+class Notification(models.Model):
+    class Type(models.TextChoices):
+        REPORT = 'report', '檢舉'
+        SYSTEM = 'system', '系統'
+        LIKE = 'like', '按讚'
+        COMMENT = 'comment', '留言'
+
+    # 接收者
+    recipient = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='notifications'
+    )
+
+    # 通知類型
+    ntype = models.CharField(
+        max_length=20,
+        choices=Type.choices,
+        default=Type.SYSTEM
+    )
+
+    # 通知標題（主文）
+    title = models.CharField(max_length=120)
+
+    # 通知訊息（補充內容，可空）
+    message = models.TextField(blank=True)
+
+    # 點通知要去的頁面（可空）
+    link_url = models.CharField(max_length=300, blank=True)
+
+    # 是否已讀
+    is_read = models.BooleanField(default=False)
+
+    # 建立時間
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['recipient', 'is_read']),
+            models.Index(fields=['recipient', '-created_at']),
+        ]
+
+    def __str__(self):
+        return f"{self.title} -> {self.recipient}"

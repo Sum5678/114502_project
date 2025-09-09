@@ -295,6 +295,17 @@
                    style="border:none; background-color:#f0faff; color:#033e6b; font-size:15px;">
             <input type="hidden" name="sort" value="{{ request.GET.sort|default:'desc' }}">
             <button type="submit" class="btn" style="background-color:#63b3ed; color:#fff; border:none;">搜尋</button>
+    <!-- 🔔 通知鈴鐺 -->
+    <button class="btn btn-outline-secondary position-relative ms-2" id="notifBell" data-bs-toggle="dropdown" aria-expanded="false">
+      <i class="bi bi-bell"></i>
+      <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notifBadge">0</span>
+    </button>
+    <ul class="dropdown-menu dropdown-menu-end" id="notifDropdown" style="max-height:300px; overflow-y:auto;">
+      <li class="dropdown-header">通知</li>
+      <li><hr class="dropdown-divider"></li>
+      <li class="text-center text-muted">載入中...</li>
+    </ul>
+    
 
             <div id="searchHistory" class="search-history"></div>
           </div>

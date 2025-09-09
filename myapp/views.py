@@ -2123,6 +2123,7 @@ from django.core.paginator import Paginator
 from django.urls import reverse
 from django.utils.datastructures import MultiValueDictKeyError
 from django.contrib import messages
+from .models import Notification
 
 from .models import ChatInteraction, ThisUserProfile
 import json
@@ -2358,6 +2359,29 @@ def _flatten_all_with_parent(comments, user_id_str=None, indent_step_px=20):
         walk(c.get('replies') or [], c, 0)
 
     return items
+
+# ================== 通知功能 ==================
+
+@login_required(login_url='/01userlogin/')
+def notif_dropdown(request):
+    """回傳使用者最近 10 則通知"""
+    notifs = Notification.objects.filter(
+        recipient=request.user
+    ).order_by('-created_at')[:10]
+
+    data = [
+        {
+            "id": n.id,
+            "title": n.title,
+            "message": n.message,
+            "link_url": n.link_url,
+            "is_read": n.is_read,
+            "created_at": n.created_at.strftime("%Y-%m-%d %H:%M"),
+        }
+        for n in notifs
+    ]
+
+    return JsonResponse({"notifications": data})
 
 # ================== 貼文 CRUD / 展示 ==================
 
