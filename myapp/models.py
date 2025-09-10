@@ -431,6 +431,36 @@ class StoreAdImage(models.Model):
         managed = False
 
 
+class StoreAdHistory(models.Model):
+    history_id = models.AutoField(primary_key=True)
+    st = models.ForeignKey(StoreAll, on_delete=models.CASCADE, db_column="st_id", related_name="ad_history")
+    ad_content = models.TextField(blank=True, null=True)
+    ad_radius = models.IntegerField(default=10)
+    enabled = models.BooleanField(default=True)
+    STATUS_CHOICES = [
+        ('pending', '待審核'),
+        ('approved', '已批准'),
+        ('rejected', '已拒絕'),
+    ]
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+    reviewed_at = models.DateTimeField(blank=True, null=True)
+    admin_id = models.IntegerField(blank=True, null=True)
+
+    class Meta:
+        db_table = "store_ad_history"
+        managed = False  # 如果你是自己建表
+
+class StoreAdHistoryImage(models.Model):
+    img_id = models.AutoField(primary_key=True)
+    history = models.ForeignKey(StoreAdHistory, on_delete=models.CASCADE, db_column="history_id", related_name="images")
+    image_url = models.CharField(max_length=500)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "store_ad_history_image"
+        managed = False
+
 
 
 
