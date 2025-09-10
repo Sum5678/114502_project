@@ -116,7 +116,9 @@ urlpatterns = [
     # 交流區檢舉：刪除被檢舉的目標（僅限已處置後）
     path("reports/delete-target/<int:report_id>/", views.delete_report_target, name="delete_report_target"),
     path('notifications/dropdown/', views.notif_dropdown, name='notif_dropdown'),
-
+    path('notifications/unread_count/', views.notif_unread_count, name='notif_unread_count'),
+    path('notifications/dropdown/', views.notif_dropdown, name='notif_dropdown'),
+    path('notifications/mark_all/', views.notif_mark_all, name='notif_mark_all'),
 
 
 
