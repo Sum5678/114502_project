@@ -431,12 +431,14 @@ class StoreAdImage(models.Model):
         managed = False
 
 
+# ----------------商家廣告歷史--------------------
 class StoreAdHistory(models.Model):
     history_id = models.AutoField(primary_key=True)
-    st = models.ForeignKey(StoreAll, on_delete=models.CASCADE, db_column="st_id", related_name="ad_history")
+    st = models.ForeignKey(StoreAll, on_delete=models.CASCADE, related_name='ad_histories')
     ad_content = models.TextField(blank=True, null=True)
     ad_radius = models.IntegerField(default=10)
     enabled = models.BooleanField(default=True)
+    
     STATUS_CHOICES = [
         ('pending', '待審核'),
         ('approved', '已批准'),
@@ -449,7 +451,8 @@ class StoreAdHistory(models.Model):
 
     class Meta:
         db_table = "store_ad_history"
-        managed = False  # 如果你是自己建表
+        managed = False
+
 
 class StoreAdHistoryImage(models.Model):
     img_id = models.AutoField(primary_key=True)

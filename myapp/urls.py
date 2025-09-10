@@ -211,7 +211,8 @@ urlpatterns = [
     path('store/reject/<str:st_id>/', views.store_step2_view, name='store_step2'),   #商家幾天
     # path('send-email/', views.admin_send_email, name='admin_send_email'), #事件拒絕後跳轉頁面
     path("adminad/review-ads/", views.admin_review_ads, name="admin_review_ads"),
-    path("adminad/review-ads/<int:st_id>/<str:action>/", views.review_store_ad, name="review_store_ad"),  #廣告審核
+    # 將 st_id 改為 history_id
+    path("adminad/review-ads/<int:history_id>/<str:action>/", views.review_store_ad, name="review_store_ad"),  #廣告審核
 
 
 
