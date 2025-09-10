@@ -4035,25 +4035,27 @@ def stores_with_ads(request):
         result = []
 
         for store in stores:
+            # 預設沒有廣告
             ad_data = {
                 'st_id': store.st_id,
                 'store_name': store.store_name,
                 'ad_content': '',
                 'ad_radius': 200,
-                'enabled': True,
+                'enabled': False,
                 'status': None,
                 'images': []
             }
 
             try:
                 ad = StoreAd.objects.get(st=store)
-                ad_data.update({
-                    'ad_content': ad.ad_content or '',
-                    'ad_radius': ad.ad_radius or 200,
-                    'enabled': ad.enabled,
-                    'status': ad.status,
-                    'images': [img.image_url for img in ad.images.all()]
-                })
+                if ad.status == "approved":  # ✅ 只允許已批准的廣告
+                    ad_data.update({
+                        'ad_content': ad.ad_content or '',
+                        'ad_radius': ad.ad_radius or 200,
+                        'enabled': ad.enabled,
+                        'status': ad.status,
+                        'images': [img.image_url for img in ad.images.all()]
+                    })
             except StoreAd.DoesNotExist:
                 pass
 
