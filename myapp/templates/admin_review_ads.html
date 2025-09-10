@@ -17,15 +17,17 @@
                 <th>操作</th>
             </tr>
             {% for ad in ads %}
-                <tr>
-                    <td>{{ ad.st.store_name }}</td>
-                    <td>{{ ad.ad_content }}</td>
-                    <td>
-                        <a href="{% url 'review_store_ad' ad.st_id 'approve' %}">✅ 通過</a> |
-                        <a href="{% url 'review_store_ad' ad.st_id 'reject' %}">❌ 拒絕</a>
-                    </td>
-                </tr>
+            <tr>
+                <td>{{ ad.st.store_name }}</td>
+                <td>{{ ad.ad_content }}</td>
+                <td>
+                    <a href="{% url 'review_store_ad' ad.history_id 'approve' %}">✅ 通過</a> |
+                    <a href="{% url 'review_store_ad' ad.history_id 'reject' %}">❌ 拒絕</a>
+
+                </td>
+            </tr>
             {% endfor %}
+
         </table>
     {% else %}
         <p>目前沒有待審核的廣告。</p>
