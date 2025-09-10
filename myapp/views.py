@@ -4000,44 +4000,70 @@ def get_store_ad(request):
 # ------------------審核廣告--------------------
 # 顯示所有待審核廣告
 def admin_review_ads(request):
-    # 從 StoreAdHistory 取得所有 pending
-    ads = StoreAdHistory.objects.filter(status='pending').order_by('-created_at')
+    ads = StoreAdHistory.objects.filter(status='pending').order_by('created_at')
     return render(request, 'admin_review_ads.html', {'ads': ads})
 
+
 # 審核單一廣告
-@admin_login_required
 def review_store_ad(request, history_id, action):
-    # 從 History 表取得要審核的廣告
-    ad_history = get_object_or_404(StoreAdHistory, pk=history_id)
+    ad = get_object_or_404(StoreAdHistory, pk=history_id)
 
     if action == "approve":
-        ad_history.status = "approved"
-        ad_history.reviewed_at = timezone.now()
-        ad_history.save()
+        ad.status = "approved"
+    elif action == "reject":
+        ad.status = "rejected"
 
-        # ✅ 將此版本更新到正式 StoreAd（覆蓋原本 StoreAd）
-        store = ad_history.st
-        ad, created = StoreAd.objects.get_or_create(st=store)
-        ad.ad_content = ad_history.ad_content
-        ad.ad_radius = ad_history.ad_radius
-        ad.enabled = ad_history.enabled
-        ad.status = 'approved'
-        ad.save()
+    ad.save()
+    return redirect("admin_review_ads")
 
-        # 清空原本 StoreAdImage 並儲存新圖片
-        ad.images.all().delete()
-        for img in ad_history.images.all():
-            StoreAdImage.objects.create(
-                st=ad,
-                image_url=img.image_url
+
+
+# 上傳廣告時建立歷史紀錄
+def upload_store_ad(request):
+    if request.method == 'POST':
+        form = StoreAdForm(request.POST)
+        if form.is_valid():
+            st_id = form.cleaned_data['st_id']
+
+            # 取得商家
+            try:
+                store = StoreAll.objects.get(st_id=st_id)
+            except StoreAll.DoesNotExist:
+                form.add_error('st_id', '找不到此商家編號')
+                return render(request, 'store_upload_ad.html', {'form': form})
+
+            # 建立歷史廣告紀錄
+            ad_history = StoreAdHistory.objects.create(
+                st=store,
+                ad_content=form.cleaned_data['ad_content'],
+                ad_radius=form.cleaned_data['ad_radius'],
+                enabled=form.cleaned_data['enabled'],
+                status='pending'
             )
 
-    elif action == "reject":
-        ad_history.status = "rejected"
-        ad_history.reviewed_at = timezone.now()
-        ad_history.save()
+            # 儲存圖片到歷史紀錄資料夾
+            for img_file in request.FILES.getlist('images'):
+                upload_dir = os.path.join(settings.MEDIA_ROOT, 'ads_history')
+                os.makedirs(upload_dir, exist_ok=True)
 
-    return redirect("admin_review_ads")
+                filepath = os.path.join(upload_dir, img_file.name)
+                with open(filepath, 'wb+') as dest:
+                    for chunk in img_file.chunks():
+                        dest.write(chunk)
+
+                # 建立對應圖片
+                StoreAdImage.objects.create(
+                    st=ad_history,  # 這裡改成指向歷史廣告
+                    image_url=f"/media/ads_history/{img_file.name}"
+                )
+
+            return redirect('store_map')
+
+    else:
+        form = StoreAdForm()
+
+    return render(request, 'store_upload_ad.html', {'form': form})
+
 
 # API: 取得商家廣告
 def stores_with_ads(request):
@@ -4046,7 +4072,6 @@ def stores_with_ads(request):
         result = []
 
         for store in stores:
-            # 預設沒有廣告
             ad_data = {
                 'st_id': store.st_id,
                 'store_name': store.store_name,
@@ -4057,18 +4082,23 @@ def stores_with_ads(request):
                 'images': []
             }
 
-            try:
-                ad = StoreAd.objects.get(st=store)
-                if ad.status == "approved":  # ✅ 只允許已批准的廣告
-                    ad_data.update({
-                        'ad_content': ad.ad_content or '',
-                        'ad_radius': ad.ad_radius or 200,
-                        'enabled': ad.enabled,
-                        'status': ad.status,
-                        'images': [img.image_url for img in ad.images.all()]
-                    })
-            except StoreAd.DoesNotExist:
-                pass
+            # 找這個商家所有 approved 廣告
+            approved_ads = store.ad_histories.filter(status='approved').order_by('-created_at')
+
+            if approved_ads.exists():
+                # 取最新一筆 approved 廣告
+                ad = approved_ads.first()
+                ad_data.update({
+                    'ad_content': ad.ad_content or '',
+                    'ad_radius': ad.ad_radius or 200,
+                    'enabled': ad.enabled,
+                    'status': ad.status,
+                    'images': [img.image_url for img in ad.st.ad_histories.first().images.all()]  # 如果你有存 images
+                })
+            else:
+                # 沒有 approved 廣告，但如果 store 本身通過審核也顯示
+                if store.review_status == 'approved':
+                    ad_data['enabled'] = False  # 沒有廣告，但顯示商家位置
 
             result.append(ad_data)
 
