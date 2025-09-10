@@ -2135,9 +2135,13 @@ from django.core.paginator import Paginator
 from django.urls import reverse
 from django.utils.datastructures import MultiValueDictKeyError
 from django.contrib import messages
-from .models import Notification
 
+from django.contrib.auth import get_user_model
+User = get_user_model()
+
+from .models import Notification
 from .models import ChatInteraction, ThisUserProfile
+
 import json
 import bleach
 from urllib.parse import quote
@@ -2148,10 +2152,12 @@ from functools import wraps
 ALLOWED_TAGS = ['a']
 ALLOWED_ATTRIBUTES = {'a': ['href', 'target', 'rel']}
 
+
 # ======== 工具：時間、載入/正規化、搜尋/計數 ========
 
 def _now_str():
     return timezone.now().strftime("%Y-%m-%d %H:%M:%S")
+
 
 def _get_post_by_any_id(post_id):
     """同時支援 pk 或 interaction_id（都以字串比對）。"""
@@ -2160,6 +2166,7 @@ def _get_post_by_any_id(post_id):
     if not post:
         raise Http404("Post not found")
     return post
+
 
 def _load_comments(post):
     """讀取並回傳 list（舊資料自動相容）。"""
@@ -2170,6 +2177,7 @@ def _load_comments(post):
     if not isinstance(comments, list):
         comments = []
     return comments
+
 
 def _ensure_reply_defaults(r):
     """補齊回覆欄位，並對其子回覆遞迴正規化。"""
@@ -2192,6 +2200,7 @@ def _ensure_reply_defaults(r):
     r['replies'] = fixed
     return r
 
+
 def _ensure_comment_defaults(c):
     """補齊單一留言的欄位，並遞迴正規化其所有回覆。"""
     c.setdefault('id', c.get('time') or str(uuid4()))
@@ -2213,6 +2222,7 @@ def _ensure_comment_defaults(c):
     c['replies'] = fixed
     return c
 
+
 def _find_comment(comments, comment_id_or_time):
     """依 id 或 time 找到留言 dict 與其索引。"""
     key = str(comment_id_or_time)
@@ -2221,6 +2231,7 @@ def _find_comment(comments, comment_id_or_time):
         if cid == key or str(c.get('time')) == key:
             return idx, c
     return None, None
+
 
 def _find_reply_recursive(replies, reply_id_or_time):
     """
@@ -2240,6 +2251,7 @@ def _find_reply_recursive(replies, reply_id_or_time):
             return (parent, idx, rr)
     return (None, None, None)
 
+
 def _mark_is_liked_recursive(replies, user_id_str):
     """把 is_liked 旗標遞迴標在每一層回覆上，供初始渲染。"""
     if not isinstance(replies, list):
@@ -2248,6 +2260,7 @@ def _mark_is_liked_recursive(replies, user_id_str):
         like_ids = [str(x) for x in (r.get('like_user_ids') or [])]
         r['is_liked'] = bool(user_id_str and (user_id_str in like_ids))
         _mark_is_liked_recursive(r.get('replies') or [], user_id_str)
+
 
 def _flatten_replies(replies, level=1):
     """舊：展平成簡易清單（保留以供其他頁使用）。"""
@@ -2271,6 +2284,7 @@ def _flatten_replies(replies, level=1):
         flat.extend(_flatten_replies(r.get('replies') or [], level + 1))
     return flat
 
+
 # ===== 計數 =====
 def _count_replies_recursive(replies):
     total = 0
@@ -2282,6 +2296,7 @@ def _count_replies_recursive(replies):
         total += _count_replies_recursive(r.get('replies') or [])
     return total
 
+
 def _count_totals(comments):
     """回傳 (top_count, all_count)"""
     top = len(comments or [])
@@ -2290,6 +2305,38 @@ def _count_totals(comments):
         c = _ensure_comment_defaults(c)
         all_total += _count_replies_recursive(c.get('replies') or [])
     return top, all_total
+
+
+# ====== 通用：把 auth_user.id 或 ThisUserProfile.id 都轉成 User 物件（通知用） ======
+def _resolve_user(user_or_id):
+    """
+    給 auth_user.id、ThisUserProfile.id 或 User 物件，都努力還原成 User 物件。
+    回傳 None 代表解析失敗。
+    """
+    if not user_or_id:
+        return None
+    # 已是 User
+    if hasattr(user_or_id, "pk") and hasattr(user_or_id, "is_authenticated"):
+        return user_or_id
+
+    # 嘗試當 auth_user.id
+    try:
+        uid = int(str(user_or_id))
+        u = User.objects.filter(pk=uid).first()
+        if u:
+            return u
+    except Exception:
+        pass
+
+    # 嘗試當 ThisUserProfile.id -> .user
+    try:
+        prof = ThisUserProfile.objects.filter(pk=str(user_or_id)).first()
+        if prof and getattr(prof, "user", None):
+            return prof.user
+    except Exception:
+        pass
+    return None
+
 
 # ===== 全部留言（含回覆）扁平化，附上「回覆對象」資訊 + 喜歡狀態 =====
 def _flatten_all_with_parent(comments, user_id_str=None, indent_step_px=20):
@@ -2372,28 +2419,50 @@ def _flatten_all_with_parent(comments, user_id_str=None, indent_step_px=20):
 
     return items
 
-# ================== 通知功能 ==================
+
+# ================== 通知功能（修正版：僅調整這一段） ==================
+from django.utils.timesince import timesince
+
+@login_required(login_url='/01userlogin/')
+def notif_unread_count(request):
+    """徽章未讀數：{"unread": <int>}"""
+    n = Notification.objects.filter(recipient=request.user, is_read=False).count()
+    return JsonResponse({"unread": n})
 
 @login_required(login_url='/01userlogin/')
 def notif_dropdown(request):
-    """回傳使用者最近 10 則通知"""
-    notifs = Notification.objects.filter(
-        recipient=request.user
-    ).order_by('-created_at')[:10]
+    """
+    回傳最近 10 則通知；前端需要的結構：
+    {"items": [{"title","url","icon","time","is_read"}...]}
+    """
+    notifs = (Notification.objects
+              .filter(recipient=request.user)
+              .order_by('-created_at')[:10])
 
-    data = [
-        {
-            "id": n.id,
-            "title": n.title,
-            "message": n.message,
-            "link_url": n.link_url,
-            "is_read": n.is_read,
-            "created_at": n.created_at.strftime("%Y-%m-%d %H:%M"),
-        }
-        for n in notifs
-    ]
+    items = []
+    for n in notifs:
+        items.append({
+            "title": getattr(n, "title", "") or "通知",
+            "url": getattr(n, "link_url", "") or "#",
+            "icon": getattr(n, "icon", "") or "bi-bell",
+            "time": f"{timesince(n.created_at)} 前" if getattr(n, "created_at", None) else "",
+            "is_read": bool(getattr(n, "is_read", False)),
+        })
+    return JsonResponse({"items": items})
 
-    return JsonResponse({"notifications": data})
+@login_required(login_url='/01userlogin/')
+def notif_mark_all(request):
+    """全部標為已讀；成功回 {"ok": True}"""
+    if request.method != "POST":
+        return JsonResponse({"ok": False, "msg": "Method not allowed"}, status=405)
+    qs = Notification.objects.filter(recipient=request.user, is_read=False)
+    try:
+        qs.update(is_read=True, read_at=timezone.now())
+    except Exception:
+        # 若模型沒有 read_at 欄位，退而只更新 is_read
+        qs.update(is_read=True)
+    return JsonResponse({"ok": True})
+
 
 # ================== 貼文 CRUD / 展示 ==================
 
@@ -2452,6 +2521,7 @@ def post(request):
         'profile_nickname1': nick1,
         'profile_nickname2': nick2,
     })
+
 
 def post_display(request):
     # 🔸 保守引入 AbuseReport（若沒定義就忽略）
@@ -2621,6 +2691,7 @@ def post_display(request):
 
     return render(request, 'post_display.html', context)
 
+
 @login_required(login_url='/01userlogin/')
 def edit_post(request, post_id):
     post = _get_post_by_any_id(post_id)
@@ -2636,6 +2707,7 @@ def edit_post(request, post_id):
 
     return render(request, 'edit_post.html', {'post': post})
 
+
 @login_required(login_url='/01userlogin/')
 def delete_post(request, post_id):
     post = _get_post_by_any_id(post_id)
@@ -2647,6 +2719,7 @@ def delete_post(request, post_id):
         return redirect('post_display')
 
     return render(request, 'delete_post_confirm.html', {'post': post})
+
 
 @require_POST
 @login_required(login_url='/01userlogin/')
@@ -2661,18 +2734,33 @@ def like_post(request, post_id):
 
     liked_user_ids = list({str(x) for x in liked_user_ids})
 
+    just_liked = False
     if user_id_str in liked_user_ids:
         liked_user_ids.remove(user_id_str)
     else:
         liked_user_ids.append(user_id_str)
+        just_liked = True
 
     post.like_heart_count = len(liked_user_ids)
     post.liked_user_ids = json.dumps(liked_user_ids, ensure_ascii=False)
     post.save(update_fields=['like_heart_count', 'liked_user_ids'])
 
+    # 🔔 通知：貼文被按讚（非自己）
+    if just_liked and str(post.user_id) != user_id_str:
+        try:
+            Notification.objects.create(
+                recipient=post.user,   # 用物件，不用 recipient_id
+                title="貼文收到新按讚",
+                message=f"{request.user.username} 按讚了你的貼文",
+                link_url=reverse('post_display'),
+            )
+        except Exception:
+            pass
+
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         return JsonResponse({'liked': user_id_str in liked_user_ids, 'count': post.like_heart_count})
     return redirect('post_display')
+
 
 @require_POST
 @login_required(login_url='/01userlogin/')
@@ -2700,6 +2788,7 @@ def save_post(request, post_id):
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         return JsonResponse({'saved': saved_state})
     return redirect('post_display')
+
 
 @require_POST
 @login_required(login_url='/01userlogin/')
@@ -2748,6 +2837,18 @@ def add_comment(request, post_id):
     post.comments = json.dumps(comments, ensure_ascii=False)
     post.save(update_fields=['comments'])
 
+    # 🔔 通知：新留言 → 貼文作者（非自己）
+    if str(post.user_id) != user_id_str:
+        try:
+            Notification.objects.create(
+                recipient=post.user,
+                title="新留言",
+                message=f"{request.user.username} 留言了你的貼文",
+                link_url=reverse('post_display'),
+            )
+        except Exception:
+            pass
+
     top_count, all_count = _count_totals(comments)
 
     return JsonResponse({
@@ -2756,6 +2857,7 @@ def add_comment(request, post_id):
         'total_comments': top_count,
         'total_including_replies': all_count
     })
+
 
 @require_POST
 @login_required(login_url='/01userlogin/')
@@ -2785,6 +2887,7 @@ def delete_comment(request, post_id):
         'total_comments': top_count,
         'total_including_replies': all_count
     })
+
 
 # ★★★ 留言編輯（支援 id 或 time；JSON 或表單皆可）★★★
 @require_POST
@@ -2832,7 +2935,8 @@ def edit_comment(request, post_id, key):
     post.save(update_fields=['comments'])
     return JsonResponse({"success": True, "comment": c})
 
-# 🧵 查看全部留言（分頁；這裡改為：頂層 + 所有回覆都列出）
+
+# 🧵 查看全部留言（分頁；頂層 + 所有回覆都列出）
 def post_comments(request, post_id):
     post = _get_post_by_any_id(post_id)
 
@@ -2849,7 +2953,7 @@ def post_comments(request, post_id):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    # ★ 加：把暱稱帶給模板（與 post_display 同步）
+    # 把暱稱帶給模板（與 post_display 同步）
     nick1 = ""
     nick2 = ""
     if request.user.is_authenticated:
@@ -2866,8 +2970,8 @@ def post_comments(request, post_id):
         'total_comments': top_count,
         'total_including_replies': all_count,
         'final_total': final_total,
-        'profile_nickname1': nick1,          # ← 新增
-        'profile_nickname2': nick2,          # ← 新增
+        'profile_nickname1': nick1,
+        'profile_nickname2': nick2,
     })
 
 
@@ -2931,21 +3035,39 @@ def reply_comment(request, post_id):
         'replies': []
     }
 
+    notify_user_id = None
+
     if parent_reply_id:
         parent_list, idx, target_r = _find_reply_recursive(c.get('replies') or [], parent_reply_id)
         if target_r is None:
             return JsonResponse({'success': False, 'error': '找不到目標回覆'}, status=404)
         target_r = _ensure_reply_defaults(target_r)
+        notify_user_id = target_r.get('user_id')  # 回覆某則回覆 → 通知該回覆作者
         target_r['replies'] = (target_r.get('replies') or [])
         target_r['replies'].append(reply_dict)
         parent_list[idx] = target_r
     else:
+        # 回覆留言 → 通知留言作者
+        notify_user_id = c.get('user_id')
         c['replies'] = (c.get('replies') or [])
         c['replies'].append(reply_dict)
 
     comments[c_idx] = c
     post.comments = json.dumps(comments, ensure_ascii=False)
     post.save(update_fields=['comments'])
+
+    # 🔔 通知：新回覆 → 被回覆的人（非自己）
+    try:
+        notify_user = _resolve_user(notify_user_id)
+        if notify_user and notify_user.id != request.user.id:
+            Notification.objects.create(
+                recipient=notify_user,
+                title="新回覆",
+                message=f"{request.user.username} 回覆了你的留言/回覆",
+                link_url=reverse('post_display'),
+            )
+    except Exception:
+        pass
 
     top_count, all_count = _count_totals(comments)
 
@@ -2956,6 +3078,7 @@ def reply_comment(request, post_id):
         'total_comments': top_count,
         'total_including_replies': all_count
     })
+
 
 @require_POST
 @login_required(login_url='/01userlogin/')
@@ -2974,6 +3097,10 @@ def like_comment(request, post_id):
         return JsonResponse({'success': False, 'error': '找不到目標留言'}, status=404)
     c = _ensure_comment_defaults(c)
 
+    liked = False
+    notify_user_id = None
+    like_count_out = 0
+
     if reply_id:
         parent_list, r_idx, r = _find_reply_recursive(c.get('replies') or [], reply_id)
         if r is None:
@@ -2987,29 +3114,48 @@ def like_comment(request, post_id):
         else:
             likers.add(user_id_str)
             liked = True
+            notify_user_id = r.get("user_id")
         r['like_user_ids'] = list(likers)
         r['like_count'] = len(likers)
+        like_count_out = r['like_count']
 
         parent_list[r_idx] = r
         comments[c_idx] = c
         post.comments = json.dumps(comments, ensure_ascii=False)
         post.save(update_fields=['comments'])
-        return JsonResponse({'success': True, 'liked': liked, 'like_count': r['like_count']})
-
-    likers = set(str(x) for x in (c.get('like_user_ids') or []))
-    if user_id_str in likers:
-        likers.remove(user_id_str)
-        liked = False
     else:
-        likers.add(user_id_str)
-        liked = True
-    c['like_user_ids'] = list(likers)
-    c['like_count'] = len(likers)
+        likers = set(str(x) for x in (c.get('like_user_ids') or []))
+        if user_id_str in likers:
+            likers.remove(user_id_str)
+            liked = False
+        else:
+            likers.add(user_id_str)
+            liked = True
+            notify_user_id = c.get("user_id")
+        c['like_user_ids'] = list(likers)
+        c['like_count'] = len(likers)
+        like_count_out = c['like_count']
 
-    comments[c_idx] = c
-    post.comments = json.dumps(comments, ensure_ascii=False)
-    post.save(update_fields=['comments'])
-    return JsonResponse({'success': True, 'liked': liked, 'like_count': c['like_count']})
+        comments[c_idx] = c
+        post.comments = json.dumps(comments, ensure_ascii=False)
+        post.save(update_fields=['comments'])
+
+    # 🔔 通知：留言/回覆被按讚（只在點讚時，且非自己）
+    if liked and notify_user_id:
+        try:
+            notify_user = _resolve_user(notify_user_id)
+            if notify_user and notify_user.id != request.user.id:
+                Notification.objects.create(
+                    recipient=notify_user,
+                    title="收到按讚",
+                    message=f"{request.user.username} 按讚了你的留言/回覆",
+                    link_url=reverse('post_display'),
+                )
+        except Exception:
+            pass
+
+    return JsonResponse({'success': True, 'liked': liked, 'like_count': like_count_out})
+
 
 @require_POST
 @login_required(login_url='/01userlogin/')
@@ -3059,6 +3205,7 @@ def edit_reply(request, post_id):
 
     return JsonResponse({'success': True, 'reply': _ensure_reply_defaults(r)})
 
+
 @require_POST
 @login_required(login_url='/01userlogin/')
 def delete_reply(request, post_id):
@@ -3097,20 +3244,9 @@ def delete_reply(request, post_id):
         'total_including_replies': all_count
     })
 
-
 # ====== 管理員登入保護（沿用你的 session 機制）=========================
-from functools import wraps
-from urllib.parse import quote
-
-from django.shortcuts import redirect, render
-from django.urls import reverse
-from django.views.decorators.http import require_POST, require_http_methods
-from django.http import JsonResponse, Http404
-from django.utils.datastructures import MultiValueDictKeyError
-from django.utils import timezone
-from django.db.models import Q
-from django.contrib import messages
-import json, bleach
+from functools import wraps as _wraps_again  # 避免名稱衝突（但不影響原本行為）
+from urllib.parse import quote as _quote_again
 
 # 你的模型
 try:
@@ -3119,21 +3255,16 @@ except Exception:
     AbuseReport = None
     Admins = None
 
-# ===== 你專案原有的工具函式（請確保存在；名稱不同就自己對應） =====
-# _get_post_by_any_id(post_id)
-# _load_comments(post)
-# _find_comment(comments, comment_id)
-# _find_reply_recursive(replies, reply_id)
 
 def admin_login_required(view_func):
     """以 session['admin_id'] 判斷是否已登入管理員；未登入導至 admin_login。"""
-    @wraps(view_func)
+    @_wraps_again(view_func)
     def wrapper(request, *args, **kwargs):
         if request.session.get('admin_id'):
             return view_func(request, *args, **kwargs)
         login_url = reverse('admin_login')
         next_url = request.get_full_path()  # e.g. /reports/?status=pending
-        return redirect(f"{login_url}?next={quote(next_url)}")
+        return redirect(f"{login_url}?next={_quote_again(next_url)}")
     return wrapper
 
 
@@ -3229,6 +3360,34 @@ def create_report(request):
         )
     except Exception as e:
         return JsonResponse({'ok': False, 'msg': f'建立檢舉失敗：{e}'}, status=400)
+
+    # 🔔 通知：被檢舉者（post.user / comment.user / reply.user）
+    try:
+        notify_user = None
+        if target_type == 'post':
+            notify_user = _resolve_user(post.user)
+        elif target_type == 'comment':
+            comments = _load_comments(post)
+            _, c = _find_comment(comments, comment_id)
+            if c:
+                notify_user = _resolve_user(c.get("user_id"))
+        elif target_type == 'reply':
+            comments = _load_comments(post)
+            _, c = _find_comment(comments, comment_id)
+            if c:
+                _, _, r = _find_reply_recursive(c.get("replies") or [], reply_id)
+                if r:
+                    notify_user = _resolve_user(r.get("user_id"))
+
+        if notify_user and notify_user.id != request.user.id:
+            Notification.objects.create(
+                recipient=notify_user,
+                title="你的內容被檢舉",
+                message=f"{request.user.username} 檢舉了你的{target_type}",
+                link_url=reverse('post_display'),
+            )
+    except Exception:
+        pass
 
     return JsonResponse({'ok': True, 'msg': '已送出檢舉，等待管理員審核'})
 
@@ -3362,6 +3521,7 @@ def act_on_report(request):
     messages.success(request, f'檢舉 #{report.id} {status_label}。')
     return redirect('report_decide')
 
+
 # ===== 管理員：編輯審核紀錄（僅允許改 status / admin_note；reason 不可改） =====
 @admin_login_required
 @require_POST
@@ -3409,6 +3569,8 @@ def edit_report(request, report_id):
     report.save()
     messages.success(request, f'已更新檢舉 #{report.id}（狀態：{report.status}）。')
     return redirect('report_decide')
+
+
 @admin_login_required
 @require_POST
 def delete_report_target(request, report_id):
@@ -3511,9 +3673,8 @@ def delete_report_target(request, report_id):
     return redirect('report_decide')
 
 
-
-
 # ------------ /交流區後端（整合版）------------
+
 
 
 
