@@ -2463,6 +2463,16 @@ def notif_mark_all(request):
         qs.update(is_read=True)
     return JsonResponse({"ok": True})
 
+@login_required(login_url='/01userlogin/')
+def notif_mark_all_unread(request):
+    """全部標為未讀；成功回 {"ok": True}"""
+    if request.method != "POST":
+        return JsonResponse({"ok": False, "msg": "Method not allowed"}, status=405)
+    qs = Notification.objects.filter(recipient=request.user, is_read=True)
+    qs.update(is_read=False)
+    return JsonResponse({"ok": True})
+
+
 
 # ================== 貼文 CRUD / 展示 ==================
 

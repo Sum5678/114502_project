@@ -119,6 +119,8 @@ urlpatterns = [
     path('notifications/unread_count/', views.notif_unread_count, name='notif_unread_count'),
     path('notifications/dropdown/', views.notif_dropdown, name='notif_dropdown'),
     path('notifications/mark_all/', views.notif_mark_all, name='notif_mark_all'),
+    path('notifications/mark_all_unread/', views.notif_mark_all_unread, name='notif_mark_all_unread'),
+
 
 
 
