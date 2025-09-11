@@ -304,6 +304,7 @@
       <li class="dropdown-header d-flex align-items-center justify-content-between px-3">
         <span class="fw-semibold">通知</span>
         <button class="btn btn-sm btn-link p-0" id="notifMarkAllBtn" type="button">全部標為已讀</button>
+        <button class="btn btn-sm btn-link p-0 ms-2" id="notifMarkAllUnreadBtn" type="button">全部標為未讀</button>
       </li>
       <li><hr class="dropdown-divider"></li>
       <li class="text-center text-muted py-2" id="notifLoading">載入中...</li>
@@ -2255,12 +2256,10 @@
   });
 
 })();
-</script>
 
 
 
 
-<script>
 // --- Block re-reporting on rejected targets (post level): capture + pretty modal ---
 (function(){
   var getModal = function(){
@@ -2385,8 +2384,7 @@
       var url = (function(){
         try { return JSON.parse(document.getElementById('django_urls__create_report')?.textContent||'{}').create_report; }
         catch(_){ return null; }
-      })() || "{% url 'create_report' %}"
- || (window.CREATE_REPORT_URL || "");
+      })() || "{% url 'create_report' %}" || (window.CREATE_REPORT_URL || "");
 
       fetch(url, {
         method:'POST',
@@ -2458,134 +2456,15 @@
     var modal = getReportModal();
     if(modal){ modal.show(); }
   });
-
 })();
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-  const bell = document.getElementById('notifBell');
-  const badge = document.getElementById('notifBadge');
-  const dropdown = document.getElementById('notifDropdown');
-  const list = document.getElementById('notifList');
-  if (!bell || !dropdown || !list) return;
-
-  let opened = false;
-  let timerId = null;
-
-  function render(items) {
-    list.innerHTML = '';
-    if (!items || items.length === 0) {
-      const li = document.createElement('li');
-      li.className = 'px-4 py-3 text-sm text-gray-500 text-center';
-      li.textContent = '目前沒有通知';
-      list.appendChild(li);
-      badge.textContent = '0';
-      badge.classList.add('hidden');
-      return;
-    }
-    // 未讀數（is_read 來自後端欄位）
-    const unread = items.filter(n => !n.is_read).length;
-    badge.textContent = unread;
-    if (unread > 0) { badge.classList.remove('hidden'); } else { badge.classList.add('hidden'); }
-
-    for (const n of items) {
-      const li = document.createElement('li');
-      li.className = 'px-4 py-3 hover:bg-gray-50';
-      const a = document.createElement('a');
-      a.href = n.link_url || '#';
-      a.className = 'block';
-      const title = document.createElement('div');
-      title.className = 'text-sm font-medium text-gray-900';
-      title.textContent = n.title || '通知';
-      const msg = document.createElement('div');
-      msg.className = 'text-xs text-gray-600 mt-0.5';
-      msg.textContent = n.message || '';
-      const t = document.createElement('div');
-      t.className = 'text-[11px] text-gray-400 mt-1';
-      t.textContent = n.created_at || '';
-      a.appendChild(title); a.appendChild(msg); a.appendChild(t);
-      li.appendChild(a);
-      list.appendChild(li);
-    }
-  }
-
-  async function fetchNotifs() {
-    try {
-      const resp = await fetch("{% url 'notif_dropdown' %}", { credentials: 'same-origin' });
-      if (!resp.ok) throw new Error('HTTP ' + resp.status);
-      const data = await resp.json();
-      render(data.notifications || []);
-    } catch (e) {
-      console.warn('通知載入失敗', e);
-    }
-  }
-
-  function open() {
-    if (opened) return;
-    opened = true;
-    dropdown.classList.remove('hidden');
-    fetchNotifs();
-    timerId = setInterval(fetchNotifs, 30000); // 開啟時每 30 秒拉一次
-  }
-  function close() {
-    if (!opened) return;
-    opened = false;
-    dropdown.classList.add('hidden');
-    if (timerId) { clearInterval(timerId); timerId = null; }
-  }
-
-  bell.addEventListener('click', (e) => {
-    e.stopPropagation();
-    if (opened) close(); else open();
-  });
-  document.addEventListener('click', () => close());
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
-
-  // 頁面剛載入也拉一次，更新徽章
-  fetchNotifs();
-});
-document.addEventListener("DOMContentLoaded", function(){
-  const bell = document.getElementById("notifBell");
-  const dropdown = document.getElementById("notifDropdown");
-  const badge = document.getElementById("notifBadge");
-
-  if (bell) {
-    bell.addEventListener("click", function(){
-      fetch("/notifications/dropdown/")
-        .then(res => res.json())
-        .then(data => {
-          dropdown.innerHTML = '<li class="dropdown-header">通知</li><li><hr class="dropdown-divider"></li>';
-          if (data.notifications.length === 0) {
-            dropdown.innerHTML += '<li class="text-center text-muted">目前沒有通知</li>';
-            badge.textContent = "0";
-          } else {
-            badge.textContent = data.notifications.filter(n => !n.is_read).length;
-            data.notifications.forEach(n => {
-              dropdown.innerHTML += `
-                <li>
-                  <a class="dropdown-item" href="${n.link_url || '#'}">
-                    <div class="fw-bold">${n.title}</div>
-                    <small class="text-muted">${n.message} - ${n.created_at}</small>
-                  </a>
-                </li>
-              `;
-            });
-          }
-        })
-        .catch(err => {
-          dropdown.innerHTML = '<li class="text-center text-danger">通知載入失敗</li>';
-        });
-    });
-  }
-});
-
-
 </script>
 
+<!-- === Notifications: Dropdown（單一版本） === -->
 <script>
-
-/* ===================== 通知：Dropdown 版（僅此一套） ===================== */
 (function(){
   if (!document.body.classList.contains('authenticated')) return; // 未登入不啟用
+
+  // CSRF
   var csrftoken = (function getCookie(name){
     var cookieValue=null;
     if(document.cookie && document.cookie!==''){
@@ -2603,6 +2482,7 @@ document.addEventListener("DOMContentLoaded", function(){
   var badge = document.getElementById('notifBadgeCount');
   var loading = document.getElementById('notifLoading');
   var markAllBtn = document.getElementById('notifMarkAllBtn');
+  var markAllUnreadBtn = document.getElementById('notifMarkAllUnreadBtn');
 
   function setBadge(n){
     if (!badge) return;
@@ -2643,9 +2523,9 @@ document.addEventListener("DOMContentLoaded", function(){
       var li = document.createElement('li');
       var a = document.createElement('a');
       a.className = 'dropdown-item d-flex align-items-start gap-2';
-      a.href = n.url || '#';
+      a.href = n.url || n.link_url || '#';
       a.innerHTML =
-        '<i class="bi ' + (n.icon || 'bi-bell') + '"></i>' +
+        '<i class="' + (n.icon || 'bi bi-bell') + '"></i>' +
         '<div class="flex-grow-1">' +
           '<div class="fw-semibold">' + (n.title || '通知') + '</div>' +
           '<div class="small text-muted">' + (n.time || '') + '</div>' +
@@ -2662,6 +2542,7 @@ document.addEventListener("DOMContentLoaded", function(){
       .then(function(r){ return r.ok ? r.json() : {items:[]}; })
       .then(function(data){
         if (loading) loading.remove();
+        // 後端為 {"items":[...]}
         renderItems(data.items || []);
       })
       .catch(function(){
@@ -2681,21 +2562,47 @@ document.addEventListener("DOMContentLoaded", function(){
       setBadge(0);
       // 即時把列表 Badge 移除
       list.querySelectorAll('span.badge.bg-primary').forEach(function(b){ b.remove(); });
-      // 也可重新載入以保險
+      // 如需也可重新載入
       // loadDropdown();
     })
     .catch(function(){});
   }
 
+  // 全部標為未讀
+  function markAllUnread(){
+    fetch('/notifications/mark_all_unread/', {
+      method: 'POST',
+      headers: {'X-CSRFToken': csrftoken},
+      credentials:'same-origin'
+    })
+    .then(function(r){ return r.ok ? r.json() : {ok:false}; })
+    .then(function(){
+      // 重新抓徽章數 + 重新載入清單
+      refreshUnread();
+      loadDropdown();
+    })
+    .catch(function(){});
+  }
+
+  // 防連點
+  function withBusy(btn, fn){
+    if(!btn) return fn();
+    btn.disabled = true;
+    Promise.resolve(fn()).finally(function(){ btn.disabled = false; });
+  }
+
   // 綁定事件
   if (btn){
-    btn.addEventListener('show.bs.dropdown', loadDropdown, {once:false});
+    btn.addEventListener('show.bs.dropdown', loadDropdown);
   }
   if (markAllBtn){
-    markAllBtn.addEventListener('click', function(e){ e.preventDefault(); markAll(); });
+    markAllBtn.addEventListener('click', function(e){ e.preventDefault(); withBusy(markAllBtn, markAll); });
+  }
+  if (markAllUnreadBtn){
+    markAllUnreadBtn.addEventListener('click', function(e){ e.preventDefault(); withBusy(markAllUnreadBtn, markAllUnread); });
   }
 
+  // 初次載入刷新徽章
   refreshUnread();
 })();
-
 </script>
