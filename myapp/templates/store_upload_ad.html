@@ -54,7 +54,14 @@
     <input type="file" name="images" id="images" multiple>
     
     <label for="ad_radius">觸發距離(公尺)</label>
-    <input type="number" name="ad_radius" id="ad_radius" class="form-control" min="1">
+    <select name="ad_radius" id="ad_radius" class="form-control">
+    <option value="10">10</option>
+    <option value="20">20</option>
+    <option value="30">30</option>
+    <option value="50">50</option>
+    <option value="100">100</option>
+    </select>
+
 
     <label for="enabled">啟用</label>
     <input type="checkbox" name="enabled" id="enabled">
@@ -71,6 +78,7 @@
 </section>
 </main>
 
+<script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
 <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
 <script>
 document.getElementById('st_id').addEventListener('blur', function() {
@@ -94,6 +102,16 @@ document.getElementById('st_id').addEventListener('blur', function() {
                 undefined: '尚未提交廣告'
             };
             document.getElementById('ad_status').value = statusMap[data.status];
+
+            // 更新觸發距離下拉選單
+            if (data.ad_radius) {
+                const radiusSelect = document.getElementById('ad_radius');
+                if ([10,20,30,50,100].includes(data.ad_radius)) {
+                    radiusSelect.value = data.ad_radius;
+                } else {
+                    radiusSelect.value = 10; // 預設值
+                }
+            }
 
             // 更新圖片輪播
             const carouselInner = document.getElementById('carousel_inner');
@@ -122,6 +140,7 @@ document.getElementById('st_id').addEventListener('blur', function() {
             // 清空欄位與圖片
             document.getElementById('ad_content').value = '';
             document.getElementById('ad_status').value = '尚未提交廣告';
+            document.getElementById('ad_radius').value = 10; // 預設值
             document.getElementById('carousel_inner').innerHTML =
                 '<div class="carousel-item active"><div class="d-flex justify-content-center align-items-center" style="height:300px; background:#eee;">無廣告圖片</div></div>';
         });
