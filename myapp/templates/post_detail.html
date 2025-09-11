@@ -1,0 +1,201 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ post.title }}｜交流區</title>
+  <!-- assets (沿用列表頁) -->
+  <link href="{% static 'assets/img/favicon.png' %}" rel="icon">
+  <link href="{% static 'assets/img/apple-touch-icon.png' %}" rel="apple-touch-icon">
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700|Nunito|Poppins" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/boxicons/2.1.0/css/boxicons.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css" rel="stylesheet">
+  <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/aos/aos.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/glightbox/css/glightbox.min.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/swiper/swiper-bundle.min.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/css/main.css' %}" rel="stylesheet">
+
+  <style>
+    body{ background:#fff; padding-top:10px; font-family:"Microsoft JhengHei",sans-serif; }
+    .card{ border-left:8px solid #{{ post.bgcolor|default:'ccc' }}; }
+    .card .card-body{ background:#fff; border-radius:6px; position:relative; }
+    .card .card-title{ font-weight:700; color:#033e6b; }
+    .card .card-text{ color:#444; font-size:15px; }
+    .meta{ font-size:13px; color:#888; }
+
+    /* === 留言樣式（與 post_display 同步） === */
+    .comment-board{
+      border:1px solid #cfe2ff; background:#f8fbff; border-radius:16px;
+      padding:16px 16px 12px; box-shadow:0 8px 24px rgba(3,62,107,.06);
+    }
+    .comment-item{
+      border:1px solid #e1efff; background:#fff; border-radius:12px;
+      padding:12px 14px; box-shadow:0 6px 14px rgba(3,62,107,.05);
+    }
+    .comment-item + .comment-item{ margin-top:10px; }
+    .comment-head{ font-size:.9rem; color:#6b7280; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .comment-content{ color:#033e6b; margin-top:6px; white-space:pre-wrap; }
+    .reply-ref{
+      font-size:.8rem; color:#6b7280; background:#f3f4f6; border:1px solid #e5e7eb;
+      border-radius:8px; padding:2px 8px; margin-left:6px;
+    }
+    .comment-actions{ display:flex; align-items:center; gap:14px; margin-top:8px; }
+    .action-btn{ background:none; border:none; color:#4b5563; padding:0; display:inline-flex; align-items:center; gap:6px; cursor:pointer; }
+    .action-btn.liked{ color:#dc3545; font-weight:600; }
+
+    .replies{ margin-top:8px; padding-left:0; }
+    .replies > li{
+      list-style:none;
+      border-left:3px solid #e6f3fb;
+      padding-left:12px;
+      margin-left:12px;
+      margin-top:8px;
+      background:#fff;
+    }
+    .reply-item{ margin-left: calc((var(--lvl, 1) - 1) * 20px); }
+
+    /* 錨點高亮（點通知後框起來） */
+    .highlight-target{
+      outline: 3px solid #60a5fa;
+      border-radius: 10px;
+      background: rgba(96,165,250,.06);
+      animation: glow 1.6s ease-out 1;
+    }
+    @keyframes glow{
+      0% { box-shadow: 0 0 0 10px rgba(96,165,250,.25); }
+      100%{ box-shadow: 0 0 0 0 rgba(96,165,250,0); }
+    }
+
+    .id-badge{
+      display:inline-flex; align-items:center; gap:4px;
+      padding:2px 8px; border-radius:999px; background:#eef6ff; border:1px solid #cfe2ff; color:#0b5ed7;
+      font-size:.75rem; font-weight:600;
+    }
+  </style>
+</head>
+
+<body class="{% if request.user.is_authenticated %}authenticated{% endif %}">
+<header id="header" class="header d-flex align-items-center fixed-top">
+  <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
+    <a href="{% url 'home' %}" class="logo d-flex align-items-center me-auto me-xl-0">
+      <h1 class="sitename" style="color:#033e6b;">怪怪走開，護您安全</h1>
+    </a>
+
+    <nav id="navmenu" class="navmenu">
+      <ul>
+        <li><a href="{% url 'home' %}#hero">主頁</a></li>
+        <li><a href="{% url 'report' %}">填寫表單</a></li>
+        <li><a href="{% url 'business_upload' %}">商家填單</a></li>
+        <li><a href="{% url 'about' %}">個人資料設定</a></li>
+        <li><a href="{% url 'chatroom_page' %}">聊天室</a></li>
+        <li class="dropdown">
+          <a href="#"><span>交流區</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+          <ul>
+            <li><a href="{% url 'post' %}#hero">我要發文</a></li>
+            <li><a href="{% url 'post_display' %}">貼文總覽</a></li>
+          </ul>
+        </li>
+        <li class="dropdown">
+          <a href="#"><span>地圖</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+          <ul>
+            <li><a href="{% url 'map' %}">事件地圖</a></li>
+            <li><a href="{% url 'store_map' %}">商家地圖</a></li>
+          </ul>
+        </li>
+        <li><a href="{% url 'harassment_prevention' %}">防騷指南</a></li>
+      </ul>
+    </nav>
+
+    <div class="nav-right-group">
+      <a href="{% url 'post_display' %}" class="btn btn-outline-primary">返回貼文總覽</a>
+      <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+    </div>
+  </div>
+</header>
+
+<main class="main">
+  <section class="mt-5">
+    <div class="container">
+      <!-- 單篇貼文卡 -->
+      <div class="card mb-4">
+        <div class="card-body">
+          <div class="d-flex align-items-center mb-3">
+            <img src="{{ post.avatar_url }}" alt="avatar" class="rounded-circle me-3" style="width:60px; height:60px;">
+            <div>
+              <h5 class="card-title mb-0">{{ post.title }}</h5>
+              <div class="meta">{{ post.nickname|default:"(匿名)" }} ・ {{ post.created_at|date:"Y/m/d H:i" }}</div>
+            </div>
+          </div>
+          <div class="card-text">{{ post.message_content|safe }}</div>
+        </div>
+      </div>
+
+      <!-- 留言區 -->
+      <div class="comment-board">
+        <div class="mb-2 text-primary fw-bold">留言</div>
+        {% if comments %}
+          {% for c in comments %}
+            <div id="c-{{ c.id }}" class="comment-item mb-2">
+              <div class="comment-head">
+                <span class="id-badge">
+                  {% if c.identity == 'anonymous' %}匿名
+                  {% elif c.identity == 'nickname1' %}暱稱 1：{{ c.nickname }}
+                  {% elif c.identity == 'nickname2' %}暱稱 2：{{ c.nickname }}
+                  {% else %}
+                    {% if c.nickname and c.nickname != '匿名' and c.nickname != '(匿名)' %}暱稱：{{ c.nickname }}{% else %}匿名{% endif %}
+                  {% endif %}
+                </span>
+                <span>・ {{ c.time }}</span>
+                {% if c.like_count %}<span class="ms-2 text-muted small">♥ {{ c.like_count }}</span>{% endif %}
+              </div>
+              <div class="comment-content">{{ c.content|safe }}</div>
+
+              {% if c.replies %}
+              <ul class="replies list-unstyled">
+                {% include "partials/replies_recursive.html" with replies=c.replies %}
+              </ul>
+              {% endif %}
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="text-muted">尚無留言</div>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- Vendor scripts -->
+<script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+<script src="{% static 'assets/vendor/aos/aos.js' %}"></script>
+<script src="{% static 'assets/vendor/glightbox/js/glightbox.min.js' %}"></script>
+<script src="{% static 'assets/vendor/purecounter/purecounter_vanilla.js' %}"></script>
+<script src="{% static 'assets/vendor/swiper/swiper-bundle.min.js' %}"></script>
+<script src="{% static 'assets/js/main.js' %}"></script>
+
+<script>
+// 把 #c-... / #r-... 的目標高亮並捲到中間
+document.addEventListener('DOMContentLoaded', () => {
+  // 展開樹（若有折疊機制可在此補上）
+  const params = new URLSearchParams(location.search);
+  const open = params.get('open'); // e.g. c-<comment_id>
+  if (open) {
+    const openEl = document.getElementById(open);
+    if (openEl) openEl.classList.remove('collapsed');
+  }
+  if (location.hash) {
+    try {
+      const target = document.querySelector(location.hash);
+      if (target) {
+        target.classList.add('highlight-target');
+        target.scrollIntoView({behavior: 'smooth', block: 'center'});
+      }
+    } catch (e) {}
+  }
+});
+</script>
+</body>
+</html>
