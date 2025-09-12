@@ -239,7 +239,6 @@ def taiwan_regions_edit(request, id):
         'form': form, 
         'action': '編輯',
         }
-    context.update(get_unreviewed_counts())
     return render(request, 'taiwan_regions_edit.html', context)
 
 def taiwan_regions_delete(request, id):
@@ -258,7 +257,9 @@ from django.contrib import messages
 @admin_login_required
 def police_address_list(request):
     addresses = PoliceAddress.objects.all().order_by('precinct_name')
-    return render(request, 'police_address_admin.html', {'addresses': addresses})
+    context =  {'addresses': addresses,}
+    context.update(get_unreviewed_counts())
+    return render(request, 'police_address_admin.html',context)
 
 @admin_login_required
 def police_address_add(request):
@@ -283,7 +284,11 @@ def police_address_add(request):
             return redirect('police_address_list')  # 替換為你列表頁的網址名稱
         else:
             messages.error(request, "所有欄位皆為必填，請確認填寫完整。")
-    return render(request, 'police_address_add.html')
+
+    context = {}
+    context.update(get_unreviewed_counts())
+    return render(request, 'police_address_add.html', context)
+
 
 @admin_login_required
 def police_address_edit(request, pk):
@@ -300,8 +305,11 @@ def police_address_edit(request, pk):
         address.save()
         messages.success(request, "資料已成功更新！")
         return redirect('police_address_list')
-
-    return render(request, 'police_address_edit.html', {'address': address})
+    context = {
+        'address': address,
+    }
+    context.update(get_unreviewed_counts())
+    return render(request, 'police_address_edit.html', context)
 
 @require_POST
 def police_address_delete(request, pk):
