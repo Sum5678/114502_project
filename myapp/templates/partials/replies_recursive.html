@@ -1,0 +1,23 @@
+{% for r in replies %}
+  <li id="r-{{ r.id }}" class="reply-item comment-item" style="--lvl: {{ r.level|default:1 }};">
+    <div class="comment-head">
+      <span class="id-badge">
+        {% if r.identity == 'anonymous' %}匿名
+        {% elif r.identity == 'nickname1' %}暱稱 1：{{ r.nickname }}
+        {% elif r.identity == 'nickname2' %}暱稱 2：{{ r.nickname }}
+        {% else %}
+          {% if r.nickname and r.nickname != '匿名' and r.nickname != '(匿名)' %}暱稱：{{ r.nickname }}{% else %}匿名{% endif %}
+        {% endif %}
+      </span>
+      <span>・ {{ r.time }}</span>
+      {% if r.like_count %}<span class="ms-2 text-muted small">♥ {{ r.like_count }}</span>{% endif %}
+    </div>
+    <div class="comment-content reply-content">{{ r.content|safe }}</div>
+
+    {% if r.replies %}
+      <ul class="replies list-unstyled">
+        {% include "partials/replies_recursive.html" with replies=r.replies %}
+      </ul>
+    {% endif %}
+  </li>
+{% endfor %}

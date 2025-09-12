@@ -120,6 +120,7 @@ urlpatterns = [
     path('notifications/dropdown/', views.notif_dropdown, name='notif_dropdown'),
     path('notifications/mark_all/', views.notif_mark_all, name='notif_mark_all'),
     path('notifications/mark_all_unread/', views.notif_mark_all_unread, name='notif_mark_all_unread'),
+    path("post/<str:post_id>/", views.post_detail, name="post_detail"),
 
 
 
