@@ -2491,16 +2491,48 @@
     badge.style.display = n > 0 ? 'inline-block' : 'none';
   }
 
+  // === 只顯示該顯示的那一顆按鈕 ===
+  var _hasAnyNotifs = false;  // 目前列表是否有通知
+  function updateToggleButtons(unread){
+    if(!markAllBtn || !markAllUnreadBtn) return;
+
+    // 沒任何通知 → 兩顆都隱藏（要改邏輯可以這裡改）
+    if(!_hasAnyNotifs){
+      markAllBtn.style.display = 'none';
+      markAllUnreadBtn.style.display = 'none';
+      return;
+    }
+
+    // 有未讀 → 顯示「全部標為已讀」
+    if((Number(unread)||0) > 0){
+      markAllBtn.style.display = 'inline-block';
+      markAllUnreadBtn.style.display = 'none';
+    }else{
+      // 沒未讀 → 顯示「全部標為未讀」
+      markAllBtn.style.display = 'none';
+      markAllUnreadBtn.style.display = 'inline-block';
+    }
+  }
+
   // 未讀數：進頁面就抓一次
   function refreshUnread(){
-    fetch('/notifications/unread_count/', {credentials:'same-origin'})
-      .then(function(r){ return r.ok ? r.json() : {unread:0}; })
-      .then(function(data){ setBadge(data.unread || 0); })
-      .catch(function(){ setBadge(0); });
+    fetch('/notifications/unread_count/', { credentials: 'same-origin' })
+      .then(function(r){ return r.ok ? r.json() : { unread: 0 }; })
+      .then(function(data){
+        var unread = Number(data && data.unread) || 0;  // 取得未讀數
+        setBadge(unread);                                // 更新徽章
+        updateToggleButtons(unread);                     // 切換按鈕顯示
+      })
+      .catch(function(){
+        setBadge(0);
+        updateToggleButtons(0);
+      });
   }
 
   // 讀取下拉最新 10 筆
   function renderItems(items){
+    _hasAnyNotifs = Array.isArray(items) && items.length > 0;
+
     // 清掉 loading 與舊項目（保留 header / divider）
     var keep = [];
     list.querySelectorAll(':scope > li').forEach(function(li){
@@ -2543,7 +2575,10 @@
       .then(function(data){
         if (loading) loading.remove();
         // 後端為 {"items":[...]}
-        renderItems(data.items || []);
+        var items = data.items || [];
+        renderItems(items);
+        var currentUnread = Number(badge && badge.textContent || 0);
+        updateToggleButtons(currentUnread);
       })
       .catch(function(){
         if (loading) loading.textContent = '載入失敗';
@@ -2562,6 +2597,7 @@
       setBadge(0);
       // 即時把列表 Badge 移除
       list.querySelectorAll('span.badge.bg-primary').forEach(function(b){ b.remove(); });
+      updateToggleButtons(0);  // 立即只顯示「全部標為未讀」
       // 如需也可重新載入
       // loadDropdown();
     })
@@ -2577,7 +2613,8 @@
     })
     .then(function(r){ return r.ok ? r.json() : {ok:false}; })
     .then(function(){
-      // 重新抓徽章數 + 重新載入清單
+      // 立刻切到顯示「全部標為已讀」，同時刷新正確數字與清單
+      updateToggleButtons(1);
       refreshUnread();
       loadDropdown();
     })
@@ -2606,3 +2643,4 @@
   refreshUnread();
 })();
 </script>
+

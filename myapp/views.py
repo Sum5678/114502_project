@@ -205,7 +205,9 @@ from .taiwan_regions_forms import TaiwanRegionForm
 @admin_login_required
 def taiwan_regions_admin(request):
     regions = TaiwanRegion.objects.all()
-    return render(request, 'taiwan_regions_admin.html', {'regions': regions})
+    context =  {'regions': regions,}
+    context.update(get_unreviewed_counts())
+    return render(request, 'taiwan_regions_admin.html', context)
 
 @admin_login_required
 def taiwan_regions_add(request):
@@ -216,7 +218,12 @@ def taiwan_regions_add(request):
             return redirect('taiwan_regions_admin')
     else:
         form = TaiwanRegionForm()
-    return render(request, 'taiwan_regions_add.html', {'form': form, 'action': '新增'})
+    context = {
+        'form': form, 
+        'action': '新增',
+        }
+    context.update(get_unreviewed_counts())
+    return render(request, 'taiwan_regions_add.html', context)
 
 @admin_login_required
 def taiwan_regions_edit(request, id):
@@ -228,7 +235,11 @@ def taiwan_regions_edit(request, id):
             return redirect('taiwan_regions_admin')
     else:
         form = TaiwanRegionForm(instance=region)
-    return render(request, 'taiwan_regions_edit.html', {'form': form, 'action': '編輯'})
+    context = {
+        'form': form, 
+        'action': '編輯',
+        }
+    return render(request, 'taiwan_regions_edit.html', context)
 
 def taiwan_regions_delete(request, id):
     region = get_object_or_404(TaiwanRegion, pk=id)
@@ -246,7 +257,9 @@ from django.contrib import messages
 @admin_login_required
 def police_address_list(request):
     addresses = PoliceAddress.objects.all().order_by('precinct_name')
-    return render(request, 'police_address_admin.html', {'addresses': addresses})
+    context =  {'addresses': addresses,}
+    context.update(get_unreviewed_counts())
+    return render(request, 'police_address_admin.html',context)
 
 @admin_login_required
 def police_address_add(request):
@@ -271,7 +284,11 @@ def police_address_add(request):
             return redirect('police_address_list')  # 替換為你列表頁的網址名稱
         else:
             messages.error(request, "所有欄位皆為必填，請確認填寫完整。")
-    return render(request, 'police_address_add.html')
+
+    context = {}
+    context.update(get_unreviewed_counts())
+    return render(request, 'police_address_add.html', context)
+
 
 @admin_login_required
 def police_address_edit(request, pk):
@@ -288,8 +305,11 @@ def police_address_edit(request, pk):
         address.save()
         messages.success(request, "資料已成功更新！")
         return redirect('police_address_list')
-
-    return render(request, 'police_address_edit.html', {'address': address})
+    context = {
+        'address': address,
+    }
+    context.update(get_unreviewed_counts())
+    return render(request, 'police_address_edit.html', context)
 
 @require_POST
 def police_address_delete(request, pk):
@@ -2144,7 +2164,7 @@ from .models import ChatInteraction, ThisUserProfile
 
 import json
 import bleach
-from urllib.parse import quote
+from urllib.parse import quote, urlencode
 from uuid import uuid4
 from functools import wraps
 
@@ -2336,6 +2356,26 @@ def _resolve_user(user_or_id):
     except Exception:
         pass
     return None
+
+
+# ====== 連結建構：讓通知能直達貼文/留言/回覆 ======
+def build_post_link(post, comment_id=None, reply_id=None):
+    """
+    - 貼文：/post/<post_id>/
+    - 留言：/post/<post_id>/#c-<comment_id>
+    - 回覆：/post/<post_id>/?open=c-<comment_id>#r-<reply_id>
+    若沒有單篇路由，會 fallback 回 /post_display/。
+    """
+    try:
+        base = reverse("post_detail", kwargs={"post_id": post.pk})
+    except Exception:
+        base = reverse("post_display")
+    if reply_id:
+        qs = urlencode({"open": f"c-{comment_id}"}) if comment_id else ""
+        return f"{base}?{qs}#r-{reply_id}" if qs else f"{base}#r-{reply_id}"
+    if comment_id:
+        return f"{base}#c-{comment_id}"
+    return base
 
 
 # ===== 全部留言（含回覆）扁平化，附上「回覆對象」資訊 + 喜歡狀態 =====
@@ -2762,7 +2802,7 @@ def like_post(request, post_id):
                 recipient=post.user,   # 用物件，不用 recipient_id
                 title="貼文收到新按讚",
                 message=f"{request.user.username} 按讚了你的貼文",
-                link_url=reverse('post_display'),
+                link_url=build_post_link(post),
             )
         except Exception:
             pass
@@ -2854,7 +2894,7 @@ def add_comment(request, post_id):
                 recipient=post.user,
                 title="新留言",
                 message=f"{request.user.username} 留言了你的貼文",
-                link_url=reverse('post_display'),
+                link_url=build_post_link(post, comment_id=comment_id),
             )
         except Exception:
             pass
@@ -3074,7 +3114,7 @@ def reply_comment(request, post_id):
                 recipient=notify_user,
                 title="新回覆",
                 message=f"{request.user.username} 回覆了你的留言/回覆",
-                link_url=reverse('post_display'),
+                link_url=build_post_link(post, comment_id=comment_id, reply_id=reply_dict['id']),
             )
     except Exception:
         pass
@@ -3159,7 +3199,7 @@ def like_comment(request, post_id):
                     recipient=notify_user,
                     title="收到按讚",
                     message=f"{request.user.username} 按讚了你的留言/回覆",
-                    link_url=reverse('post_display'),
+                    link_url=build_post_link(post, comment_id=comment_id, reply_id=(reply_id or None)),
                 )
         except Exception:
             pass
@@ -3394,7 +3434,11 @@ def create_report(request):
                 recipient=notify_user,
                 title="你的內容被檢舉",
                 message=f"{request.user.username} 檢舉了你的{target_type}",
-                link_url=reverse('post_display'),
+                link_url=build_post_link(
+                    post,
+                    comment_id=comment_id if target_type in ['comment', 'reply'] else None,
+                    reply_id=reply_id if target_type == 'reply' else None
+                ),
             )
     except Exception:
         pass
@@ -3682,8 +3726,51 @@ def delete_report_target(request, report_id):
     messages.success(request, f"檢舉 #{report.id}：{done_msg}")
     return redirect('report_decide')
 
+@login_required(login_url='/01userlogin/')
+def post_detail(request, post_id):
+    post = _get_post_by_any_id(post_id)
+    user_id_str = str(request.user.id)
+
+    # 標記貼文的 like/save 狀態（沿用 post_display 做法）
+    try:
+        liked_ids = [str(x) for x in json.loads(post.liked_user_ids or '[]')]
+    except json.JSONDecodeError:
+        liked_ids = []
+    post.is_liked = user_id_str in liked_ids
+
+    try:
+        saved_ids = [str(x) for x in json.loads(getattr(post, 'saved_user_ids', '[]') or '[]')]
+    except json.JSONDecodeError:
+        saved_ids = []
+    post.is_saved = user_id_str in saved_ids
+
+    # 載入留言並補齊欄位 + is_liked
+    comments = _load_comments(post)
+    fixed_comments = []
+    for c in comments:
+        c = _ensure_comment_defaults(c)
+        c['is_liked'] = user_id_str in c['like_user_ids']
+        _mark_is_liked_recursive(c.get('replies') or [], user_id_str)
+        fixed_comments.append(c)
+
+    # 暱稱（與 post_display 同步）
+    prof = ThisUserProfile.objects.filter(gmail=request.user.email).first() \
+           or ThisUserProfile.objects.filter(user=request.user).first() \
+           or ThisUserProfile.objects.filter(gmail__iexact=(request.user.email or "")).first()
+    nick1 = (prof.default_nickname1 or "").strip() if prof else ""
+    nick2 = (prof.default_nickname2 or "").strip() if prof else ""
+
+    return render(request, "post_detail.html", {
+        "post": post,
+        "comments": fixed_comments,
+        "profile_nickname1": nick1,
+        "profile_nickname2": nick2,
+    })
+
+
 
 # ------------ /交流區後端（整合版）------------
+
 
 
 
