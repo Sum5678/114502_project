@@ -205,7 +205,9 @@ from .taiwan_regions_forms import TaiwanRegionForm
 @admin_login_required
 def taiwan_regions_admin(request):
     regions = TaiwanRegion.objects.all()
-    return render(request, 'taiwan_regions_admin.html', {'regions': regions})
+    context =  {'regions': regions,}
+    context.update(get_unreviewed_counts())
+    return render(request, 'taiwan_regions_admin.html', context)
 
 @admin_login_required
 def taiwan_regions_add(request):
@@ -216,7 +218,12 @@ def taiwan_regions_add(request):
             return redirect('taiwan_regions_admin')
     else:
         form = TaiwanRegionForm()
-    return render(request, 'taiwan_regions_add.html', {'form': form, 'action': '新增'})
+    context = {
+        'form': form, 
+        'action': '新增',
+        }
+    context.update(get_unreviewed_counts())
+    return render(request, 'taiwan_regions_add.html', context)
 
 @admin_login_required
 def taiwan_regions_edit(request, id):
@@ -228,7 +235,12 @@ def taiwan_regions_edit(request, id):
             return redirect('taiwan_regions_admin')
     else:
         form = TaiwanRegionForm(instance=region)
-    return render(request, 'taiwan_regions_edit.html', {'form': form, 'action': '編輯'})
+    context = {
+        'form': form, 
+        'action': '編輯',
+        }
+    context.update(get_unreviewed_counts())
+    return render(request, 'taiwan_regions_edit.html', context)
 
 def taiwan_regions_delete(request, id):
     region = get_object_or_404(TaiwanRegion, pk=id)
