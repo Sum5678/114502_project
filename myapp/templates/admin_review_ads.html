@@ -2,6 +2,157 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>{% block title %}首頁{% endblock %}</title>
+  <meta content="" name="description">
+  <meta content="" name="keywords">
+
+  <!-- Favicons -->
+  <link href="{% static 'assets/img/favicon.png' %}" rel="icon">
+  <link href="{% static 'assets/img/apple-touch-icon.png' %}" rel="apple-touch-icon">
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700|Nunito:300,400,600,700,800|Poppins:300,400,500,600,700" rel="stylesheet">
+
+  <!-- Icon CDN -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/boxicons/2.1.0/css/boxicons.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css" rel="stylesheet">
+
+  <!-- Vendor CSS -->
+  <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/boxicons/css/boxicons.min.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/quill/quill.snow.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/quill/quill.bubble.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/simple-datatables/style.css' %}" rel="stylesheet">
+
+  <!-- Template Main CSS File -->
+  <link href="{% static 'assets/css/main.css' %}" rel="stylesheet">
+</head>
+
+<body class="index-page">
+  <header id="header" class="header d-flex align-items-center fixed-top">
+    <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
+      <a href="index.html" class="logo d-flex flex-column align-items-start me-auto me-xl-0">
+        <h1 class="sitename">{{ admin_name }} 管理員</h1>
+        <h1 class="sitename">您的管理員id是: {{ admin_id }}</h1>
+        </a>
+
+      <nav id="navmenu" class="navmenu">
+        <ul>
+          <li><a href="{% url 'admin_index' %}#hero" class="active">管理員主頁</a></li>
+          <li><a href="{% url 'admin_interview' %}">管理員自我介紹</a></li>          
+          <li class="dropdown"><a href="#"><span>清單審核</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+            <ul>
+              <li>
+                <a href="{% url 'pemap_judge' %}">
+                  事件清單審核
+                  {% if unreviewed_events_count > 0 %}
+                    <span class="badge bg-danger ms-2">{{ unreviewed_events_count }}</span>
+                  {% endif %}
+                </a>
+              </li>
+              <li><a href="{% url 'store_judge' %}">商家清單審核
+                {% if unreviewed_stores_count > 0 %}
+                  <span class="badge bg-danger ms-2">{{ unreviewed_stores_count }}</span>
+                {% endif %}
+              </a></li>
+              <!-- 新增：交流區檢舉清單 -->
+              <li><a href="{% url 'review_reports' %}">交流區檢舉清單
+                {% if unreviewed_review_count > 0 %}
+                  <span class="badge bg-danger ms-2">{{ unreviewed_review_count }}</span>
+                {% endif %}
+              </a></li>
+
+              <li><a href="{% url 'admin_review_ads' %}">廣告審核</a></li>
+            </ul> 
+          </li>
+          
+                    <li class="dropdown"><a href="#"><span>我的審核紀錄</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+            <ul>
+              <li><a href="{% url 'admin_decide' %}">事件審核紀錄</a></li>
+              <li><a href="{% url 'store_decide' %}">商家審核紀錄</a></li>
+              <!-- 新增：交流區舉報審核紀錄 -->
+              <li><a href="{% url 'report_decide' %}">交流區舉報審核紀錄</a></li>
+            </ul> 
+          </li>
+          <!-- ✅ 新增的下拉式選單 -->
+          <li class="dropdown"><a href="#"><span>管理工具</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+            <ul>
+              <li><a href="{% url 'user_admin_list' %}">用戶管理</a></li>
+              <li><a href="{% url 'education_list' %}">教育網頁管理</a></li>
+              <li><a href="{% url 'taiwan_regions_admin' %}">台灣縣市管理</a></li>
+              <li><a href="{% url 'police_address_list' %}">最近警局管理</a></li>
+              <li><a href="#">其他工具</a></li>
+            </ul>
+          </li>
+        </ul>
+          <!-- <li><a href="{% url 'admin_logout' %}">登出</a></li> -->
+        </ul>
+        <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+      </nav>
+      <a class="btn-getstarted" href="{% url 'admin_logout' %}">登出</a>
+    </div>
+  </header>
+<body class="index-page">
+
+  <main class="main" style="padding:40px 0;">
+
+    <div class="container">
+      <div class="bg-white p-4 shadow rounded">
+
+        <h2 class="mb-3">待審核廣告</h2>
+
+        {% if ads %}
+        <div class="table-responsive">
+          <table class="table table-bordered table-hover align-middle text-center">
+            <thead class="table-primary">
+              <tr>
+                <th>商家名稱</th>
+                <th>廣告內容</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for ad in ads %}
+              <tr>
+                <td class="fw-bold">{{ ad.st.store_name }}</td>
+                <td class="text-start" style="max-width:300px;">
+                  <div class="text-truncate" title="{{ ad.ad_content }}">{{ ad.ad_content }}</div>
+                </td>
+                <td class="text-nowrap">
+                  <a href="{% url 'review_store_ad' ad.history_id 'approve' %}" class="btn btn-success btn-sm me-1">
+                    <i class="bi bi-check-circle"></i> 通過
+                  </a>
+                  <a href="{% url 'review_store_ad' ad.history_id 'reject' %}" class="btn btn-danger btn-sm">
+                    <i class="bi bi-x-circle"></i> 拒絕
+                  </a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+          <p class="text-muted">目前沒有待審核的廣告。</p>
+        {% endif %}
+
+      </div>
+    </div>
+  </main>
+
+  <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+</body>
+</html>
+
+
+
+
+<!-- {% load static %}
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
     <meta charset="UTF-8">
     <title>廣告審核</title>
     <link rel="stylesheet" href="{% static 'css/admin.css' %}">
@@ -33,4 +184,4 @@
         <p>目前沒有待審核的廣告。</p>
     {% endif %}
 </body>
-</html>
+</html> -->
