@@ -2174,6 +2174,7 @@ import bleach
 from urllib.parse import quote, urlencode
 from uuid import uuid4
 from functools import wraps
+import re  # ← 供通知清理用
 
 # 允許的貼文 HTML（內容/留言都會用 bleach 過濾）
 ALLOWED_TAGS = ['a']
@@ -2470,6 +2471,29 @@ def _flatten_all_with_parent(comments, user_id_str=None, indent_step_px=20):
 # ================== 通知功能（修正版：僅調整這一段） ==================
 from django.utils.timesince import timesince
 
+# 🔧 輔助：根據通知 link_url 判斷其指向的貼文是否仍存在；若不存在就順手刪掉。
+def _notif_targets_post_exists_and_clean(n: Notification) -> bool:
+    """
+    嘗試從 link_url 擷取 /post/<id>/ 的 <id>，檢查 ChatInteraction 是否存在。
+    - 若解析失敗，視為可顯示（回傳 True，避免誤殺其它非貼文型通知）。
+    - 若解析成功但貼文不存在，直接刪除這筆通知並回傳 False。
+    """
+    url = getattr(n, "link_url", "") or ""
+    m = re.search(r"/post/([^/]+)/", url)
+    if not m:
+        return True
+    pid = m.group(1)
+    exists = ChatInteraction.objects.filter(Q(pk=str(pid)) | Q(interaction_id=str(pid))).exists()
+    if exists:
+        return True
+    # 目標貼文已不存在 → 清掉這筆通知以免點進去 404
+    try:
+        n.delete()
+    except Exception:
+        pass
+    return False
+
+
 @login_required(login_url='/01userlogin/')
 def notif_unread_count(request):
     """徽章未讀數：{"unread": <int>}"""
@@ -2481,21 +2505,26 @@ def notif_dropdown(request):
     """
     回傳最近 10 則通知；前端需要的結構：
     {"items": [{"title","url","icon","time","is_read"}...]}
+    會自動剔除（並清理）指向不存在貼文的通知，避免點進去 404。
     """
     notifs = (Notification.objects
               .filter(recipient=request.user)
-              .order_by('-created_at')[:10])
+              .order_by('-created_at')[:30])  # 先多抓幾筆，濾掉無效後再取前 10
 
     items = []
     for n in notifs:
+        if not _notif_targets_post_exists_and_clean(n):
+            continue  # 跳過已失效的通知
         items.append({
-            "id": n.id,  # ← 新增這行
+            "id": n.id,
             "title": getattr(n, "title", "") or "通知",
             "url": getattr(n, "link_url", "") or "#",
             "icon": getattr(n, "icon", "") or "bi-bell",
             "time": f"{timesince(n.created_at)} 前" if getattr(n, "created_at", None) else "",
             "is_read": bool(getattr(n, "is_read", False)),
         })
+        if len(items) >= 10:
+            break
     return JsonResponse({"items": items})
 
 # －－－－ 新增：刪除單一通知（硬刪除） －－－－
@@ -2554,6 +2583,12 @@ def notif_mark_all_unread(request):
     qs.update(is_read=False)
     return JsonResponse({"ok": True})
 
+# 🔧 輔助：刪除與某篇貼文相關的所有通知（用 post.pk 去清）
+def _purge_post_notifications(post):
+    try:
+        Notification.objects.filter(link_url__contains=f"/post/{post.pk}/").delete()
+    except Exception:
+        pass
 
 
 # ================== 貼文 CRUD / 展示 ==================
@@ -2807,6 +2842,8 @@ def delete_post(request, post_id):
         return HttpResponseForbidden("⚠️ 你無權刪除這篇貼文。")
 
     if request.method == 'POST':
+        # 先清掉與這篇貼文相關的所有通知，避免殘留造成 404
+        _purge_post_notifications(post)
         post.delete()
         return redirect('post_display')
 
@@ -3702,7 +3739,8 @@ def delete_report_target(request, report_id):
     target_type = report.target_type
     try:
         if target_type == 'post':
-            # 直接刪除整篇貼文
+            # 先清掉相關通知，再刪貼文
+            _purge_post_notifications(post)
             if post is None:
                 messages.error(request, '貼文已不存在。')
                 return redirect('report_decide')
@@ -3718,6 +3756,8 @@ def delete_report_target(request, report_id):
             del comments[idx]
             post.comments = json.dumps(comments, ensure_ascii=False)
             post.save(update_fields=['comments'])
+            # 留言/回覆也會造成通知，但為簡化與安全，直接清理此貼文所有通知
+            _purge_post_notifications(post)
             done_msg = '已刪除留言'
 
         elif target_type == 'reply':
@@ -3736,6 +3776,8 @@ def delete_report_target(request, report_id):
             comments[cidx] = c
             post.comments = json.dumps(comments, ensure_ascii=False)
             post.save(update_fields=['comments'])
+            # 同理，清理此貼文所有通知，避免殘留指向已刪內容的連結
+            _purge_post_notifications(post)
             done_msg = '已刪除回覆'
 
         else:
@@ -3812,6 +3854,7 @@ def post_detail(request, post_id):
 
 
 # ------------ /交流區後端（整合版）------------
+
 
 
 
