@@ -59,13 +59,11 @@
                   <span class="badge bg-danger ms-2">{{ unreviewed_stores_count }}</span>
                 {% endif %}
               </a></li>
-              <!-- 新增：交流區檢舉清單 -->
               <li><a href="{% url 'review_reports' %}">交流區檢舉清單
                 {% if unreviewed_review_count > 0 %}
                   <span class="badge bg-danger ms-2">{{ unreviewed_review_count }}</span>
                 {% endif %}
               </a></li>
-
               <li><a href="{% url 'admin_review_ads' %}">廣告審核</a></li>
             </ul> 
           </li>
