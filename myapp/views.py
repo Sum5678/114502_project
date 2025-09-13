@@ -2489,6 +2489,7 @@ def notif_dropdown(request):
     items = []
     for n in notifs:
         items.append({
+            "id": n.id,  # ← 新增這行
             "title": getattr(n, "title", "") or "通知",
             "url": getattr(n, "link_url", "") or "#",
             "icon": getattr(n, "icon", "") or "bi-bell",
@@ -2496,6 +2497,40 @@ def notif_dropdown(request):
             "is_read": bool(getattr(n, "is_read", False)),
         })
     return JsonResponse({"items": items})
+
+# －－－－ 新增：刪除單一通知（硬刪除） －－－－
+from django.views.decorators.http import require_POST
+
+@login_required(login_url='/01userlogin/')
+@require_POST
+def notif_delete(request, notif_id):
+    """硬刪除：刪除自己的一筆通知"""
+    n = Notification.objects.filter(pk=notif_id, recipient=request.user).first()
+    if not n:
+        return JsonResponse({"ok": False, "msg": "找不到通知"}, status=404)
+    n.delete()  # ← 直接刪資料庫紀錄
+    return JsonResponse({"ok": True})
+
+
+# －－－－ 新增：刪除所有『已讀』通知（硬刪除） －－－－
+@login_required(login_url='/01userlogin/')
+@require_POST
+def notif_delete_read(request):
+    qs = Notification.objects.filter(recipient=request.user, is_read=True)
+    deleted = qs.count()
+    qs.delete()
+    return JsonResponse({"ok": True, "deleted": deleted})
+
+
+# －－－－ 新增：刪除所有通知（硬刪除） －－－－
+@login_required(login_url='/01userlogin/')
+@require_POST
+def notif_delete_all(request):
+    qs = Notification.objects.filter(recipient=request.user)
+    deleted = qs.count()
+    qs.delete()
+    return JsonResponse({"ok": True, "deleted": deleted})
+
 
 @login_required(login_url='/01userlogin/')
 def notif_mark_all(request):

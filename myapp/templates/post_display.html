@@ -301,13 +301,13 @@
       <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notifBadgeCount" style="display:none;">0</span>
     </button>
     <ul class="dropdown-menu dropdown-menu-end" id="notifList" style="min-width: 340px; max-height: 360px; overflow-y: auto;">
-      <li class="dropdown-header d-flex align-items-center justify-content-between px-3">
+      <li class="dropdown-header d-flex align-items-center justify-content-between px-3" data-fixed="1">
         <span class="fw-semibold">通知</span>
         <button class="btn btn-sm btn-link p-0" id="notifMarkAllBtn" type="button">全部標為已讀</button>
         <button class="btn btn-sm btn-link p-0 ms-2" id="notifMarkAllUnreadBtn" type="button">全部標為未讀</button>
       </li>
-      <li><hr class="dropdown-divider"></li>
-      <li class="text-center text-muted py-2" id="notifLoading">載入中...</li>
+      <li data-fixed="1"><hr class="dropdown-divider"></li>
+      <li class="text-center text-muted py-2" id="notifLoading" data-fixed="1">載入中...</li>
     </ul>
 
     
@@ -2644,3 +2644,303 @@
 })();
 </script>
 
+
+<!-- ===== Notifications delete controls & JS (injected) ===== -->
+<script>
+/* injected by assistant */
+(function(){
+  function getCookie(name){
+    const m = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+    return m ? m.pop() : '';
+  }
+  function ensureNotifHeaderControls(){
+    const list = document.getElementById('notifList');
+    if (!list) return;
+    const header = list.querySelector('.dropdown-header');
+    if (!header) return;
+    if (header.querySelector('#notifDeleteReadBtn')) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'd-flex align-items-center gap-2';
+    wrap.innerHTML = `
+      <button class="btn btn-sm btn-link p-0" id="notifMarkAllBtn" type="button">全部標為已讀</button>
+      <button class="btn btn-sm btn-link p-0" id="notifMarkAllUnreadBtn" type="button">全部標為未讀</button>
+      <span class="text-muted">｜</span>
+      <button class="btn btn-sm btn-link text-danger p-0" id="notifDeleteReadBtn" type="button" title="刪除所有已讀">清空已讀</button>
+      <button class="btn btn-sm btn-link text-danger p-0" id="notifDeleteAllBtn" type="button" title="刪除全部">全部刪除</button>
+    `;
+    header.classList.add('d-flex','align-items-center','justify-content-between','px-3');
+    header.appendChild(wrap);
+  }
+  async function refreshUnreadBadge(){
+    try{
+      const r = await fetch('/notifications/unread_count/');
+      if (!r.ok) return;
+      const data = await r.json();
+      const badge = document.getElementById('notifBadgeCount') || document.querySelector('.notif-badge');
+      if (!badge) return;
+      const n = data.unread || 0;
+      badge.textContent = n;
+      badge.style.display = n > 0 ? '' : 'none';
+    }catch(e){}
+  }
+  function renderNotifList(items){
+    const list = document.getElementById('notifList');
+    if (!list) return;
+    ensureNotifHeaderControls();
+    list.querySelectorAll('li[data-notif-item], li#notifEmpty').forEach(li => li.remove());
+    if (!items || !items.length){
+      const empty = document.createElement('li');
+      empty.id = 'notifEmpty';
+      empty.className = 'text-center text-muted py-3';
+      empty.textContent = '目前沒有通知';
+      list.appendChild(empty);
+      return;
+    }
+    items.forEach(item => {
+      const li = document.createElement('li');
+      li.dataset.notifItem = '1';
+      li.className = 'px-3 py-2';
+      li.innerHTML = `
+        <div class="d-flex align-items-start justify-content-between">
+          <a class="flex-grow-1 text-truncate me-2 d-inline-flex align-items-center" href="${item.url || '#'}">
+            <i class="${item.icon || 'bi bi-bell'} me-2"></i>
+            <div class="d-flex flex-column">
+              <span class="text-body">${item.title || '通知'}</span>
+              <small class="text-muted">${item.time || ''}</small>
+            </div>
+          </a>
+          <button class="btn btn-link text-danger p-0 js-del-notif" data-id="${item.id}" title="刪除此通知">
+            <i class="bi bi-x-circle"></i>
+          </button>
+        </div>
+      `;
+      list.appendChild(li);
+    });
+  }
+  async function loadNotifDropdown(){
+    const list = document.getElementById('notifList');
+    if (!list) return;
+    ensureNotifHeaderControls();
+    let loading = list.querySelector('#notifLoading');
+    if (!loading){
+      loading = document.createElement('li');
+      loading.id = 'notifLoading';
+      loading.className = 'text-center text-muted py-2';
+      loading.textContent = '載入中...';
+      list.appendChild(loading);
+    }
+    loading.style.display = '';
+    try{
+      const r = await fetch('/notifications/dropdown/');
+      const data = await r.json();
+      renderNotifList(data.items || []);
+    }catch(e){
+      renderNotifList([]);
+    }finally{
+      loading.style.display = 'none';
+    }
+  }
+  const notifBellBtn = document.getElementById('notifBellBtn');
+  if (notifBellBtn){
+    notifBellBtn.addEventListener('click', loadNotifDropdown);
+  }
+  document.addEventListener('click', async (e) => {
+    const btn = e.target.closest('.js-del-notif');
+    if (!btn) return;
+    const id = btn.dataset.id;
+    if (!id) return;
+    const res = await fetch(`/notifications/delete/${id}/`, {
+      method: 'POST',
+      headers: { 'X-CSRFToken': getCookie('csrftoken') }
+    });
+    if (res.ok){
+      const li = btn.closest('li[data-notif-item]');
+      if (li) li.remove();
+      if (!document.querySelector('#notifList li[data-notif-item]')){
+        renderNotifList([]);
+      }
+      refreshUnreadBadge();
+    }else{
+      alert('刪除失敗');
+    }
+  });
+  function on(id, fn){ const el = document.getElementById(id); if (el) el.addEventListener('click', fn); }
+  on('notifMarkAllBtn', async () => {
+    const r = await fetch('/notifications/mark_all/', { method: 'POST', headers: { 'X-CSRFToken': getCookie('csrftoken') } });
+    if (r.ok) refreshUnreadBadge();
+  });
+  on('notifMarkAllUnreadBtn', async () => {
+    const r = await fetch('/notifications/mark_all_unread/', { method: 'POST', headers: { 'X-CSRFToken': getCookie('csrftoken') } });
+    if (r.ok) refreshUnreadBadge();
+  });
+  on('notifDeleteReadBtn', async () => {
+    if (!confirm('確定刪除所有「已讀」通知？此動作無法復原。')) return;
+    const r = await fetch('/notifications/delete_read/', { method: 'POST', headers: { 'X-CSRFToken': getCookie('csrftoken') } });
+    if (r.ok){ await loadNotifDropdown(); refreshUnreadBadge(); }
+  });
+  on('notifDeleteAllBtn', async () => {
+    if (!confirm('確定「全部刪除」所有通知？此動作無法復原。')) return;
+    const r = await fetch('/notifications/delete_all/', { method: 'POST', headers: { 'X-CSRFToken': getCookie('csrftoken') } });
+    if (r.ok){ renderNotifList([]); refreshUnreadBadge(); }
+  });
+  refreshUnreadBadge();
+})();
+</script>
+
+<!-- Notif Dropdown Patch START -->
+<script>
+(function(){
+  if (window.__notifPatched) return; window.__notifPatched = true;
+
+  function getCookie(name){
+    const m = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+    return m ? m.pop() : '';
+  }
+  function qs(sel, root){ return (root||document).querySelector(sel); }
+  function qsa(sel, root){ return Array.from((root||document).querySelectorAll(sel)); }
+
+  const list = qs('#notifList');
+  const badge = qs('#notifBadgeCount');
+  const loading = qs('#notifLoading');
+  const markAllBtn = qs('#notifMarkAllBtn');
+  const markAllUnreadBtn = qs('#notifMarkAllUnreadBtn');
+
+  function setBadge(n){
+    if (!badge) return;
+    if (n > 0){ badge.textContent = n; badge.style.display = ''; }
+    else { badge.textContent = '0'; badge.style.display = 'none'; }
+  }
+
+  async function refreshUnread(){
+    try{
+      const r = await fetch('/notifications/unread_count/');
+      if (!r.ok) return;
+      const data = await r.json();
+      setBadge(data.unread || 0);
+    }catch(e){}
+  }
+
+  function clearListKeepFixed(){
+    if (!list) return;
+    qsa('li', list).forEach(li => { if (!li.hasAttribute('data-fixed')) li.remove(); });
+  }
+
+  function renderItems(items){
+    clearListKeepFixed();
+    if (!items || !items.length){
+      const empty = document.createElement('li');
+      empty.className = 'text-center text-muted py-2';
+      empty.textContent = '目前沒有通知';
+      list.appendChild(empty);
+      return;
+    }
+    items.forEach(it => {
+      const li = document.createElement('li');
+      li.className = 'px-3 py-2 d-flex align-items-center justify-content-between notif-item';
+      li.setAttribute('data-id', it.id);
+
+      const left = document.createElement('div');
+      left.className = 'd-flex align-items-start gap-2 flex-grow-1';
+      left.innerHTML = '<i class="'+ (it.icon||'bi bi-bell') +'"></i>' +
+                       '<div class="flex-grow-1">' +
+                         '<div class="fw-semibold">'+ (it.title||'通知') +'</div>' +
+                         (it.time ? '<div class="small text-muted">'+ it.time +'</div>' : '') +
+                       '</div>';
+      if (it.url) {
+        left.addEventListener('click', () => { window.location.href = it.url; });
+        left.style.cursor = 'pointer';
+      }
+
+      const del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'btn btn-link text-danger p-0 ms-2 js-del-notif';
+      del.setAttribute('data-id', it.id);
+      del.setAttribute('title', '刪除此通知');
+      del.innerHTML = '<i class="bi bi-x-circle"></i>';
+
+      li.appendChild(left);
+      li.appendChild(del);
+      list.appendChild(li);
+    });
+  }
+
+  async function loadAndRender(){
+    if (!list) return;
+    loading && (loading.style.display = '');
+    try{
+      const r = await fetch('/notifications/dropdown/');
+      if (!r.ok) throw new Error('net');
+      const data = await r.json();
+      renderItems(data.items || []);
+    }catch(e){
+      clearListKeepFixed();
+      const li = document.createElement('li');
+      li.className = 'text-danger text-center py-2';
+      li.textContent = '載入失敗';
+      list.appendChild(li);
+    }finally{
+      loading && (loading.style.display = 'none');
+    }
+  }
+
+  // Bind dropdown show to refresh once per open
+  const bell = qs('#notifBellBtn');
+  if (bell){
+    bell.addEventListener('click', () => { loadAndRender(); }, { once:false });
+  }
+
+  // Delete single notif (event delegation)
+  if (list){
+    list.addEventListener('click', async (e) => {
+      const btn = e.target.closest('.js-del-notif');
+      if (!btn) return;
+      const id = btn.dataset.id;
+      try{
+        const r = await fetch('/notifications/delete/' + id + '/', {
+          method: 'POST',
+          headers: { 'X-CSRFToken': getCookie('csrftoken') }
+        });
+        if (r.ok){
+          const li = btn.closest('li.notif-item');
+          if (li) li.remove();
+          // if list becomes empty, show placeholder
+          if (!qsa('li.notif-item', list).length){
+            renderItems([]);
+          }
+          refreshUnread();
+        }else{
+          alert('刪除失敗');
+        }
+      }catch(err){}
+    });
+  }
+
+  // Mark all read/unread
+  if (markAllBtn){
+    markAllBtn.addEventListener('click', async () => {
+      try{
+        const r = await fetch('/notifications/mark_all/', {
+          method: 'POST',
+          headers: { 'X-CSRFToken': getCookie('csrftoken') }
+        });
+        if (r.ok){ refreshUnread(); }
+      }catch(e){}
+    });
+  }
+  if (markAllUnreadBtn){
+    markAllUnreadBtn.addEventListener('click', async () => {
+      try{
+        const r = await fetch('/notifications/mark_all_unread/', {
+          method: 'POST',
+          headers: { 'X-CSRFToken': getCookie('csrftoken') }
+        });
+        if (r.ok){ refreshUnread(); }
+      }catch(e){} 
+    });
+  }
+
+  // Initial badge
+  refreshUnread();
+})();
+</script>
+<!-- Notif Dropdown Patch END -->

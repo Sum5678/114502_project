@@ -115,12 +115,15 @@ urlpatterns = [
     path("reports/edit/<int:report_id>/", views.edit_report, name="edit_report"),
     # 交流區檢舉：刪除被檢舉的目標（僅限已處置後）
     path("reports/delete-target/<int:report_id>/", views.delete_report_target, name="delete_report_target"),
-    path('notifications/dropdown/', views.notif_dropdown, name='notif_dropdown'),
     path('notifications/unread_count/', views.notif_unread_count, name='notif_unread_count'),
     path('notifications/dropdown/', views.notif_dropdown, name='notif_dropdown'),
     path('notifications/mark_all/', views.notif_mark_all, name='notif_mark_all'),
     path('notifications/mark_all_unread/', views.notif_mark_all_unread, name='notif_mark_all_unread'),
     path("post/<str:post_id>/", views.post_detail, name="post_detail"),
+    path("notifications/delete/<int:notif_id>/", views.notif_delete, name="notif_delete"),
+    path("notifications/delete_read/", views.notif_delete_read, name="notif_delete_read"),
+    path("notifications/delete_all/", views.notif_delete_all, name="notif_delete_all"),
+
 
 
 
