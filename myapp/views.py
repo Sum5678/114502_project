@@ -326,7 +326,9 @@ from django.utils import timezone
 @admin_login_required
 def user_admin_list(request):
     users = ThisUserProfile.objects.all().order_by('id')
-    return render(request, 'user_admin_list.html', {'users': users})
+    context =  {'users': users}
+    context.update(get_unreviewed_counts())
+    return render(request, 'user_admin_list.html',context)
 
 # 搜尋用戶
 def user_admin_search(request):
@@ -339,10 +341,12 @@ def user_admin_search(request):
             Q(default_nickname1__icontains=query) |
             Q(default_nickname2__icontains=query)
         )
-    return render(request, 'user_admin_list.html', {
+    context = {
         'users': results,
         'query': query,
-    })
+    }
+    context.update(get_unreviewed_counts())
+    return render(request, 'user_admin_list.html', context)
 
 # 編輯用戶
 @admin_login_required
@@ -354,8 +358,9 @@ def user_admin_edit(request, user_id):
         user.status_color = status_color
         user.save()
         return redirect("user_admin_list")
-
-    return render(request, "user_admin_edit.html", {"user": user})
+    context = {"user": user}
+    context.update(get_unreviewed_counts())
+    return render(request, "user_admin_edit.html", context)
 
 # 刪除用戶
 def user_admin_delete(request, user_id):
@@ -1958,12 +1963,13 @@ def admin_decide_view(request):
 
     # 查出這個管理員有改過的資料（已經改過 review_status 的）
     decided_list = PemapAll.objects.filter(admin_id=admin_id).order_by('-time_reviewed')
-
-    return render(request, 'admin_decide.html', {
+    context = {
         'admin_id': admin_id,
         'admin_name': admin_name,
         'decided_list': decided_list
-    })
+    }
+    context.update(get_unreviewed_counts())
+    return render(request, 'admin_decide.html', context)
     
 
 from .models import StoreAll
@@ -1979,12 +1985,13 @@ def store_decide(request):
         review_status__in=['approved', 'rejected'],  # 根據你 review_status 的設定來調整
         admin_id=admin_id
     ).order_by('-reviewed_at')
-
-    return render(request, 'admin_decide_st.html', {
+    context =  {
         'decided_list': decided_list,
         'admin_id': admin_id,
         'admin_name': admin_name,
-    })
+    }
+    context.update(get_unreviewed_counts())
+    return render(request, 'admin_decide_st.html',context)
 
     
 #----------------使用者 事件地圖--------------
