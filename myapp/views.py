@@ -1256,9 +1256,8 @@ def submit_store(request):
 
             # 建立商家
             store = StoreAll.objects.create(
-                user=request.user,
-                st_id=str(st_id),
-                poster_id=str(poster_id),
+                st_id=st_id,  # st_id 本來就是 AutoField，可以不用自己塞
+                poster_id=poster_id,
                 store_name=bs_name,
                 address=bs_address,
                 latitude=float(latitude),
@@ -1269,6 +1268,7 @@ def submit_store(request):
                 reviewed_at=None,
                 review_status="pending",
                 admin_id=9999,
+                user_id=request.user.id,         # ✅ 改這裡
                 poster_gmail=request.user.email,
             )
 
@@ -1311,13 +1311,16 @@ def submit_store(request):
 
 
 from django.contrib.auth.decorators import login_required
+
 @login_required(login_url='/01userlogin/')
 def business_list_view(request):
-    user_stores = list(StoreAll.objects.filter(user=request.user).order_by('-created_at'))
+    # ✅ 改成 user_id
+    user_stores = list(StoreAll.objects.filter(user_id=request.user.id).order_by('-created_at'))
     total = len(user_stores)
     for i, store in enumerate(user_stores):
         store.reverse_id = total - i  # 編號從總數開始往下減
     return render(request, 'business_list.html', {'stores': user_stores})
+
 #----------------聊天室-----------------------------
 from django.shortcuts import render
 
