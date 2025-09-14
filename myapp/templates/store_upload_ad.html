@@ -16,7 +16,7 @@
 .upload-ad-card h2 { font-weight: 600; color: #2c3e50; margin-bottom: 20px;}
 .btn-primary { background-color: #63b3ed; border: none; padding: 10px 20px; border-radius: 8px; transition: 0.3s;}
 .btn-primary:hover { background-color: #4299e1;}
-.carousel-item img { max-height: 300px; object-fit: cover; width: 100%;}
+.carousel-item img { max-height: 300px; object-fit: cover; width: 100%; }
 </style>
 </head>
 
@@ -39,9 +39,7 @@
     
     <label>現有廣告圖片</label>
     <div id="current_images" class="carousel slide mb-3" data-bs-ride="carousel">
-        <div class="carousel-inner" id="carousel_inner">
-            <!-- JS動態生成 -->
-        </div>
+        <div class="carousel-inner" id="carousel_inner"></div>
         <button class="carousel-control-prev" type="button" data-bs-target="#current_images" data-bs-slide="prev">
             <span class="carousel-control-prev-icon"></span>
         </button>
@@ -78,69 +76,71 @@
 
 <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
 <script>
+// 載入商家廣告
 document.getElementById('st_id').addEventListener('blur', function() {
     const st_id = this.value.trim();
     if (!st_id) return;
 
     fetch(`/api/get_store_ad/?st_id=${st_id}`)
-        .then(res => {
-            if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-            return res.json();
-        })
+        .then(res => res.json())
         .then(data => {
-            // 更新廣告文字
-            document.getElementById('ad_content').value = data.ad_content || '';
+            const adContentField = document.getElementById('ad_content');
+            if (!adContentField.value) {
+                adContentField.value = data.ad_content || '';
+            }
 
-            // 更新廣告狀態
-            const statusMap = {
-                'pending': '待審核',
-                'approved': '已批准',
-                'rejected': '已拒絕',
-                undefined: '尚未提交廣告'
-            };
-            document.getElementById('ad_status').value = statusMap[data.status];
+            const adRadiusSelect = document.getElementById('ad_radius');
+            if (!adRadiusSelect.value && data.ad_radius && [10,20,30,50,100].includes(data.ad_radius)) {
+                adRadiusSelect.value = data.ad_radius;
+            }
 
-            // 更新觸發距離下拉選單
-            if (data.ad_radius) {
-                const radiusSelect = document.getElementById('ad_radius');
-                if ([10,20,30,50,100].includes(data.ad_radius)) {
-                    radiusSelect.value = data.ad_radius;
+            const statusMap = { 'pending':'待審核', 'approved':'已批准', 'rejected':'已拒絕', undefined:'尚未提交廣告' };
+            const adStatusField = document.getElementById('ad_status');
+            if (!adStatusField.value) {
+                adStatusField.value = statusMap[data.status];
+            }
+
+            // carousel 只在沒有暫存圖片時載入
+            const carouselInner = document.getElementById('carousel_inner');
+            if (!carouselInner.hasChildNodes()) {
+                carouselInner.innerHTML = '';
+                if (data.images && data.images.length > 0) {
+                    data.images.forEach((url, idx) => {
+                        const div = document.createElement('div');
+                        div.classList.add('carousel-item');
+                        if (idx === 0) div.classList.add('active');
+                        const img = document.createElement('img');
+                        img.src = url;
+                        img.classList.add('d-block','w-100');
+                        div.appendChild(img);
+                        carouselInner.appendChild(div);
+                    });
                 } else {
-                    radiusSelect.value = 10; // 預設值
+                    const div = document.createElement('div');
+                    div.classList.add('carousel-item','active');
+                    div.innerHTML = '<div class="d-flex justify-content-center align-items-center" style="height:300px; background:#eee;">無廣告圖片</div>';
+                    carouselInner.appendChild(div);
                 }
             }
-
-            // 更新圖片輪播
-            const carouselInner = document.getElementById('carousel_inner');
-            carouselInner.innerHTML = '';
-
-            if (data.images && data.images.length > 0) {
-                data.images.forEach((url, idx) => {
-                    const div = document.createElement('div');
-                    div.classList.add('carousel-item');
-                    if (idx === 0) div.classList.add('active');
-                    const img = document.createElement('img');
-                    img.src = url;
-                    img.classList.add('d-block', 'w-100');
-                    div.appendChild(img);
-                    carouselInner.appendChild(div);
-                });
-            } else {
-                const div = document.createElement('div');
-                div.classList.add('carousel-item', 'active');
-                div.innerHTML = '<div class="d-flex justify-content-center align-items-center" style="height:300px; background:#eee;">無廣告圖片</div>';
-                carouselInner.appendChild(div);
-            }
         })
-        .catch(err => {
-            console.error('載入廣告失敗', err);
-            // 清空欄位與圖片
-            document.getElementById('ad_content').value = '';
-            document.getElementById('ad_status').value = '尚未提交廣告';
-            document.getElementById('ad_radius').value = 10; // 預設值
-            document.getElementById('carousel_inner').innerHTML =
-                '<div class="carousel-item active"><div class="d-flex justify-content-center align-items-center" style="height:300px; background:#eee;">無廣告圖片</div></div>';
-        });
+        .catch(err => console.error('載入廣告失敗', err));
+});
+
+// 選擇距離自動跳轉付款頁 (新視窗)
+const adRadiusSelect = document.getElementById('ad_radius');
+const amountToItem = {20:'微型方案', 30:'小型方案', 50:'中型方案', 100:'大型方案', 200:'超大方案'};
+
+adRadiusSelect.addEventListener('change', function() {
+    const val = parseInt(this.value);
+    if ([20,30,50,100,200].includes(val)) {
+        const item = amountToItem[val] || '未知品項';
+        const nextUrl = window.location.pathname;  // 自動抓原頁 URL
+        window.open(
+            `/test_payment/?amount=${val}&item=${encodeURIComponent(item)}&next=${encodeURIComponent(nextUrl)}`,
+            '_blank',
+            'width=500,height=600'
+        );
+    }
 });
 </script>
 
