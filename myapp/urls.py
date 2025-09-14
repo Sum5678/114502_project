@@ -159,6 +159,7 @@ urlpatterns = [
     # API
     path("api/get_store_ad/", views.get_store_ad, name="api_get_store_ad"),
     path("/api/stores-with-ads/", views.stores_with_ads, name="stores_with_ads"),
+    path('test_payment/', views.test_payment, name='test_payment'),  # 模擬付款頁面
 
 
 
