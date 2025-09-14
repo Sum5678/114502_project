@@ -11,7 +11,6 @@
   <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
   <link href="{% static 'assets/vendor/aos/aos.css' %}" rel="stylesheet">
   <link href="{% static 'assets/css/main.css' %}" rel="stylesheet">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
   <link href="{% static 'assets/vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet">
 </head>
 
@@ -176,7 +175,9 @@
   <div id="preloader"></div>
 
   <!-- JS Libraries -->
-  <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+  <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAUuPZMMJvgVWftmqVyzfX8mKTwMX4kA6o&callback=initMap">
+  </script>
   <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
   <script src="{% static 'assets/vendor/php-email-form/validate.js' %}"></script>
   <script src="{% static 'assets/vendor/aos/aos.js' %}"></script>
@@ -189,25 +190,38 @@
 
   <!-- 自訂功能 JS -->
   <script>
-    // Leaflet 地圖初始化
-    const map = L.map('map').setView([25.033964, 121.564472], 13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap 貢獻者'
-    }).addTo(map);
-
+    let map;
     let marker;
-    map.on('click', function (e) {
-      const lat = e.latlng.lat.toFixed(6);
-      const lng = e.latlng.lng.toFixed(6);
-      document.getElementById('latitude').value = lat;
-      document.getElementById('longitude').value = lng;
-      document.getElementById('address').value = `${lat}, ${lng}`;
-      if (marker) {
-        marker.setLatLng(e.latlng);
-      } else {
-        marker = L.marker(e.latlng).addTo(map);
-      }
-    });
+
+    function initMap() {
+      const defaultLatLng = { lat: 25.033964, lng: 121.564472 };
+      map = new google.maps.Map(document.getElementById("map"), {
+        zoom: 13,
+        center: defaultLatLng,
+      });
+
+      map.addListener("click", (e) => {
+        const lat = e.latLng.lat().toFixed(6);
+        const lng = e.latLng.lng().toFixed(6);
+
+        document.getElementById("latitude").value = lat;
+        document.getElementById("longitude").value = lng;
+        document.getElementById("address").value = `${lat}, ${lng}`;
+
+        if (marker) {
+          marker.setPosition(e.latLng);
+        } else {
+          marker = new google.maps.Marker({
+            position: e.latLng,
+            map: map,
+          });
+        }
+      });
+    }
+
+    // 初始化 Google Map
+    window.onload = initMap;
+
 
     // 圖片預覽功能
     document.getElementById('image').addEventListener('change', function (event) {
