@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>付款頁面</title>
+</head>
+<body>
+<h2>模擬付款</h2>
+
+<p>付款金額：{{ default_amount }} 元</p>
+<p>付款品項：{{ item }}</p>
+
+<form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="amount" value="{{ default_amount }}">
+    <input type="hidden" name="item" value="{{ item }}">
+    <input type="hidden" name="next" value="{{ next|default:'/' }}">  <!-- 自動帶 next -->
+    <button type="submit">確認付款</button>
+</form>
+
+</body>
+</html>
