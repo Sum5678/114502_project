@@ -32,7 +32,6 @@ class UserProfile(models.Model):
 
 
 ####登入後填表的
-from django.db import models
 
 class ThisUserProfile(models.Model):
     username = models.CharField(max_length=100)
@@ -464,9 +463,19 @@ class StoreAdHistory(models.Model):
     reviewed_at = models.DateTimeField(blank=True, null=True)
     admin_id = models.IntegerField(blank=True, null=True)
 
+    # ✅ 新增付款外鍵
+    payment = models.ForeignKey(
+        'UserPayment',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='ad_histories'
+    )
+
     class Meta:
         db_table = "store_ad_history"
-        managed = False
+        managed = False  # 如果你已經用 SQL 建表，可以保持 False
+
 
 
 class StoreAdHistoryImage(models.Model):
@@ -647,3 +656,27 @@ class Notification(models.Model):
 
     def __str__(self):
         return f"{self.title} -> {self.recipient}"
+
+
+# -------使用者付費--------
+class UserPayment(models.Model):
+    """付款紀錄表"""
+    user = models.ForeignKey(
+        ThisUserProfile,
+        on_delete=models.CASCADE,
+        db_index=True,
+        related_name='payments'
+    )
+    amount = models.IntegerField()
+    item = models.CharField(max_length=100, default="未知品項")  # 新增品項欄位
+    is_used = models.BooleanField(default=False)
+    transaction_id = models.CharField(max_length=255, null=True, blank=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    is_refunded = models.BooleanField(default=False)  # 是否已退款
+    refunded_at = models.DateTimeField(null=True, blank=True)  # 退款時間
+
+    class Meta:
+        db_table = 'user_payments'
+
+    def __str__(self):
+        return f"{self.user.username} - {self.amount} 元 - {self.item} - {self.transaction_id}"
