@@ -46,12 +46,27 @@ class ThisUserProfile(models.Model):
     user_images = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     status_color = models.CharField(max_length=20, default='#63b3ed')
+    total_paid = models.IntegerField(default=0)           # 累積付費金額
+    membership_level = models.IntegerField(default=0)     # 會員等級 0~5
 
     class Meta:
         db_table = 'this_user_profile'
 
     def __str__(self):
         return self.username
+
+    def membership_name(self):
+        """回傳會員名稱對應等級"""
+        level_names = {
+            0: '普通',
+            1: '銅牌',
+            2: '銀牌',
+            3: '金牌',
+            4: '白金',
+            5: '鑽石'
+        }
+        return level_names.get(self.membership_level, '普通')
+
 
 
 
