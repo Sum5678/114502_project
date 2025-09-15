@@ -2554,25 +2554,6 @@ def notif_delete(request, notif_id):
     return JsonResponse({"ok": True})
 
 
-# －－－－ 新增：刪除所有『已讀』通知（硬刪除） －－－－
-@login_required(login_url='/01userlogin/')
-@require_POST
-def notif_delete_read(request):
-    qs = Notification.objects.filter(recipient=request.user, is_read=True)
-    deleted = qs.count()
-    qs.delete()
-    return JsonResponse({"ok": True, "deleted": deleted})
-
-
-# －－－－ 新增：刪除所有通知（硬刪除） －－－－
-@login_required(login_url='/01userlogin/')
-@require_POST
-def notif_delete_all(request):
-    qs = Notification.objects.filter(recipient=request.user)
-    deleted = qs.count()
-    qs.delete()
-    return JsonResponse({"ok": True, "deleted": deleted})
-
 
 @login_required(login_url='/01userlogin/')
 def notif_mark_all(request):
@@ -2595,6 +2576,25 @@ def notif_mark_all_unread(request):
     qs = Notification.objects.filter(recipient=request.user, is_read=True)
     qs.update(is_read=False)
     return JsonResponse({"ok": True})
+
+# 單一通知標為已讀
+@login_required(login_url='/01userlogin/')
+@require_POST
+def notif_mark_read(request, notif_id):
+    n = Notification.objects.filter(pk=notif_id, recipient=request.user).first()
+    if not n:
+        return JsonResponse({"ok": False, "msg": "找不到通知"}, status=404)
+    if not n.is_read:
+        try:
+            n.is_read = True
+            if hasattr(n, "read_at"):
+                n.read_at = timezone.now()
+            n.save(update_fields=["is_read"] + (["read_at"] if hasattr(n, "read_at") else []))
+        except Exception:
+            n.is_read = True
+            n.save(update_fields=["is_read"])
+    return JsonResponse({"ok": True})
+
 
 # 🔧 輔助：刪除與某篇貼文相關的所有通知（用 post.pk 去清）
 def _purge_post_notifications(post):

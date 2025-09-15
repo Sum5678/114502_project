@@ -2504,13 +2504,11 @@
     badge.style.display = n > 0 ? 'inline-block' : 'none';
   }
 
-  // 依未讀數切換按鈕文字
   function updateToggle(unread){
     if (!toggleBtn) return;
     toggleBtn.textContent = (Number(unread)||0) > 0 ? '全部標為已讀' : '全部標為未讀';
   }
 
-  // 讀未讀數
   function refreshUnread(){
     return fetch('/notifications/unread_count/', { credentials: 'same-origin' })
       .then(r => r.ok ? r.json() : { unread: 0 })
@@ -2523,11 +2521,8 @@
       .catch(() => { setBadge(0); updateToggle(0); return 0; });
   }
 
-  // 清單渲染（單筆點擊會標已讀）
   function renderItems(items){
-    // 清掉除 header/divider 外的 li
     list.querySelectorAll(':scope > li:not([data-fixed="1"])').forEach(li => li.remove());
-
     if (!items || !items.length){
       var empty = document.createElement('li');
       empty.className = 'text-center text-muted py-2';
@@ -2535,7 +2530,6 @@
       list.appendChild(empty);
       return;
     }
-
     items.forEach(n => {
       var li = document.createElement('li');
       var a  = document.createElement('a');
@@ -2546,6 +2540,7 @@
         '<i class="' + (n.icon || 'bi bi-bell') + '"></i>' +
         '<div class="flex-grow-1">' +
           '<div class="fw-semibold">' + (n.title || '通知') + '</div>' +
+          (n.message ? '<div class="small text-muted">'+ n.message +'</div>' : '') +
           '<div class="small text-muted">' + (n.time || '') + '</div>' +
         '</div>';
       li.appendChild(a);
@@ -2553,14 +2548,12 @@
     });
   }
 
-  // 下拉時載入
   function loadDropdown(){
     fetch('/notifications/dropdown/', {credentials:'same-origin'})
       .then(r => r.ok ? r.json() : {items:[]})
       .then(data => { renderItems(data.items || []); });
   }
 
-  // 全部標為已讀 / 未讀（單一顆按鈕切換）
   function markAllRead(){
     return fetch('/notifications/mark_all/', {
       method: 'POST',
@@ -2587,26 +2580,36 @@
     });
   }
 
-  // 委派：點單筆通知 → 先標已讀，再跳轉
-  list.addEventListener('click', function(e){
-    var a = e.target.closest('a.notif-link');
-    if (!a) return;
-    var id = a.dataset.id;
-    if (!id) return;
-    fetch('/notifications/mark_read/' + id + '/', {
-      method: 'POST',
-      headers: {'X-CSRFToken': csrftoken},
-      credentials:'same-origin'
-    }).then(() => refreshUnread());
-    // 跳轉照常
-  });
+// 委派：點單筆通知 → 標已讀
+list.addEventListener('click', function(e){
+  var a = e.target.closest('a.notif-link');
+  if (!a) return;
+  var id = a.dataset.id;
+  if (!id) return;
 
-  // 綁定：開啟下拉時載入一次清單
+  fetch('/notifications/mark_read/' + id + '/', {
+    method: 'POST',
+    headers: {'X-CSRFToken': csrftoken},
+    credentials: 'same-origin'
+  }).then(r => {
+    if (r.ok) {
+      // 手動扣掉徽章數
+      var n = parseInt(badge.textContent || "0", 10) || 0;
+      if (n > 0) setBadge(n - 1);
+
+      // 保險：再刷新一次
+      refreshUnread();
+    }
+  });
+});
+
+
+
+
   if (btn){
     btn.addEventListener('show.bs.dropdown', loadDropdown);
   }
 
-  // 首次載入就抓徽章
   refreshUnread();
 })();
 </script>
@@ -2769,5 +2772,7 @@
   // Initial badge
   refreshUnread();
 })();
+
+
 </script>
 <!-- Notif Dropdown Patch END -->
