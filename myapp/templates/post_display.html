@@ -2556,10 +2556,34 @@
           (n.message ? '<div class="small text-muted">'+ n.message +'</div>' : '') +
           '<div class="small text-muted">' + (n.time || '') + '</div>' +
         '</div>';
-      li.appendChild(a);
-      list.appendChild(li);
+
+
+// ★ 刪除按鈕放在 <a> 裡、靠最右
+    var del = document.createElement('button');
+    del.type = 'button';
+    del.className = 'btn btn-sm text-danger ms-auto p-0 notif-del';
+    del.innerHTML = '<i class="bi bi-x-circle"></i>';
+    del.addEventListener('click', function(e){
+      e.preventDefault();
+      e.stopPropagation(); // 不要觸發 a 的點擊（避免已讀+跳轉）
+      fetch('/notifications/delete/' + n.id + '/', {
+        method:'POST',
+        headers:{'X-CSRFToken': csrftoken},
+        credentials:'same-origin'
+      }).then(r=>{
+        if (r.ok) {
+          li.remove();
+          var count = parseInt(badge.textContent||'0',10)||0;
+          if (count>0) setBadge(count-1);
+        }
+      });
     });
-  }
+
+    a.appendChild(del);   // ⬅ 重要：把刪除鈕放進 a
+    li.appendChild(a);
+    list.appendChild(li);
+  });
+}
 
   function loadDropdown(){
     fetch('/notifications/dropdown/', {credentials:'same-origin'})
