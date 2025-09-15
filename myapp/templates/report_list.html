@@ -101,11 +101,38 @@
         <div class="section-title">
           <h2>我的回報紀錄</h2>
           <p>以下是你所提交的可疑事件回報。</p>
+        </div>
 
-          <!-- 搜尋區塊 -->
-          <div class="input-group mb-3" style="max-width: 400px; margin: 0 auto;">
-            <input type="text" id="reportSearch" class="form-control" placeholder="輸入關鍵字搜尋...">
+        <!-- 搜尋列 -->
+        <div class="d-flex justify-content-center mb-3">
+          <div class="input-group" style="max-width: 600px;">
+            <!-- 返回鍵 -->
+            <button type="button" class="btn btn-outline-secondary" onclick="history.back()">
+              <i class="bi bi-arrow-left"></i>
+            </button>
+            <!-- 放大鏡 -->
+            <span class="input-group-text bg-white">
+              <i class="bi bi-search"></i>
+            </span>
+            <!-- 搜尋輸入 -->
+            <input type="text" id="reportSearch" class="form-control" placeholder="輸入關鍵字搜尋回報...">
+            <!-- 搜尋按鈕 -->
             <button id="reportSearchBtn" class="btn btn-primary" type="button">搜尋</button>
+            <!-- 鈴鐺通知 (可刪掉) -->
+            <button type="button" class="btn btn-outline-secondary">
+              <i class="bi bi-bell"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- 排序列 -->
+        <div class="d-flex justify-content-end mb-3">
+          <div class="d-flex align-items-center">
+            <span class="me-2 text-muted">回報排序：</span>
+            <div class="btn-group" role="group">
+              <button type="button" class="btn btn-outline-primary btn-sm active" id="sortNewest">↓ 最新回報</button>
+              <button type="button" class="btn btn-outline-primary btn-sm" id="sortOldest">↑ 最舊回報</button>
+            </div>
           </div>
         </div>
 
@@ -138,7 +165,9 @@
                     無圖片
                   {% endif %}
                 </td>
-                <td>{{ report.time_created }}</td>
+                <td data-time="{{ report.time_created|date:'c' }}">
+                  {{ report.time_created }}
+                </td>
                 <td>{{ report.review_status }}</td>
               </tr>
               {% endfor %}
@@ -172,27 +201,58 @@
   <script src="{% static 'assets/js/main.js' %}"></script>
   <script>
   document.addEventListener("DOMContentLoaded", function() {
-    const searchInput = document.getElementById("reportSearch");
-    const searchBtn = document.getElementById("reportSearchBtn");
-    const rows = document.querySelectorAll("#reportTable tbody tr");
+  const searchInput = document.getElementById("reportSearch");
+  const searchBtn = document.getElementById("reportSearchBtn");
+  const tbody = document.querySelector("#reportTable tbody");
 
-    console.log("找到的列數:", rows.length); // 確認有沒有抓到列
+  function getRows() {
+    return Array.from(tbody.querySelectorAll("tr"));
+  }
 
-    function filterReports() {
-      const keyword = searchInput.value.toLowerCase();
-      rows.forEach(row => {
-        row.style.display = row.innerText.toLowerCase().includes(keyword) ? "" : "none";
-      });
-    }
-
-    searchBtn.addEventListener("click", filterReports);
-    searchInput.addEventListener("keypress", function(e) {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        filterReports();
-      }
+  // 搜尋
+  function filterReports() {
+    const keyword = searchInput.value.toLowerCase();
+    getRows().forEach(row => {
+      row.style.display = row.innerText.toLowerCase().includes(keyword) ? "" : "none";
     });
+  }
+
+  searchBtn.addEventListener("click", filterReports);
+  searchInput.addEventListener("keypress", e => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      filterReports();
+    }
   });
+
+  // 排序
+  function sortReports(order) {
+    const rows = getRows();
+    const sortedRows = rows.sort((a, b) => {
+      const dateA = new Date(a.querySelector("td:nth-child(7)").dataset.time);
+      const dateB = new Date(b.querySelector("td:nth-child(7)").dataset.time);
+      return order === "newest" ? dateB - dateA : dateA - dateB;
+    });
+    tbody.innerHTML = "";
+    sortedRows.forEach(row => tbody.appendChild(row));
+  }
+
+  document.getElementById("sortNewest").addEventListener("click", function() {
+    sortReports("newest");
+    this.classList.add("active");
+    document.getElementById("sortOldest").classList.remove("active");
+  });
+
+  document.getElementById("sortOldest").addEventListener("click", function() {
+    sortReports("oldest");
+    this.classList.add("active");
+    document.getElementById("sortNewest").classList.remove("active");
+  });
+
+  // 預設最新
+  sortReports("newest");
+});
+
   </script>
 </body>
 </html>
