@@ -191,7 +191,7 @@
     }
     .search-history .history-item:hover{ background: #f0faff; }
     .search-history .history-item .icon{ font-size: 1rem; color: #63b3ed; }
-    .search-history .history-item .term{ flex: 1; color: #033e6b; }
+    .search-history .history-item .term{ flex: 1; color:#033e6b; }
     .search-history .history-item .remove{
       margin-left: auto;
       background: none;
@@ -201,7 +201,17 @@
       color: #6b7280;
     }
     .search-history .history-item .remove:hover{ color: #dc3545; }
-  </style>
+
+    /* 單一通知已讀樣式 */
+    #notifList a.notif-link.read {
+      opacity: .6;
+      background-color: #f8f9fa;
+    }
+    #notifList a.notif-link.read:hover {
+      opacity: .75;
+    }
+</style>
+
 </head>
 
 <body class="{% if request.user.is_authenticated %}authenticated{% endif %}"
@@ -2534,6 +2544,9 @@
       var li = document.createElement('li');
       var a  = document.createElement('a');
       a.className = 'dropdown-item d-flex align-items-start gap-2 notif-link';
+      if (n.is_read) {            // ← ★ 這裡是新增的
+      a.classList.add('read');  // 讓已讀通知在刷新後也變淡
+    }
       a.href = n.url || n.link_url || '#';
       a.dataset.id = n.id;
       a.innerHTML =
@@ -2580,31 +2593,39 @@
     });
   }
 
-// 委派：點單筆通知 → 標已讀
+// 單一通知 → 已讀 + UI 更新 + 跳轉
 list.addEventListener('click', function(e){
   var a = e.target.closest('a.notif-link');
   if (!a) return;
+
+  e.preventDefault();   // 🚨 阻止瀏覽器立刻跳轉
   var id = a.dataset.id;
-  if (!id) return;
+  var targetUrl = a.href;
+
+  if (!id) {
+    window.location.href = targetUrl;
+    return;
+  }
 
   fetch('/notifications/mark_read/' + id + '/', {
     method: 'POST',
-    headers: {'X-CSRFToken': csrftoken},
+    headers: { 'X-CSRFToken': csrftoken },
     credentials: 'same-origin'
   }).then(r => {
     if (r.ok) {
-      // 手動扣掉徽章數
+      // ✅ 立即更新 UI
+      a.classList.add('read');  
       var n = parseInt(badge.textContent || "0", 10) || 0;
-      if (n > 0) setBadge(n - 1);
-
-      // 保險：再刷新一次
-      refreshUnread();
+      if (n > 0) {
+        setBadge(n - 1);
+        if (n - 1 === 0) badge.style.display = "none";
+      }
     }
+  }).finally(() => {
+    // 最後再跳轉
+    window.location.href = targetUrl;
   });
 });
-
-
-
 
   if (btn){
     btn.addEventListener('show.bs.dropdown', loadDropdown);
@@ -2613,166 +2634,3 @@ list.addEventListener('click', function(e){
   refreshUnread();
 })();
 </script>
-
-
-
-
-<!-- Notif Dropdown Patch START -->
-<script>
-(function(){
-  if (window.__notifPatched) return; window.__notifPatched = true;
-
-  function getCookie(name){
-    const m = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
-    return m ? m.pop() : '';
-  }
-  function qs(sel, root){ return (root||document).querySelector(sel); }
-  function qsa(sel, root){ return Array.from((root||document).querySelectorAll(sel)); }
-
-  const list = qs('#notifList');
-  const badge = qs('#notifBadgeCount');
-  const loading = qs('#notifLoading');
-  const markAllBtn = qs('#notifMarkAllBtn');
-  const markAllUnreadBtn = qs('#notifMarkAllUnreadBtn');
-
-  function setBadge(n){
-    if (!badge) return;
-    if (n > 0){ badge.textContent = n; badge.style.display = ''; }
-    else { badge.textContent = '0'; badge.style.display = 'none'; }
-  }
-
-  async function refreshUnread(){
-    try{
-      const r = await fetch('/notifications/unread_count/');
-      if (!r.ok) return;
-      const data = await r.json();
-      setBadge(data.unread || 0);
-    }catch(e){}
-  }
-
-  function clearListKeepFixed(){
-    if (!list) return;
-    qsa('li', list).forEach(li => { if (!li.hasAttribute('data-fixed')) li.remove(); });
-  }
-
-  function renderItems(items){
-    clearListKeepFixed();
-    if (!items || !items.length){
-      const empty = document.createElement('li');
-      empty.className = 'text-center text-muted py-2';
-      empty.textContent = '目前沒有通知';
-      list.appendChild(empty);
-      return;
-    }
-    items.forEach(it => {
-      const li = document.createElement('li');
-      li.className = 'px-3 py-2 d-flex align-items-center justify-content-between notif-item';
-      li.setAttribute('data-id', it.id);
-
-      const left = document.createElement('div');
-      left.className = 'd-flex align-items-start gap-2 flex-grow-1';
-      left.innerHTML = '<i class="'+ (it.icon||'bi bi-bell') +'"></i>' +
-                       '<div class="flex-grow-1">' +
-                         '<div class="fw-semibold">'+ (it.title||'通知') +'</div>' +
-                         (it.time ? '<div class="small text-muted">'+ it.time +'</div>' : '') +
-                       '</div>';
-      if (it.url) {
-        left.addEventListener('click', () => { window.location.href = it.url; });
-        left.style.cursor = 'pointer';
-      }
-
-      const del = document.createElement('button');
-      del.type = 'button';
-      del.className = 'btn btn-link text-danger p-0 ms-2 js-del-notif';
-      del.setAttribute('data-id', it.id);
-      del.setAttribute('title', '刪除此通知');
-      del.innerHTML = '<i class="bi bi-x-circle"></i>';
-
-      li.appendChild(left);
-      li.appendChild(del);
-      list.appendChild(li);
-    });
-  }
-
-  async function loadAndRender(){
-    if (!list) return;
-    loading && (loading.style.display = '');
-    try{
-      const r = await fetch('/notifications/dropdown/');
-      if (!r.ok) throw new Error('net');
-      const data = await r.json();
-      renderItems(data.items || []);
-    }catch(e){
-      clearListKeepFixed();
-      const li = document.createElement('li');
-      li.className = 'text-danger text-center py-2';
-      li.textContent = '載入失敗';
-      list.appendChild(li);
-    }finally{
-      loading && (loading.style.display = 'none');
-    }
-  }
-
-  // Bind dropdown show to refresh once per open
-  const bell = qs('#notifBellBtn');
-  if (bell){
-    bell.addEventListener('click', () => { loadAndRender(); }, { once:false });
-  }
-
-  // Delete single notif (event delegation)
-  if (list){
-    list.addEventListener('click', async (e) => {
-      const btn = e.target.closest('.js-del-notif');
-      if (!btn) return;
-      const id = btn.dataset.id;
-      try{
-        const r = await fetch('/notifications/delete/' + id + '/', {
-          method: 'POST',
-          headers: { 'X-CSRFToken': getCookie('csrftoken') }
-        });
-        if (r.ok){
-          const li = btn.closest('li.notif-item');
-          if (li) li.remove();
-          // if list becomes empty, show placeholder
-          if (!qsa('li.notif-item', list).length){
-            renderItems([]);
-          }
-          refreshUnread();
-        }else{
-          alert('刪除失敗');
-        }
-      }catch(err){}
-    });
-  }
-
-  // Mark all read/unread
-  if (markAllBtn){
-    markAllBtn.addEventListener('click', async () => {
-      try{
-        const r = await fetch('/notifications/mark_all/', {
-          method: 'POST',
-          headers: { 'X-CSRFToken': getCookie('csrftoken') }
-        });
-        if (r.ok){ refreshUnread(); }
-      }catch(e){}
-    });
-  }
-  if (markAllUnreadBtn){
-    markAllUnreadBtn.addEventListener('click', async () => {
-      try{
-        const r = await fetch('/notifications/mark_all_unread/', {
-          method: 'POST',
-          headers: { 'X-CSRFToken': getCookie('csrftoken') }
-        });
-        if (r.ok){ refreshUnread(); }
-      }catch(e){} 
-    });
-  }
-
-  // Initial badge
-  refreshUnread();
-})();
-
-
-</script>
-<!-- Notif Dropdown Patch END -->
