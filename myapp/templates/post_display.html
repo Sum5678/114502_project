@@ -320,9 +320,7 @@
   </li>
 
   <li data-fixed="1"><hr class="dropdown-divider"></li>
-  <li class="text-center text-muted py-2" id="notifLoading" data-fixed="1">載入中...</li>
-</ul>
-
+  
 
     
 
@@ -2539,19 +2537,6 @@
       return;
     }
 
-
-  function loadDropdown(){
-    if (loadingLi) loadingLi.textContent = '載入中...';
-    fetch('/notifications/dropdown/', {credentials:'same-origin'})
-      .then(function(r){ return r.ok ? r.json() : {items:[]}; })
-      .then(function(data){
-        if (loadingLi) loadingLi.textContent = '';
-        renderItems(data.items || []);
-      })
-      .catch(function(){
-        if (loadingLi) loadingLi.textContent = '載入失敗';
-      });
-  }
 
   // 全部標為已讀 / 未讀（單一顆按鈕切換）
   function markAllRead(){
