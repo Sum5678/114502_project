@@ -105,7 +105,7 @@
 
         <!-- 搜尋列 -->
         <div class="d-flex justify-content-center mb-3">
-          <div class="input-group" style="max-width: 600px;">
+          <div class="input-group w-100" style="max-width: 600px; position: relative;">
             <!-- 返回鍵 -->
             <button type="button" class="btn btn-outline-secondary" onclick="history.back()">
               <i class="bi bi-arrow-left"></i>
@@ -118,9 +118,11 @@
             <button type="button" class="btn btn-outline-secondary" id="searchHistoryBtn">
               <i class="bi bi-clock-history"></i> 歷史
             </button>
+
+            <!-- 下拉歷史容器：放在 input-group 內 -->
+            <div id="searchHistoryDropdown" class="list-group position-absolute w-100" style="top: 100%; left:0; z-index:1000; display:none;"></div>
           </div>
         </div>
-
 
         <!-- 排序列 -->
         <div class="d-flex justify-content-end mb-3">
@@ -198,112 +200,134 @@
   <script src="{% static 'assets/js/main.js' %}"></script>
   <script>
   document.addEventListener("DOMContentLoaded", function() {
-  const searchInput = document.getElementById("reportSearch");
-  const searchBtn = document.getElementById("reportSearchBtn");
-  const searchHistoryBtn = document.getElementById("searchHistoryBtn");
-  const tbody = document.querySelector("#reportTable tbody");
+    const searchInput = document.getElementById("reportSearch");
+    const searchBtn = document.getElementById("reportSearchBtn");
+    const searchHistoryBtn = document.getElementById("searchHistoryBtn");
+    const tbody = document.querySelector("#reportTable tbody");
+    const dropdown = document.getElementById("searchHistoryDropdown");
 
-  // 儲存原始列
-  const originalRows = Array.from(tbody.querySelectorAll("tr")).map(row => row.cloneNode(true));
+    // 儲存原始列
+    const originalRows = Array.from(tbody.querySelectorAll("tr")).map(row => row.cloneNode(true));
 
-  function getRows() {
-    return Array.from(tbody.querySelectorAll("tr"));
-  }
+    function getRows() {
+      return Array.from(tbody.querySelectorAll("tr"));
+    }
 
-  // 搜尋
-  function filterReports(keyword = null, pushState = true) {
-    if (keyword === null) keyword = searchInput.value.trim().toLowerCase();
-    if (keyword) saveSearchHistory(keyword);
+    // 搜尋
+    function filterReports(keyword = null, pushState = true) {
+      if (keyword === null) keyword = searchInput.value.trim().toLowerCase();
+      if (keyword) saveSearchHistory(keyword);
 
-    getRows().forEach(row => {
-      row.style.display = row.innerText.toLowerCase().includes(keyword) ? "" : "none";
+      getRows().forEach(row => {
+        row.style.display = row.innerText.toLowerCase().includes(keyword) ? "" : "none";
+      });
+
+      if (pushState) {
+        history.pushState({ search: keyword }, "", "");
+      }
+    }
+
+    // 重置搜尋（回到搜尋前）
+    function resetSearch(pushState = true) {
+      searchInput.value = "";
+      tbody.innerHTML = "";
+      originalRows.forEach(row => tbody.appendChild(row));
+      sortReports("newest");
+
+      if (pushState) {
+        history.pushState({ search: "" }, "", "");
+      }
+    }
+
+    // popstate 事件
+    window.addEventListener("popstate", function(event) {
+      if (event.state && event.state.search !== undefined) {
+        const keyword = event.state.search;
+        searchInput.value = keyword;
+        if (keyword === "") resetSearch(false);
+        else filterReports(keyword, false);
+      } else {
+        resetSearch(false);
+      }
     });
 
-    if (pushState) {
-      history.pushState({ search: keyword }, "", "");
-    }
-  }
-
-  // 重置搜尋（回到搜尋前）
-  function resetSearch(pushState = true) {
-    searchInput.value = "";
-    tbody.innerHTML = "";
-    originalRows.forEach(row => tbody.appendChild(row));
-    sortReports("newest");
-
-    if (pushState) {
-      history.pushState({ search: "" }, "", "");
-    }
-  }
-
-  // popstate 事件
-  window.addEventListener("popstate", function(event) {
-    if (event.state && event.state.search !== undefined) {
-      const keyword = event.state.search;
-      searchInput.value = keyword;
-      if (keyword === "") resetSearch(false);
-      else filterReports(keyword, false);
-    } else {
-      resetSearch(false);
-    }
-  });
-
-  // 綁定事件
-  searchBtn.addEventListener("click", () => filterReports());
-  searchInput.addEventListener("keypress", e => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      filterReports();
-    }
-  });
-  searchHistoryBtn.addEventListener("click", showSearchHistory);
-
-  // 儲存搜尋歷史
-  function saveSearchHistory(keyword) {
-    let history = JSON.parse(localStorage.getItem("reportSearchHistory") || "[]");
-    history = history.filter(item => item !== keyword);
-    history.unshift(keyword);
-    if (history.length > 5) history.pop();
-    localStorage.setItem("reportSearchHistory", JSON.stringify(history));
-  }
-
-  // 顯示搜尋歷史
-  function showSearchHistory() {
-    const history = JSON.parse(localStorage.getItem("reportSearchHistory") || "[]");
-    if (history.length === 0) alert("目前沒有搜尋紀錄");
-    else alert("搜尋歷史：\n" + history.join("\n"));
-  }
-
-  // 排序
-  function sortReports(order) {
-    const rows = getRows();
-    const sortedRows = rows.sort((a, b) => {
-      const dateA = new Date(a.querySelector("td:nth-child(7)").dataset.time);
-      const dateB = new Date(b.querySelector("td:nth-child(7)").dataset.time);
-      return order === "newest" ? dateB - dateA : dateA - dateB;
+    // 綁定事件
+    searchBtn.addEventListener("click", () => filterReports());
+    searchInput.addEventListener("keypress", e => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        filterReports();
+      }
     });
-    tbody.innerHTML = "";
-    sortedRows.forEach(row => tbody.appendChild(row));
-  }
 
-  document.getElementById("sortNewest").addEventListener("click", function() {
+    // 儲存搜尋歷史
+    function saveSearchHistory(keyword) {
+      let history = JSON.parse(localStorage.getItem("reportSearchHistory") || "[]");
+      history = history.filter(item => item !== keyword);
+      history.unshift(keyword);
+      if (history.length > 5) history.pop();
+      localStorage.setItem("reportSearchHistory", JSON.stringify(history));
+    }
+
+    // 顯示下拉歷史
+    function showSearchHistoryDropdown() {
+      const history = JSON.parse(localStorage.getItem("reportSearchHistory") || "[]");
+      dropdown.innerHTML = "";
+      if (history.length === 0) { dropdown.style.display = "none"; return; }
+
+      history.forEach(keyword => {
+        const item = document.createElement("button");
+        item.type = "button";
+        item.className = "list-group-item list-group-item-action";
+        item.textContent = keyword;
+        item.addEventListener("click", () => {
+          searchInput.value = keyword;
+          filterReports(keyword);
+          dropdown.style.display = "none";
+        });
+        dropdown.appendChild(item);
+      });
+
+      dropdown.style.display = "block";
+    }
+
+    searchHistoryBtn.addEventListener("click", e => {
+      e.stopPropagation();
+      showSearchHistoryDropdown();
+    });
+
+    document.addEventListener("click", () => { dropdown.style.display = "none"; });
+
+    // 排序
+    function sortReports(order) {
+      const rows = getRows();
+      const sortedRows = rows.sort((a, b) => {
+        const dateA = new Date(a.querySelector("td:nth-child(7)").dataset.time);
+        const dateB = new Date(b.querySelector("td:nth-child(7)").dataset.time);
+        return order === "newest" ? dateB - dateA : dateA - dateB;
+      });
+      tbody.innerHTML = "";
+      sortedRows.forEach(row => tbody.appendChild(row));
+    }
+
+    document.getElementById("sortNewest").addEventListener("click", function() {
+      sortReports("newest");
+      this.classList.add("active");
+      document.getElementById("sortOldest").classList.remove("active");
+    });
+
+    document.getElementById("sortOldest").addEventListener("click", function() {
+      sortReports("oldest");
+      this.classList.add("active");
+      document.getElementById("sortNewest").classList.remove("active");
+    });
+
+    // 預設最新
     sortReports("newest");
-    this.classList.add("active");
-    document.getElementById("sortOldest").classList.remove("active");
+
+    // 初始化 pushState，保證第一次返回可回到原始表格
+    history.replaceState({ search: "" }, "", "");
   });
-
-  document.getElementById("sortOldest").addEventListener("click", function() {
-    sortReports("oldest");
-    this.classList.add("active");
-    document.getElementById("sortNewest").classList.remove("active");
-  });
-
-  // 預設最新
-  sortReports("newest");
-
-  // 初始化 pushState，保證第一次返回可回到原始表格
-  history.replaceState({ search: "" }, "", "");
-});
 
   </script>
 </body>
