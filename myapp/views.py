@@ -1254,6 +1254,16 @@ def submit_store(request):
 
             st_id = int(request.POST.get('st_id'))
 
+            # 🔹 防呆：經緯度不能空
+            if not latitude or not longitude:
+                return JsonResponse({'status': 'error', 'message': '請先在地圖上選擇位置'})
+
+            try:
+                latitude = float(latitude)
+                longitude = float(longitude)
+            except ValueError:
+                return JsonResponse({'status': 'error', 'message': '經緯度格式錯誤'})
+
             # 建立商家
             store = StoreAll.objects.create(
                 st_id=st_id,  # st_id 本來就是 AutoField，可以不用自己塞
