@@ -2483,7 +2483,10 @@
       var cookies=document.cookie.split(';');
       for(var i=0;i<cookies.length;i++){
         var cookie=cookies[i].trim();
-        if(cookie.substring(0,name.length+1)===(name+'=')){ cookieValue=decodeURIComponent(cookie.substring(name.length+1)); break; }
+        if(cookie.substring(0,name.length+1)===(name+'=')){ 
+          cookieValue=decodeURIComponent(cookie.substring(name.length+1)); 
+          break; 
+        }
       }
     }
     return cookieValue;
@@ -2492,8 +2495,6 @@
   var btn        = document.getElementById('notifBellBtn');
   var list       = document.getElementById('notifList');
   var badge      = document.getElementById('notifBadgeCount');
-  var loadingLi  = document.getElementById('notifLoading');
-  // HTML 裡請只留一顆按鈕：id="notifToggleBtn"
   var toggleBtn  = document.getElementById('notifToggleBtn');
 
   function setBadge(n){
@@ -2512,22 +2513,20 @@
   // 讀未讀數
   function refreshUnread(){
     return fetch('/notifications/unread_count/', { credentials: 'same-origin' })
-      .then(function(r){ return r.ok ? r.json() : { unread: 0 }; })
-      .then(function(data){
+      .then(r => r.ok ? r.json() : { unread: 0 })
+      .then(data => {
         var unread = Number(data && data.unread) || 0;
         setBadge(unread);
         updateToggle(unread);
         return unread;
       })
-      .catch(function(){
-        setBadge(0); updateToggle(0); return 0;
-      });
+      .catch(() => { setBadge(0); updateToggle(0); return 0; });
   }
 
   // 清單渲染（單筆點擊會標已讀）
   function renderItems(items){
-    // 清掉除 header/divider/loading 以外的 li
-    list.querySelectorAll(':scope > li:not([data-fixed="1"])').forEach(function(li){ li.remove(); });
+    // 清掉除 header/divider 外的 li
+    list.querySelectorAll(':scope > li:not([data-fixed="1"])').forEach(li => li.remove());
 
     if (!items || !items.length){
       var empty = document.createElement('li');
@@ -2537,6 +2536,29 @@
       return;
     }
 
+    items.forEach(n => {
+      var li = document.createElement('li');
+      var a  = document.createElement('a');
+      a.className = 'dropdown-item d-flex align-items-start gap-2 notif-link';
+      a.href = n.url || n.link_url || '#';
+      a.dataset.id = n.id;
+      a.innerHTML =
+        '<i class="' + (n.icon || 'bi bi-bell') + '"></i>' +
+        '<div class="flex-grow-1">' +
+          '<div class="fw-semibold">' + (n.title || '通知') + '</div>' +
+          '<div class="small text-muted">' + (n.time || '') + '</div>' +
+        '</div>';
+      li.appendChild(a);
+      list.appendChild(li);
+    });
+  }
+
+  // 下拉時載入
+  function loadDropdown(){
+    fetch('/notifications/dropdown/', {credentials:'same-origin'})
+      .then(r => r.ok ? r.json() : {items:[]})
+      .then(data => { renderItems(data.items || []); });
+  }
 
   // 全部標為已讀 / 未讀（單一顆按鈕切換）
   function markAllRead(){
@@ -2544,14 +2566,14 @@
       method: 'POST',
       headers: {'X-CSRFToken': csrftoken},
       credentials:'same-origin'
-    }).then(function(r){ return r.ok ? r.json() : {ok:false}; });
+    }).then(r => r.ok ? r.json() : {ok:false});
   }
   function markAllUnread(){
     return fetch('/notifications/mark_all_unread/', {
       method: 'POST',
       headers: {'X-CSRFToken': csrftoken},
       credentials:'same-origin'
-    }).then(function(r){ return r.ok ? r.json() : {ok:false}; });
+    }).then(r => r.ok ? r.json() : {ok:false});
   }
 
   if (toggleBtn){
@@ -2560,18 +2582,7 @@
       var isMarkRead = this.textContent.indexOf('已讀') !== -1;
       this.disabled = true;
       (isMarkRead ? markAllRead() : markAllUnread())
-        .then(function(){
-          return refreshUnread(); // 同步徽章與按鈕文字
-        })
-        .then(function(){
-          // 立即更新清單上的「新」badge 狀態
-          if (isMarkRead){
-            list.querySelectorAll('span.badge.bg-primary').forEach(function(b){ b.remove(); });
-          }else{
-            // 重新拉一次，下拉中就會看到「新」標記
-            loadDropdown();
-          }
-        })
+        .then(() => refreshUnread())
         .finally(()=>{ toggleBtn.disabled = false; });
     });
   }
@@ -2581,14 +2592,13 @@
     var a = e.target.closest('a.notif-link');
     if (!a) return;
     var id = a.dataset.id;
-    if (!id) return; // 沒 id 就不處理
-    // 先丟 API（不阻止跳轉，讓 UX 流暢）
+    if (!id) return;
     fetch('/notifications/mark_read/' + id + '/', {
       method: 'POST',
       headers: {'X-CSRFToken': csrftoken},
       credentials:'same-origin'
-    }).then(function(){ refreshUnread(); });
-    // 讓瀏覽器照常跳轉
+    }).then(() => refreshUnread());
+    // 跳轉照常
   });
 
   // 綁定：開啟下拉時載入一次清單
@@ -2600,6 +2610,7 @@
   refreshUnread();
 })();
 </script>
+
 
 
 
