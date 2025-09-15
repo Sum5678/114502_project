@@ -2577,6 +2577,8 @@ def notif_mark_all_unread(request):
     qs.update(is_read=False)
     return JsonResponse({"ok": True})
 
+
+
 # 單一通知標為已讀
 @login_required(login_url='/01userlogin/')
 @require_POST
