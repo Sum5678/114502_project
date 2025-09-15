@@ -110,20 +110,17 @@
             <button type="button" class="btn btn-outline-secondary" onclick="history.back()">
               <i class="bi bi-arrow-left"></i>
             </button>
-            <!-- 放大鏡 -->
-            <span class="input-group-text bg-white">
-              <i class="bi bi-search"></i>
-            </span>
             <!-- 搜尋輸入 -->
             <input type="text" id="reportSearch" class="form-control" placeholder="輸入關鍵字搜尋回報...">
             <!-- 搜尋按鈕 -->
             <button id="reportSearchBtn" class="btn btn-primary" type="button">搜尋</button>
-            <!-- 鈴鐺通知 (可刪掉) -->
-            <button type="button" class="btn btn-outline-secondary">
-              <i class="bi bi-bell"></i>
+            <!-- 搜尋歷史 -->
+            <button type="button" class="btn btn-outline-secondary" id="searchHistoryBtn">
+              <i class="bi bi-clock-history"></i> 歷史
             </button>
           </div>
         </div>
+
 
         <!-- 排序列 -->
         <div class="d-flex justify-content-end mb-3">
@@ -203,6 +200,7 @@
   document.addEventListener("DOMContentLoaded", function() {
   const searchInput = document.getElementById("reportSearch");
   const searchBtn = document.getElementById("reportSearchBtn");
+  const searchHistoryBtn = document.getElementById("searchHistoryBtn");
   const tbody = document.querySelector("#reportTable tbody");
 
   function getRows() {
@@ -211,10 +209,31 @@
 
   // 搜尋
   function filterReports() {
-    const keyword = searchInput.value.toLowerCase();
+    const keyword = searchInput.value.trim().toLowerCase();
+    if (keyword) saveSearchHistory(keyword);
+
     getRows().forEach(row => {
       row.style.display = row.innerText.toLowerCase().includes(keyword) ? "" : "none";
     });
+  }
+
+  // 儲存搜尋歷史（最多 5 筆）
+  function saveSearchHistory(keyword) {
+    let history = JSON.parse(localStorage.getItem("reportSearchHistory") || "[]");
+    history = history.filter(item => item !== keyword); // 去重
+    history.unshift(keyword); // 新的放最前面
+    if (history.length > 5) history.pop(); // 只保留 5 筆
+    localStorage.setItem("reportSearchHistory", JSON.stringify(history));
+  }
+
+  // 顯示搜尋歷史
+  function showSearchHistory() {
+    const history = JSON.parse(localStorage.getItem("reportSearchHistory") || "[]");
+    if (history.length === 0) {
+      alert("目前沒有搜尋紀錄");
+    } else {
+      alert("搜尋歷史：\n" + history.join("\n"));
+    }
   }
 
   searchBtn.addEventListener("click", filterReports);
@@ -224,6 +243,7 @@
       filterReports();
     }
   });
+  searchHistoryBtn.addEventListener("click", showSearchHistory);
 
   // 排序
   function sortReports(order) {
