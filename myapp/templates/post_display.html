@@ -2539,23 +2539,6 @@
       return;
     }
 
-    items.forEach(function(n){
-      var li = document.createElement('li');
-      var a  = document.createElement('a');
-      a.className = 'dropdown-item d-flex align-items-start gap-2 notif-link';
-      a.href = n.url || n.link_url || '#';
-      a.dataset.id = n.id; // 讓點擊時可標已讀
-      a.innerHTML =
-        '<i class="' + (n.icon || 'bi bi-bell') + '"></i>' +
-        '<div class="flex-grow-1">' +
-          '<div class="fw-semibold">' + (n.title || '通知') + '</div>' +
-          '<div class="small text-muted">' + (n.time || '') + '</div>' +
-        '</div>' +
-        (n.is_read ? '' : '<span class="badge bg-primary ms-2">新</span>');
-      li.appendChild(a);
-      list.appendChild(li);
-    });
-  }
 
   function loadDropdown(){
     if (loadingLi) loadingLi.textContent = '載入中...';
