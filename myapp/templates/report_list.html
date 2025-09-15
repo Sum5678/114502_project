@@ -203,40 +203,53 @@
   const searchHistoryBtn = document.getElementById("searchHistoryBtn");
   const tbody = document.querySelector("#reportTable tbody");
 
+  // 儲存原始列
+  const originalRows = Array.from(tbody.querySelectorAll("tr")).map(row => row.cloneNode(true));
+
   function getRows() {
     return Array.from(tbody.querySelectorAll("tr"));
   }
 
   // 搜尋
-  function filterReports() {
-    const keyword = searchInput.value.trim().toLowerCase();
+  function filterReports(keyword = null, pushState = true) {
+    if (keyword === null) keyword = searchInput.value.trim().toLowerCase();
     if (keyword) saveSearchHistory(keyword);
 
     getRows().forEach(row => {
       row.style.display = row.innerText.toLowerCase().includes(keyword) ? "" : "none";
     });
-  }
 
-  // 儲存搜尋歷史（最多 5 筆）
-  function saveSearchHistory(keyword) {
-    let history = JSON.parse(localStorage.getItem("reportSearchHistory") || "[]");
-    history = history.filter(item => item !== keyword); // 去重
-    history.unshift(keyword); // 新的放最前面
-    if (history.length > 5) history.pop(); // 只保留 5 筆
-    localStorage.setItem("reportSearchHistory", JSON.stringify(history));
-  }
-
-  // 顯示搜尋歷史
-  function showSearchHistory() {
-    const history = JSON.parse(localStorage.getItem("reportSearchHistory") || "[]");
-    if (history.length === 0) {
-      alert("目前沒有搜尋紀錄");
-    } else {
-      alert("搜尋歷史：\n" + history.join("\n"));
+    if (pushState) {
+      history.pushState({ search: keyword }, "", "");
     }
   }
 
-  searchBtn.addEventListener("click", filterReports);
+  // 重置搜尋（回到搜尋前）
+  function resetSearch(pushState = true) {
+    searchInput.value = "";
+    tbody.innerHTML = "";
+    originalRows.forEach(row => tbody.appendChild(row));
+    sortReports("newest");
+
+    if (pushState) {
+      history.pushState({ search: "" }, "", "");
+    }
+  }
+
+  // popstate 事件
+  window.addEventListener("popstate", function(event) {
+    if (event.state && event.state.search !== undefined) {
+      const keyword = event.state.search;
+      searchInput.value = keyword;
+      if (keyword === "") resetSearch(false);
+      else filterReports(keyword, false);
+    } else {
+      resetSearch(false);
+    }
+  });
+
+  // 綁定事件
+  searchBtn.addEventListener("click", () => filterReports());
   searchInput.addEventListener("keypress", e => {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -244,6 +257,22 @@
     }
   });
   searchHistoryBtn.addEventListener("click", showSearchHistory);
+
+  // 儲存搜尋歷史
+  function saveSearchHistory(keyword) {
+    let history = JSON.parse(localStorage.getItem("reportSearchHistory") || "[]");
+    history = history.filter(item => item !== keyword);
+    history.unshift(keyword);
+    if (history.length > 5) history.pop();
+    localStorage.setItem("reportSearchHistory", JSON.stringify(history));
+  }
+
+  // 顯示搜尋歷史
+  function showSearchHistory() {
+    const history = JSON.parse(localStorage.getItem("reportSearchHistory") || "[]");
+    if (history.length === 0) alert("目前沒有搜尋紀錄");
+    else alert("搜尋歷史：\n" + history.join("\n"));
+  }
 
   // 排序
   function sortReports(order) {
@@ -271,6 +300,9 @@
 
   // 預設最新
   sortReports("newest");
+
+  // 初始化 pushState，保證第一次返回可回到原始表格
+  history.replaceState({ search: "" }, "", "");
 });
 
   </script>
