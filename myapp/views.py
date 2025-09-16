@@ -2613,7 +2613,7 @@ def post(request):
     prof = ThisUserProfile.objects.filter(gmail=request.user.email).first()
     # --- 後備查法：維持原邏輯，僅在找不到時補救 ---
     if not prof and request.user.is_authenticated:
-        prof = ThisUserProfile.objects.filter(user=request.user).first() \
+        prof = ThisUserProfile.objects.filter(username=request.user.username).first() \
                or ThisUserProfile.objects.filter(gmail__iexact=(request.user.email or "")).first()
     nick1 = (prof.default_nickname1 or "").strip() if prof else ""
     nick2 = (prof.default_nickname2 or "").strip() if prof else ""
@@ -2811,7 +2811,7 @@ def post_display(request):
         prof = ThisUserProfile.objects.filter(gmail=request.user.email).first()
         # 後備查法（只在找不到時使用；不影響原有邏輯）
         if not prof:
-            prof = ThisUserProfile.objects.filter(user=request.user).first() \
+            prof = ThisUserProfile.objects.filter(username=request.user.username).first() \
                    or ThisUserProfile.objects.filter(gmail__iexact=(request.user.email or "")).first()
         nick1 = (prof.default_nickname1 or "").strip() if prof else ""
         nick2 = (prof.default_nickname2 or "").strip() if prof else ""
@@ -2950,7 +2950,7 @@ def add_comment(request, post_id):
 
     prof = ThisUserProfile.objects.filter(gmail=request.user.email).first()
     if not prof:
-        prof = ThisUserProfile.objects.filter(user=request.user).first() \
+        prof = ThisUserProfile.objects.filter(username=request.user.username).first() \
                or ThisUserProfile.objects.filter(gmail__iexact=(request.user.email or "")).first()
     nick1 = (prof.default_nickname1 or "").strip() if prof else ""
     nick2 = (prof.default_nickname2 or "").strip() if prof else ""
@@ -3102,7 +3102,7 @@ def post_comments(request, post_id):
     nick2 = ""
     if request.user.is_authenticated:
         prof = ThisUserProfile.objects.filter(gmail=request.user.email).first() or \
-               ThisUserProfile.objects.filter(user=request.user).first() or \
+               ThisUserProfile.objects.filter(username=request.user.username).first() or \
                ThisUserProfile.objects.filter(gmail__iexact=request.user.email).first()
         if prof:
             nick1 = (prof.default_nickname1 or "").strip()
@@ -3149,7 +3149,7 @@ def reply_comment(request, post_id):
 
     prof = ThisUserProfile.objects.filter(gmail=request.user.email).first()
     if not prof:
-        prof = ThisUserProfile.objects.filter(user=request.user).first() \
+        prof = ThisUserProfile.objects.filter(username=request.user.username).first() \
                or ThisUserProfile.objects.filter(gmail__iexact=(request.user.email or "")).first()
     nick1 = (prof.default_nickname1 or "").strip() if prof else ""
     nick2 = (prof.default_nickname2 or "").strip() if prof else ""
@@ -3854,7 +3854,7 @@ def post_detail(request, post_id):
 
     # 暱稱（與 post_display 同步）
     prof = ThisUserProfile.objects.filter(gmail=request.user.email).first() \
-           or ThisUserProfile.objects.filter(user=request.user).first() \
+           or ThisUserProfile.objects.filter(username=request.user.username).first() \
            or ThisUserProfile.objects.filter(gmail__iexact=(request.user.email or "")).first()
     nick1 = (prof.default_nickname1 or "").strip() if prof else ""
     nick2 = (prof.default_nickname2 or "").strip() if prof else ""
