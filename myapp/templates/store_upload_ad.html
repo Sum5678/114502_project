@@ -32,6 +32,16 @@
 <form method="post" enctype="multipart/form-data">
     {% csrf_token %}
 
+
+    <!-- 顯示非欄位錯誤 -->
+    {% if form.non_field_errors %}
+        <div class="alert alert-warning">
+            {% for error in form.non_field_errors %}
+                <p>{{ error }}</p>
+            {% endfor %}
+        </div>
+    {% endif %}
+
     <!-- 隱藏欄位：付款資訊 -->
     <input type="hidden" name="payment_done" id="payment_done" value="0">
     <input type="hidden" name="payment_item" id="payment_item">
