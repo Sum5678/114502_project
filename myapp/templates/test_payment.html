@@ -26,13 +26,15 @@ button:hover { background: #00994d; }
     <div class="order-summary">
         <p>付款金額：<strong>{{ default_amount }} 元</strong></p>
         <p>付款品項：<strong>{{ item }}</strong></p>
+        <p>商家編號：<strong>{{ st_id|default:"未提供" }}</strong></p>
     </div>
 
     <!-- 模擬信用卡表單 -->
-    <form onsubmit="return doPayment()">
+    <form method="post">
         {% csrf_token %}
         <input type="hidden" name="amount" value="{{ default_amount }}">
         <input type="hidden" name="item" value="{{ item }}">
+        <input type="hidden" name="st_id" value="{{ st_id|default:'' }}">
         <input type="hidden" name="next" value="{{ next|default:'/' }}">
 
         <label>信用卡號碼</label>
@@ -44,35 +46,31 @@ button:hover { background: #00994d; }
         <label>安全碼 (CVV)</label>
         <input type="password" maxlength="4" placeholder="***" required>
 
-        <div class="card-icons">
-            <img src="https://img.icons8.com/color/48/000000/visa.png" alt="Visa"/>
-            <img src="https://img.icons8.com/color/48/000000/mastercard.png" alt="Mastercard"/>
-            <img src="https://img.icons8.com/color/48/000000/jcb.png" alt="JCB"/>
-        </div>
-
         <button type="submit">測試付款點我</button>
     </form>
+
 
     <p class="note">本頁面僅為模擬，不會儲存任何信用卡資訊。</p>
 </div>
 
 <script>
 function doPayment() {
-    // 模擬付款成功 → 通知 opener 視窗
+    const stId = "{{ st_id|default:'' }}";
     if (window.opener) {
         window.opener.postMessage({
             type: "PAYMENT_SUCCESS",
             item: "{{ item }}",
-            amount: "{{ default_amount }}"
+            amount: "{{ default_amount }}",
+            st_id: stId
         }, "*");
     }
-    // 關閉付款視窗
     window.close();
-    return false; // 阻止表單真正送出
+    return false;
 }
 </script>
 </body>
 </html>
+
 
 
 
