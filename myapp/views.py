@@ -2683,6 +2683,11 @@ def post_display(request):
         base_qs = base_qs.filter(
             Q(title__icontains=query) | Q(message_content__icontains=query) | Q(nickname__icontains=query)
         )
+        # ⭐ 把搜尋紀錄存進 session
+    history = request.session.get("search_history", [])
+    if query not in history:   # 避免重複
+        history.insert(0, query)  # 插到最前面
+    request.session["search_history"] = history[:10]  # 保留最新 10 筆
     posts = base_qs.order_by(order_expr)
 
     user_id_str = str(request.user.id) if request.user.is_authenticated else None
