@@ -3663,11 +3663,30 @@ def act_on_report(request):
             pass
 
     report.save()
+        # 🔔 通知檢舉人：告知駁回或已處置
+    try:
+        if report.reporter:  # 確保有檢舉人（不是匿名）
+            status_label = "已處置" if report.status == "action_taken" else "已駁回"
+            Notification.objects.create(
+                recipient=report.reporter,
+                title=f"檢舉結果：{status_label}",
+                message=f"你對 {report.target_type} 的檢舉 {status_label}。管理員備註：{admin_note or '（無）'}",
+                link_url=build_post_link(
+                    report.post,
+                    comment_id=report.comment_id if report.target_type in ["comment", "reply"] else None,
+                    reply_id=report.reply_id if report.target_type == "reply" else None
+                ),
+            )
+    except Exception:
+        pass
+
 
     # ✅ 成功後直接導向審核紀錄頁，並顯示提示
     status_label = '已處置' if report.status == 'action_taken' else '已駁回'
     messages.success(request, f'檢舉 #{report.id} {status_label}。')
     return redirect('report_decide')
+
+
 
 
 # ===== 管理員：編輯審核紀錄（僅允許改 status / admin_note；reason 不可改） =====
