@@ -289,38 +289,64 @@
 
 </script>
 
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<!-- 🔑 引入 Google Maps API -->
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAUuPZMMJvgVWftmqVyzfX8mKTwMX4kA6o&callback=initMap" async defer></script>
 
 <script>
-// 地圖選點
-const map = L.map('map').setView([25.033964, 121.564472], 13);
+let map, marker;
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '&copy; OpenStreetMap contributors'
-}).addTo(map);
+function initMap() {
+  const taipei = { lat: 25.033964, lng: 121.564472 }; // 預設台北101
 
-let marker = null;
+  map = new google.maps.Map(document.getElementById("map"), {
+    center: taipei,
+    zoom: 13,
+  });
 
-map.on('click', function (e) {
-  const { lat, lng } = e.latlng;
-  window.selectedLat = lat.toFixed(6);
-  window.selectedLng = lng.toFixed(6);
+  // 點擊地圖事件
+  map.addListener("click", (e) => {
+    const lat = e.latLng.lat();
+    const lng = e.latLng.lng();
 
-  if (marker) {
-    marker.setLatLng([lat, lng]);
-  } else {
-    marker = L.marker([lat, lng]).addTo(map);
-  }
+    if (marker) {
+      marker.setPosition(e.latLng);
+    } else {
+      marker = new google.maps.Marker({
+        position: e.latLng,
+        map: map,
+      });
+    }
 
-  // 更新隱藏欄位
-  document.getElementById("bs_address").value = `Lat: ${lat}, Lng: ${lng}`;
-  document.getElementById("latitude").value = lat.toFixed(6);
-  document.getElementById("longitude").value = lng.toFixed(6);
+    // 更新隱藏欄位
+    document.getElementById("latitude").value = lat.toFixed(14);
+    document.getElementById("longitude").value = lng.toFixed(14);
 
-  // 顯示在提示框
-  document.getElementById("lat-val").textContent = lat.toFixed(6);
-  document.getElementById("lng-val").textContent = lng.toFixed(6);
-  document.getElementById("latlng-display").style.display = "block";
+    // ✅ 統一輸出 Lat/Lng 格式
+    document.getElementById("bs_address").value = `Lat: ${lat}, Lng: ${lng}`;
+
+
+    // 顯示提示框
+    document.getElementById("lat-val").textContent = lat.toFixed(14);
+    document.getElementById("lng-val").textContent = lng.toFixed(14);
+    document.getElementById("latlng-display").style.display = "block";
+  });
+}
+
+// 頁面載入後執行
+window.onload = initMap;
+
+// ✅ 表單提交前檢查
+document.addEventListener("DOMContentLoaded", function () {
+  const form = document.getElementById("upload-form");
+  form.addEventListener("submit", function (e) {
+    const lat = document.getElementById("latitude").value;
+    const lng = document.getElementById("longitude").value;
+
+    if (!lat || !lng) {
+      e.preventDefault();
+      alert("❌ 請先在地圖上點選位置，再提交表單！");
+    }
+  });
 });
 </script>
 
@@ -351,6 +377,8 @@ document.getElementById("businessForm").addEventListener("submit", function(e) {
   const bsName = document.getElementById("bs_name").value.trim();
   const bsAddress = document.getElementById("bs_address").value.trim();
   const bsPhone = document.getElementById("bs_phone").value.trim();
+  const lat = document.getElementById("latitude").value;
+  const lng = document.getElementById("longitude").value;
   if (!bsName || !bsAddress || !bsPhone) {
     alert("❗ 請填寫所有必填欄位");
     return;
@@ -361,8 +389,8 @@ document.getElementById("businessForm").addEventListener("submit", function(e) {
   formData.append("store_name", bsName);
   formData.append("phone", bsPhone);
   formData.append("address", bsAddress);
-  formData.append("latitude", window.selectedLat || "");
-  formData.append("longitude", window.selectedLng || "");
+  formData.append("latitude", lat);
+  formData.append("longitude", lng);
 
   // ✅ 營業時間（用 collectBusinessHours）
   formData.append("business_hours", collectBusinessHours());

@@ -121,8 +121,8 @@ urlpatterns = [
     path('notifications/mark_all_unread/', views.notif_mark_all_unread, name='notif_mark_all_unread'),
     path("post/<str:post_id>/", views.post_detail, name="post_detail"),
     path("notifications/delete/<int:notif_id>/", views.notif_delete, name="notif_delete"),
-    path("notifications/delete_read/", views.notif_delete_read, name="notif_delete_read"),
-    path("notifications/delete_all/", views.notif_delete_all, name="notif_delete_all"),
+    path("notifications/mark_read/<int:notif_id>/", views.notif_mark_read, name="notif_mark_read"),
+
 
 
 
