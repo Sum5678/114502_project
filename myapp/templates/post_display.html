@@ -305,7 +305,7 @@
                    style="border:none; background-color:#f0faff; color:#033e6b; font-size:15px;">
             <input type="hidden" name="sort" value="{{ request.GET.sort|default:'desc' }}">
             <button type="submit" class="btn" style="background-color:#63b3ed; color:#fff; border:none;">搜尋</button>
-<!-- 🔔 通知（Dropdown 版本：#notifBellBtn + #notifList） -->
+   <!-- 🔔 通知（Dropdown 版本：#notifBellBtn + #notifList） -->
 <button class="btn btn-outline-secondary position-relative ms-2" 
         id="notifBellBtn" 
         data-bs-toggle="dropdown" 
@@ -317,27 +317,10 @@
         style="display:none;">0</span>
 </button>
 
-<!-- ⭐ 搜尋歷史：要放在 input-group 裡 -->
-<div id="searchHistory" class="search-history">
-  {% for term in search_history %}
-    <div class="history-item">
-      <i class="bi bi-clock-history icon"></i>
-      <span class="term">{{ term }}</span>
-      <button type="button" class="remove" data-term="{{ term }}">✕</button>
-    </div>
-  {% empty %}
-    <div class="text-muted p-2 small">目前沒有搜尋紀錄</div>
-  {% endfor %}
-</div>
-</div> <!-- ✅ 正確關閉 .input-group -->
-
-</form>
-</div>
-
-<!-- 🔔 通知 Dropdown 要放 input-group 外面 -->
 <ul class="dropdown-menu dropdown-menu-end" 
     id="notifList" 
     style="min-width: 340px; max-height: 360px; overflow-y: auto;">
+  
   <li class="dropdown-header d-flex align-items-center justify-content-between px-3" data-fixed="1">
     <span class="fw-semibold">通知</span>
     <!-- ✅ 單一切換按鈕（初始為「全部標為已讀」） -->
@@ -345,10 +328,16 @@
             id="notifToggleBtn" 
             type="button">全部標為已讀</button>
   </li>
-  <li data-fixed="1"><hr class="dropdown-divider"></li>
-  <!-- 🔔 這裡之後會由 JS 動態 append 通知項目 -->
-</ul>
 
+  <li data-fixed="1"><hr class="dropdown-divider"></li>
+  
+
+    
+
+            <div id="searchHistory" class="search-history"></div>
+          </div>
+        </form>
+      </div>
 
       <!-- 工具列 -->
       <div class="toolbar">
