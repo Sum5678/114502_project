@@ -98,11 +98,39 @@
         <h2>商家上傳紀錄</h2>
         <p>以下是你上傳的商家資訊。</p>
         <!-- 搜尋區塊 -->
-        <div class="input-group mb-3" style="max-width: 400px; margin: 0 auto;">
-          <input type="text" id="storeSearch" class="form-control" placeholder="輸入關鍵字搜尋...">
-          <button id="storeSearchBtn" class="btn btn-primary" type="button">搜尋</button>
-        </div>
       </div>
+
+      <!-- 搜尋列 -->
+        <div class="d-flex justify-content-center mb-3">
+          <div class="input-group w-100" style="max-width: 600px; position: relative;">
+            <!-- 返回鍵 -->
+            <button type="button" class="btn btn-outline-secondary" onclick="history.back()">
+              <i class="bi bi-arrow-left"></i>
+            </button>
+            <!-- 搜尋輸入 -->
+            <input type="text" id="storeSearch" class="form-control" placeholder="輸入關鍵字搜尋商家...">
+            <!-- 搜尋按鈕 -->
+            <button id="storeSearchBtn" class="btn btn-primary" type="button">搜尋</button>
+            <!-- 搜尋歷史 -->
+            <button type="button" class="btn btn-outline-secondary" id="searchHistoryBtn">
+              <i class="bi bi-clock-history"></i> 歷史
+            </button>
+
+            <!-- 下拉歷史容器：放在 input-group 內 -->
+            <div id="searchHistoryDropdown" class="list-group position-absolute w-100" style="top: 100%; left:0; z-index:1000; display:none;"></div>
+          </div>
+        </div>
+
+        <!-- 排序列 -->
+        <div class="d-flex justify-content-end mb-3">
+          <div class="d-flex align-items-center">
+            <span class="me-2 text-muted">回報排序：</span>
+            <div class="btn-group" role="group">
+              <button type="button" class="btn btn-outline-primary btn-sm active" id="sortNewest">↓ 最新回報</button>
+              <button type="button" class="btn btn-outline-primary btn-sm" id="sortOldest">↑ 最舊回報</button>
+            </div>
+          </div>
+        </div>
 
       <div class="table-responsive">
         <table class="table table-bordered align-middle" id="storeTable">
@@ -164,24 +192,131 @@
 document.addEventListener("DOMContentLoaded", function() {
   const searchInput = document.getElementById("storeSearch");
   const searchBtn = document.getElementById("storeSearchBtn");
-  const rows = document.querySelectorAll("#storeTable tbody tr");
+  const searchHistoryBtn = document.getElementById("searchHistoryBtn");
+  const tbody = document.querySelector("#storeTable tbody");
+  const dropdown = document.getElementById("searchHistoryDropdown");
 
-  console.log("找到的列數:", rows.length); // 確認有沒有抓到列
+  // 儲存原始列
+  const originalRows = Array.from(tbody.querySelectorAll("tr")).map(row => row.cloneNode(true));
 
-  function filterStores() {
-    const keyword = searchInput.value.toLowerCase();
-    rows.forEach(row => {
-      row.style.display = row.innerText.toLowerCase().includes(keyword) ? "" : "none";
-    });
+  function getRows() {
+    return Array.from(tbody.querySelectorAll("tr"));
   }
 
-  searchBtn.addEventListener("click", filterStores);
-  searchInput.addEventListener("keypress", function(e) {
+  // 搜尋
+  function filterStores(keyword = null, pushState = true) {
+    if (keyword === null) keyword = searchInput.value.trim().toLowerCase();
+    if (keyword) saveSearchHistory(keyword);
+
+    getRows().forEach(row => {
+      row.style.display = row.innerText.toLowerCase().includes(keyword) ? "" : "none";
+    });
+
+    if (pushState) {
+      history.pushState({ search: keyword }, "", "");
+    }
+  }
+
+  // 重置搜尋
+  function resetSearch(pushState = true) {
+    searchInput.value = "";
+    tbody.innerHTML = "";
+    originalRows.forEach(row => tbody.appendChild(row));
+    sortStores("newest");
+
+    if (pushState) {
+      history.pushState({ search: "" }, "", "");
+    }
+  }
+
+  // popstate
+  window.addEventListener("popstate", function(event) {
+    if (event.state && event.state.search !== undefined) {
+      const keyword = event.state.search;
+      searchInput.value = keyword;
+      if (keyword === "") resetSearch(false);
+      else filterStores(keyword, false);
+    } else {
+      resetSearch(false);
+    }
+  });
+
+  // 綁定事件
+  searchBtn.addEventListener("click", () => filterStores());
+  searchInput.addEventListener("keypress", e => {
     if (e.key === "Enter") {
       e.preventDefault();
       filterStores();
     }
   });
+
+  // 儲存搜尋歷史
+  function saveSearchHistory(keyword) {
+    let history = JSON.parse(localStorage.getItem("storeSearchHistory") || "[]");
+    history = history.filter(item => item !== keyword);
+    history.unshift(keyword);
+    if (history.length > 5) history.pop();
+    localStorage.setItem("storeSearchHistory", JSON.stringify(history));
+  }
+
+  // 顯示下拉歷史
+  function showSearchHistoryDropdown() {
+    const history = JSON.parse(localStorage.getItem("storeSearchHistory") || "[]");
+    dropdown.innerHTML = "";
+    if (history.length === 0) { dropdown.style.display = "none"; return; }
+
+    history.forEach(keyword => {
+      const item = document.createElement("button");
+      item.type = "button";
+      item.className = "list-group-item list-group-item-action";
+      item.textContent = keyword;
+      item.addEventListener("click", () => {
+        searchInput.value = keyword;
+        filterStores(keyword);
+        dropdown.style.display = "none";
+      });
+      dropdown.appendChild(item);
+    });
+
+    dropdown.style.display = "block";
+  }
+
+  searchHistoryBtn.addEventListener("click", e => {
+    e.stopPropagation();
+    showSearchHistoryDropdown();
+  });
+
+  document.addEventListener("click", () => { dropdown.style.display = "none"; });
+
+  // 排序（暫時用商家 ID 排序）
+  function sortStores(order) {
+    const rows = getRows();
+    const sortedRows = rows.sort((a, b) => {
+      const idA = parseInt(a.querySelector("td:nth-child(1)").innerText); // # 欄位
+      const idB = parseInt(b.querySelector("td:nth-child(1)").innerText);
+      return order === "newest" ? idB - idA : idA - idB;
+    });
+    tbody.innerHTML = "";
+    sortedRows.forEach(row => tbody.appendChild(row));
+  }
+
+  document.getElementById("sortNewest").addEventListener("click", function() {
+    sortStores("newest");
+    this.classList.add("active");
+    document.getElementById("sortOldest").classList.remove("active");
+  });
+
+  document.getElementById("sortOldest").addEventListener("click", function() {
+    sortStores("oldest");
+    this.classList.add("active");
+    document.getElementById("sortNewest").classList.remove("active");
+  });
+
+  // 預設最新
+  sortStores("newest");
+
+  // 初始化 pushState
+  history.replaceState({ search: "" }, "", "");
 });
 </script>
 </body>
