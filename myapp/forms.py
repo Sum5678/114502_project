@@ -39,11 +39,16 @@ class ThisUserProfileForm(forms.ModelForm):
 
 
 # forms.py
+# forms.py
 from django import forms
 from .models import StoreAd
 
 class StoreAdForm(forms.ModelForm):
-    st_id = forms.IntegerField(label="商家編號")  
+    st_id = forms.IntegerField(label="商家編號")
+    # 隱藏欄位，用來判斷付款
+    payment_done = forms.CharField(widget=forms.HiddenInput(), required=False)
+    payment_item = forms.CharField(widget=forms.HiddenInput(), required=False)
+    payment_amount = forms.CharField(widget=forms.HiddenInput(), required=False)
 
     class Meta:
         model = StoreAd
@@ -52,3 +57,18 @@ class StoreAdForm(forms.ModelForm):
             'ad_content': forms.Textarea(attrs={'rows': 3, 'placeholder': '請輸入廣告內容'}),
             'ad_radius': forms.NumberInput(attrs={'min': 1, 'placeholder': '觸發距離 (公尺)'}),
         }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        payment_done = cleaned_data.get('payment_done')
+        payment_item = cleaned_data.get('payment_item')
+        payment_amount = cleaned_data.get('payment_amount')
+
+        if payment_done != '1':
+            raise forms.ValidationError("請先完成付款再提交廣告")
+        
+        # 可選：檢查 payment_item 和 payment_amount 是否合理
+        if not payment_item or not payment_amount:
+            raise forms.ValidationError("付款資訊不完整，無法提交廣告")
+        
+        return cleaned_data
