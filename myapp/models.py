@@ -674,6 +674,7 @@ class UserPayment(models.Model):
     created_at = models.DateTimeField(default=timezone.now)
     is_refunded = models.BooleanField(default=False)  # 是否已退款
     refunded_at = models.DateTimeField(null=True, blank=True)  # 退款時間
+    st_id = models.IntegerField(null=True, blank=True) 
 
     class Meta:
         db_table = 'user_payments'

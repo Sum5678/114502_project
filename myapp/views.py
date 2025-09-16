@@ -4277,7 +4277,7 @@ def public_profile(request, gmail):
 # --------商家廣告-------s
 from django.shortcuts import render, redirect, get_object_or_404
 from django.conf import settings
-from .models import StoreAll, StoreAd, StoreAdImage, StoreAdHistory, StoreAdHistoryImage
+from .models import StoreAll, StoreAd, StoreAdImage, StoreAdHistory, StoreAdHistoryImage, UserPayment
 from .forms import StoreAdForm
 import os
 from django.utils import timezone
@@ -4456,22 +4456,14 @@ def review_store_ad(request, history_id, action):
     return redirect("admin_review_ads")
 
 
-
-
-# 上傳廣告時建立歷史紀錄
+#-----------------上傳廣告時建立歷史紀錄-------------------
 from django.shortcuts import render, redirect
-from .models import StoreAll, StoreAdHistory, StoreAdHistoryImage
-from .forms import StoreAdForm
 from django.utils import timezone
-import os
 from django.conf import settings
-
-from django.shortcuts import render, redirect
-from .models import StoreAll, StoreAdHistory, StoreAdHistoryImage
-from .forms import StoreAdForm
-from django.utils import timezone
 import os, shutil
-from django.conf import settings
+
+from .models import StoreAll, StoreAdHistory, StoreAdHistoryImage, UserPayment, ThisUserProfile
+from .forms import StoreAdForm
 
 def upload_store_ad(request):
     # 暫存資料
@@ -4480,6 +4472,16 @@ def upload_store_ad(request):
 
     if request.method == 'POST':
         form = StoreAdForm(request.POST)
+
+        # 後端付款檢查
+        payment_done = request.POST.get('payment_done') == '1'
+        payment_item = request.POST.get('payment_item')
+        payment_amount = request.POST.get('payment_amount')
+
+        if not payment_done:
+            form.add_error(None, "請先完成付款再提交廣告")
+            return render(request, 'store_upload_ad.html', {'form': form, 'images': pending_images})
+
         if form.is_valid():
             st_id = form.cleaned_data['st_id']
 
@@ -4490,7 +4492,24 @@ def upload_store_ad(request):
                 form.add_error('st_id', '找不到此商家編號')
                 return render(request, 'store_upload_ad.html', {'form': form, 'images': pending_images})
 
-            # 建立歷史廣告紀錄
+            # 取得登入使用者的 ThisUserProfile
+            try:
+                user_profile = ThisUserProfile.objects.get(gmail=request.user.email)
+            except ThisUserProfile.DoesNotExist:
+                form.add_error(None, '請先完成會員資料填寫')
+                return render(request, 'store_upload_ad.html', {'form': form, 'images': pending_images})
+
+            # 建立付款紀錄
+            payment = UserPayment.objects.create(
+                user=user_profile,
+                amount=int(payment_amount),
+                item=payment_item,
+                st_id=st_id,
+                is_used=True,
+                created_at=timezone.now()
+            )
+
+            # 建立廣告歷史紀錄
             ad_history = StoreAdHistory.objects.create(
                 st=store,
                 ad_content=form.cleaned_data['ad_content'],
@@ -4500,11 +4519,11 @@ def upload_store_ad(request):
                 created_at=timezone.now()
             )
 
-            # 正式儲存資料夾
+            # 圖片儲存目錄
             upload_dir = os.path.join(settings.MEDIA_ROOT, 'ads_history')
             os.makedirs(upload_dir, exist_ok=True)
 
-            # 先處理暫存圖片
+            # 處理暫存圖片
             for temp_url in pending_images:
                 temp_path = os.path.join(settings.BASE_DIR, temp_url.lstrip('/'))
                 if os.path.exists(temp_path):
@@ -4516,7 +4535,7 @@ def upload_store_ad(request):
                         image_url=f"/media/ads_history/{filename}"
                     )
 
-            # 再處理新上傳的圖片
+            # 處理新上傳圖片
             for img_file in request.FILES.getlist('images'):
                 filepath = os.path.join(upload_dir, img_file.name)
                 with open(filepath, 'wb+') as dest:
@@ -4529,12 +4548,12 @@ def upload_store_ad(request):
 
             return render(request, 'store_upload_ad.html', {
                 'form': StoreAdForm(),
-                'message': '廣告申請已送審，請等待管理員審核',
+                'message': f'廣告申請已送審，已完成付款 ({payment.item} {payment.amount}元)',
                 'images': []
             })
 
         else:
-            # 表單無效或回跳，暫存資料
+            # 表單無效，暫存資料
             request.session['pending_ad_data'] = request.POST.dict()
 
             # 暫存上傳檔案到 media/temp/
@@ -4547,7 +4566,6 @@ def upload_store_ad(request):
                     for chunk in img_file.chunks():
                         dest.write(chunk)
                 temp_urls.append(f"/media/temp/{img_file.name}")
-
             request.session['pending_ad_images'] = temp_urls
             return redirect(request.path)
 
@@ -4555,6 +4573,7 @@ def upload_store_ad(request):
         form = StoreAdForm(initial=pending_data) if pending_data else StoreAdForm()
 
     return render(request, 'store_upload_ad.html', {'form': form, 'images': pending_images})
+
 
 
 
@@ -4614,25 +4633,29 @@ def upload_ad_page(request):
 
 
 # -------------付費------------
-from django.shortcuts import render, redirect
-from .models import ThisUserProfile, UserPayment
-import uuid
-
 def test_payment(request):
     user = ThisUserProfile.objects.first()  # 測試用
-
     default_amount = request.GET.get('amount', 0)
     item = request.GET.get('item', '未知品項')
+    st_id = request.GET.get('st_id')  # 商家編號
     next_url = request.GET.get('next', '/')
 
     if request.method == "POST":
         amount = int(request.POST.get('amount', 0))
         item = request.POST.get('item', '未知品項')
-        next_url = request.POST.get('next', '/')  # POST 時帶回 next
+        st_id = request.POST.get('st_id')
+        next_url = request.POST.get('next', '/')
         transaction_id = str(uuid.uuid4())
 
         # 建立付款紀錄
-        UserPayment.objects.create(user=user, amount=amount, item=item, transaction_id=transaction_id)
+        UserPayment.objects.create(
+            user=user,
+            amount=amount,
+            item=item,
+            st_id=st_id,
+            transaction_id=transaction_id,
+            is_used=True
+        )
 
         # 更新會員等級
         user.total_paid += amount
@@ -4650,12 +4673,24 @@ def test_payment(request):
             user.membership_level = 0
         user.save()
 
-        # ✅ 付款完成回跳
-        return redirect(next_url)
+        # ✅ POST 成功後回傳 JS 通知父頁面
+        return render(request, "test_payment_done.html", {
+            "item": item,
+            "amount": amount,
+            "next": next_url
+        })
 
     return render(request, "test_payment.html", {
         "default_amount": default_amount,
         "item": item,
-        "user": user,
-        "next": next_url
+        "st_id": st_id,
+        "next": next_url,
+        "user": user
     })
+
+
+
+
+def test_payment_done(request):
+    # 這裡可以做一些完成後的處理，例如顯示付款成功訊息
+    return render(request, "test_payment_done.html")

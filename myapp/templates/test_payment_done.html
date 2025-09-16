@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>付款完成</title>
+</head>
+<body>
+<script>
+if (window.opener) {
+    window.opener.postMessage({
+        type: "PAYMENT_SUCCESS",
+        item: "{{ item }}",
+        amount: "{{ amount }}"
+    }, "*");
+}
+window.close();
+</script>
+<p>付款完成，視窗即將關閉...</p>
+</body>
+</html>
