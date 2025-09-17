@@ -173,7 +173,13 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
+# ----------------- 媒體檔 (改為 GCS) -----------------
+INSTALLED_APPS += ['storages']
 
+# GCS 設定
+DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
+GS_BUCKET_NAME = '114_502_no_stranger'
+MEDIA_URL = f'https://storage.googleapis.com/114_502_no_stranger/'
 
 # 在這行之後放 Google 登入相關設定
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
