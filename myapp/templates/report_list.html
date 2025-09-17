@@ -199,136 +199,141 @@
   <script src="{% static 'assets/vendor/aos/aos.js' %}"></script>
   <script src="{% static 'assets/js/main.js' %}"></script>
   <script>
-  document.addEventListener("DOMContentLoaded", function() {
-    const searchInput = document.getElementById("reportSearch");
-    const searchBtn = document.getElementById("reportSearchBtn");
-    const searchHistoryBtn = document.getElementById("searchHistoryBtn");
-    const tbody = document.querySelector("#reportTable tbody");
-    const dropdown = document.getElementById("searchHistoryDropdown");
+document.addEventListener("DOMContentLoaded", function() {
+  const searchInput = document.getElementById("reportSearch");
+  const searchBtn = document.getElementById("reportSearchBtn");
+  const searchHistoryBtn = document.getElementById("searchHistoryBtn");
+  const tbody = document.querySelector("#reportTable tbody");
+  const dropdown = document.getElementById("searchHistoryDropdown");
 
-    // 儲存原始列
-    const originalRows = Array.from(tbody.querySelectorAll("tr")).map(row => row.cloneNode(true));
+  // 儲存原始 HTML（restore 用，比 cloneNode 穩定）
+  const originalHTML = tbody ? tbody.innerHTML : "";
 
-    function getRows() {
-      return Array.from(tbody.querySelectorAll("tr"));
-    }
+  function getRows() {
+    return Array.from(tbody.querySelectorAll("tr"));
+  }
 
-    // 搜尋
-    function filterReports(keyword = null, pushState = true) {
-      if (keyword === null) keyword = searchInput.value.trim().toLowerCase();
-      if (keyword) saveSearchHistory(keyword);
+  // 搜尋（keyword 若為 null，則使用輸入框）
+  function filterReports(keyword = null, pushState = true) {
+    if (keyword === null) keyword = (searchInput.value || "").trim();
+    else keyword = String(keyword).trim();
 
-      getRows().forEach(row => {
-        row.style.display = row.innerText.toLowerCase().includes(keyword) ? "" : "none";
-      });
+    const keyLower = keyword.toLowerCase();
 
-      if (pushState) {
-        history.pushState({ search: keyword }, "", "");
+    if (keyword) saveSearchHistory(keyword);
+
+    getRows().forEach(row => {
+      row.style.display = row.innerText.toLowerCase().includes(keyLower) ? "" : "none";
+    });
+
+    if (pushState) {
+      // 加上 timestamp 保證每次 pushState 都是新的 entry
+      try {
+        history.pushState({ search: keyword, ts: Date.now() }, "", "");
+      } catch (e) {
+        // 某些環境可能對第三個參數有要求，降級處理
+        history.pushState({ search: keyword, ts: Date.now() }, "");
       }
     }
+  }
 
-    // 重置搜尋（回到搜尋前）
-    function resetSearch(pushState = true) {
-      searchInput.value = "";
-      tbody.innerHTML = "";
-      originalRows.forEach(row => tbody.appendChild(row));
-      sortReports("newest");
-
-      if (pushState) {
-        history.pushState({ search: "" }, "", "");
-      }
-    }
-
-    // popstate 事件
-    window.addEventListener("popstate", function(event) {
-      if (event.state && event.state.search !== undefined) {
-        const keyword = event.state.search;
-        searchInput.value = keyword;
-        if (keyword === "") resetSearch(false);
-        else filterReports(keyword, false);
-      } else {
-        resetSearch(false);
-      }
-    });
-
-    // 綁定事件
-    searchBtn.addEventListener("click", () => filterReports());
-    searchInput.addEventListener("keypress", e => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        filterReports();
-      }
-    });
-
-    // 儲存搜尋歷史
-    function saveSearchHistory(keyword) {
-      let history = JSON.parse(localStorage.getItem("reportSearchHistory") || "[]");
-      history = history.filter(item => item !== keyword);
-      history.unshift(keyword);
-      if (history.length > 5) history.pop();
-      localStorage.setItem("reportSearchHistory", JSON.stringify(history));
-    }
-
-    // 顯示下拉歷史
-    function showSearchHistoryDropdown() {
-      const history = JSON.parse(localStorage.getItem("reportSearchHistory") || "[]");
-      dropdown.innerHTML = "";
-      if (history.length === 0) { dropdown.style.display = "none"; return; }
-
-      history.forEach(keyword => {
-        const item = document.createElement("button");
-        item.type = "button";
-        item.className = "list-group-item list-group-item-action";
-        item.textContent = keyword;
-        item.addEventListener("click", () => {
-          searchInput.value = keyword;
-          filterReports(keyword);
-          dropdown.style.display = "none";
-        });
-        dropdown.appendChild(item);
-      });
-
-      dropdown.style.display = "block";
-    }
-
-    searchHistoryBtn.addEventListener("click", e => {
-      e.stopPropagation();
-      showSearchHistoryDropdown();
-    });
-
-    document.addEventListener("click", () => { dropdown.style.display = "none"; });
-
-    // 排序
-    function sortReports(order) {
-      const rows = getRows();
-      const sortedRows = rows.sort((a, b) => {
-        const dateA = new Date(a.querySelector("td:nth-child(7)").dataset.time);
-        const dateB = new Date(b.querySelector("td:nth-child(7)").dataset.time);
-        return order === "newest" ? dateB - dateA : dateA - dateB;
-      });
-      tbody.innerHTML = "";
-      sortedRows.forEach(row => tbody.appendChild(row));
-    }
-
-    document.getElementById("sortNewest").addEventListener("click", function() {
-      sortReports("newest");
-      this.classList.add("active");
-      document.getElementById("sortOldest").classList.remove("active");
-    });
-
-    document.getElementById("sortOldest").addEventListener("click", function() {
-      sortReports("oldest");
-      this.classList.add("active");
-      document.getElementById("sortNewest").classList.remove("active");
-    });
-
-    // 預設最新
+  // 重置搜尋（回到原始表格）。**不會 pushState**
+  function resetSearch() {
+    searchInput.value = "";
+    tbody.innerHTML = originalHTML;
     sortReports("newest");
+  }
 
-    // 初始化 pushState，保證第一次返回可回到原始表格
-    history.replaceState({ search: "" }, "", "");
+  // popstate 處理：穩定處理 null / undefined
+  window.addEventListener("popstate", function(event) {
+    if (event.state && Object.prototype.hasOwnProperty.call(event.state, 'search')) {
+      const kw = event.state.search || "";
+      searchInput.value = kw;
+      if (kw === "") resetSearch();
+      else filterReports(kw, false);
+    } else {
+      // fallback（沒有 state 時回原始）
+      resetSearch();
+    }
   });
 
-  </script>
+  // 綁定事件
+  searchBtn.addEventListener("click", () => filterReports(null, true));
+  searchInput.addEventListener("keypress", e => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      filterReports(null, true);
+    }
+  });
+
+  // 儲存搜尋歷史（UI 相關維持原樣）
+  function saveSearchHistory(keyword) {
+    let history = JSON.parse(localStorage.getItem("reportSearchHistory") || "[]");
+    history = history.filter(item => item !== keyword);
+    history.unshift(keyword);
+    if (history.length > 5) history.pop();
+    localStorage.setItem("reportSearchHistory", JSON.stringify(history));
+  }
+
+  // 顯示下拉歷史
+  function showSearchHistoryDropdown() {
+    const history = JSON.parse(localStorage.getItem("reportSearchHistory") || "[]");
+    dropdown.innerHTML = "";
+    if (history.length === 0) { dropdown.style.display = "none"; return; }
+
+    history.forEach(keyword => {
+      const item = document.createElement("button");
+      item.type = "button";
+      item.className = "list-group-item list-group-item-action";
+      item.textContent = keyword;
+      item.addEventListener("click", () => {
+        searchInput.value = keyword;
+        filterReports(keyword, true);
+        dropdown.style.display = "none";
+      });
+      dropdown.appendChild(item);
+    });
+
+    dropdown.style.display = "block";
+  }
+
+  searchHistoryBtn.addEventListener("click", e => {
+    e.stopPropagation();
+    showSearchHistoryDropdown();
+  });
+  document.addEventListener("click", () => { dropdown.style.display = "none"; });
+
+  // 排序（維持你原本邏輯）
+  function sortReports(order) {
+    const rows = getRows();
+    const sortedRows = rows.sort((a, b) => {
+      const dateA = new Date(a.querySelector("td:nth-child(7)").dataset.time);
+      const dateB = new Date(b.querySelector("td:nth-child(7)").dataset.time);
+      return order === "newest" ? dateB - dateA : dateA - dateB;
+    });
+    tbody.innerHTML = "";
+    sortedRows.forEach(row => tbody.appendChild(row));
+  }
+
+  document.getElementById("sortNewest").addEventListener("click", function() {
+    sortReports("newest");
+    this.classList.add("active");
+    document.getElementById("sortOldest").classList.remove("active");
+  });
+
+  document.getElementById("sortOldest").addEventListener("click", function() {
+    sortReports("oldest");
+    this.classList.add("active");
+    document.getElementById("sortNewest").classList.remove("active");
+  });
+
+  // 預設：排序最新
+  sortReports("newest");
+
+  // 初始化 single replaceState（只做一次）
+  history.replaceState({ search: "" }, "", "");
+});
+</script>
+
 </body>
 </html>
