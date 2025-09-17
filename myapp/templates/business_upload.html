@@ -193,17 +193,20 @@
 
 
         <div class="mb-3">
-          <label for="ad_content">廣告語</label>
-          <textarea class="form-control" id="ad_content" name="ad_content" rows="3"></textarea>
-        </div>
+        <label for="ad_content">廣告語</label>
+        <textarea class="form-control" id="ad_content" name="ad_content" rows="3"></textarea>
+        <small class="text-muted">初次填單預設將為推播地點附近10公尺，若需升級請至商家廣告填寫廣告申請表</small>
+      </div>
 
-        <div class="mb-3">
-          <label for="ad_images">廣告圖片（可多選）</label>
-          <input type="file" class="form-control" id="ad_images" name="ad_images" multiple accept="image/*">
-        </div>
+      <div class="mb-3">
+        <label for="ad_images">廣告圖片</label>
+        <input type="file" class="form-control" id="ad_images" name="ad_images" accept="image/*" multiple>
+        <small class="text-muted">可多次選擇圖片，每次選擇的圖片都會被加入預覽區，點擊叉叉可刪除不想要的圖片</small>
+      </div>
 
-        <!-- 預覽區塊 -->
-        <div id="image-preview" class="row mt-2"></div>
+      <div id="image-preview" class="row mt-2"></div>
+
+
 
         <input type="hidden" id="bs_address" name="bs_address" required>
         <input type="hidden" id="latitude" name="latitude" required>
@@ -351,21 +354,43 @@ document.addEventListener("DOMContentLoaded", function () {
 </script>
 
 <script>
-// 圖片預覽
-document.getElementById("ad_images").addEventListener("change", function() {
-  const preview = document.getElementById("image-preview");
+// 圖片預覽並支援多次選擇追加，並可刪除
+let selectedFiles = [];
+
+const adImagesInput = document.getElementById("ad_images");
+const preview = document.getElementById("image-preview");
+
+adImagesInput.addEventListener("change", function() {
+  [...this.files].forEach(file => selectedFiles.push(file));
+  updatePreview();
+});
+
+function updatePreview() {
   preview.innerHTML = "";
-  [...this.files].forEach(file => {
+  selectedFiles.forEach((file, index) => {
     const reader = new FileReader();
     reader.onload = e => {
       const col = document.createElement("div");
-      col.className = "col-4 mb-2";
-      col.innerHTML = `<img src="${e.target.result}" class="img-fluid rounded">`;
+      col.className = "col-4 mb-2 position-relative";
+      col.innerHTML = `
+        <img src="${e.target.result}" class="img-fluid rounded">
+        <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1 remove-img" data-index="${index}">&times;</button>
+      `;
       preview.appendChild(col);
     };
     reader.readAsDataURL(file);
   });
+}
+
+// 刪除按鈕事件
+preview.addEventListener("click", function(e) {
+  if (e.target.classList.contains("remove-img")) {
+    const index = e.target.dataset.index;
+    selectedFiles.splice(index, 1);
+    updatePreview();
+  }
 });
+
 </script>
 
 <script>
