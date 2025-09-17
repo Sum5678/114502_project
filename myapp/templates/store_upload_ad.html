@@ -178,6 +178,31 @@ window.addEventListener("message", function(event) {
         if (paymentWindow && !paymentWindow.closed) paymentWindow.close();
     }
 });
+
+document.addEventListener("DOMContentLoaded", function() {
+    const form = document.querySelector('form');
+    const paymentDoneInput = document.getElementById('payment_done');
+
+    form.addEventListener('submit', function(e) {
+        // 檢查是否已付款
+        if (paymentDoneInput.value !== '1') {
+            e.preventDefault(); // 阻止表單送出
+            // 顯示警告訊息
+            let alertBox = document.getElementById('payment_alert');
+            if (!alertBox) {
+                alertBox = document.createElement('div');
+                alertBox.id = 'payment_alert';
+                alertBox.classList.add('alert', 'alert-warning');
+                alertBox.style.marginBottom = '15px';
+                alertBox.innerText = '請先完成付款，才能送出廣告！';
+                const card = document.querySelector('.upload-ad-card');
+                card.insertBefore(alertBox, form);
+            } else {
+                alertBox.innerText = '請先完成付款，才能送出廣告！';
+            }
+        }
+    });
+});
 </script>
 </body>
 </html>
