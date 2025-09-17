@@ -2109,7 +2109,6 @@ def store_map_view(request):
 # API：取得審核通過的商家資料
 def store_data_api(request):
     approved_stores = StoreAll.objects.filter(review_status='approved')
-
     data = [
         {
             'st_id': store.st_id,
@@ -2118,32 +2117,25 @@ def store_data_api(request):
             'phone': store.phone,
             'latitude': store.latitude,
             'longitude': store.longitude,
-            
         }
         for store in approved_stores
         if store.latitude is not None and store.longitude is not None
     ]
     return JsonResponse(data, safe=False)
 
+
 # API：取得審核通過的商家資料（含廣告）
 from django.conf import settings
 
+# ----------------- 商家廣告 API -----------------
 def stores_with_ads_api(request):
     approved_stores = StoreAll.objects.filter(review_status='approved')
-
     data = []
+
     for store in approved_stores:
         try:
-            ad = StoreAd.objects.get(st_id=store.st_id)
-            images = []
-            for img in ad.images.all():
-                # 移除重複的 'media/'，只保留一個
-                img_url = img.image_url.lstrip('/')
-                if img_url.startswith('media/'):
-                    full_url = request.build_absolute_uri('/' + img_url)
-                else:
-                    full_url = request.build_absolute_uri(settings.MEDIA_URL + img_url)
-                images.append(full_url)
+            ad = StoreAd.objects.get(st=store)
+            images = [img.image_url for img in ad.images.all()]
         except StoreAd.DoesNotExist:
             ad = None
             images = []
@@ -2156,11 +2148,12 @@ def stores_with_ads_api(request):
             'latitude': store.latitude,
             'longitude': store.longitude,
             'ad_content': ad.ad_content if ad else '',
-            'ad_radius': 200,
+            'ad_radius': ad.ad_radius if ad else 200,
             'images': images
         })
 
     return JsonResponse(data, safe=False)
+
 
 
 
@@ -4274,13 +4267,136 @@ def public_profile(request, gmail):
 
 
 
-# --------商家廣告-------s
-from django.shortcuts import render, redirect, get_object_or_404
-from django.conf import settings
-from .models import StoreAll, StoreAd, StoreAdImage, StoreAdHistory, StoreAdHistoryImage, UserPayment
-from .forms import StoreAdForm
-import os
+#-----------------上傳廣告時建立歷史紀錄-------------------
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
+from django.shortcuts import render, redirect
 from django.utils import timezone
+from .models import StoreAll, StoreAdHistory, StoreAdHistoryImage, UserPayment, ThisUserProfile
+from .forms import StoreAdForm
+import uuid
+
+# ----------------- 上傳廣告（GCS 版 + 半徑10公尺免費） -----------------
+import os
+import uuid
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
+from django.shortcuts import render, redirect
+from django.utils import timezone
+from .models import StoreAll, StoreAdHistory, StoreAdHistoryImage, UserPayment, ThisUserProfile
+from .forms import StoreAdForm
+
+def upload_store_ad(request):
+    # 暫存資料
+    pending_data = request.session.pop('pending_ad_data', None)
+    pending_images = request.session.pop('pending_ad_images', [])
+
+    if request.method == 'POST':
+        form = StoreAdForm(request.POST)
+        st_id = request.POST.get('st_id')
+        ad_radius = int(request.POST.get('ad_radius', 0))
+        payment_done = request.POST.get('payment_done') == '1'
+        payment_item = request.POST.get('payment_item')
+        payment_amount = request.POST.get('payment_amount')
+
+        # 如果不是免費 (radius != 10) 就檢查付款
+        if ad_radius != 10 and not payment_done:
+            form.add_error(None, "請先完成付款再提交廣告")
+            return render(request, 'store_upload_ad.html', {'form': form, 'images': pending_images})
+
+        if form.is_valid():
+            # 取得商家
+            try:
+                store = StoreAll.objects.get(st_id=st_id)
+            except StoreAll.DoesNotExist:
+                form.add_error('st_id', '找不到此商家編號')
+                return render(request, 'store_upload_ad.html', {'form': form, 'images': pending_images})
+
+            # 取得使用者資料
+            try:
+                user_profile = ThisUserProfile.objects.get(gmail=request.user.email)
+            except ThisUserProfile.DoesNotExist:
+                form.add_error(None, '請先完成會員資料填寫')
+                return render(request, 'store_upload_ad.html', {'form': form, 'images': pending_images})
+
+            # 建立付款紀錄 (只有非免費廣告才建立)
+            payment = None
+            if ad_radius != 10:
+                payment = UserPayment.objects.create(
+                    user=user_profile,
+                    amount=int(payment_amount),
+                    item=payment_item,
+                    st_id=st_id,
+                    is_used=True,
+                    created_at=timezone.now()
+                )
+
+            # 建立廣告歷史紀錄
+            ad_history = StoreAdHistory.objects.create(
+                st=store,
+                ad_content=form.cleaned_data['ad_content'],
+                ad_radius=form.cleaned_data['ad_radius'],
+                enabled=form.cleaned_data['enabled'],
+                status='pending',
+                created_at=timezone.now()
+            )
+
+            # 處理暫存圖片 (session)
+            for temp_url in pending_images:
+                try:
+                    temp_path = temp_url.replace(request.build_absolute_uri('/')[:-1], '')  # 去掉 domain
+                    with open(temp_path.lstrip('/'), 'rb') as f:
+                        content = f.read()
+                    filename = f"ads_history/{uuid.uuid4().hex}_{os.path.basename(temp_path)}"
+                    default_storage.save(filename, ContentFile(content))
+                    image_url = default_storage.url(filename)
+                    StoreAdHistoryImage.objects.create(
+                        history=ad_history,
+                        image_url=image_url
+                    )
+                except Exception as e:
+                    print(f"⚠️ 暫存圖片上傳失敗: {temp_url}, {e}")
+
+            # 處理新上傳圖片
+            for img_file in request.FILES.getlist('images'):
+                filename = f"ads_history/{uuid.uuid4().hex}_{img_file.name}"
+                default_storage.save(filename, ContentFile(img_file.read()))
+                image_url = default_storage.url(filename)
+                StoreAdHistoryImage.objects.create(
+                    history=ad_history,
+                    image_url=image_url
+                )
+
+            msg = "廣告申請已送審"
+            if payment:
+                msg += f"，已完成付款 ({payment.item} {payment.amount}元)"
+            else:
+                msg += " (免費廣告)"
+
+            return render(request, 'store_upload_ad.html', {
+                'form': StoreAdForm(),
+                'message': msg,
+                'images': []
+            })
+
+        else:
+            # 表單無效，暫存資料
+            request.session['pending_ad_data'] = request.POST.dict()
+            temp_urls = []
+            for img_file in request.FILES.getlist('images'):
+                filename = f"temp/{uuid.uuid4().hex}_{img_file.name}"
+                default_storage.save(filename, ContentFile(img_file.read()))
+                image_url = default_storage.url(filename)
+                temp_urls.append(image_url)
+            request.session['pending_ad_images'] = temp_urls
+            return redirect(request.path)
+
+    else:
+        form = StoreAdForm(initial=pending_data) if pending_data else StoreAdForm()
+
+    return render(request, 'store_upload_ad.html', {'form': form, 'images': pending_images})
+
+
 
 # --------- API: 根據商家編號取得廣告 ---------
 def get_store_ad(request):
@@ -4322,7 +4438,6 @@ def get_store_ad(request):
 def admin_review_ads(request):
     ads = StoreAdHistory.objects.filter(status='pending').order_by('created_at')
     return render(request, 'admin_review_ads.html', {'ads': ads})
-
 
 def review_store_ad(request, history_id, action):
     ad_history = get_object_or_404(StoreAdHistory, pk=history_id)
@@ -4366,7 +4481,6 @@ def review_store_ad(request, history_id, action):
                 is_used=False,
                 is_refunded=False
             ).latest('created_at')
-
             payment.is_refunded = True
             payment.refunded_at = timezone.now()
             payment.save()
@@ -4376,123 +4490,7 @@ def review_store_ad(request, history_id, action):
     return redirect("admin_review_ads")
 
 
-#-----------------上傳廣告時建立歷史紀錄-------------------
-from django.shortcuts import render, redirect
-from django.utils import timezone
-from django.conf import settings
-import os, shutil
 
-from .models import StoreAll, StoreAdHistory, StoreAdHistoryImage, UserPayment, ThisUserProfile
-from .forms import StoreAdForm
-
-def upload_store_ad(request):
-    # 暫存資料
-    pending_data = request.session.pop('pending_ad_data', None)
-    pending_images = request.session.pop('pending_ad_images', [])
-
-    if request.method == 'POST':
-        form = StoreAdForm(request.POST)
-
-        # 後端付款檢查
-        payment_done = request.POST.get('payment_done') == '1'
-        payment_item = request.POST.get('payment_item')
-        payment_amount = request.POST.get('payment_amount')
-
-        if not payment_done:
-            form.add_error(None, "請先完成付款再提交廣告")
-            return render(request, 'store_upload_ad.html', {'form': form, 'images': pending_images})
-
-        if form.is_valid():
-            st_id = form.cleaned_data['st_id']
-
-            # 取得商家
-            try:
-                store = StoreAll.objects.get(st_id=st_id)
-            except StoreAll.DoesNotExist:
-                form.add_error('st_id', '找不到此商家編號')
-                return render(request, 'store_upload_ad.html', {'form': form, 'images': pending_images})
-
-            # 取得登入使用者的 ThisUserProfile
-            try:
-                user_profile = ThisUserProfile.objects.get(gmail=request.user.email)
-            except ThisUserProfile.DoesNotExist:
-                form.add_error(None, '請先完成會員資料填寫')
-                return render(request, 'store_upload_ad.html', {'form': form, 'images': pending_images})
-
-            # 建立付款紀錄
-            payment = UserPayment.objects.create(
-                user=user_profile,
-                amount=int(payment_amount),
-                item=payment_item,
-                st_id=st_id,
-                is_used=True,
-                created_at=timezone.now()
-            )
-
-            # 建立廣告歷史紀錄
-            ad_history = StoreAdHistory.objects.create(
-                st=store,
-                ad_content=form.cleaned_data['ad_content'],
-                ad_radius=form.cleaned_data['ad_radius'],
-                enabled=form.cleaned_data['enabled'],
-                status='pending',
-                created_at=timezone.now()
-            )
-
-            # 圖片儲存目錄
-            upload_dir = os.path.join(settings.MEDIA_ROOT, 'ads_history')
-            os.makedirs(upload_dir, exist_ok=True)
-
-            # 處理暫存圖片
-            for temp_url in pending_images:
-                temp_path = os.path.join(settings.BASE_DIR, temp_url.lstrip('/'))
-                if os.path.exists(temp_path):
-                    filename = os.path.basename(temp_path)
-                    dest_path = os.path.join(upload_dir, filename)
-                    shutil.move(temp_path, dest_path)
-                    StoreAdHistoryImage.objects.create(
-                        history=ad_history,
-                        image_url=f"/media/ads_history/{filename}"
-                    )
-
-            # 處理新上傳圖片
-            for img_file in request.FILES.getlist('images'):
-                filepath = os.path.join(upload_dir, img_file.name)
-                with open(filepath, 'wb+') as dest:
-                    for chunk in img_file.chunks():
-                        dest.write(chunk)
-                StoreAdHistoryImage.objects.create(
-                    history=ad_history,
-                    image_url=f"/media/ads_history/{img_file.name}"
-                )
-
-            return render(request, 'store_upload_ad.html', {
-                'form': StoreAdForm(),
-                'message': f'廣告申請已送審，已完成付款 ({payment.item} {payment.amount}元)',
-                'images': []
-            })
-
-        else:
-            # 表單無效，暫存資料
-            request.session['pending_ad_data'] = request.POST.dict()
-
-            # 暫存上傳檔案到 media/temp/
-            temp_dir = os.path.join(settings.MEDIA_ROOT, 'temp')
-            os.makedirs(temp_dir, exist_ok=True)
-            temp_urls = []
-            for img_file in request.FILES.getlist('images'):
-                temp_path = os.path.join(temp_dir, img_file.name)
-                with open(temp_path, 'wb+') as dest:
-                    for chunk in img_file.chunks():
-                        dest.write(chunk)
-                temp_urls.append(f"/media/temp/{img_file.name}")
-            request.session['pending_ad_images'] = temp_urls
-            return redirect(request.path)
-
-    else:
-        form = StoreAdForm(initial=pending_data) if pending_data else StoreAdForm()
-
-    return render(request, 'store_upload_ad.html', {'form': form, 'images': pending_images})
 
 
 
@@ -4527,12 +4525,11 @@ def stores_with_ads(request):
                     'images': [img.image_url for img in latest_ad.images.all()]
                 })
             elif store.review_status == 'approved':
-                ad_data['enabled'] = False  # 沒有廣告但顯示商家
+                ad_data['enabled'] = False
 
             result.append(ad_data)
 
         return JsonResponse(result, safe=False)
-
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
@@ -4543,12 +4540,8 @@ from django.shortcuts import render, redirect
 from .forms import StoreAdForm
 
 def upload_ad_page(request):
-    # 嘗試從 session 讀取暫存資料
     pending_data = request.session.pop('pending_ad_data', None)
-    if pending_data:
-        form = StoreAdForm(initial=pending_data)
-    else:
-        form = StoreAdForm()
+    form = StoreAdForm(initial=pending_data) if pending_data else StoreAdForm()
     return render(request, "store_upload_ad.html", {"form": form})
 
 
