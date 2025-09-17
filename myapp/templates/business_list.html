@@ -196,8 +196,8 @@ document.addEventListener("DOMContentLoaded", function() {
   const tbody = document.querySelector("#storeTable tbody");
   const dropdown = document.getElementById("searchHistoryDropdown");
 
-  // 儲存原始列
-  const originalRows = Array.from(tbody.querySelectorAll("tr")).map(row => row.cloneNode(true));
+  // 儲存原始 HTML（reset 用）
+  const originalHTML = tbody ? tbody.innerHTML : "";
 
   function getRows() {
     return Array.from(tbody.querySelectorAll("tr"));
@@ -205,48 +205,52 @@ document.addEventListener("DOMContentLoaded", function() {
 
   // 搜尋
   function filterStores(keyword = null, pushState = true) {
-    if (keyword === null) keyword = searchInput.value.trim().toLowerCase();
+    if (keyword === null) keyword = (searchInput.value || "").trim();
+    else keyword = String(keyword).trim();
+
+    const keyLower = keyword.toLowerCase();
+
     if (keyword) saveSearchHistory(keyword);
 
     getRows().forEach(row => {
-      row.style.display = row.innerText.toLowerCase().includes(keyword) ? "" : "none";
+      row.style.display = row.innerText.toLowerCase().includes(keyLower) ? "" : "none";
     });
 
     if (pushState) {
-      history.pushState({ search: keyword }, "", "");
+      // 加上 timestamp 保證每次 push 都新 entry
+      try {
+        history.pushState({ search: keyword, ts: Date.now() }, "", "");
+      } catch (e) {
+        history.pushState({ search: keyword, ts: Date.now() }, "");
+      }
     }
   }
 
-  // 重置搜尋
-  function resetSearch(pushState = true) {
+  // 重置搜尋（不 pushState）
+  function resetSearch() {
     searchInput.value = "";
-    tbody.innerHTML = "";
-    originalRows.forEach(row => tbody.appendChild(row));
+    tbody.innerHTML = originalHTML;
     sortStores("newest");
-
-    if (pushState) {
-      history.pushState({ search: "" }, "", "");
-    }
   }
 
   // popstate
   window.addEventListener("popstate", function(event) {
-    if (event.state && event.state.search !== undefined) {
-      const keyword = event.state.search;
-      searchInput.value = keyword;
-      if (keyword === "") resetSearch(false);
-      else filterStores(keyword, false);
+    if (event.state && Object.prototype.hasOwnProperty.call(event.state, 'search')) {
+      const kw = event.state.search || "";
+      searchInput.value = kw;
+      if (kw === "") resetSearch();
+      else filterStores(kw, false);
     } else {
-      resetSearch(false);
+      resetSearch();
     }
   });
 
   // 綁定事件
-  searchBtn.addEventListener("click", () => filterStores());
+  searchBtn.addEventListener("click", () => filterStores(null, true));
   searchInput.addEventListener("keypress", e => {
     if (e.key === "Enter") {
       e.preventDefault();
-      filterStores();
+      filterStores(null, true);
     }
   });
 
@@ -272,7 +276,7 @@ document.addEventListener("DOMContentLoaded", function() {
       item.textContent = keyword;
       item.addEventListener("click", () => {
         searchInput.value = keyword;
-        filterStores(keyword);
+        filterStores(keyword, true);
         dropdown.style.display = "none";
       });
       dropdown.appendChild(item);
@@ -285,14 +289,13 @@ document.addEventListener("DOMContentLoaded", function() {
     e.stopPropagation();
     showSearchHistoryDropdown();
   });
-
   document.addEventListener("click", () => { dropdown.style.display = "none"; });
 
-  // 排序（暫時用商家 ID 排序）
+  // 排序
   function sortStores(order) {
     const rows = getRows();
     const sortedRows = rows.sort((a, b) => {
-      const idA = parseInt(a.querySelector("td:nth-child(1)").innerText); // # 欄位
+      const idA = parseInt(a.querySelector("td:nth-child(1)").innerText);
       const idB = parseInt(b.querySelector("td:nth-child(1)").innerText);
       return order === "newest" ? idB - idA : idA - idB;
     });
@@ -312,12 +315,13 @@ document.addEventListener("DOMContentLoaded", function() {
     document.getElementById("sortNewest").classList.remove("active");
   });
 
-  // 預設最新
+  // 預設排序最新
   sortStores("newest");
 
-  // 初始化 pushState
+  // 初始化 single replaceState
   history.replaceState({ search: "" }, "", "");
 });
 </script>
+
 </body>
 </html>
