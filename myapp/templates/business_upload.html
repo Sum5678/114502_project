@@ -19,6 +19,56 @@
       margin-top: 5px;
     }
   </style>
+  <style>
+  /* 原本的 label/input 樣式 */
+  label {
+    font-weight: bold;
+    margin-top: 15px;
+  }
+  input, button {
+    margin-top: 5px;
+  }
+
+  /* 強制黑色箭頭 */
+  .carousel-control-prev-icon {
+    background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='black' viewBox='0 0 8 8'%3E%3Cpath d='M5.5 0L4.78.72 1.53 4l3.25 3.28L5.5 8 1 4z'/%3E%3C/svg%3E");
+  }
+
+  .carousel-control-next-icon {
+    background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='black' viewBox='0 0 8 8'%3E%3Cpath d='M2.5 0L3.22.72 6.47 4 3.22 7.28 2.5 8 7 4z'/%3E%3C/svg%3E");
+  }
+
+  /* 增加箭頭可點擊範圍 */
+  .carousel-control-prev,
+  .carousel-control-next {
+    width: 50px;
+  }
+
+  /* 刪除按鈕顯示在圖片上方，確保可點 */
+  .remove-img {
+    z-index: 10;
+    width: 25px;
+    height: 25px;
+    font-size: 16px;
+    padding: 0;
+    position: absolute;
+    top: 0;
+    right: 0;
+  }
+
+  /* 避免圖片阻擋叉叉點擊 */
+  .carousel-item img {
+    pointer-events: none;
+  }
+
+  /* 輪播圖片置中且限制大小 */
+  .carousel-item img.d-block {
+    max-height: 150px;
+    width: auto;
+    margin: auto;
+  }
+  </style>
+
 </head>
 <body class="index-page">
 
@@ -201,12 +251,25 @@
       <div class="mb-3">
         <label for="ad_images">廣告圖片</label>
         <input type="file" class="form-control" id="ad_images" name="ad_images" accept="image/*" multiple>
-        <small class="text-muted">可多次選擇圖片，每次選擇的圖片都會被加入預覽區，點擊叉叉可刪除不想要的圖片</small>
+        <small class="text-muted">可多次選擇圖片，每次選擇的圖片都會加入輪播預覽，點擊叉叉可刪除不想要的圖片</small>
       </div>
 
-      <div id="image-preview" class="row mt-2"></div>
+      <!-- 預覽區塊：Carousel -->
+      <div id="image-carousel-container" class="mt-2" style="display:none; max-width: 400px; margin: auto;">
+      <div id="imageCarousel" class="carousel slide" data-bs-ride="carousel">
+        <div class="carousel-inner" id="carousel-inner"></div>
 
-
+        <!-- 左右箭頭 -->
+        <button class="carousel-control-prev" type="button" data-bs-target="#imageCarousel" data-bs-slide="prev">
+          <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+          <span class="visually-hidden">上一張</span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#imageCarousel" data-bs-slide="next">
+          <span class="carousel-control-next-icon" aria-hidden="true"></span>
+          <span class="visually-hidden">下一張</span>
+        </button>
+      </div>
+    </div>
 
         <input type="hidden" id="bs_address" name="bs_address" required>
         <input type="hidden" id="latitude" name="latitude" required>
@@ -354,42 +417,50 @@ document.addEventListener("DOMContentLoaded", function () {
 </script>
 
 <script>
-// 圖片預覽並支援多次選擇追加，並可刪除
+// 圖片輪播預覽 + 可多次選擇 + 刪除
 let selectedFiles = [];
 
 const adImagesInput = document.getElementById("ad_images");
-const preview = document.getElementById("image-preview");
+const carouselContainer = document.getElementById("image-carousel-container");
+const carouselInner = document.getElementById("carousel-inner");
 
 adImagesInput.addEventListener("change", function() {
   [...this.files].forEach(file => selectedFiles.push(file));
-  updatePreview();
+  updateCarousel();
 });
 
-function updatePreview() {
-  preview.innerHTML = "";
+function updateCarousel() {
+  carouselInner.innerHTML = "";
+
+  if (selectedFiles.length === 0) {
+    carouselContainer.style.display = "none";
+    return;
+  }
+
+  carouselContainer.style.display = "block";
+
   selectedFiles.forEach((file, index) => {
     const reader = new FileReader();
     reader.onload = e => {
-      const col = document.createElement("div");
-      col.className = "col-4 mb-2 position-relative";
-      col.innerHTML = `
-        <img src="${e.target.result}" class="img-fluid rounded">
-        <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1 remove-img" data-index="${index}">&times;</button>
+      const carouselItem = document.createElement("div");
+      carouselItem.className = "carousel-item" + (index === 0 ? " active" : "");
+      carouselItem.innerHTML = `
+        <div class="position-relative text-center">
+          <img src="${e.target.result}" class="d-block mx-auto rounded" style="max-height: 150px; width: auto;">
+          <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1 remove-img" data-index="${index}">&times;</button>
+        </div>
       `;
-      preview.appendChild(col);
+      carouselInner.appendChild(carouselItem);
+
+      // 刪除圖片
+      carouselItem.querySelector(".remove-img").addEventListener("click", function() {
+        selectedFiles.splice(index, 1);
+        updateCarousel();
+      });
     };
     reader.readAsDataURL(file);
   });
 }
-
-// 刪除按鈕事件
-preview.addEventListener("click", function(e) {
-  if (e.target.classList.contains("remove-img")) {
-    const index = e.target.dataset.index;
-    selectedFiles.splice(index, 1);
-    updatePreview();
-  }
-});
 
 </script>
 
