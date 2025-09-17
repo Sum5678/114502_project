@@ -251,7 +251,7 @@
       <div class="mb-3">
         <label for="ad_images">廣告圖片</label>
         <input type="file" class="form-control" id="ad_images" name="ad_images" accept="image/*" multiple>
-        <small class="text-muted">可多次選擇圖片，每次選擇的圖片都會加入輪播預覽，點擊叉叉可刪除不想要的圖片</small>
+        <small class="text-muted">可多次選擇圖片，上傳多張圖片可點擊左右箭頭預覽，點擊叉叉可刪除不想要的圖片</small>
       </div>
 
       <!-- 預覽區塊：Carousel -->
@@ -439,6 +439,7 @@ function updateCarousel() {
 
   carouselContainer.style.display = "block";
 
+
   selectedFiles.forEach((file, index) => {
     const reader = new FileReader();
     reader.onload = e => {
@@ -460,6 +461,17 @@ function updateCarousel() {
     };
     reader.readAsDataURL(file);
   });
+
+  // 控制箭頭顯示
+  const prevArrow = carouselContainer.querySelector(".carousel-control-prev");
+  const nextArrow = carouselContainer.querySelector(".carousel-control-next");
+  if (selectedFiles.length <= 1) {
+    prevArrow.style.display = "none";
+    nextArrow.style.display = "none";
+  } else {
+    prevArrow.style.display = "flex";
+    nextArrow.style.display = "flex";
+  }
 }
 
 </script>
