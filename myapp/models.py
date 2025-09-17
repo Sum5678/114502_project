@@ -437,7 +437,7 @@ class StoreAd(models.Model):
 class StoreAdImage(models.Model):
     img_id = models.AutoField(primary_key=True)
     st = models.ForeignKey(StoreAd, on_delete=models.CASCADE, db_column="st_id", related_name="images")
-    image_url = models.CharField(max_length=500)
+    image_url = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -481,7 +481,7 @@ class StoreAdHistory(models.Model):
 class StoreAdHistoryImage(models.Model):
     img_id = models.AutoField(primary_key=True)
     history = models.ForeignKey(StoreAdHistory, on_delete=models.CASCADE, db_column="history_id", related_name="images")
-    image_url = models.CharField(max_length=500)
+    image_url = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
