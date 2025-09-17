@@ -180,6 +180,7 @@ INSTALLED_APPS += ['storages']
 DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
 GS_BUCKET_NAME = '114_502_no_stranger'
 MEDIA_URL = f'https://storage.googleapis.com/114_502_no_stranger/'
+GS_PROJECT_ID = "apt-trainer-459421-j5"
 
 # 在這行之後放 Google 登入相關設定
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -225,8 +226,10 @@ LOGIN_REDIRECT_URL = '/this_user_profile'  # 登出後的轉址
 
 
 # 確保在 settings.py 中配置 MEDIA_URL 和 MEDIA_ROOT
-MEDIA_URL = '/media/'
+# 保留 GCS URL
+MEDIA_URL = f'https://storage.googleapis.com/114_502_no_stranger/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
 
 # MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
