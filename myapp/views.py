@@ -2168,7 +2168,7 @@ from django.core.paginator import Paginator
 from django.urls import reverse
 from django.utils.datastructures import MultiValueDictKeyError
 from django.contrib import messages
-
+from django.utils.text import Truncator
 from django.contrib.auth import get_user_model
 User = get_user_model()
 
@@ -2524,6 +2524,7 @@ def notif_dropdown(request):
         items.append({
             "id": n.id,
             "title": getattr(n, "title", "") or "通知",
+            "message": n.message,   # ← 確認這裡有傳
             "url": getattr(n, "link_url", "") or "#",
             "icon": getattr(n, "icon", "") or "bi-bell",
             "time": f"{timesince(n.created_at)} 前" if getattr(n, "created_at", None) else "",
@@ -2888,19 +2889,31 @@ def like_post(request, post_id):
     post.save(update_fields=['like_heart_count', 'liked_user_ids'])
 
     # 🔔 通知：貼文被按讚（非自己）
-    if just_liked and str(post.user_id) != user_id_str:
+    if str(post.user_id) != user_id_str:
         try:
-            Notification.objects.create(
-                recipient=post.user,   # 用物件，不用 recipient_id
-                title="貼文收到新按讚",
-                message=f"{request.user.username} 按讚了你的貼文",
-                link_url=build_post_link(post),
-            )
+            if just_liked:
+                # 新增通知
+                Notification.objects.create(
+                    recipient=post.user,   # 用物件，不用 recipient_id
+                    title="貼文收到新按讚",
+                    message="1 位使用者按讚了你的貼文",
+                    link_url=build_post_link(post),
+                )
+            else:
+                # 收回讚 → 刪除通知
+                Notification.objects.filter(
+                    recipient=post.user,
+                    title="貼文收到新按讚",
+                    link_url=build_post_link(post)
+                ).delete()
         except Exception:
             pass
 
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        return JsonResponse({'liked': user_id_str in liked_user_ids, 'count': post.like_heart_count})
+        return JsonResponse({
+            'liked': user_id_str in liked_user_ids,
+            'count': post.like_heart_count
+        })
     return redirect('post_display')
 
 
@@ -2982,12 +2995,13 @@ def add_comment(request, post_id):
     # 🔔 通知：新留言 → 貼文作者（非自己）
     if str(post.user_id) != user_id_str:
         try:
+            excerpt = Truncator(safe_text).chars(30)
             Notification.objects.create(
                 recipient=post.user,
                 title="新留言",
-                message=f"{request.user.username} 留言了你的貼文",
+                message=f"{nickname} 留言了你的貼文：「{excerpt}」",
                 link_url=build_post_link(post, comment_id=comment_id),
-            )
+)
         except Exception:
             pass
 
@@ -3202,12 +3216,14 @@ def reply_comment(request, post_id):
     try:
         notify_user = _resolve_user(notify_user_id)
         if notify_user and notify_user.id != request.user.id:
+            excerpt = Truncator(safe_text).chars(30)
             Notification.objects.create(
                 recipient=notify_user,
                 title="新回覆",
-                message=f"{request.user.username} 回覆了你的留言/回覆",
+                message=f"{nickname} 回覆：「{excerpt}」",
                 link_url=build_post_link(post, comment_id=comment_id, reply_id=reply_dict['id']),
             )
+
     except Exception:
         pass
 
