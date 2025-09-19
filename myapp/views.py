@@ -3038,14 +3038,25 @@ def delete_comment(request, post_id):
 
     comments = _load_comments(post)
 
+    # 找目標留言（時間 + 作者符合才可刪除）
     target = next((c for c in comments if c.get('time') == comment_time and str(c.get('user_id')) == user_id_str), None)
     if not target:
         return JsonResponse({'error': '留言不存在或你無權刪除'}, status=404)
 
+    # 刪除留言
     comments = [c for c in comments if not (c.get('time') == comment_time and str(c.get('user_id')) == user_id_str)]
     post.comments = json.dumps(comments, ensure_ascii=False)
     post.save(update_fields=['comments'])
 
+    # 🧹 同步刪掉相關通知
+    try:
+        comment_id = target.get("id") or target.get("time")
+        link = build_post_link(post, comment_id=comment_id)
+        Notification.objects.filter(link_url=link).delete()
+    except Exception:
+        pass
+
+    # 更新計數
     top_count, all_count = _count_totals(comments)
 
     return JsonResponse({
@@ -3426,6 +3437,14 @@ def delete_reply(request, post_id):
     post.comments = json.dumps(comments, ensure_ascii=False)
     post.save(update_fields=['comments'])
 
+    # 🧹 同步刪掉相關通知
+    try:
+        link = build_post_link(post, comment_id=comment_id, reply_id=reply_id)
+        Notification.objects.filter(link_url=link).delete()
+    except Exception:
+        pass
+
+    # 更新計數
     top_count, all_count = _count_totals(comments)
 
     return JsonResponse({
@@ -3433,6 +3452,7 @@ def delete_reply(request, post_id):
         'total_comments': top_count,
         'total_including_replies': all_count
     })
+
 
 # ====== 管理員登入保護（沿用你的 session 機制）=========================
 from functools import wraps as _wraps_again  # 避免名稱衝突（但不影響原本行為）
