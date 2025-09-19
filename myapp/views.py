@@ -3258,6 +3258,7 @@ def like_comment(request, post_id):
     liked = False
     notify_user_id = None
     like_count_out = 0
+    target_content = ""
 
     if reply_id:
         parent_list, r_idx, r = _find_reply_recursive(c.get('replies') or [], reply_id)
@@ -3273,6 +3274,7 @@ def like_comment(request, post_id):
             likers.add(user_id_str)
             liked = True
             notify_user_id = r.get("user_id")
+            target_content = r.get("content", "")
         r['like_user_ids'] = list(likers)
         r['like_count'] = len(likers)
         like_count_out = r['like_count']
@@ -3290,6 +3292,7 @@ def like_comment(request, post_id):
             likers.add(user_id_str)
             liked = True
             notify_user_id = c.get("user_id")
+            target_content = c.get("content", "")
         c['like_user_ids'] = list(likers)
         c['like_count'] = len(likers)
         like_count_out = c['like_count']
@@ -3304,12 +3307,16 @@ def like_comment(request, post_id):
             notify_user = _resolve_user(notify_user_id)
             if notify_user and notify_user.id != request.user.id:
                 link = build_post_link(post, comment_id=comment_id, reply_id=(reply_id or None))
+
+                
+                excerpt = Truncator(target_content).chars(30)
+
                 if liked:
                     # 新增通知
                     Notification.objects.create(
                         recipient=notify_user,
                         title="收到按讚",
-                        message="1 位使用者按讚了你的留言/回覆",
+                        message=f"1 位使用者按讚了你的留言/回覆：「{excerpt}」",
                         link_url=link,
                     )
                 else:
@@ -3327,7 +3334,6 @@ def like_comment(request, post_id):
         'liked': liked,
         'like_count': like_count_out
     })
-
 
 
 @require_POST
