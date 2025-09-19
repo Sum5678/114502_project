@@ -2891,20 +2891,32 @@ def like_post(request, post_id):
     # 🔔 通知：貼文被按讚（非自己）
     if str(post.user_id) != user_id_str:
         try:
+            link = build_post_link(post)
+
+            # 取貼文內容片段（標題或文字）
+            from django.utils.text import Truncator
+            excerpt = ""
+            if hasattr(post, "title") and post.title:
+                excerpt = Truncator(post.title).chars(30)
+            elif hasattr(post, "content") and post.content:
+                excerpt = Truncator(post.content).chars(30)
+            else:
+                excerpt = "你的貼文"
+
             if just_liked:
                 # 新增通知
                 Notification.objects.create(
                     recipient=post.user,   # 用物件，不用 recipient_id
                     title="貼文收到新按讚",
-                    message="1 位使用者按讚了你的貼文",
-                    link_url=build_post_link(post),
+                    message=f"1 位使用者按讚了你的貼文：「{excerpt}」",
+                    link_url=link,
                 )
             else:
                 # 收回讚 → 刪除通知
                 Notification.objects.filter(
                     recipient=post.user,
                     title="貼文收到新按讚",
-                    link_url=build_post_link(post)
+                    link_url=link
                 ).delete()
         except Exception:
             pass
@@ -2915,7 +2927,6 @@ def like_post(request, post_id):
             'count': post.like_heart_count
         })
     return redirect('post_display')
-
 
 @require_POST
 @login_required(login_url='/01userlogin/')
