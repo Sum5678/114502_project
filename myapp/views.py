@@ -3298,21 +3298,36 @@ def like_comment(request, post_id):
         post.comments = json.dumps(comments, ensure_ascii=False)
         post.save(update_fields=['comments'])
 
-    # 🔔 通知：留言/回覆被按讚（只在點讚時，且非自己）
-    if liked and notify_user_id:
+    # 🔔 通知：留言/回覆被按讚（新增 / 收回）
+    if notify_user_id:
         try:
             notify_user = _resolve_user(notify_user_id)
             if notify_user and notify_user.id != request.user.id:
-                Notification.objects.create(
-                    recipient=notify_user,
-                    title="收到按讚",
-                    message=f"{request.user.username} 按讚了你的留言/回覆",
-                    link_url=build_post_link(post, comment_id=comment_id, reply_id=(reply_id or None)),
-                )
+                link = build_post_link(post, comment_id=comment_id, reply_id=(reply_id or None))
+                if liked:
+                    # 新增通知
+                    Notification.objects.create(
+                        recipient=notify_user,
+                        title="收到按讚",
+                        message="1 位使用者按讚了你的留言/回覆",
+                        link_url=link,
+                    )
+                else:
+                    # 收回讚 → 刪除通知
+                    Notification.objects.filter(
+                        recipient=notify_user,
+                        title="收到按讚",
+                        link_url=link
+                    ).delete()
         except Exception:
             pass
 
-    return JsonResponse({'success': True, 'liked': liked, 'like_count': like_count_out})
+    return JsonResponse({
+        'success': True,
+        'liked': liked,
+        'like_count': like_count_out
+    })
+
 
 
 @require_POST
