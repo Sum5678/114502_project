@@ -305,6 +305,8 @@
                    style="border:none; background-color:#f0faff; color:#033e6b; font-size:15px;">
             <input type="hidden" name="sort" value="{{ request.GET.sort|default:'desc' }}">
             <button type="submit" class="btn" style="background-color:#63b3ed; color:#fff; border:none;">搜尋</button>
+            <!-- 搜尋歷史面板（要放這裡，和 input 同區） -->
+            <div id="searchHistory" class="search-history"></div>
    <!-- 🔔 通知（Dropdown 版本：#notifBellBtn + #notifList） -->
 <button class="btn btn-outline-secondary position-relative ms-2" 
         id="notifBellBtn" 
@@ -332,9 +334,7 @@
   <li data-fixed="1"><hr class="dropdown-divider"></li>
   
 
-    
-
-            <div id="searchHistory" class="search-history"></div>
+  
           </div>
         </form>
       </div>
