@@ -523,6 +523,9 @@
                             <div class="head">
                               <span class="dot"></span>
                               <span class="time">{{ c.time }}</span>
+                              {% if c.edited_at %}
+                              <span class="edited-flag" title="編輯於 {{ c.edited_at }}">（已編輯）</span>
+                            {% endif %}
                               <span class="id-badge">
                                 {% if c.identity == 'anonymous' %}匿名
                                 {% elif c.identity == 'nickname1' %}暱稱 1：{{ c.nickname }}
@@ -663,6 +666,9 @@
                       {% endif %}
                     </span>
                     <span>・ {{ c.time }}</span>
+                    {% if c.edited_at %}
+                    <span class="edited-flag" title="編輯於 {{ c.edited_at }}">（已編輯）</span>
+                  {% endif %}
                   </div>
 
                   <div class="comment-content">{{ c.content|escape }}</div>
@@ -1554,8 +1560,11 @@
 
         li.innerHTML =
           '<div class="comment-head">' +
-            '<span class="id-badge">'+ identityText(r) +'</span>' +
-            '<span>・ '+ esc(r.time||'') +'</span>' +
+          '<span class="id-badge">'+ identityText(r) +'</span>' +
+          '<span>・ '+ esc(r.time||'') +'</span>' +
+          (r.edited_at ? '<span class="edited-flag" title="編輯於 '+esc(r.edited_at)+'">（已編輯）</span>' : '') +
+        '</div>' +
+
           '</div>' +
           '<div class="comment-content reply-content">'+ esc(r.content||'') +'</div>' +
           '<div class="comment-actions">' +
