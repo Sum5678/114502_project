@@ -29,6 +29,15 @@
   }
   </style>
   <style>
+    /* 讓表格所有欄位都不要換行 */
+    #storeTable th,
+    #storeTable td {
+      white-space: nowrap;
+    }
+    /* 第 3 欄 (商家店名) 不允許換行 */
+    #storeTable td:nth-child(3) {
+      white-space: nowrap;
+    }
     table {
       width: 100%;
       border-collapse: collapse;
