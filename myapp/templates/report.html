@@ -12,6 +12,25 @@
   <link href="{% static 'assets/vendor/aos/aos.css' %}" rel="stylesheet">
   <link href="{% static 'assets/css/main.css' %}" rel="stylesheet">
   <link href="{% static 'assets/vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet">
+  <style>
+  #header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 999;
+    background: #fff;   /* 白底避免透明 */
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  }
+
+  #navmenu ul li a {
+    color: #033e6b;      /* 深藍字，避免和背景混掉 */
+  }
+
+  #navmenu ul li a:hover {
+    color: #63b3ed;      /* 滑過換藍色 */
+  }
+  </style>
 </head>
 
 <body class="index-page">
