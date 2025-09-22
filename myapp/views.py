@@ -4417,10 +4417,13 @@ def upload_store_ad(request):
                         content = f.read()
                     filename = f"ads_history/{uuid.uuid4().hex}_{os.path.basename(temp_path)}"
                     default_storage.save(filename, ContentFile(content))
-                    image_url = default_storage.url(filename)
+
+                    # ✅ 改成公開 URL
+                    public_url = f"https://storage.googleapis.com/114_502_no_stranger/{filename}"
+
                     StoreAdHistoryImage.objects.create(
                         history=ad_history,
-                        image_url=image_url
+                        image_url=public_url
                     )
                 except Exception as e:
                     print(f"⚠️ 暫存圖片上傳失敗: {temp_url}, {e}")
@@ -4429,10 +4432,13 @@ def upload_store_ad(request):
             for img_file in request.FILES.getlist('images'):
                 filename = f"ads_history/{uuid.uuid4().hex}_{img_file.name}"
                 default_storage.save(filename, ContentFile(img_file.read()))
-                image_url = default_storage.url(filename)
+
+                # ✅ 改成公開 URL
+                public_url = f"https://storage.googleapis.com/114_502_no_stranger/{filename}"
+
                 StoreAdHistoryImage.objects.create(
                     history=ad_history,
-                    image_url=image_url
+                    image_url=public_url
                 )
 
             msg = "廣告申請已送審"
