@@ -36,6 +36,19 @@
   <link rel="manifest" href="{% url 'manifest' %}">
   <meta name="theme-color" content="#4a90e2">
 
+  <style>
+  .btn-lightblue {
+    background-color: #63b3ed; /* 這是截圖的藍色 */
+    border: none;
+    color: white;
+  }
+  .btn-lightblue:hover {
+    background-color: #033e6b; /* hover 稍微深一點 */
+    color: white;
+  }
+  </style>
+
+
 </head>
 <body class="index-page">
   <header id="header" class="header d-flex align-items-center fixed-top">
@@ -1143,10 +1156,10 @@
         </div>
         <div class="modal-body text-center">
           <p>請選擇您的系統：</p>
-          <a href="https://play.google.com/store/apps/details?id=tw.gov.npa.videocall&pcampaignid=web_share" target="_blank" class="btn btn-success w-100 mb-2">
+          <a href="https://play.google.com/store/apps/details?id=tw.gov.npa.videocall&pcampaignid=web_share" target="_blank" class="btn btn-lightblue w-100 mb-2">
             Android 下載 (Google Play)
           </a>
-          <a href="https://apps.apple.com/tw/app/110%E8%A6%96%E8%A8%8A%E5%A0%B1%E6%A1%88/id1172052836" target="_blank" class="btn btn-primary w-100">
+          <a href="https://apps.apple.com/tw/app/110%E8%A6%96%E8%A8%8A%E5%A0%B1%E6%A1%88/id1172052836" target="_blank" class="btn btn-lightblue w-100">
             iOS 下載 (App Store)
           </a>
         </div>
