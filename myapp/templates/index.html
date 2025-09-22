@@ -67,6 +67,14 @@
           </li>
           
           <li><a href="{% url 'harassment_prevention' %}">防騷指南</a></li>
+          <!-- 新增 110 視訊報案按鈕 -->
+          </li>
+            <a href="#" id="report110Btn"
+              class="btn btn-danger"
+              style="color:white; border-radius:8px; padding:6px 14px; margin-left:10px;">
+              110 視訊報案
+            </a>
+          </li>
 
         </ul>
         <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
@@ -1125,6 +1133,27 @@
     </section><!-- /Contact Section -->
 
   </main>
+  <!-- 110 視訊報案 Modal -->
+  <div class="modal fade" id="report110Modal" tabindex="-1" aria-labelledby="report110ModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content" style="border-radius: 12px;">
+        <div class="modal-header">
+          <h5 class="modal-title" id="report110ModalLabel">下載 110 視訊報案 APP</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
+        </div>
+        <div class="modal-body text-center">
+          <p>請選擇您的系統：</p>
+          <a href="https://play.google.com/store/apps/details?id=tw.gov.npa.videocall&pcampaignid=web_share" target="_blank" class="btn btn-success w-100 mb-2">
+            Android 下載 (Google Play)
+          </a>
+          <a href="https://apps.apple.com/tw/app/110%E8%A6%96%E8%A8%8A%E5%A0%B1%E6%A1%88/id1172052836" target="_blank" class="btn btn-primary w-100">
+            iOS 下載 (App Store)
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
 
   <footer id="footer" class="footer position-relative light-background">
 
@@ -1222,6 +1251,30 @@ if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register('/service-worker.js');
   }
 </script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const reportBtn = document.getElementById("report110Btn");
+  reportBtn.addEventListener("click", function (e) {
+    e.preventDefault();
+
+    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+
+    if (/android/i.test(userAgent)) {
+      // Android → Google Play
+      window.open("https://play.google.com/store/apps/details?id=com.npa.call110", "_blank");
+    } else if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
+      // iOS → App Store
+      window.open("https://apps.apple.com/tw/app/110%E8%A6%96%E8%A8%8A%E5%A0%B1%E6%A1%88/id1354793237", "_blank");
+    } else {
+      // 電腦 → 開啟 Bootstrap Modal
+      const modal = new bootstrap.Modal(document.getElementById('report110Modal'));
+      modal.show();
+    }
+  });
+});
+</script>
+
+
 
 
 
