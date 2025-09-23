@@ -11,6 +11,19 @@
   <link href="{% static 'assets/css/main.css' %}" rel="stylesheet">
   <link href="{% static 'assets/vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet">
   <style>
+  /* ✅ 淺藍色勾勾 */
+  input[type="checkbox"].open-checkbox {
+    accent-color: #63b3ed; /* Bootstrap 的淺藍 */
+  }
+
+  /* ✅ 上傳按鈕置中 */
+  .form-submit-center {
+    display: flex;
+    justify-content: center;
+  }
+  </style>
+
+  <style>
   #header {
     position: fixed;
     top: 0;
@@ -298,7 +311,11 @@
           <input type="text" class="form-control" id="bs_phone" name="bs_phone" required>
         </div>
 
-        <button type="submit" class="btn btn-primary mt-3">上傳</button>
+        <div class="form-submit-center">
+          <button type="submit" class="btn btn-primary mt-3" style="background-color:#63b3ed;border:none;">
+            上傳
+          </button>
+        </div>
       </form>
     </div>
   </section>
