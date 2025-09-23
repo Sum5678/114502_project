@@ -4681,3 +4681,38 @@ def test_payment(request):
 def test_payment_done(request):
     # 這裡可以做一些完成後的處理，例如顯示付款成功訊息
     return render(request, "test_payment_done.html")
+
+
+from django.shortcuts import render
+from .models import PemapAll, StoreAll, ChatInteraction
+from .models import ChatMessage, ChatRoomClick, FavoriteChatRoom
+
+def index(request):
+    # ✅ 定義審核通過的狀態
+    approved_status = ["人工審核通過", "4", 4, "2", 2]
+
+    # ✅ 已通報案件數（只算審核通過）
+    report_count = PemapAll.objects.filter(
+        review_status__in=approved_status
+    ).count()
+
+    # ✅ 地圖上標記次數（事件 + 商家，目前全部都算）
+    map_mark_count = PemapAll.objects.filter(
+        review_status__in=approved_status
+    ).count() + StoreAll.objects.count()
+
+    # ✅ 用戶互動次數
+    interactions = (
+        ChatInteraction.objects.count()
+        + ChatMessage.objects.count()
+        + ChatRoomClick.objects.count()
+        + FavoriteChatRoom.objects.count()
+    )
+
+    ctx = {
+        "report_count": report_count,
+        "map_mark_count": map_mark_count,
+        "interactions": interactions,
+    }
+    return render(request, "index.html", ctx)
+

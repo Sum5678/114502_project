@@ -128,37 +128,50 @@
       <img src="{% static 'assets/img/1.png' %}" alt="Hero Image">
     </section>
 
-    <!-- Stats Section -->
+<!-- Stats Section -->
 <section id="stats" class="stats section">
 
   <div class="container position-relative" data-aos="fade-up" data-aos-delay="100">
 
     <div class="row gy-4">
 
+      <!-- 已通報案件數 -->
       <div class="col-lg-3 col-md-6">
         <div class="stats-item text-center w-100 h-100">
-          <span data-purecounter-start="0" data-purecounter-end="6" data-purecounter-duration="1" class="purecounter"></span>
+          <span data-purecounter-start="0"
+                data-purecounter-end="{{ report_count|default:0 }}"
+                data-purecounter-duration="1"
+                class="purecounter"></span>
           <p>已通報案件數</p>
         </div>
       </div>
 
+      <!-- 地圖上標記次數 -->
       <div class="col-lg-3 col-md-6">
         <div class="stats-item text-center w-100 h-100">
-          <span data-purecounter-start="0" data-purecounter-end="56" data-purecounter-duration="1" class="purecounter"></span>
+          <span data-purecounter-start="0"
+                data-purecounter-end="{{ map_mark_count|default:0 }}"
+                data-purecounter-duration="1"
+                class="purecounter"></span>
           <p>地圖上標記次數</p>
         </div>
       </div>
 
+      <!-- 資訊準確率（暫不提供，保留版面） -->
       <div class="col-lg-3 col-md-6">
         <div class="stats-item text-center w-100 h-100">
-          <span>5%</span>
+          <span>暫不提供</span>
           <p>資訊準確率</p>
         </div>
       </div>
 
+      <!-- 用戶互動次數 -->
       <div class="col-lg-3 col-md-6">
         <div class="stats-item text-center w-100 h-100">
-          <span data-purecounter-start="0" data-purecounter-end="205" data-purecounter-duration="1" class="purecounter"></span>
+          <span data-purecounter-start="0"
+                data-purecounter-end="{{ interactions|default:0 }}"
+                data-purecounter-duration="1"
+                class="purecounter"></span>
           <p>用戶互動次數</p>
         </div>
       </div>
@@ -166,6 +179,7 @@
     </div>
   </div>
 </section>
+
 
 
 
