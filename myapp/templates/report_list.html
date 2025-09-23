@@ -10,6 +10,62 @@
   <link href="{% static 'assets/css/main.css' %}" rel="stylesheet">
   <link href="{% static 'assets/vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet">
   <style>
+  /* 讓 .btn-primary 變淺藍 */
+  .btn-primary {
+    background-color: #63b3ed !important;
+    border-color: #63b3ed !important;
+    color: #fff !important;
+    transition: transform 0.2s ease, background-color 0.2s ease;
+  }
+  .btn-primary:hover {
+    background-color: #4299e1 !important;
+    border-color: #4299e1 !important;
+    transform: scale(1.05);
+  }
+  .btn-primary:active {
+    transform: scale(0.97);
+  }
+
+  /* 讓 .btn-outline-primary 變淺藍邊框 */
+  .btn-outline-primary {
+    color: #63b3ed !important;
+    border-color: #63b3ed !important;
+    transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+  }
+  .btn-outline-primary:hover {
+    background-color: #63b3ed !important;
+    color: #fff !important;
+    transform: scale(1.05);
+  }
+  .btn-outline-primary:active {
+    transform: scale(0.97);
+  }
+
+  /* 讓 .btn-outline-secondary 也用淺藍 */
+  .btn-outline-secondary {
+    color: #63b3ed !important;
+    border-color: #63b3ed !important;
+  }
+  .btn-outline-secondary:hover {
+    background-color: #63b3ed !important;
+    color: #fff !important;
+    transform: scale(1.05);
+  }
+  .btn-outline-secondary:active {
+    transform: scale(0.97);
+  }
+
+  /* 排序按鈕 active 狀態（淺藍背景） */
+  .btn-outline-primary.active,
+  .btn-outline-primary:active,
+  .show > .btn-outline-primary.dropdown-toggle {
+    background-color: #63b3ed !important;
+    border-color: #63b3ed !important;
+    color: #fff !important;
+  }
+  </style>
+
+  <style>
   #header {
     position: fixed;
     top: 0;
