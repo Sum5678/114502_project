@@ -11,18 +11,44 @@
   <link href="{% static 'assets/css/main.css' %}" rel="stylesheet">
   <link href="{% static 'assets/vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet">
   <style>
-  /* ✅ 淺藍色勾勾 */
-  input[type="checkbox"].open-checkbox {
-    accent-color: #63b3ed; /* Bootstrap 的淺藍 */
+  /* ===== 淺藍色系按鈕統一設定 ===== */
+
+  /* 實心按鈕（送出回報、查看紀錄等） */
+  .btn-primary {
+    background-color: #63b3ed !important;
+    border-color: #63b3ed !important;
+    color: #fff !important;
+    transition: transform 0.2s ease, background-color 0.2s ease;
+  }
+  .btn-primary:hover {
+    background-color: #4299e1 !important;
+    border-color: #4299e1 !important;
+    transform: scale(1.05);
+  }
+  .btn-primary:active {
+    transform: scale(0.97);
   }
 
-  /* ✅ 上傳按鈕置中 */
+  /* 外框按鈕（修改、篩選等） */
+  .btn-outline-primary {
+    color: #63b3ed !important;
+    border-color: #63b3ed !important;
+    transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+  }
+  .btn-outline-primary:hover {
+    background-color: #63b3ed !important;
+    color: #fff !important;
+    transform: scale(1.05);
+  }
+  .btn-outline-primary:active {
+    transform: scale(0.97);
+  }
+  /* 置中上傳按鈕 */
   .form-submit-center {
-    display: flex;
-    justify-content: center;
+    text-align: center; /* 水平置中 */
+    margin-top: 20px;
   }
   </style>
-
   <style>
   #header {
     position: fixed;
