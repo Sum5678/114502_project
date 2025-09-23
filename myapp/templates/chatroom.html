@@ -739,3 +739,737 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 
+
+
+
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>可疑事件聊天室</title>
+  <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet" />
+  <link href="{% static 'assets/vendor/aos/aos.css' %}" rel="stylesheet" />
+  <link href="{% static 'assets/css/main.css' %}" rel="stylesheet" />
+  <style>
+    /* 限制搜尋聊天室列表高度，超出自動捲動 */
+    #userChatrooms {
+      max-height: 100px; /* 可以改成你想要的高度 */
+      overflow-y: auto;
+    }
+
+    
+    .reply-quote {
+      color: #6c757d; /* Bootstrap 的 text-muted 預設色，或你想要的淡灰色 */
+      opacity: 0.6;   /* 透明度調淡 */
+      border-left: 3px solid #ced4da; /* 類似 border-start */
+      padding-left: 0.5rem;
+      margin-bottom: 0.5rem;
+      font-size: 0.85rem;
+      user-select: text;
+      cursor: pointer;
+    }
+
+
+
+
+    body {
+      background: #f5f7fa;
+      padding-top: 90px;
+      font-family: "Noto Sans TC", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      color: #333;
+    }
+
+    /* Container Flex */
+    .container-flex {
+      display: flex;
+      gap: 2rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 1.5rem;
+      padding-bottom: 4rem;
+    }
+
+    /* Sidebar */
+    .sidebar-container {
+      flex: 1 1 320px;
+      max-width: 360px;
+    }
+
+    .sidebar-section {
+      background: #fff;
+      border-radius: 0.6rem;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1.8rem;
+      max-height: 370px;
+      overflow-y: auto;
+      transition: box-shadow 0.3s ease;
+    }
+    .sidebar-section:hover {
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+
+    .section-title {
+      font-weight: 700;
+      font-size: 1.2rem;
+      color: #0d6efd;
+      margin-bottom: 1rem;
+      border-bottom: 2px solid #0d6efd;
+      padding-bottom: 0.3rem;
+      user-select: none;
+    }
+
+    /* 聊天室列表項目 */
+    .chatroom-item {
+      padding: 0.6rem 1rem;
+      border-bottom: 1px solid #e3e8ef;
+      cursor: pointer;
+      border-radius: 0.4rem;
+      user-select: none;
+      transition: background-color 0.25s, color 0.25s;
+      color: #495057;
+      font-weight: 500;
+    }
+    .chatroom-item:hover {
+      background-color: #e7f0ff;
+      color: #0d6efd;
+    }
+    .chatroom-item.active {
+      background-color: #0d6efd;
+      color: #fff;
+      font-weight: 700;
+      box-shadow: 0 0 8px #0d6efdaa;
+    }
+
+    /* 收藏聊天室列表 */
+    .favorites-section ul {
+      list-style: none;
+      padding-left: 0;
+      margin: 0;
+    }
+    .favorites-section ul li {
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+    }
+    .favorites-section ul li a {
+      cursor: pointer;
+      text-decoration: none;
+      color: #0d6efd;
+      transition: color 0.3s;
+      border-bottom: 1px dotted transparent;
+    }
+    .favorites-section ul li a:hover,
+    .favorites-section ul li a.active {
+      color: #084298;
+      border-bottom-color: #084298;
+    }
+
+    /* 聊天室主區塊 */
+    .chatroom-box {
+      flex: 2 1 650px;
+      max-width: 720px;
+      background: #fff;
+      border-radius: 0.6rem;
+      box-shadow: 0 3px 18px rgba(13, 110, 253, 0.2);
+      padding: 1.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      height: 550px;
+    }
+
+    /* 標題和收藏按鈕區 */
+    .chatroom-box > .d-flex {
+      margin-bottom: 1rem;
+      align-items: center;
+      justify-content: space-between;
+    }
+    #chatroomTitle {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #0d6efd;
+      user-select: none;
+    }
+    .favorite-btn {
+      cursor: pointer;
+      user-select: none;
+      font-size: 1.6rem;
+      color: #bbb;
+      transition: color 0.4s, text-shadow 0.4s;
+      padding: 0.2rem 0.6rem;
+      border-radius: 0.5rem;
+      user-select: none;
+      user-drag: none;
+    }
+    .favorite-btn.favorited {
+      color: #ffc107;
+      text-shadow: 0 0 6px #ffdb58;
+    }
+    .favorite-btn:hover {
+      color: #0d6efd;
+      text-shadow: 0 0 8px #0d6efdaa;
+    }
+
+    /* 聊天訊息視窗 */
+    .chat-window {
+      flex-grow: 1;
+      background: #f0f4ff;
+      border: 1.5px solid #cbd5f7;
+      border-radius: 0.5rem;
+      padding: 1rem 1.25rem;
+      font-size: 1rem;
+      line-height: 1.5;
+      color: #212529;
+      overflow-y: auto;
+      box-shadow: inset 0 1px 3px #ffffffaa;
+    }
+    .chat-window p {
+      margin-bottom: 0.8rem;
+      word-break: break-word;
+      border-bottom: 1px solid #dbe4ff;
+      padding-bottom: 0.4rem;
+    }
+
+    /* 輸入區 */
+    .chat-input-area {
+      margin-top: 1rem;
+      display: flex;
+      gap: 0.6rem;
+    }
+    .chat-input-area input[type="text"] {
+      flex-grow: 1;
+      font-size: 1rem;
+      padding: 0.55rem 1rem;
+      border-radius: 0.5rem;
+      border: 1.8px solid #0d6efd;
+      outline-offset: 2px;
+      transition: border-color 0.3s ease;
+    }
+    .chat-input-area input[type="text"]:focus {
+      border-color: #084298;
+      box-shadow: 0 0 8px #084298aa;
+    }
+    .chat-input-area button {
+      background-color: #0d6efd;
+      border: none;
+      border-radius: 0.5rem;
+      color: white;
+      font-weight: 600;
+      padding: 0.55rem 1.4rem;
+      transition: background-color 0.3s ease;
+      user-select: none;
+    }
+    .chat-input-area button:hover {
+      background-color: #084298;
+    }
+
+    /* RWD */
+    @media (max-width: 768px) {
+      .container-flex {
+        flex-direction: column;
+        align-items: center;
+        padding: 0 1rem;
+      }
+      .sidebar-container,
+      .chatroom-box {
+        max-width: 100%;
+        width: 100%;
+      }
+      .chatroom-box {
+        height: auto;
+      }
+    }
+  </style>
+</head>
+
+<body class="index-page">
+
+<header id="header" class="header d-flex align-items-center fixed-top bg-white shadow-sm">
+  <div class="container-fluid d-flex justify-content-between align-items-center">
+    <a href="{% url 'home' %}" class="logo d-flex align-items-center">
+      <h1 class="sitename mb-0">怪怪走開，護您安全</h1>
+    </a>
+    <nav id="navmenu" class="navmenu">
+        <ul>
+          <li><a href="{% url 'home' %}#hero">主頁</a></li>
+          <li><a href="index.html#services">簡介及功能介紹</a></li>
+          <li><a href="{% url 'report' %}">填寫表單</a></li>
+          <li><a href="{% url 'business_upload' %}">商家填單</a></li>
+          <li><a href="{% url 'about' %}">個人資料設定</a></li>
+          <li><a href="{% url 'chatroom_page' %}">聊天室</a></li>
+        <li class="dropdown">
+          <a href="#"><span>交流區</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+          <ul>
+            <li><a href="{% url 'post' %}#hero">我要發文</a></li>
+            <li><a href="{% url 'post_display' %}">貼文總覽</a></li>
+          </ul>
+        </li>
+          
+          <li class="dropdown"><a href="#"><span>地圖</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+            <ul>
+              <li><a href="{% url 'map' %}">事件地圖</a></li>
+              <li><a href="{% url 'store_map' %}">商家地圖</a></li>
+            </ul> 
+          </li>
+          
+          <li><a href="{% url 'harassment_prevention' %}">防騷指南</a></li>
+
+        </ul>
+        <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+      </nav>
+    {% if request.user.is_authenticated %}
+      <div class="dropdown">
+        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown" aria-expanded="false">{{ request.user.username }}</a>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="{% url 'about' %}">個人資料設定</a></li>
+          <li><a class="dropdown-item" href="{% url '01_userlogin_out' %}">登出</a></li>
+        </ul>
+      </div>
+    {% else %}
+      <a class="btn-getstarted btn btn-primary px-3" href="{% url 'userlogin' %}">登入</a>
+    {% endif %}
+  </div>
+</header>
+
+<main class="main mt-5 pt-5">
+  <div class="container container-flex" data-aos="fade-up">
+
+    <div class="sidebar-container">
+      <div class="sidebar-section">
+        <h4 class="section-title">所有聊天室</h4>
+      <select id="popularSelect" class="form-select" aria-label="所有聊天室選擇">
+          <option value="" selected disabled>請選擇聊天室</option>
+        <select id="popularSelect" class="form-select" aria-label="所有聊天室選擇">
+          <option value="" selected disabled>請選擇聊天室</option>
+          {% for room in popular_chatrooms %}
+            <option value="{{ room.id }}">
+              {{ room.city }} {{ room.district }} （收藏數：{{ room.fav_count }}）
+            </option>
+          {% endfor %}
+        </select>
+
+      </div>
+
+
+      
+
+
+      
+
+      <div class="sidebar-section">
+        <h4 class="section-title">搜尋聊天室</h4>
+        <input 
+          type="text" 
+          id="chatroomSearchInput" 
+          class="form-control mb-2" 
+          placeholder="輸入縣市或行政區搜尋..." 
+        />
+        <div id="userChatrooms" class="user-chatrooms"></div>
+      </div>
+
+
+      <div class="sidebar-section favorites-section">
+        <h4 class="section-title">我的收藏聊天室</h4>
+        <ul id="favoriteList">
+          {% if is_fav %}
+            {% for fav in favorites %}
+              <li>
+                <a href="javascript:void(0)" onclick="openChatroom('{{ fav.chat_room.id }}')">
+                  {{ fav.chat_room.city }} {{ fav.chat_room.district }}
+                </a>
+              </li>
+            {% endfor %}
+          {% else %}
+            <li class="text-muted">尚未收藏任何聊天室</li>
+          {% endif %}
+        </ul>
+      </div>
+
+    </div>
+
+    <div class="chatroom-box d-none" id="chatroomBox" aria-live="polite" aria-atomic="true" role="region">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h5 id="chatroomTitle" class="mb-0">聊天室名稱</h5>
+        <span id="favoriteBtn" class="favorite-btn" title="點擊收藏/取消收藏" role="button" tabindex="0" aria-pressed="false" aria-label="收藏聊天室">☆ 收藏</span>
+      </div>
+      <div class="chat-window" id="chatWindow" tabindex="0" aria-label="聊天訊息區">
+      </div>     
+      <div class="chat-input-area mt-3" style="align-items:center; gap:0.5rem;">
+        <select id="nicknameSelect" class="form-select" style="max-width: 140px;">
+          <option value="">匿名</option>
+          {% if user_profile.default_nickname1 %}
+            <option value="{{ user_profile.default_nickname1 }}" >
+              {{ user_profile.default_nickname1 }}
+            </option>
+          {% endif %}
+          {% if user_profile.default_nickname2 %}
+            <option value="{{ user_profile.default_nickname2 }}">
+              {{ user_profile.default_nickname2 }}
+            </option>
+          {% endif %}
+        </select>
+        <span id="nicknameDisplay" style="min-width: 50px; font-weight: 600; color: #0d6efd;">匿名</span>
+        
+        <input type="text" id="chatInput" placeholder="輸入留言..." autocomplete="off" aria-label="輸入聊天訊息" />
+        <button class="btn btn-primary" onclick="sendMessage()" aria-label="送出訊息">送出</button>
+      </div>
+
+    </div>
+
+    <div id="chatroomData" data-favorites='{{ favorite_chatroom_ids|escapejs }}'></div>
+
+  </div>
+</main>
+
+<footer id="footer" class="footer position-relative light-background mt-5 py-3 bg-white shadow-sm">
+  <div class="container text-center text-muted small">
+    © 2025 <strong class="sitename">怪怪走開</strong> All Rights Reserved
+  </div>
+</footer>
+
+<script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+<script src="{% static 'assets/vendor/aos/aos.js' %}"></script>
+<script src="{% static 'assets/js/main.js' %}"></script>
+
+<script>
+  // 從後端模板拿到聊天室資料
+  const chatrooms = JSON.parse('{{ chatrooms_json|escapejs }}');
+  const favoriteChatrooms = new Set(JSON.parse('{{ favorite_chatroom_ids|escapejs }}'));
+  let currentRoomId = null;
+  let replyTarget = null; // { id, text }
+
+  // DOM 元素
+  const chatWindow = document.getElementById('chatWindow');
+  const chatInput = document.getElementById('chatInput');
+  const chatroomBox = document.getElementById('chatroomBox');
+  const favoriteBtn = document.getElementById('favoriteBtn');
+  const userChatroomsContainer = document.getElementById('userChatrooms');
+  const favoriteListContainer = document.getElementById('favoriteList');
+  const nicknameSelect = document.getElementById('nicknameSelect');
+  const nicknameDisplay = document.getElementById('nicknameDisplay');
+
+  // 初始化暱稱顯示
+  nicknameDisplay.textContent = nicknameSelect.value || '匿名';
+  nicknameSelect.addEventListener('change', function () {
+    const selected = nicknameSelect.value;
+    nicknameDisplay.textContent = selected || '匿名';
+    const link = nicknameSelect.options[nicknameSelect.selectedIndex]?.getAttribute('data-link');
+    if (link) window.open(link, '_blank');
+  });
+
+  // CSRF Helper
+  function getCookie(name) {
+    const cookies = document.cookie.split(';').map(c => c.trim());
+    for (let cookie of cookies) {
+      if (cookie.startsWith(name + '=')) return decodeURIComponent(cookie.split('=')[1]);
+    }
+    return null;
+  }
+
+  // 渲染熱門聊天室
+  function renderPopularChatrooms() {
+    const popularSelect = document.getElementById('popularSelect');
+    if (!popularSelect) return;
+    popularSelect.innerHTML = '<option value="" selected disabled>請選擇熱門聊天室</option>';
+    const sorted = [...chatrooms].sort((a,b) => (b.fav_count||0) - (a.fav_count||0));
+    sorted.forEach(room => {
+      const option = document.createElement('option');
+      option.value = room.id;
+      option.textContent = `${room.city} ${room.district} 聊天室（收藏數：${room.fav_count || 0}）`;
+      popularSelect.appendChild(option);
+    });
+    popularSelect.onchange = () => {
+      const selectedId = parseInt(popularSelect.value);
+      if (!isNaN(selectedId)) openChatroom(selectedId);
+    };
+  }
+
+  // 渲染聊天室列表
+  function renderUserChatrooms(filter='') {
+    if (!userChatroomsContainer) return;
+    userChatroomsContainer.innerHTML = '';
+    const filtered = chatrooms.filter(r => {
+      const text = (r.city + ' ' + r.district).toLowerCase();
+      return text.includes(filter.toLowerCase());
+    });
+    if (filtered.length === 0) {
+      userChatroomsContainer.innerHTML = '<p class="text-muted">沒有符合的聊天室</p>';
+      return;
+    }
+    filtered.forEach(room => {
+      const div = document.createElement('div');
+      div.className = 'chatroom-item';
+      div.textContent = `${room.city} ${room.district} 聊天室（收藏數：${room.fav_count||0}）`;
+      div.setAttribute('data-id', room.id);
+      div.onclick = () => openChatroom(room.id);
+      userChatroomsContainer.appendChild(div);
+    });
+  }
+
+  document.getElementById('chatroomSearchInput').addEventListener('input', function () {
+    renderUserChatrooms(this.value);
+  });
+
+  // 渲染收藏聊天室
+  function renderFavoriteChatrooms() {
+    if (!favoriteListContainer) return;
+    favoriteListContainer.innerHTML = '';
+    if (favoriteChatrooms.size === 0) {
+      favoriteListContainer.innerHTML = '<li class="text-muted">尚未收藏任何聊天室</li>';
+      return;
+    }
+    chatrooms.filter(r => favoriteChatrooms.has(r.id)).forEach(room => {
+      const li = document.createElement('li');
+      li.innerHTML = `<a href="javascript:void(0)" data-id="${room.id}" onclick="openChatroom(${room.id})">${room.city} ${room.district} 聊天室</a>`;
+      favoriteListContainer.appendChild(li);
+    });
+  }
+
+  // 開啟聊天室
+  function openChatroom(id) {
+    currentRoomId = id;
+    const room = chatrooms.find(r => r.id === id);
+    if (!room) return alert('找不到聊天室');
+
+    highlightActiveChatroom(id);
+
+    fetch(`/chat/messages/${id}/`)
+      .then(res => res.json())
+      .then(messages => {
+        renderMessages(messages);
+        document.getElementById('chatroomTitle').textContent = `${room.city} ${room.district} 聊天室`;
+        chatroomBox.classList.remove('d-none');
+        renderUserChatrooms();
+        updateFavoriteBtn(id);
+      })
+      .catch(() => alert('載入聊天室訊息失敗'));
+  }
+
+  // 標示目前聊天室
+  function highlightActiveChatroom(id) {
+    document.querySelectorAll('.chatroom-item').forEach(el => {
+      el.classList.toggle('active', parseInt(el.getAttribute('data-id')) === id);
+    });
+    if(favoriteListContainer){
+      favoriteListContainer.querySelectorAll('a').forEach(a => {
+        a.classList.toggle('active', parseInt(a.getAttribute('data-id')) === id);
+      });
+    }
+  }
+
+  // 渲染訊息
+  function renderMessages(messages) {
+    chatWindow.innerHTML = '';
+    if (!messages.length) {
+      chatWindow.innerHTML = '<p class="text-muted">還沒有留言，快來發表第一則訊息！</p>';
+      return;
+    }
+    // 在 renderMessages 裡
+    messages.forEach(msg => {
+      const wrapper = document.createElement('div');
+      wrapper.classList.add('mb-2');
+      wrapper.id = "msg-" + msg.id;
+
+      const msgBox = document.createElement('div');
+      msgBox.classList.add('p-2', 'border', 'rounded', 'bg-white');
+
+      // 如果是回覆訊息，建立引用 div
+      if (msg.reply_to_text && msg.reply_to_id) {
+        const quote = document.createElement("div");
+        quote.classList.add("small", "text-muted", "border-start", "ps-2", "mb-1");
+        quote.textContent = `回覆「${msg.reply_to_text}」`;
+        // 點擊引用文字滾動回去原訊息
+        quote.style.cursor = 'pointer';
+        quote.onclick = () => {
+          const target = document.getElementById("msg-" + msg.reply_to_id);
+          if(target){
+            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            target.classList.add('bg-warning', 'bg-opacity-25');
+            setTimeout(() => target.classList.remove('bg-warning','bg-opacity-25'),1500);
+          }
+        };
+        msgBox.appendChild(quote);
+      }
+
+      const main = document.createElement('span');
+      main.innerHTML = `<strong style="color:${msg.status_color || '#000'}">${msg.nickname || '匿名'}</strong>：${msg.message}`;
+      msgBox.appendChild(main);
+
+      // 回覆按鈕
+      const replyBtn = document.createElement('button');
+      replyBtn.textContent = '回覆';
+      replyBtn.classList.add('btn','btn-link','btn-sm','p-0','ms-2');
+      replyBtn.onclick = () => setReply(msg.id, msg.message);
+      msgBox.appendChild(replyBtn);
+
+      wrapper.appendChild(msgBox);
+      chatWindow.appendChild(wrapper);
+    });
+
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+  }
+
+  // 設定回覆目標
+  function setReply(targetId, targetText) {
+    replyTarget = { id: targetId, text: targetText };
+    chatInput.placeholder = `回覆「${targetText}」...`;
+    const target = document.getElementById("msg-" + targetId);
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      target.classList.add('bg-warning', 'bg-opacity-25');
+      setTimeout(() => target.classList.remove('bg-warning', 'bg-opacity-25'), 1500);
+    }
+    chatInput.focus();
+  }
+
+  // 送出訊息
+  function sendMessage() {
+    const message = chatInput.value.trim();
+    const nickname = nicknameSelect.value || '匿名';
+    if (!message) return alert('訊息不能為空！');
+    if (!currentRoomId) return alert('請先選擇聊天室！');
+
+    fetch(`/chat/send/${currentRoomId}/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      body: JSON.stringify({ message, nickname, reply_to_id: replyTarget?.id || null })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.status !== 'ok') return alert('發送失敗：' + data.msg);
+
+      chatInput.value = '';
+      chatInput.placeholder = "輸入留言...";
+
+      if (!data.message) {
+        openChatroom(currentRoomId);
+        replyTarget = null;
+        return;
+      }
+
+      const wrapper = document.createElement('div');
+      wrapper.classList.add('mb-2');
+      wrapper.id = "msg-" + data.message.id;
+
+      const msgBox = document.createElement('div');
+      msgBox.classList.add('p-2', 'border', 'rounded', 'bg-white');
+
+      if (replyTarget) {
+        const quote = document.createElement("div");
+        quote.classList.add("small","text-muted","border-start","ps-2","mb-1");
+        quote.textContent = `回覆「${replyTarget.text}」`;
+        quote.style.cursor = 'pointer';
+        quote.onclick = () => {
+          const target = document.getElementById("msg-" + replyTarget.id);
+          if(target){
+            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            target.classList.add('bg-warning','bg-opacity-25');
+            setTimeout(()=>target.classList.remove('bg-warning','bg-opacity-25'),1500);
+          }
+        };
+        msgBox.appendChild(quote);
+      }
+
+
+      const main = document.createElement('span');
+      main.innerHTML = `<strong style="color:${data.message.status_color || '#000'}">${data.message.nickname || '匿名'}</strong>：${data.message.message}`;
+      msgBox.appendChild(main);
+
+      const replyBtn = document.createElement('button');
+      replyBtn.textContent = '回覆';
+      replyBtn.classList.add('btn', 'btn-link', 'btn-sm', 'p-0', 'ms-2');
+      replyBtn.onclick = () => setReply(data.message.id, data.message.message);
+      msgBox.appendChild(replyBtn);
+
+      wrapper.appendChild(msgBox);
+      chatWindow.appendChild(wrapper);
+      chatWindow.scrollTop = chatWindow.scrollHeight;
+      replyTarget = null;
+    });
+  }
+
+  // 收藏 / 取消收藏
+  favoriteBtn.onclick = () => {
+    if (!currentRoomId) return;
+    fetch('/chat/toggle_favorite/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      body: `room_id=${currentRoomId}`
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.status === 'added') favoriteChatrooms.add(currentRoomId);
+      else if (data.status === 'removed') favoriteChatrooms.delete(currentRoomId);
+      updateFavoriteBtn(currentRoomId);
+      renderFavoriteChatrooms();
+    });
+  };
+
+  // 更新收藏按鈕
+  function updateFavoriteBtn(id) {
+    if (favoriteChatrooms.has(id)) {
+      favoriteBtn.classList.add('favorited');
+      favoriteBtn.textContent = '⭐ 已收藏';
+      favoriteBtn.setAttribute('aria-pressed','true');
+    } else {
+      favoriteBtn.classList.remove('favorited');
+      favoriteBtn.textContent = '☆ 收藏';
+      favoriteBtn.setAttribute('aria-pressed','false');
+    }
+  }
+
+  // 初始化
+  renderPopularChatrooms();
+  renderUserChatrooms();
+  renderFavoriteChatrooms();
+
+
+  // ✅ 頁面載入完成後，自動打開第一個聊天室
+  window.addEventListener('DOMContentLoaded', function() {
+    const firstRoom = document.querySelector("#chatroomList .list-group-item");
+    if (firstRoom) {
+      const roomId = firstRoom.getAttribute("data-room-id");
+      enterChatRoom(roomId);
+    }
+  });
+
+</script>
+
+
+
+</body>
+</html>
+
+
+
+
+
+
+ -->
+
+
+
