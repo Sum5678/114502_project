@@ -4119,8 +4119,8 @@ def chat_messages_api(request, room_id):
         messages = ChatMessage.objects.filter(region=room_id).order_by('timestamp')
         data = [{
             'id': msg.id,
-            'nickname': msg.nickname or msg.user.username,
-            'user_id': msg.user.username if msg.user else '匿名',
+            'nickname': msg.nickname or '匿名',
+            # 'user_id': msg.user.username if msg.user else '匿名',
             'message': msg.message,
             'reply_to_id': msg.reply_to.id if msg.reply_to else None,
             'reply_to_text': msg.reply_to.message if msg.reply_to else None,
@@ -4204,6 +4204,21 @@ from django.contrib import messages
 from django.shortcuts import render
 from django.db.models import Count
 import json
+# views.py
+@login_required
+def chatroom_list(request):
+    user_profile = ThisUserProfile.objects.get(gmail=request.user.email)
+    rooms = ChatRoom.objects.all()
+    data = []
+    for room in rooms:
+        is_favorite = FavoriteChatRoom.objects.filter(user=user_profile, chat_room=room).exists()
+        data.append({
+            "id": room.id,
+            "name": room.name,
+            "is_favorite": is_favorite,
+        })
+    return JsonResponse({"rooms": data})
+
 
 def chatroom_view(request):
     if not request.user.is_authenticated:
