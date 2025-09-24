@@ -694,12 +694,11 @@
 
   // ✅ 頁面載入完成後，自動打開第一個聊天室
   window.addEventListener('DOMContentLoaded', function() {
-    const firstRoom = document.querySelector("#chatroomList .list-group-item");
-    if (firstRoom) {
-      const roomId = firstRoom.getAttribute("data-room-id");
-      enterChatRoom(roomId);
+    if (chatrooms.length > 0) {
+      openChatroom(chatrooms[0].id);
     }
   });
+
 
 </script>
 

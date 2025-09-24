@@ -111,6 +111,7 @@
               <tr>
                 <th>商家名稱</th>
                 <th>廣告內容</th>
+                <th>圖片</th> <!-- ✅ 新增 -->
                 <th>操作</th>
               </tr>
             </thead>
@@ -120,6 +121,15 @@
                 <td class="fw-bold">{{ ad.st.store_name }}</td>
                 <td class="text-start" style="max-width:300px;">
                   <div class="text-truncate" title="{{ ad.ad_content }}">{{ ad.ad_content }}</div>
+                </td>
+                <td>
+                  {% with ad.images.all|first as img %}
+                    {% if img %}
+                      <img src="{{ img.image_url }}" alt="廣告圖片" style="max-height:80px; max-width:120px; object-fit:cover;">
+                    {% else %}
+                      <span class="text-muted">無圖片</span>
+                    {% endif %}
+                  {% endwith %}
                 </td>
                 <td class="text-nowrap">
                   <a href="{% url 'review_store_ad' ad.history_id 'approve' %}" class="btn btn-success btn-sm me-1">
@@ -132,7 +142,7 @@
               </tr>
               {% endfor %}
             </tbody>
-          </table>
+
         </div>
         {% else %}
           <p class="text-muted">目前沒有待審核的廣告。</p>
