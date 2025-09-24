@@ -4206,6 +4206,17 @@ def send_message(request, room_id):
     })
 
 # ------------------ 即時檢查訊息 ------------------
+# ... (在檔案開頭加入)
+import google.generativeai as genai
+from django.conf import settings
+
+# 設定 API Key
+genai.configure(api_key=settings.GOOGLE_API_KEY)
+model = genai.GenerativeModel('gemini-1.5-flash')
+
+# ... (其他 views 函式)
+
+# ------------------ 即時檢查與改寫訊息 ------------------
 @login_required
 @require_POST
 def check_message(request):
@@ -4213,23 +4224,45 @@ def check_message(request):
         data = json.loads(request.body)
         message = data.get('message', '')
     except Exception:
-        return JsonResponse({'status': 'error', 'msg': '資料格式錯誤'})
+        return JsonResponse({'status': 'error', 'msg': '資料格式錯誤'}, status=400)
 
-    if not message:
-        return JsonResponse({'status': 'ok'})  # 空訊息不阻擋
+    if not message.strip():
+        return JsonResponse({'status': 'ok'})
 
-    client = language_v1.LanguageServiceClient()
-    document = language_v1.Document(content=message, type_=language_v1.Document.Type.PLAIN_TEXT)
-    response = client.analyze_sentiment(document=document)
+    try:
+        # ✅ 使用 Gemini API 進行判斷和改寫
+        prompt = f"""請判斷以下中文訊息是否包含不當、攻擊性、歧視或不友善的內容。
+如果訊息安全且友善，請直接回覆 "安全"。
+如果訊息不友善或不當，請將其改寫成一個友善、中性且不具攻擊性的版本，並只回覆改寫後的文字。
+例如：
+輸入: 你這個垃圾
+輸出: 謝謝你的意見，我會注意。
 
-    # 簡單邏輯：整體 sentiment score < -0.5 判斷為不當訊息
-    if response.document_sentiment.score < -0.5:
+輸入: 今天天氣真好。
+輸出: 安全
+
+輸入: {message}
+輸出:"""
+        
+        # 呼叫 Gemini API
+        response = model.generate_content(prompt)
+        gemini_text = response.text.strip()
+        
+        # 判斷 Gemini 的回覆
+        if gemini_text == "安全":
+            return JsonResponse({'status': 'ok'})
+        else:
+            return JsonResponse({
+                'status': 'rewritten',
+                'suggestion': gemini_text
+            })
+
+    except Exception as e:
+        print(f"Gemini API 呼叫失敗: {e}")
         return JsonResponse({
-            'status': 'blocked',
-            'suggestion': '請改用中性或友善用語'
-        })
-
-    return JsonResponse({'status': 'ok'})
+            'status': 'error', 
+            'msg': '無法檢查訊息安全性，請稍後再試。'
+        }, status=500)
 
 # ------------------ 列出聊天室（含收藏狀態） ------------------
 @login_required
