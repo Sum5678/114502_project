@@ -4132,43 +4132,6 @@ def chat_messages_api(request, room_id):
 
 
 
-@login_required
-def chat_send_api(request, room_id):
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            message = data.get('message')
-            if not message:
-                return JsonResponse({'status': 'error', 'msg': '訊息不能為空'})
-
-            # 找到 ThisUserProfile
-            user_profile = ThisUserProfile.objects.get(gmail=request.user.email)
-
-            chat_msg = ChatMessage.objects.create(
-                user=user_profile,
-                region=str(room_id),
-                message=message
-            )
-
-            return JsonResponse({
-                'status': 'success',
-                'message': {
-                    'id': chat_msg.id,
-                    'nickname': chat_msg.nickname,
-                    'message': chat_msg.message,
-                    'timestamp': chat_msg.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
-                    'status_color': user_profile.status_color
-                }
-            })
-        except ThisUserProfile.DoesNotExist:
-            return JsonResponse({'status': 'error', 'msg': '請先至個人資料設定填寫email'})
-        except Exception as e:
-            return JsonResponse({'status': 'error', 'msg': str(e)})
-    else:
-        return JsonResponse({'status': 'error', 'msg': '只接受 POST'}, status=405)
-
-
-
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
