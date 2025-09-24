@@ -4644,3 +4644,66 @@ def test_payment(request):
 def test_payment_done(request):
     # 這裡可以做一些完成後的處理，例如顯示付款成功訊息
     return render(request, "test_payment_done.html")
+
+
+from django.shortcuts import render
+from .models import PemapAll, StoreAll, ChatInteraction
+from .models import ChatMessage, ChatRoomClick, FavoriteChatRoom
+import json
+
+def _sum_json_list_lengths(qs, field):
+    """把 TextField(JSON字串) 逐筆載入後回傳清單長度總和。壞字串一律當 0。"""
+    total = 0
+    for s in qs.values_list(field, flat=True):
+        try:
+            data = json.loads(s or "[]")
+            if isinstance(data, list):
+                total += len(data)
+        except Exception:
+            pass
+    return total
+
+def index(request):
+    # ✅ 審核通過的狀態（同時相容文字/數字）
+    approved_status = ["人工審核通過", "4", 4, "2", 2]
+
+    # ✅ 已通報案件數（只算通過）
+    report_count = PemapAll.objects.filter(review_status__in=approved_status).count()
+
+    # ✅ 地圖上標記次數（事件+商家；事件只算通過，商家你若也有審核欄位可同樣加過濾）
+    map_mark_count = (
+        PemapAll.objects.filter(review_status__in=approved_status).count()
+        + StoreAll.objects.count()
+    )
+
+    # ===== 互動次數細項 =====
+    # 1) 交流區「貼文數」
+    post_count = ChatInteraction.objects.count()
+
+    # 2) 交流區「留言數」（存在 ChatInteraction.comments 的 JSON 陣列）
+    comment_count = _sum_json_list_lengths(ChatInteraction.objects.all(), "comments")
+
+    # 3) 交流區「按讚數」（可選：若要算按讚，打開這行；否則設成 0）
+    like_count = _sum_json_list_lengths(ChatInteraction.objects.all(), "liked_user_ids")
+
+    # 4) 聊天室訊息 / 點擊 / 收藏聊天室
+    chat_message_count = ChatMessage.objects.count()
+    chat_click_count = ChatRoomClick.objects.count()
+    chat_fav_room_count = FavoriteChatRoom.objects.count()
+
+    # ✅ 總互動 = 貼文 + 留言 +（可選）按讚 + 聊天室相關
+    interactions = (
+        post_count
+        + comment_count
+        + like_count            # 如果不想把按讚算進去，改成 + 0
+        + chat_message_count
+        + chat_click_count
+        + chat_fav_room_count
+    )
+
+    ctx = {
+        "report_count": report_count,
+        "map_mark_count": map_mark_count,
+        "interactions": interactions,
+    }
+    return render(request, "index.html", ctx)

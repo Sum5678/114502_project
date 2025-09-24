@@ -11,6 +11,45 @@
   <link href="{% static 'assets/css/main.css' %}" rel="stylesheet">
   <link href="{% static 'assets/vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet">
   <style>
+  /* ===== 淺藍色系按鈕統一設定 ===== */
+
+  /* 實心按鈕（送出回報、查看紀錄等） */
+  .btn-primary {
+    background-color: #63b3ed !important;
+    border-color: #63b3ed !important;
+    color: #fff !important;
+    transition: transform 0.2s ease, background-color 0.2s ease;
+  }
+  .btn-primary:hover {
+    background-color: #4299e1 !important;
+    border-color: #4299e1 !important;
+    transform: scale(1.05);
+  }
+  .btn-primary:active {
+    transform: scale(0.97);
+  }
+
+  /* 外框按鈕（修改、篩選等） */
+  .btn-outline-primary {
+    color: #63b3ed !important;
+    border-color: #63b3ed !important;
+    transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+  }
+  .btn-outline-primary:hover {
+    background-color: #63b3ed !important;
+    color: #fff !important;
+    transform: scale(1.05);
+  }
+  .btn-outline-primary:active {
+    transform: scale(0.97);
+  }
+  /* 置中上傳按鈕 */
+  .form-submit-center {
+    text-align: center; /* 水平置中 */
+    margin-top: 20px;
+  }
+  </style>
+  <style>
   #header {
     position: fixed;
     top: 0;
@@ -298,7 +337,11 @@
           <input type="text" class="form-control" id="bs_phone" name="bs_phone" required>
         </div>
 
-        <button type="submit" class="btn btn-primary mt-3">上傳</button>
+        <div class="form-submit-center">
+          <button type="submit" class="btn btn-primary mt-3" style="background-color:#63b3ed;border:none;">
+            上傳
+          </button>
+        </div>
       </form>
     </div>
   </section>
