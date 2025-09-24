@@ -589,37 +589,63 @@
   // 送出訊息（含即時惡意訊息檢查）
   async function sendMessage() {
     const message = chatInput.value.trim();
-    const nickname = nicknameSelect.value || '匿名';
-    if (!message) return alert('訊息不能為空！');
-    if (!currentRoomId) return alert('請先選擇聊天室！');
+        const nickname = nicknameSelect.value || '匿名';
+        if (!message) {
+            alert('訊息不能為空！');
+            return;
+        }
+        if (!currentRoomId) {
+            alert('請先選擇聊天室！');
+            return;
+        }
 
-    // ✅ 先檢查訊息是否惡意
-    try {
-      const checkRes = await fetch('/check_message/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': getCookie('csrftoken')
-        },
-        body: JSON.stringify({ message })
-      });
-      const checkData = await checkRes.json();
-      if (checkData.status === 'blocked') {
-        return alert(`訊息可能不適當，建議改寫為：\n${checkData.suggestion}`);
-      }
-    } catch (err) {
-      console.error('訊息檢查失敗', err);
-      return alert('無法檢查訊息安全性，請稍後再試');
-    }
+        // ✅ 先檢查並改寫訊息
+        let messageToSend = message; // 預設使用原始訊息
+        try {
+            const checkRes = await fetch('/chat/check_message/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ message })
+            });
+            const checkData = await checkRes.json();
+
+            if (checkData.status === 'error') {
+                return alert('訊息檢查失敗: ' + checkData.msg);
+            }
+
+            // 如果訊息被改寫，提示用戶並詢問是否送出
+            if (checkData.status === 'rewritten') {
+                const confirmed = confirm(
+                    `您的訊息可能不適當，系統已為您改寫成以下版本：\n\n"${checkData.suggestion}"\n\n是否要送出此版本？`
+                );
+                
+                if (!confirmed) {
+                    return; // 用戶取消，則不送出
+                }
+                // 使用改寫後的訊息
+                messageToSend = checkData.suggestion;
+            }
+
+        } catch (err) {
+            console.error('訊息檢查失敗', err);
+            return alert('無法檢查訊息安全性，請稍後再試。');
+        }
+
 
     // ✅ 原本的發送流程
+    // ... (上面檢查訊息的程式碼都保持不變)
+
+    // ✅ 修正後的發送流程，使用 messageToSend 變數
     fetch(`/chat/send/${currentRoomId}/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'X-CSRFToken': getCookie('csrftoken')
       },
-      body: JSON.stringify({ message, nickname, reply_to_id: replyTarget?.id || null })
+      body: JSON.stringify({ message: messageToSend, nickname, reply_to_id: replyTarget?.id || null })
     })
     .then(res => res.json())
     .then(data => {
@@ -673,76 +699,6 @@
       replyTarget = null;
     });
   }
-
-
-  // function sendMessage() {
-  //   const message = chatInput.value.trim();
-  //   const nickname = nicknameSelect.value || '匿名';
-  //   if (!message) return alert('訊息不能為空！');
-  //   if (!currentRoomId) return alert('請先選擇聊天室！');
-
-  //   fetch(`/chat/send/${currentRoomId}/`, {
-  //     method: 'POST',
-  //     headers: {
-  //       'Content-Type': 'application/json',
-  //       'X-CSRFToken': getCookie('csrftoken')
-  //     },
-  //     body: JSON.stringify({ message, nickname, reply_to_id: replyTarget?.id || null })
-  //   })
-  //   .then(res => res.json())
-  //   .then(data => {
-  //     if (data.status !== 'ok') return alert('發送失敗：' + data.msg);
-
-  //     chatInput.value = '';
-  //     chatInput.placeholder = "輸入留言...";
-
-  //     if (!data.message) {
-  //       openChatroom(currentRoomId);
-  //       replyTarget = null;
-  //       return;
-  //     }
-
-  //     const wrapper = document.createElement('div');
-  //     wrapper.classList.add('mb-2');
-  //     wrapper.id = "msg-" + data.message.id;
-
-  //     const msgBox = document.createElement('div');
-  //     msgBox.classList.add('p-2', 'border', 'rounded', 'bg-white');
-
-  //     if (replyTarget) {
-  //       const quote = document.createElement("div");
-  //       quote.classList.add("small","text-muted","border-start","ps-2","mb-1");
-  //       quote.textContent = `回覆「${replyTarget.text}」`;
-  //       quote.style.cursor = 'pointer';
-  //       quote.onclick = () => {
-  //         const target = document.getElementById("msg-" + replyTarget.id);
-  //         if(target){
-  //           target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  //           target.classList.add('bg-warning','bg-opacity-25');
-  //           setTimeout(()=>target.classList.remove('bg-warning','bg-opacity-25'),1500);
-  //         }
-  //       };
-  //       msgBox.appendChild(quote);
-  //     }
-
-
-  //     const main = document.createElement('span');
-  //     main.innerHTML = `<strong style="color:${data.message.status_color || '#000'}">${data.message.nickname || '匿名'}</strong>：${data.message.message}`;
-  //     msgBox.appendChild(main);
-
-  //     const replyBtn = document.createElement('button');
-  //     replyBtn.textContent = '回覆';
-  //     replyBtn.classList.add('btn', 'btn-link', 'btn-sm', 'p-0', 'ms-2');
-  //     replyBtn.onclick = () => setReply(data.message.id, data.message.message);
-  //     msgBox.appendChild(replyBtn);
-
-  //     wrapper.appendChild(msgBox);
-  //     chatWindow.appendChild(wrapper);
-  //     chatWindow.scrollTop = chatWindow.scrollHeight;
-  //     replyTarget = null;
-  //   });
-  // }
-
 
 
   // 收藏 / 取消收藏
