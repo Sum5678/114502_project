@@ -4132,119 +4132,27 @@ def chat_messages_api(request, room_id):
 
 
 
-from django.views.decorators.csrf import csrf_exempt
-from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
-import json
-
-@login_required
-@csrf_exempt
-def send_message(request, room_id):
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-        except Exception:
-            return JsonResponse({'status': 'error', 'msg': '資料格式錯誤'})
-
-        message_text = data.get('message')
-        nickname = data.get('nickname', '').strip()
-        reply_to_id = data.get('reply_to_id')
-
-        if not message_text:
-            return JsonResponse({'status': 'error', 'msg': '訊息不可為空'})
-
-        try:
-            user_profile = ThisUserProfile.objects.get(gmail=request.user.email)
-        except ThisUserProfile.DoesNotExist:
-            return JsonResponse({'status': 'error', 'msg': '找不到使用者資料'})
-
-        reply_to_msg = None
-        if reply_to_id:
-            try:
-                reply_to_msg = ChatMessage.objects.get(id=reply_to_id)
-            except ChatMessage.DoesNotExist:
-                pass
-
-        chat_msg = ChatMessage.objects.create(
-            user=user_profile,
-            region=room_id,
-            message=message_text,
-            nickname=nickname if nickname else None,
-            reply_to=reply_to_msg
-        )
-
-        return JsonResponse({
-            'status': 'ok',
-            'message': {
-                'id': chat_msg.id,
-                'nickname': chat_msg.nickname,
-                'message': chat_msg.message,
-                'reply_to_id': reply_to_msg.id if reply_to_msg else None,
-                'reply_to_text': reply_to_msg.message if reply_to_msg else None,
-                'timestamp': chat_msg.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
-                'status_color': user_profile.status_color
-            }
-        })
-
-    return JsonResponse({'status': 'error', 'msg': '僅接受 POST'})
-
-
-
-
-#---------看自己收藏的聊天室---------------
-import json
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
-from .models import ThisUserProfile, ChatRoom, FavoriteChatRoom
-
-# ------------- 查看收藏聊天室 -------------
-from django.contrib import messages
-from django.shortcuts import render
 from django.db.models import Count
+from .models import ThisUserProfile, ChatRoom, ChatMessage, FavoriteChatRoom
 import json
-# views.py
+from google.cloud import language_v1
+
+# ------------------ 聊天室頁面 ------------------
 @login_required
-def chatroom_list(request):
-    user_profile = ThisUserProfile.objects.get(gmail=request.user.email)
-    rooms = ChatRoom.objects.all()
-    data = []
-    for room in rooms:
-        is_favorite = FavoriteChatRoom.objects.filter(user=user_profile, chat_room=room).exists()
-        data.append({
-            "id": room.id,
-            "name": room.name,
-            "is_favorite": is_favorite,
-        })
-    return JsonResponse({"rooms": data})
-
-
 def chatroom_view(request):
-    if not request.user.is_authenticated:
-        messages.error(request, "請先登入才能使用聊天室")
-        return render(request, "chatroom.html", {
-            "user_profile": None,
-            "favorites": [],
-            "favorite_chatroom_ids": "[]",
-            "chatrooms_json": "[]",
-        })
-
-    # 已登入，正常流程
     try:
         user_profile = ThisUserProfile.objects.get(gmail=request.user.email)
-        favorites = FavoriteChatRoom.objects.filter(user=user_profile).select_related('chat_room')
-        favorite_ids = [fav.chat_room.id for fav in favorites]
     except ThisUserProfile.DoesNotExist:
         user_profile = None
-        favorites = []
-        favorite_ids = []
-        messages.warning(request, "找不到您的使用者資料，部分功能可能無法使用")
 
-    chatrooms = ChatRoom.objects.annotate(
-        fav_count=Count('favorited_by_users')
-    ).order_by('-fav_count')
+    favorites = FavoriteChatRoom.objects.filter(user=user_profile).select_related('chat_room') if user_profile else []
+    favorite_ids = [fav.chat_room.id for fav in favorites]
 
+    chatrooms = ChatRoom.objects.annotate(fav_count=Count('favorited_by_users')).order_by('-fav_count')
     chatroom_list = list(chatrooms.values('id', 'city', 'district', 'fav_count'))
 
     return render(request, 'chatroom.html', {
@@ -4254,47 +4162,120 @@ def chatroom_view(request):
         'chatrooms_json': json.dumps(chatroom_list),
     })
 
-
-# ------------- 加入收藏 -------------
-@require_POST
+# ------------------ 發訊息 ------------------
 @login_required
+@require_POST
+def send_message(request, room_id):
+    try:
+        data = json.loads(request.body)
+    except Exception:
+        return JsonResponse({'status': 'error', 'msg': '資料格式錯誤'})
+
+    message_text = data.get('message', '').strip()
+    nickname = data.get('nickname', '匿名').strip()
+    reply_to_id = data.get('reply_to_id')
+
+    if not message_text:
+        return JsonResponse({'status': 'error', 'msg': '訊息不能為空'})
+
+    room = get_object_or_404(ChatRoom, id=room_id)
+
+    # 取得回覆訊息
+    reply_to_msg = ChatMessage.objects.filter(id=reply_to_id).first() if reply_to_id else None
+
+    # 建立訊息
+    msg_obj = ChatMessage.objects.create(
+        chat_room=room,
+        message=message_text,
+        nickname=nickname,
+        reply_to=reply_to_msg,
+        user=user_profile
+    )
+
+    return JsonResponse({
+        'status': 'ok',
+        'message': {
+            'id': msg_obj.id,
+            'nickname': msg_obj.nickname,
+            'message': msg_obj.message,
+            'reply_to_id': reply_to_msg.id if reply_to_msg else None,
+            'reply_to_text': reply_to_msg.message if reply_to_msg else None,
+            'timestamp': msg_obj.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+            'status_color': getattr(user_profile, 'status_color', '#000')
+        }
+    })
+
+# ------------------ 即時檢查訊息 ------------------
+@login_required
+@require_POST
+def check_message(request):
+    try:
+        data = json.loads(request.body)
+        message = data.get('message', '')
+    except Exception:
+        return JsonResponse({'status': 'error', 'msg': '資料格式錯誤'})
+
+    if not message:
+        return JsonResponse({'status': 'ok'})  # 空訊息不阻擋
+
+    client = language_v1.LanguageServiceClient()
+    document = language_v1.Document(content=message, type_=language_v1.Document.Type.PLAIN_TEXT)
+    response = client.analyze_sentiment(document=document)
+
+    # 簡單邏輯：整體 sentiment score < -0.5 判斷為不當訊息
+    if response.document_sentiment.score < -0.5:
+        return JsonResponse({
+            'status': 'blocked',
+            'suggestion': '請改用中性或友善用語'
+        })
+
+    return JsonResponse({'status': 'ok'})
+
+# ------------------ 列出聊天室（含收藏狀態） ------------------
+@login_required
+def chatroom_list(request):
+    user_profile = ThisUserProfile.objects.get(gmail=request.user.email)
+    rooms = ChatRoom.objects.all()
+    data = []
+    for room in rooms:
+        is_favorite = FavoriteChatRoom.objects.filter(user=user_profile, chat_room=room).exists()
+        data.append({
+            'id': room.id,
+            'name': getattr(room, 'name', f'{room.city}-{room.district}'),
+            'is_favorite': is_favorite,
+        })
+    return JsonResponse({'rooms': data})
+
+# ------------------ 加入收藏 ------------------
+@login_required
+@require_POST
 def add_to_favorites(request):
     room_id = request.POST.get('room_id')
     chat_room = get_object_or_404(ChatRoom, id=room_id)
-
-    try:
-        profile = ThisUserProfile.objects.get(gmail=request.user.email)
-    except ThisUserProfile.DoesNotExist:
-        return JsonResponse({'status': 'error', 'message': '使用者資料未建立'})
-
+    profile = ThisUserProfile.objects.get(gmail=request.user.email)
     favorite, created = FavoriteChatRoom.objects.get_or_create(user=profile, chat_room=chat_room)
     if created:
         return JsonResponse({'status': 'success', 'message': '已加入收藏'})
     else:
         return JsonResponse({'status': 'exists', 'message': '已經收藏過了'})
 
-
-# ------------- 收藏切換（新增/移除）-------------
-@require_POST
+# ------------------ 收藏切換 ------------------
 @login_required
+@require_POST
 def toggle_favorite(request):
-    try:
-        user_profile = ThisUserProfile.objects.get(gmail=request.user.email)
-    except ThisUserProfile.DoesNotExist:
-        return JsonResponse({'status': 'error', 'msg': '找不到使用者資料'}, status=404)
-
     room_id = request.POST.get('room_id')
     if not room_id:
         return JsonResponse({'status': 'error', 'msg': '缺少 room_id'}, status=400)
 
     chat_room = get_object_or_404(ChatRoom, id=room_id)
-    fav_obj = FavoriteChatRoom.objects.filter(user=user_profile, chat_room=chat_room).first()
+    profile = ThisUserProfile.objects.get(gmail=request.user.email)
+    fav_obj = FavoriteChatRoom.objects.filter(user=profile, chat_room=chat_room).first()
 
     if fav_obj:
         fav_obj.delete()
         return JsonResponse({'status': 'removed'})
     else:
-        FavoriteChatRoom.objects.create(user=user_profile, chat_room=chat_room)
+        FavoriteChatRoom.objects.create(user=profile, chat_room=chat_room)
         return JsonResponse({'status': 'added'})
 
 

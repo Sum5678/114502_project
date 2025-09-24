@@ -183,6 +183,9 @@ urlpatterns = [
     path('api/stores-with-ads/', views.stores_with_ads_api, name='stores_with_ads_api'),
     path('api/get_store_ad/', views.get_store_ad, name='get_store_ad'),
 
+
+
+   #聊天室相關
     path('api/chatrooms/', views.chatrooms_api, name='chatrooms_api'),
     path('chatrooms_api/', views.chatrooms_api, name='chatrooms_api'),
     path('chat/messages/<int:room_id>/', views.chat_messages_api, name='chat_messages_api'),
@@ -192,6 +195,7 @@ urlpatterns = [
     path('toggle_favorite/', views.toggle_favorite, name='toggle_favorite'),
     path('chatrooms/', views.chatroom_view, name='chatroom_page'),
     path('api/reports.json', views.reports_with_subkind_json, name='reports_with_subkind_json'),
+    path('check_message/', views.check_message, name='check_message'),
 
 
     # Pemap 管理員相關
