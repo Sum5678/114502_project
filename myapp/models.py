@@ -312,21 +312,23 @@ class ChatMessage(models.Model):
     user = models.ForeignKey(
         'ThisUserProfile',
         on_delete=models.CASCADE,
-        db_column='user_id',
         help_text="留言的使用者"
     )
-    region = models.CharField(max_length=50, help_text="區域名稱")
+    # ✅ 保持使用 region 欄位，與你的資料庫表一致
+    region = models.CharField(max_length=50, help_text="區域名稱") 
     message = models.TextField()
     nickname = models.CharField(max_length=100, blank=True, null=True)
     timestamp = models.DateTimeField(auto_now_add=True)
 
-    # ✅ 新增回覆功能
     reply_to = models.ForeignKey(
         'self',
         null=True, blank=True,
         on_delete=models.SET_NULL,
         related_name='replies'
     )
+    # ✅ 由於你的資料庫沒有這些欄位，我們在模型中也不定義。
+    # reply_to_text = models.TextField(null=True, blank=True)
+    # reply_to_id = models.IntegerField(null=True, blank=True)
 
     class Meta:
         db_table = 'chat_messages'
@@ -361,24 +363,6 @@ class FavoriteChatRoom(models.Model):
     def __str__(self):
         return f"{self.user.username} 收藏了 {self.chat_room}"
     
-    # class ChatMessage(models.Model):
-#     user = models.ForeignKey(
-#         'ThisUserProfile',
-#         on_delete=models.CASCADE,
-#         db_column='user_id',  # 指定外鍵欄位
-#         help_text="留言的使用者"
-#     )
-#     region = models.CharField(max_length=50, help_text="區域名稱")
-#     message = models.TextField()
-#     timestamp = models.DateTimeField(auto_now_add=True)
-
-#     class Meta:
-#         db_table = 'chat_messages'
-#         verbose_name = "聊天室訊息"
-#         verbose_name_plural = "聊天室訊息"
-
-#     def __str__(self):
-#         return f"{self.user} @ {self.region}: {self.message[:20]}"
 
 
 # ----------------商家廣告--------------------
@@ -681,3 +665,23 @@ class UserPayment(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.amount} 元 - {self.item} - {self.transaction_id}"
+
+
+    # class ChatMessage(models.Model):
+#     user = models.ForeignKey(
+#         'ThisUserProfile',
+#         on_delete=models.CASCADE,
+#         db_column='user_id',  # 指定外鍵欄位
+#         help_text="留言的使用者"
+#     )
+#     region = models.CharField(max_length=50, help_text="區域名稱")
+#     message = models.TextField()
+#     timestamp = models.DateTimeField(auto_now_add=True)
+
+#     class Meta:
+#         db_table = 'chat_messages'
+#         verbose_name = "聊天室訊息"
+#         verbose_name_plural = "聊天室訊息"
+
+#     def __str__(self):
+#         return f"{self.user} @ {self.region}: {self.message[:20]}"
