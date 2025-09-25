@@ -4111,6 +4111,12 @@ from django.conf import settings
 import json
 import google.generativeai as genai
 # from google.cloud import language_v1 # 不再需要，可以移除
+
+# 設定 API Key
+genai.configure(api_key=settings.GOOGLE_API_KEY)
+model = genai.GenerativeModel('gemini-1.5-flash')
+
+
 def chatrooms_api(request):
     rooms = ChatRoom.objects.all().values('id', 'city', 'district', 'click_count')
     return JsonResponse(list(rooms), safe=False)
