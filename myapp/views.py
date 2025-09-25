@@ -4101,10 +4101,16 @@ def admin_send_email(request, p_id):
 
 
 #------------------------聊天室---------------------
-from .models import ChatRoom
-from django.views.decorators.csrf import csrf_exempt
+from .models import ThisUserProfile, ChatRoom, ChatMessage, FavoriteChatRoom
+from django.shortcuts import render, get_object_or_404
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from django.contrib.auth.decorators import login_required
+from django.db.models import Count
+from django.conf import settings
 import json
-
+import google.generativeai as genai
+# from google.cloud import language_v1 # 不再需要，可以移除
 def chatrooms_api(request):
     rooms = ChatRoom.objects.all().values('id', 'city', 'district', 'click_count')
     return JsonResponse(list(rooms), safe=False)
