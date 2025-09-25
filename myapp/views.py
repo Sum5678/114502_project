@@ -4173,31 +4173,34 @@ def chatroom_view(request):
         'favorite_chatroom_ids': json.dumps(favorite_ids),
         'chatrooms_json': json.dumps(chatroom_list),
     })
-
 # ------------------ 發訊息 ------------------
 @login_required
 @require_POST
 def send_message(request, room_id):
     try:
         data = json.loads(request.body)
-    except Exception:
-        return JsonResponse({'status': 'error', 'msg': '資料格式錯誤'})
+    except json.JSONDecodeError:
+        return JsonResponse({'status': 'error', 'msg': '資料格式錯誤'}, status=400)
 
     message_text = data.get('message', '').strip()
     nickname = data.get('nickname', '匿名').strip()
     reply_to_id = data.get('reply_to_id')
 
     if not message_text:
-        return JsonResponse({'status': 'error', 'msg': '訊息不能為空'})
+        return JsonResponse({'status': 'error', 'msg': '訊息不能為空'}, status=400)
 
-    room = get_object_or_404(ChatRoom, id=room_id)
+    try:
+        room = get_object_or_404(ChatRoom, id=room_id)
+        user_profile = ThisUserProfile.objects.get(gmail=request.user.email)
+    except ThisUserProfile.DoesNotExist:
+        return JsonResponse({'status': 'error', 'msg': '使用者資料不存在'}, status=404)
 
-    # 取得回覆訊息
     reply_to_msg = ChatMessage.objects.filter(id=reply_to_id).first() if reply_to_id else None
 
     # 建立訊息
     msg_obj = ChatMessage.objects.create(
-        chat_room=room,
+        # ✅ 修正：使用 region 欄位來儲存 chat_room 的 ID，與 chat_messages_api 保持一致
+        region=room.id,
         message=message_text,
         nickname=nickname,
         reply_to=reply_to_msg,
@@ -4217,6 +4220,7 @@ def send_message(request, room_id):
         }
     })
 
+
 # ------------------ 即時檢查訊息 ------------------
 # ... (在檔案開頭加入)
 import google.generativeai as genai
@@ -4229,52 +4233,63 @@ model = genai.GenerativeModel('gemini-1.5-flash')
 # ... (其他 views 函式)
 
 # ------------------ 即時檢查與改寫訊息 ------------------
+# ------------------ 即時檢查與改寫訊息 ------------------
 @login_required
 @require_POST
 def check_message(request):
     try:
         data = json.loads(request.body)
         message = data.get('message', '')
-    except Exception:
+        print(f"後端接收到的訊息是: '{message}'")
+    except json.JSONDecodeError:
         return JsonResponse({'status': 'error', 'msg': '資料格式錯誤'}, status=400)
 
     if not message.strip():
+        print("訊息為空，直接返回 'ok'")
         return JsonResponse({'status': 'ok'})
 
     try:
-        # ✅ 使用 Gemini API 進行判斷和改寫
-        prompt = f"""請判斷以下中文訊息是否包含不當、攻擊性、歧視或不友善的內容。
-如果訊息安全且友善，請直接回覆 "安全"。
-如果訊息不友善或不當，請將其改寫成一個友善、中性且不具攻擊性的版本，並只回覆改寫後的文字。
-例如：
-輸入: 你這個垃圾
-輸出: 謝謝你的意見，我會注意。
+        # ✅ 改進的 Prompt
+        prompt = f"""
+你是一個中文訊息的安全審查助手。
+請判斷下面這段訊息是否安全：
 
-輸入: 今天天氣真好。
-輸出: 安全
+訊息內容：{message}
 
-輸入: {message}
-輸出:"""
-        
-        # 呼叫 Gemini API
+規則：
+1. 如果訊息完全安全、友善，請只回覆「安全」兩個字。
+2. 如果訊息包含不當、攻擊性、歧視或可能引發法律問題的內容，
+   請你改寫成友善、中性、不觸法的版本，並只回覆改寫後的文字。
+3. 不要回覆任何解釋或額外文字，只能回覆「安全」或改寫後的內容。
+
+範例：
+輸入：你這個垃圾
+輸出：我希望我們能好好溝通。
+
+輸入：今天天氣真好。
+輸出：安全
+"""
+
         response = model.generate_content(prompt)
-        gemini_text = response.text.strip()
-        
-        # 判斷 Gemini 的回覆
-        if gemini_text == "安全":
+
+        # ⚠️ 建議保險抓第一個候選回覆
+        gemini_text = getattr(response, "text", "").strip()
+        if not gemini_text and hasattr(response, "candidates"):
+            gemini_text = response.candidates[0].content.parts[0].text.strip()
+
+        # 放寬判斷，避免「安全。」這種情況
+        if gemini_text.strip("。.! ") == "安全":
             return JsonResponse({'status': 'ok'})
         else:
-            return JsonResponse({
-                'status': 'rewritten',
-                'suggestion': gemini_text
-            })
+            return JsonResponse({'status': 'rewritten', 'suggestion': gemini_text})
 
     except Exception as e:
         print(f"Gemini API 呼叫失敗: {e}")
         return JsonResponse({
-            'status': 'error', 
+            'status': 'error',
             'msg': '無法檢查訊息安全性，請稍後再試。'
         }, status=500)
+
 
 # ------------------ 列出聊天室（含收藏狀態） ------------------
 @login_required
@@ -4322,7 +4337,6 @@ def toggle_favorite(request):
     else:
         FavoriteChatRoom.objects.create(user=profile, chat_room=chat_room)
         return JsonResponse({'status': 'added'})
-
 
 
 
