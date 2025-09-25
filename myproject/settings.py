@@ -13,6 +13,10 @@ import os
 import pymysql
 pymysql.install_as_MySQLdb()
 
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -271,3 +275,5 @@ PWA_APP_ICONS = [
         'sizes': '512x512'
     }
 ]
+
+GOOGLE_API_KEY = os.environ.get('GOOGLE_API_KEY')
