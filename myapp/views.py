@@ -4252,7 +4252,7 @@ def check_message(request):
         # ✅ 改進的 Prompt
         prompt = f"""
 你是一個中文訊息的安全審查助手。
-請判斷下面這段訊息是否安全：
+請判斷下面這段訊息是否安全且絕對不犯中華民國法律：
 
 訊息內容：{message}
 
