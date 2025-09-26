@@ -4372,6 +4372,12 @@ from django.utils import timezone
 from .models import StoreAll, StoreAdHistory, StoreAdHistoryImage, UserPayment, ThisUserProfile
 from .forms import StoreAdForm
 
+import base64
+from django.shortcuts import render, redirect
+from django.utils import timezone
+from .models import StoreAll, StoreAdHistory, StoreAdHistoryImage, UserPayment, ThisUserProfile
+from .forms import StoreAdForm
+
 def upload_store_ad(request):
     # 暫存資料
     pending_data = request.session.pop('pending_ad_data', None)
@@ -4428,35 +4434,22 @@ def upload_store_ad(request):
             )
 
             # 處理暫存圖片 (session)
-            for temp_url in pending_images:
-                try:
-                    temp_path = temp_url.replace(request.build_absolute_uri('/')[:-1], '')  # 去掉 domain
-                    with open(temp_path.lstrip('/'), 'rb') as f:
-                        content = f.read()
-                    filename = f"ads_history/{uuid.uuid4().hex}_{os.path.basename(temp_path)}"
-                    default_storage.save(filename, ContentFile(content))
-
-                    # ✅ 改成公開 URL
-                    public_url = f"https://storage.googleapis.com/114_502_no_stranger/{filename}"
-
-                    StoreAdHistoryImage.objects.create(
-                        history=ad_history,
-                        image_url=public_url
-                    )
-                except Exception as e:
-                    print(f"⚠️ 暫存圖片上傳失敗: {temp_url}, {e}")
+            for temp_b64 in pending_images:
+                StoreAdHistoryImage.objects.create(
+                    history=ad_history,
+                    image_url=temp_b64
+                )
 
             # 處理新上傳圖片
             for img_file in request.FILES.getlist('images'):
-                filename = f"ads_history/{uuid.uuid4().hex}_{img_file.name}"
-                default_storage.save(filename, ContentFile(img_file.read()))
-
-                # ✅ 改成公開 URL
-                public_url = f"https://storage.googleapis.com/114_502_no_stranger/{filename}"
+                img_data = img_file.read()
+                img_b64 = base64.b64encode(img_data).decode('utf-8')
+                mime_type = img_file.content_type
+                data_url = f"data:{mime_type};base64,{img_b64}"
 
                 StoreAdHistoryImage.objects.create(
                     history=ad_history,
-                    image_url=public_url
+                    image_url=data_url
                 )
 
             msg = "廣告申請已送審"
@@ -4474,19 +4467,21 @@ def upload_store_ad(request):
         else:
             # 表單無效，暫存資料
             request.session['pending_ad_data'] = request.POST.dict()
-            temp_urls = []
+            temp_b64_list = []
             for img_file in request.FILES.getlist('images'):
-                filename = f"temp/{uuid.uuid4().hex}_{img_file.name}"
-                default_storage.save(filename, ContentFile(img_file.read()))
-                image_url = default_storage.url(filename)
-                temp_urls.append(image_url)
-            request.session['pending_ad_images'] = temp_urls
+                img_data = img_file.read()
+                img_b64 = base64.b64encode(img_data).decode('utf-8')
+                mime_type = img_file.content_type
+                data_url = f"data:{mime_type};base64,{img_b64}"
+                temp_b64_list.append(data_url)
+            request.session['pending_ad_images'] = temp_b64_list
             return redirect(request.path)
 
     else:
         form = StoreAdForm(initial=pending_data) if pending_data else StoreAdForm()
 
     return render(request, 'store_upload_ad.html', {'form': form, 'images': pending_images})
+
 
 
 
