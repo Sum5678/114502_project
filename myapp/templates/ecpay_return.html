@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>付款結果</title>
+</head>
+<body>
+<script>
+(function(){
+    // 取自 Django 傳入的 context
+    const item = "{{ item|escapejs }}";
+    const amount = "{{ amount|escapejs }}";
+    const st_id = "{{ st_id|default:''|escapejs }}";
+
+    // 如果有 opener (父視窗)，透過 postMessage 傳回
+    if (window.opener && !window.opener.closed) {
+        window.opener.postMessage({
+            type: "PAYMENT_SUCCESS",
+            item: item,
+            amount: amount,
+            st_id: st_id
+        }, "*");
+    }
+
+    // 關閉目前視窗 (在某些瀏覽器/場景可能需要使用者互動才允許關閉)
+    // 等 800ms 再關閉，給父頁面一點時間處理
+    setTimeout(function(){ window.close(); }, 800);
+})();
+</script>
+<p>付款通知已送出，視窗即將關閉...</p>
+</body>
+</html>

@@ -4774,32 +4774,33 @@ def index(request):
 
 
 
+
+
+
+
+
+
+
 import datetime
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
-from .models import UserPayment, ThisUserProfile
-from .sdk.ecpay_payment_sdk import ECPayPaymentSdk
+from django.views.decorators.csrf import csrf_exempt
+from myapp.models import UserPayment, ThisUserProfile
+from myapp.sdk.ecpay_payment_sdk import CreateOrder
 
-
+# -------------------------------
+# 付款頁面（新版 SDK）
+# -------------------------------
 def ecpay_checkout(request):
     if not request.user.is_authenticated:
         return HttpResponse("請先登入！")
 
-    # 直接抓已存在的 ThisUserProfile
-    profile = ThisUserProfile.objects.get(id=request.user.id)  # 假設 request.user.id 對應 profile.id
-
-    # 前端傳來的金額、商家ID
+    profile = ThisUserProfile.objects.get(id=request.user.id)
     amount = int(request.GET.get("amount", 100))
     st_id = request.GET.get("st_id")
 
     # 金額對應方案名稱
-    amount_to_item = {
-        20: '微型方案',
-        30: '小型方案',
-        50: '中型方案',
-        100: '大型方案',
-        200: '超大方案'
-    }
+    amount_to_item = {20:'微型方案', 30:'小型方案', 50:'中型方案', 100:'大型方案', 200:'超大方案'}
     item_name = amount_to_item.get(amount, "自訂方案")
 
     merchant_trade_no = 'TEST' + datetime.datetime.now().strftime('%Y%m%d%H%M%S')
@@ -4812,32 +4813,87 @@ def ecpay_checkout(request):
         'TotalAmount': amount,
         'TradeDesc': '廣告上架付款',
         'ItemName': item_name,
-        'ReturnURL': 'http://127.0.0.1:8000/ecpay/return/',
-        'OrderResultURL': 'http://127.0.0.1:8000/ecpay/return/',
-        'ClientBackURL': 'http://127.0.0.1:8000/thankyou/',
+        'ReturnURL': 'http://127.0.0.1:8000/ecpay/return/',   # 綠界伺服器回呼
+        'OrderResultURL': 'http://127.0.0.1:8000/ecpay/result/', # 使用者付款完成導回
+        'ClientBackURL': f'http://127.0.0.1:8000/store_upload_ad/?paid=1&st_id={st_id}',  # 使用者點完成回頁面
         'NeedExtraPaidInfo': 'Y',
         'EncryptType': 1,
-        'ChoosePayment': 'Credit'
+        'ChoosePayment': 'ALL',
     }
 
-    sdk = ECPayPaymentSdk(
-        MerchantID='2000132',
-        HashKey='5294y06JbISpM5x9',
-        HashIV='v77hoKGq4kWxNNIS'
-    )
-    final_params = sdk.create_order(order_params)
-    action_url = "https://payment-stage.ecpay.com.tw/Cashier/AioCheckOut/V5"
+    try:
+        # 新版 SDK 初始化
+        create_order = CreateOrder()
+        create_order.MerchantID = '2000132'  # 測試商店號
+        create_order.HashKey = '5294y06JbISpM5x9'
+        create_order.HashIV = 'v77hoKGq4kWxNNIS'
 
-    # 存入 UserPayment
-    UserPayment.objects.create(
-        user=profile,
-        amount=amount,
-        item=item_name,
-        transaction_id=merchant_trade_no,
-        st_id=st_id
-    )
+        # 建立訂單
+        final_params = create_order.create_order(order_params)
 
-    return render(request, 'ecpay_checkout.html', {
-        'final_params': final_params,
-        'action_url': action_url
-    })
+        # 新增未付款紀錄
+        UserPayment.objects.create(
+            user=profile,
+            amount=amount,
+            item=item_name,
+            transaction_id=merchant_trade_no,
+            st_id=st_id,
+        )
+
+        # 自動生成 HTML 表單送到綠界
+        action_url = "https://payment-stage.ecpay.com.tw/Cashier/AioCheckOut/V5"
+        form_inputs = "".join([
+            f'<input type="hidden" name="{k}" value="{v}">'
+            for k, v in final_params.items()
+        ])
+        html = f"""
+        <html>
+        <head><meta charset="utf-8"><title>付款中...</title></head>
+        <body>
+            <h3>即將導向綠界付款頁面...</h3>
+            <form id="ecpayForm" method="post" action="{action_url}">
+                {form_inputs}
+            </form>
+            <script>document.getElementById('ecpayForm').submit();</script>
+        </body>
+        </html>
+        """
+        return HttpResponse(html)
+
+    except Exception as e:
+        import traceback
+        tb = traceback.format_exc()
+        debug_msg = f"錯誤: {e}\n\norder_params = {order_params}\n\nTraceback:\n{tb}"
+        return HttpResponse(debug_msg, content_type="text/plain")
+
+
+# -------------------------------
+# 綠界伺服器回呼（後端）
+# -------------------------------
+@csrf_exempt
+def ecpay_return(request):
+    if request.method == "POST":
+        merchant_trade_no = request.POST.get("MerchantTradeNo")
+        rtn_code = request.POST.get("RtnCode")
+        trade_amt = request.POST.get("TradeAmt")
+
+        # 更新付款狀態
+        try:
+            payment = UserPayment.objects.get(transaction_id=merchant_trade_no)
+            if rtn_code == "1":  # 綠界規定 1=成功
+                # 這裡可紀錄付款成功時間或其他資訊
+                pass
+        except UserPayment.DoesNotExist:
+            pass  # 找不到交易紀錄，可記 log
+
+        return HttpResponse("1|OK")  # ✅ 綠界規定必須回傳
+
+    return HttpResponse("Error")
+
+
+# -------------------------------
+# 使用者付款完成後導回前端頁面
+# -------------------------------
+def ecpay_result(request):
+    st_id = request.GET.get('st_id')
+    return redirect(f"/store_upload_ad/?paid=1&st_id={st_id}")
