@@ -4799,7 +4799,6 @@ def ecpay_checkout(request):
     amount = int(request.GET.get("amount", 100))
     st_id = request.GET.get("st_id")
 
-    # 金額對應方案名稱
     amount_to_item = {20:'微型方案', 30:'小型方案', 50:'中型方案', 100:'大型方案', 200:'超大方案'}
     item_name = amount_to_item.get(amount, "自訂方案")
 
@@ -4813,25 +4812,24 @@ def ecpay_checkout(request):
         'TotalAmount': amount,
         'TradeDesc': '廣告上架付款',
         'ItemName': item_name,
-        'ReturnURL': 'http://127.0.0.1:8000/ecpay/return/',   # 綠界伺服器回呼
-        'OrderResultURL': 'http://127.0.0.1:8000/ecpay/result/', # 使用者付款完成導回
-        'ClientBackURL': f'http://127.0.0.1:8000/store_upload_ad/?paid=1&st_id={st_id}',  # 使用者點完成回頁面
+        'ReturnURL': 'http://127.0.0.1:8000/ecpay/return/',   
+        'OrderResultURL': 'http://127.0.0.1:8000/ecpay/result/', 
+        # ✅ 改這裡 → 導到 payment_done
+        'ClientBackURL': f'http://127.0.0.1:8000/ecpay/EC_payment_done/?st_id={st_id}&item={item_name}&amount={amount}',
+       
         'NeedExtraPaidInfo': 'Y',
         'EncryptType': 1,
-        'ChoosePayment': 'ALL',
+        'ChoosePayment': 'Credit',
     }
 
     try:
-        # 新版 SDK 初始化
         create_order = CreateOrder()
-        create_order.MerchantID = '2000132'  # 測試商店號
+        create_order.MerchantID = '2000132'
         create_order.HashKey = '5294y06JbISpM5x9'
         create_order.HashIV = 'v77hoKGq4kWxNNIS'
 
-        # 建立訂單
         final_params = create_order.create_order(order_params)
 
-        # 新增未付款紀錄
         UserPayment.objects.create(
             user=profile,
             amount=amount,
@@ -4840,12 +4838,8 @@ def ecpay_checkout(request):
             st_id=st_id,
         )
 
-        # 自動生成 HTML 表單送到綠界
         action_url = "https://payment-stage.ecpay.com.tw/Cashier/AioCheckOut/V5"
-        form_inputs = "".join([
-            f'<input type="hidden" name="{k}" value="{v}">'
-            for k, v in final_params.items()
-        ])
+        form_inputs = "".join([f'<input type="hidden" name="{k}" value="{v}">' for k, v in final_params.items()])
         html = f"""
         <html>
         <head><meta charset="utf-8"><title>付款中...</title></head>
@@ -4894,6 +4888,46 @@ def ecpay_return(request):
 # -------------------------------
 # 使用者付款完成後導回前端頁面
 # -------------------------------
+@csrf_exempt
 def ecpay_result(request):
     st_id = request.GET.get('st_id')
     return redirect(f"/store_upload_ad/?paid=1&st_id={st_id}")
+
+
+# views.py
+def ecpay_client_back(request):
+    st_id = request.GET.get("st_id")
+    item_name = request.GET.get("item", "自訂方案")
+    
+    html = f"""
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <title>付款完成</title>
+    </head>
+    <body>
+        <script>
+            if (window.opener) {{
+                window.opener.paymentCompleted({st_id}, "{item_name}");
+            }}
+            window.close();
+        </script>
+        <p>付款完成，頁面即將關閉...</p>
+    </body>
+    </html>
+    """
+    return HttpResponse(html)
+
+
+from django.shortcuts import render
+
+def EC_payment_done(request):
+    st_id = request.GET.get('st_id')
+    item = request.GET.get('item')
+    amount = request.GET.get('amount')
+    # 這個頁面只做 JS 控制父頁
+    return render(request, 'ec_payment_done.html', {
+        'st_id': st_id,
+        'item': item,
+        'amount': amount
+    })
