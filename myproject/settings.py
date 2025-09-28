@@ -32,7 +32,14 @@ SECRET_KEY = 'django-insecure-v$kp6c(&&c)%z*a5tcd65o6wo12f1)3!-&j@e4p%2u9@8p3z16
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["*"]
+# myproject/settings.py
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    'no-stranger-app-26102906571.asia-east1.run.app',  # <- 加上你的 Cloud Run URL
+]
+
+
 
 
 
@@ -277,3 +284,4 @@ PWA_APP_ICONS = [
 ]
 
 GOOGLE_API_KEY = os.environ.get('GOOGLE_API_KEY')
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
