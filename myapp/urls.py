@@ -161,6 +161,7 @@ urlpatterns = [
     path("/api/stores-with-ads/", views.stores_with_ads, name="stores_with_ads"),
     path('test_payment/', views.test_payment, name='test_payment'),  # 模擬付款頁面
     path('test_payment_done/', views.test_payment_done, name='test_payment_done'),  # 模擬付款頁面完成
+    path('ecpay/checkout/', views.ecpay_checkout, name='ecpay_checkout'),
 
 
 
