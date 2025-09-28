@@ -41,7 +41,6 @@
 <form method="post" enctype="multipart/form-data">
     {% csrf_token %}
 
-    <!-- 顯示非欄位錯誤 -->
     {% if form.non_field_errors %}
         <div class="alert alert-warning">
             {% for error in form.non_field_errors %}
@@ -50,7 +49,6 @@
         </div>
     {% endif %}
 
-    <!-- 隱藏欄位：付款資訊 -->
     <input type="hidden" name="payment_done" id="payment_done" value="0">
     <input type="hidden" name="payment_item" id="payment_item">
     <input type="hidden" name="payment_amount" id="payment_amount">
@@ -102,6 +100,7 @@
 
 <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
 <script>
+// 載入商家廣告資料
 document.getElementById('st_id').addEventListener('blur', function() {
     const st_id = this.value.trim();
     if (!st_id) return;
@@ -146,9 +145,9 @@ document.getElementById('st_id').addEventListener('blur', function() {
         .catch(err => console.error('載入廣告失敗', err));
 });
 
+// 選擇方案付款
 const adRadiusSelect = document.getElementById('ad_radius');
 const amountToItem = {20:'微型方案', 30:'小型方案', 50:'中型方案', 100:'大型方案', 200:'超大方案'};
-
 adRadiusSelect.addEventListener('change', function() {
     const val = parseInt(this.value);
     const st_id = document.getElementById('st_id').value;
@@ -164,40 +163,105 @@ adRadiusSelect.addEventListener('change', function() {
     }
 });
 
-// 檢查表單是否已付款
+// 整合付款檢查、popup 自動關閉與父頁面更新
 document.addEventListener("DOMContentLoaded", function() {
     const form = document.querySelector('form');
     const paymentDoneInput = document.getElementById('payment_done');
+    const currentUrl = window.location.href;
+    const urlParams = new URLSearchParams(window.location.search);
 
+    function showPaymentMessage(msgText) {
+        let msg = document.getElementById('payment_message');
+        if (!msg) {
+            msg = document.createElement('p');
+            msg.id = 'payment_message';
+            msg.classList.add('payment-message');
+            form.insertBefore(msg, form.firstChild);
+        }
+        msg.textContent = msgText;
+    }
+
+    function showAlert(text) {
+        let alertBox = document.getElementById('payment_alert');
+        if (!alertBox) {
+            alertBox = document.createElement('div');
+            alertBox.id = 'payment_alert';
+            alertBox.classList.add('alert', 'alert-warning');
+            alertBox.style.marginBottom = '15px';
+            const card = document.querySelector('.upload-ad-card');
+            card.insertBefore(alertBox, form);
+        }
+        alertBox.innerText = text;
+    }
+
+    // URL 參數 paid=1
+    if (urlParams.get("paid") === "1") {
+        if (paymentDoneInput) paymentDoneInput.value = '1';
+        showPaymentMessage("已完成付款");
+        if (window.opener) setTimeout(() => window.close(), 1000);
+    }
+
+    // 模擬頁面自動關閉
+    if (currentUrl.includes("MockScanCodePayPaid") && window.opener) {
+        window.opener.postMessage({ type: "PAYMENT_SUCCESS" }, "*");
+        setTimeout(() => window.close(), 1000);
+    }
+
+    // 表單提交檢查
     form.addEventListener('submit', function(e) {
         if (paymentDoneInput.value !== '1') {
             e.preventDefault();
-            let alertBox = document.getElementById('payment_alert');
-            if (!alertBox) {
-                alertBox = document.createElement('div');
-                alertBox.id = 'payment_alert';
-                alertBox.classList.add('alert', 'alert-warning');
-                alertBox.style.marginBottom = '15px';
-                alertBox.innerText = '請先完成付款，才能送出廣告！';
-                const card = document.querySelector('.upload-ad-card');
-                card.insertBefore(alertBox, form);
-            } else {
-                alertBox.innerText = '請先完成付款，才能送出廣告！';
-            }
+            showAlert("請先完成付款，才能送出廣告！");
         }
     });
 });
+
+// 父頁面接收 popup 訊息
+window.addEventListener("message", function(event) {
+    if (event.data.type === "PAYMENT_SUCCESS") {
+        const paymentDoneInput = document.getElementById('payment_done');
+        if (paymentDoneInput) paymentDoneInput.value = '1';
+        const form = document.querySelector('form');
+        let msg = document.getElementById('payment_message');
+        if (!msg) {
+            msg = document.createElement('p');
+            msg.id = 'payment_message';
+            msg.classList.add('payment-message');
+            form.insertBefore(msg, form.firstChild);
+        }
+        msg.textContent = "已完成付款";
+    }
+});
+
+function openPayment(amount, st_id, item_name) {
+    const url = `/ecpay/checkout/?amount=${amount}&st_id=${st_id}`;
+    window.open(url, "_blank", "width=600,height=800");
+}
+
+// 綠界回傳付款完成
+function paymentCompleted(st_id, item_name) {
+    // 在原頁面顯示已付款
+    alert(`${item_name} 已付款成功！`);
+    // 也可以用 Ajax 更新你的頁面資料
+    // fetch(`/store_upload_ad/?st_id=${st_id}&paid=1`);
+}
+
+window.addEventListener('message', function(event) {
+    // event.data: { paid: true, st_id, item, amount }
+    if (event.data && event.data.paid) {
+        const st_id = event.data.st_id;
+        const item = event.data.item;
+        const amount = event.data.amount;
+
+        alert(`方案「${item}」已付款，金額 ${amount} 元！`);
+        // 你也可以在頁面上直接更新對應區塊，例如：
+        // document.querySelector(`#status-${st_id}`).textContent = '已付款';
+    }
+});
+
 </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
 
 
 
