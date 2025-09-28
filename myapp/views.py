@@ -4378,6 +4378,7 @@ from django.utils import timezone
 from .models import StoreAll, StoreAdHistory, StoreAdHistoryImage, UserPayment, ThisUserProfile
 from .forms import StoreAdForm
 
+@csrf_exempt
 def upload_store_ad(request):
     # 暫存資料
     pending_data = request.session.pop('pending_ad_data', None)
