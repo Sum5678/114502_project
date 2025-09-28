@@ -1,18 +1,48 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html>
 <head>
     <meta charset="UTF-8">
-    <title>綠界金流 - 轉跳中</title>
+    <title>綠界付款模擬</title>
 </head>
 <body>
-    <p>系統將自動轉跳到綠界付款頁面，請稍候...</p>
-    <form id="ecpay-form" method="post" action="{{ action_url }}">
-        {% for key, value in final_params.items %}
-        <input type="hidden" name="{{ key }}" value="{{ value }}">
+    <h3>即將導向綠界付款頁面...</h3>
+
+    <!-- 真正跳轉到綠界付款頁面 -->
+    <form id="ecpayForm" method="post" action="{{ action_url }}">
+        {% for k, v in final_params.items %}
+            <input type="hidden" name="{{ k }}" value="{{ v }}">
         {% endfor %}
+        <input type="hidden" name="ClientBackURL" value="http://127.0.0.1:8000/store/upload-ad/?status=success">
     </form>
+
+
     <script>
-        document.getElementById('ecpay-form').submit();
+        // 自動送出表單到綠界
+        document.getElementById("ecpayForm").submit();
     </script>
 </body>
 </html>
+
+
+
+
+
+
+<!-- <!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>綠界付款模擬</title>
+</head>
+<body>
+    <h3>即將導向綠界付款頁面...</h3>
+    <form id="ecpayForm" method="post" action="{{ action_url }}">
+        {% for k, v in final_params.items %}
+            <input type="hidden" name="{{ k }}" value="{{ v }}">
+        {% endfor %}
+    </form>
+    <script>
+        document.getElementById("ecpayForm").submit();
+    </script>
+</body>
+</html> -->
