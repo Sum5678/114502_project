@@ -8,6 +8,9 @@ from django.utils import timezone
 import json
 from datetime import datetime
 from .utils import get_unreviewed_counts  
+import datetime
+from django.views.decorators.csrf import csrf_exempt
+from myapp.sdk.ecpay_payment_sdk import ECPayPaymentSdk
 
 
 def report_view(request):
@@ -4714,6 +4717,10 @@ def _sum_json_list_lengths(qs, field):
             pass
     return total
 
+
+
+
+
 def index(request):
     # ✅ 審核通過的狀態（同時相容文字/數字）
     approved_status = ["人工審核通過", "4", 4, "2", 2]
@@ -4758,3 +4765,79 @@ def index(request):
         "interactions": interactions,
     }
     return render(request, "index.html", ctx)
+
+
+
+
+
+
+
+
+
+import datetime
+from django.shortcuts import render, redirect
+from django.http import HttpResponse
+from .models import UserPayment, ThisUserProfile
+from .sdk.ecpay_payment_sdk import ECPayPaymentSdk
+
+
+def ecpay_checkout(request):
+    if not request.user.is_authenticated:
+        return HttpResponse("請先登入！")
+
+    # 直接抓已存在的 ThisUserProfile
+    profile = ThisUserProfile.objects.get(id=request.user.id)  # 假設 request.user.id 對應 profile.id
+
+    # 前端傳來的金額、商家ID
+    amount = int(request.GET.get("amount", 100))
+    st_id = request.GET.get("st_id")
+
+    # 金額對應方案名稱
+    amount_to_item = {
+        20: '微型方案',
+        30: '小型方案',
+        50: '中型方案',
+        100: '大型方案',
+        200: '超大方案'
+    }
+    item_name = amount_to_item.get(amount, "自訂方案")
+
+    merchant_trade_no = 'TEST' + datetime.datetime.now().strftime('%Y%m%d%H%M%S')
+
+    order_params = {
+        'MerchantTradeNo': merchant_trade_no,
+        'MerchantTradeDate': datetime.datetime.now().strftime('%Y/%m/%d %H:%M:%S'),
+        'CustomField1': str(profile.id),
+        'PaymentType': 'aio',
+        'TotalAmount': amount,
+        'TradeDesc': '廣告上架付款',
+        'ItemName': item_name,
+        'ReturnURL': 'http://127.0.0.1:8000/ecpay/return/',
+        'OrderResultURL': 'http://127.0.0.1:8000/ecpay/return/',
+        'ClientBackURL': 'http://127.0.0.1:8000/thankyou/',
+        'NeedExtraPaidInfo': 'Y',
+        'EncryptType': 1,
+        'ChoosePayment': 'Credit'
+    }
+
+    sdk = ECPayPaymentSdk(
+        MerchantID='2000132',
+        HashKey='5294y06JbISpM5x9',
+        HashIV='v77hoKGq4kWxNNIS'
+    )
+    final_params = sdk.create_order(order_params)
+    action_url = "https://payment-stage.ecpay.com.tw/Cashier/AioCheckOut/V5"
+
+    # 存入 UserPayment
+    UserPayment.objects.create(
+        user=profile,
+        amount=amount,
+        item=item_name,
+        transaction_id=merchant_trade_no,
+        st_id=st_id
+    )
+
+    return render(request, 'ecpay_checkout.html', {
+        'final_params': final_params,
+        'action_url': action_url
+    })
