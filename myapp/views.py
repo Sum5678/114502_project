@@ -1283,6 +1283,7 @@ def submit_store(request):
                 admin_id=9999,
                 user_id=request.user.id,         # ✅ 改這裡
                 poster_gmail=request.user.email,
+                submitted_by=request.user.id 
             )
 
             # 建立廣告
@@ -4224,45 +4225,49 @@ def send_message(request, room_id):
     })
 
 
-# ------------------ 即時檢查訊息 ------------------
-# ... (在檔案開頭加入)
-import google.generativeai as genai
+# views.py
+
+import json
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from django.contrib.auth.decorators import login_required
 from django.conf import settings
+import google.generativeai as genai
 
-# 設定 API Key
+# ------------------ 設定 Gemini API ------------------
 genai.configure(api_key=settings.GOOGLE_API_KEY)
-model = genai.GenerativeModel('gemini-1.5-flash')
 
-# ... (其他 views 函式)
+# 你可以用 list_models() 確認可用模型名稱
+# print(genai.list_models())
 
-# ------------------ 即時檢查與改寫訊息 ------------------
+model = genai.GenerativeModel("gemini-1.5-flash")  # 或 list_models() 顯示可用的其他模型
+
 # ------------------ 即時檢查與改寫訊息 ------------------
 @login_required
 @require_POST
 def check_message(request):
     try:
         data = json.loads(request.body)
-        message = data.get('message', '')
-        print(f"後端接收到的訊息是: '{message}'")
+        message = data.get('message', '').strip()
+        print(f"後端接收到訊息: '{message}'")
     except json.JSONDecodeError:
         return JsonResponse({'status': 'error', 'msg': '資料格式錯誤'}, status=400)
 
-    if not message.strip():
-        print("訊息為空，直接返回 'ok'")
-        return JsonResponse({'status': 'ok'})
+    if not message:
+        return JsonResponse({'status': 'ok'})  # 空訊息直接通過
 
     try:
-        # ✅ 改進的 Prompt
         prompt = f"""
-你是一個中文訊息的安全審查助手。
-請判斷下面這段訊息是否安全且絕對不犯中華民國法律：
+你是一個中文訊息安全審查助手。
+請判斷下面這段訊息是否安全且不違反中華民國法律：
 
-訊息內容：{message}
+訊息內容：
+{message}
 
 規則：
 1. 如果訊息完全安全、友善，請只回覆「安全」兩個字。
 2. 如果訊息包含不當、攻擊性、歧視或可能引發法律問題的內容，
-   請你改寫成友善、中性、不觸法的版本，並只回覆改寫後的文字。
+   請改寫成友善、中性、不觸法的版本，並只回覆改寫後的文字。
 3. 不要回覆任何解釋或額外文字，只能回覆「安全」或改寫後的內容。
 
 範例：
@@ -4272,15 +4277,14 @@ def check_message(request):
 輸入：今天天氣真好。
 輸出：安全
 """
-
         response = model.generate_content(prompt)
 
-        # ⚠️ 建議保險抓第一個候選回覆
+        # 取得回覆文字
         gemini_text = getattr(response, "text", "").strip()
         if not gemini_text and hasattr(response, "candidates"):
             gemini_text = response.candidates[0].content.parts[0].text.strip()
 
-        # 放寬判斷，避免「安全。」這種情況
+        # 判斷「安全」回覆
         if gemini_text.strip("。.! ") == "安全":
             return JsonResponse({'status': 'ok'})
         else:
@@ -4357,51 +4361,31 @@ def public_profile(request, gmail):
 
 
 #-----------------上傳廣告時建立歷史紀錄-------------------
-from django.core.files.base import ContentFile
-from django.core.files.storage import default_storage
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
-from .models import StoreAll, StoreAdHistory, StoreAdHistoryImage, UserPayment, ThisUserProfile
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+from .models import StoreAll, StoreAdHistory, StoreAdHistoryImage, StoreAdImage, StoreAd, UserPayment, ThisUserProfile
 from .forms import StoreAdForm
-import uuid
+import base64
+
+# 對應價格方案
+AD_PRICE_SCHEME = {10: 0, 20: 20, 30: 30, 50: 50, 100: 100, 200: 200}
+AD_ITEM_NAME = {10:'免費方案', 20:'微型方案', 30:'小型方案', 50:'中型方案', 100:'大型方案', 200:'超大方案'}
 
 # ----------------- 上傳廣告（GCS 版 + 半徑10公尺免費） -----------------
-import os
-import uuid
-from django.core.files.base import ContentFile
-from django.core.files.storage import default_storage
-from django.shortcuts import render, redirect
-from django.utils import timezone
-from .models import StoreAll, StoreAdHistory, StoreAdHistoryImage, UserPayment, ThisUserProfile
-from .forms import StoreAdForm
-
-import base64
-from django.shortcuts import render, redirect
-from django.utils import timezone
-from .models import StoreAll, StoreAdHistory, StoreAdHistoryImage, UserPayment, ThisUserProfile
-from .forms import StoreAdForm
-
 @csrf_exempt
 def upload_store_ad(request):
-    # 暫存資料
     pending_data = request.session.pop('pending_ad_data', None)
     pending_images = request.session.pop('pending_ad_images', [])
 
     if request.method == 'POST':
         form = StoreAdForm(request.POST)
-        st_id = request.POST.get('st_id')
-        ad_radius = int(request.POST.get('ad_radius', 0))
-        payment_done = request.POST.get('payment_done') == '1'
-        payment_item = request.POST.get('payment_item')
-        payment_amount = request.POST.get('payment_amount')
-
-        # 如果不是免費 (radius != 10) 就檢查付款
-        if ad_radius != 10 and not payment_done:
-            form.add_error(None, "請先完成付款再提交廣告")
-            return render(request, 'store_upload_ad.html', {'form': form, 'images': pending_images})
+        st_id = int(request.POST.get('st_id', 0))
+        ad_radius = int(request.POST.get('ad_radius', 10))
 
         if form.is_valid():
-            # 取得商家
+            # 取得商家資料
             try:
                 store = StoreAll.objects.get(st_id=st_id)
             except StoreAll.DoesNotExist:
@@ -4415,52 +4399,32 @@ def upload_store_ad(request):
                 form.add_error(None, '請先完成會員資料填寫')
                 return render(request, 'store_upload_ad.html', {'form': form, 'images': pending_images})
 
-            # 建立付款紀錄 (只有非免費廣告才建立)
-            payment = None
-            if ad_radius != 10:
-                payment = UserPayment.objects.create(
-                    user=user_profile,
-                    amount=int(payment_amount),
-                    item=payment_item,
-                    st_id=st_id,
-                    is_used=True,
-                    created_at=timezone.now()
-                )
-
-            # 建立廣告歷史紀錄
+            # 建立廣告歷史紀錄 (審核前)
             ad_history = StoreAdHistory.objects.create(
                 st=store,
                 ad_content=form.cleaned_data['ad_content'],
-                ad_radius=form.cleaned_data['ad_radius'],
+                ad_radius=ad_radius,
                 enabled=form.cleaned_data['enabled'],
                 status='pending',
                 created_at=timezone.now()
             )
 
-            # 處理暫存圖片 (session)
+            # 暫存圖片
             for temp_b64 in pending_images:
-                StoreAdHistoryImage.objects.create(
-                    history=ad_history,
-                    image_url=temp_b64
-                )
+                StoreAdHistoryImage.objects.create(history=ad_history, image_url=temp_b64)
 
-            # 處理新上傳圖片
             for img_file in request.FILES.getlist('images'):
                 img_data = img_file.read()
                 img_b64 = base64.b64encode(img_data).decode('utf-8')
                 mime_type = img_file.content_type
                 data_url = f"data:{mime_type};base64,{img_b64}"
-
-                StoreAdHistoryImage.objects.create(
-                    history=ad_history,
-                    image_url=data_url
-                )
+                StoreAdHistoryImage.objects.create(history=ad_history, image_url=data_url)
 
             msg = "廣告申請已送審"
-            if payment:
-                msg += f"，已完成付款 ({payment.item} {payment.amount}元)"
+            if ad_radius == 10:
+                msg += " (免費方案，審核通過後將直接上架)"
             else:
-                msg += " (免費廣告)"
+                msg += f" (付費方案，審核通過後會通知付款)"
 
             return render(request, 'store_upload_ad.html', {
                 'form': StoreAdForm(),
@@ -4487,9 +4451,75 @@ def upload_store_ad(request):
     return render(request, 'store_upload_ad.html', {'form': form, 'images': pending_images})
 
 
+# ---------------- 管理員審核廣告 ----------------
+def admin_review_ads(request):
+    ads = StoreAdHistory.objects.filter(status='pending').order_by('created_at')
+    return render(request, 'admin_review_ads.html', {'ads': ads})
 
 
-# --------- API: 根據商家編號取得廣告 ---------
+from django.shortcuts import get_object_or_404, redirect
+from django.utils import timezone
+from .models import StoreAdHistory, StoreAd, StoreAdImage, UserPayment, ThisUserProfile
+
+from django.shortcuts import redirect
+
+def review_store_ad(request, history_id, action):
+    ad_history = get_object_or_404(StoreAdHistory, pk=history_id)
+
+    if action == "approve":
+        ad_history.status = "approved"
+        ad_history.reviewed_at = timezone.now()
+        ad_history.save()
+
+        if ad_history.ad_radius == 10:  # 免費方案
+            ad, created = StoreAd.objects.get_or_create(
+                st=ad_history.st,
+                defaults={
+                    'ad_content': ad_history.ad_content,
+                    'ad_radius': ad_history.ad_radius,
+                    'enabled': ad_history.enabled,
+                    'status': 'approved',
+                }
+            )
+            if not created:
+                ad.ad_content = ad_history.ad_content
+                ad.ad_radius = ad_history.ad_radius
+                ad.enabled = ad_history.enabled
+                ad.status = 'approved'
+                ad.save()
+            ad.images.all().delete()
+            for img in ad_history.images.all():
+                StoreAdImage.objects.create(st=ad, image_url=img.image_url)
+        else:  # 付費方案
+            try:
+                user_profile = ThisUserProfile.objects.get(id=ad_history.st.user_id)
+            except ThisUserProfile.DoesNotExist:
+                user_profile = None
+
+            if user_profile:
+                price = AD_PRICE_SCHEME.get(ad_history.ad_radius, 0)
+                item_name = AD_ITEM_NAME.get(ad_history.ad_radius, f'方案 {ad_history.ad_radius}')
+                UserPayment.objects.create(
+                    user=user_profile,
+                    st_id=ad_history.st.st_id,
+                    amount=price,
+                    item=item_name,
+                    is_used=False
+                )
+
+    elif action == "reject":
+        ad_history.status = "rejected"
+        ad_history.reviewed_at = timezone.now()
+        ad_history.save()
+
+    # ✅ 一定要回傳 HttpResponse
+    return redirect('admin_review_ads')  # 這裡改成你的管理員審核頁 URL 名稱
+
+
+
+
+
+# ---------------- API: 取得商家廣告 ----------------
 def get_store_ad(request):
     st_id = request.GET.get('st_id')
     if not st_id:
@@ -4498,13 +4528,7 @@ def get_store_ad(request):
     try:
         store = StoreAll.objects.get(st_id=st_id)
     except StoreAll.DoesNotExist:
-        return JsonResponse({
-            'ad_content': '',
-            'images': [],
-            'ad_radius': 200,
-            'enabled': True,
-            'status': None,
-        })
+        return JsonResponse({'ad_content': '', 'images': [], 'ad_radius': 200, 'enabled': True, 'status': None})
 
     try:
         ad = StoreAd.objects.get(st=store)
@@ -4517,76 +4541,8 @@ def get_store_ad(request):
             'status': ad.status,
         })
     except StoreAd.DoesNotExist:
-        return JsonResponse({
-            'ad_content': '',
-            'images': [],
-            'ad_radius': 200,
-            'enabled': True,
-            'status': None,
-        })
+        return JsonResponse({'ad_content': '', 'images': [], 'ad_radius': 200, 'enabled': True, 'status': None})
 
-# ---------------- 管理員審核廣告 ----------------
-def admin_review_ads(request):
-    ads = StoreAdHistory.objects.filter(status='pending').order_by('created_at')
-    return render(request, 'admin_review_ads.html', {'ads': ads})
-
-def review_store_ad(request, history_id, action):
-    ad_history = get_object_or_404(StoreAdHistory, pk=history_id)
-
-    if action == "approve":
-        ad_history.status = "approved"
-        ad_history.reviewed_at = timezone.now()
-        ad_history.save()
-
-        ad, created = StoreAd.objects.get_or_create(
-            st=ad_history.st,
-            defaults={
-                'ad_content': ad_history.ad_content,
-                'ad_radius': ad_history.ad_radius,
-                'enabled': ad_history.enabled,
-                'status': 'approved',
-            }
-        )
-        if not created:
-            ad.ad_content = ad_history.ad_content
-            ad.ad_radius = ad_history.ad_radius
-            ad.enabled = ad_history.enabled
-            ad.status = 'approved'
-            ad.save()
-
-        ad.images.all().delete()
-        for img in ad_history.images.all():
-            StoreAdImage.objects.create(
-                st=ad,
-                image_url=img.image_url
-            )
-
-    elif action == "reject":
-        ad_history.status = "rejected"
-        ad_history.reviewed_at = timezone.now()
-        ad_history.save()
-
-        try:
-            payment = UserPayment.objects.filter(
-                user_id=ad_history.st.user_id,
-                is_used=False,
-                is_refunded=False
-            ).latest('created_at')
-            payment.is_refunded = True
-            payment.refunded_at = timezone.now()
-            payment.save()
-        except UserPayment.DoesNotExist:
-            print(f"⚠️ 廣告 {ad_history.history_id} 找不到付款紀錄，無法退款")
-
-    return redirect("admin_review_ads")
-
-
-
-
-
-
-
-# API: 取得商家廣告
 
 # ---------------- 商家地圖 API ----------------
 def stores_with_ads(request):
@@ -4606,17 +4562,18 @@ def stores_with_ads(request):
             }
 
             approved_ads = store.ad_histories.filter(status='approved').order_by('-created_at')
-            if approved_ads.exists():
-                latest_ad = approved_ads.first()
-                ad_data.update({
-                    'ad_content': latest_ad.ad_content or '',
-                    'ad_radius': latest_ad.ad_radius or 200,
-                    'enabled': latest_ad.enabled,
-                    'status': latest_ad.status,
-                    'images': [img.image_url for img in latest_ad.images.all()]
-                })
-            elif store.review_status == 'approved':
-                ad_data['enabled'] = False
+
+            for ad in approved_ads:
+                payment_ok = True if ad.ad_radius == 10 else (hasattr(ad, 'payment') and ad.payment.is_used)
+                if payment_ok:
+                    ad_data.update({
+                        'ad_content': ad.ad_content or '',
+                        'ad_radius': ad.ad_radius or 200,
+                        'enabled': ad.enabled,
+                        'status': ad.status,
+                        'images': [img.image_url for img in ad.images.all()]
+                    })
+                    break  # 只取最新有效廣告
 
             result.append(ad_data)
 
@@ -4625,15 +4582,57 @@ def stores_with_ads(request):
         return JsonResponse({'error': str(e)}, status=500)
 
 
-
-# 頁面：上傳廣告
-from django.shortcuts import render, redirect
-from .forms import StoreAdForm
-
+# ---------------- 頁面：上傳廣告 ----------------
 def upload_ad_page(request):
     pending_data = request.session.pop('pending_ad_data', None)
     form = StoreAdForm(initial=pending_data) if pending_data else StoreAdForm()
     return render(request, "store_upload_ad.html", {"form": form})
+
+
+
+
+
+
+
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+from .models import StoreAdHistory
+
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+from .models import StoreAdHistory
+
+@login_required
+def pending_payments(request):
+    user_email = request.user.email
+
+    # 取得符合條件的歷史廣告
+    histories = StoreAdHistory.objects.filter(
+        status='approved',
+        st__poster_gmail=user_email
+    ).exclude(
+        payment__is_used=True  # 排除已付款
+    )
+
+    # 整理給前端
+    payment_list = []
+    for h in histories:
+        payment_list.append({
+            'payment': h.payment,
+            'ad': h,
+            'images': getattr(h, 'images', []).all() if hasattr(h, 'images') else [],
+        })
+
+    return render(request, 'pending_payments.html', {'payment_list': payment_list})
+
+
+
+
+@login_required
+def pay_advertisement(request, payment_id):
+    payment = get_object_or_404(UserPayment, id=payment_id)
+    return render(request, 'pay_advertisement.html', {'payment': payment})
+
 
 
 # -------------付費------------
@@ -4778,9 +4777,6 @@ def index(request):
 
 
 
-
-
-
 import datetime
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
@@ -4812,11 +4808,10 @@ def ecpay_checkout(request):
         'TotalAmount': amount,
         'TradeDesc': '廣告上架付款',
         'ItemName': item_name,
-        'ReturnURL': 'http://127.0.0.1:8000/ecpay/return/',   
-        'OrderResultURL': 'http://127.0.0.1:8000/ecpay/result/', 
-        # ✅ 改這裡 → 導到 payment_done
-        'ClientBackURL': f'http://127.0.0.1:8000/ecpay/EC_payment_done/?st_id={st_id}&item={item_name}&amount={amount}',
-       
+        'ReturnURL': 'http://127.0.0.1:8000/ecpay/return/',   # 綠界伺服器回呼
+        # 'OrderResultURL': f'http://127.0.0.1:8000/ecpay/payment_done/{merchant_trade_no}/', # 付款完成導回
+        'OrderResultURL': 'http://127.0.0.1:8000/ecpay/done/',# 付款完成導回
+        'ClientBackURL': '',  # 不需要
         'NeedExtraPaidInfo': 'Y',
         'EncryptType': 1,
         'ChoosePayment': 'Credit',
@@ -4824,12 +4819,13 @@ def ecpay_checkout(request):
 
     try:
         create_order = CreateOrder()
-        create_order.MerchantID = '2000132'
+        create_order.MerchantID = '2000132'  # 測試商店號
         create_order.HashKey = '5294y06JbISpM5x9'
         create_order.HashIV = 'v77hoKGq4kWxNNIS'
 
         final_params = create_order.create_order(order_params)
 
+        # 新增未付款紀錄
         UserPayment.objects.create(
             user=profile,
             amount=amount,
@@ -4838,6 +4834,7 @@ def ecpay_checkout(request):
             st_id=st_id,
         )
 
+        # 自動生成 HTML 表單送到綠界
         action_url = "https://payment-stage.ecpay.com.tw/Cashier/AioCheckOut/V5"
         form_inputs = "".join([f'<input type="hidden" name="{k}" value="{v}">' for k, v in final_params.items()])
         html = f"""
@@ -4869,65 +4866,33 @@ def ecpay_return(request):
     if request.method == "POST":
         merchant_trade_no = request.POST.get("MerchantTradeNo")
         rtn_code = request.POST.get("RtnCode")
-        trade_amt = request.POST.get("TradeAmt")
 
-        # 更新付款狀態
         try:
             payment = UserPayment.objects.get(transaction_id=merchant_trade_no)
-            if rtn_code == "1":  # 綠界規定 1=成功
-                # 這裡可紀錄付款成功時間或其他資訊
-                pass
+            if rtn_code == "1":
+                payment.is_used = True
+                payment.save()
         except UserPayment.DoesNotExist:
-            pass  # 找不到交易紀錄，可記 log
+            pass
 
         return HttpResponse("1|OK")  # ✅ 綠界規定必須回傳
-
     return HttpResponse("Error")
 
 
 # -------------------------------
-# 使用者付款完成後導回前端頁面
+# 付款完成頁（小視窗）
 # -------------------------------
-@csrf_exempt
-def ecpay_result(request):
-    st_id = request.GET.get('st_id')
-    return redirect(f"/store_upload_ad/?paid=1&st_id={st_id}")
-
-
-# views.py
-def ecpay_client_back(request):
-    st_id = request.GET.get("st_id")
-    item_name = request.GET.get("item", "自訂方案")
-    
-    html = f"""
-    <html>
-    <head>
-        <meta charset="utf-8">
-        <title>付款完成</title>
-    </head>
-    <body>
-        <script>
-            if (window.opener) {{
-                window.opener.paymentCompleted({st_id}, "{item_name}");
-            }}
-            window.close();
-        </script>
-        <p>付款完成，頁面即將關閉...</p>
-    </body>
-    </html>
-    """
-    return HttpResponse(html)
-
-
 from django.shortcuts import render
+from django.views.decorators.csrf import csrf_exempt
 
-def EC_payment_done(request):
-    st_id = request.GET.get('st_id')
+@csrf_exempt
+def EC_payment_done(request, transaction_id=None):
+    st_id = request.GET.get('st_id') 
     item = request.GET.get('item')
     amount = request.GET.get('amount')
-    # 這個頁面只做 JS 控制父頁
-    return render(request, 'ec_payment_done.html', {
+    return render(request, 'ec_payment_done.html', {  # <-- 改成正確名稱
         'st_id': st_id,
         'item': item,
-        'amount': amount
+        'amount': amount,
+        'transaction_id': transaction_id
     })
