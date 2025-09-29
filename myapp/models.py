@@ -366,6 +366,7 @@ class FavoriteChatRoom(models.Model):
 
 
 # ----------------商家廣告--------------------
+from django.contrib.auth.models import User
 
 class StoreAll(models.Model):
     st_id = models.AutoField(primary_key=True)
@@ -382,10 +383,18 @@ class StoreAll(models.Model):
     admin_id = models.IntegerField()
     user_id = models.IntegerField()
     poster_gmail = models.CharField(max_length=255, blank=True, null=True)
-
+    # submitted_by = models.IntegerField()  # 這裡改成 IntegerField
+    # 🔹 外鍵指向 auth_user
+    submitted_by = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='submitted_stores',
+        db_column='submitted_by'  # 🔹 指定資料表裡的欄位名稱
+    )
     class Meta:
         managed = False  # 已經有 SQL 建表
         db_table = 'store_all'
+
 
 
 class StoreAd(models.Model):
