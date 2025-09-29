@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>付款完成</title>
+<style>
+body { font-family: "Microsoft JhengHei", sans-serif; background: #f5f6f7; display: flex; align-items: center; justify-content: center; height: 100vh; }
+.container { text-align: center; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+p { font-size: 16px; }
+</style>
+</head>
+<body>
+<div class="container">
+    <p>付款完成，視窗即將關閉...</p>
+</div>
+
+<script>
+// 通知父頁付款完成
+function notifyParent() {
+    if (window.opener && !window.opener.closed) {
+        window.opener.postMessage({
+            type: "PAYMENT_SUCCESS",
+            item: "{{ item }}",
+            amount: "{{ amount }}",
+            st_id: "{{ st_id }}"
+        }, window.location.origin);  // ✅ 改成同源
+    } else {
+        console.warn("父頁不存在或已關閉");
+    }
+
+    // 自動關閉小視窗
+    setTimeout(function() {
+        window.close();
+    }, 500);
+}
+
+notifyParent();
+
+localStorage.setItem("payment_result", JSON.stringify({
+    type: "PAYMENT_SUCCESS",
+    item: "{{ item }}",
+    amount: "{{ amount }}",
+    st_id: "{{ st_id }}"
+}));
+
+</script>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+<!-- templates/ec_payment_done.html
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>付款完成</title>
+</head>
+<body>
+    <p>付款完成，正在返回...</p>
+    <script>
+        console.log("正在通知父頁：付款完成");
+        if (window.opener) {
+            window.opener.postMessage({
+                type: "PAYMENT_SUCCESS",
+                st_id: "{{ st_id }}",
+                item: "{{ item }}",
+                amount: "{{ amount }}"
+            }, "*");
+        }
+        setTimeout(() => window.close(), 1000);
+    </script>
+
+</body>
+</html> -->
