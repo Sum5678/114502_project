@@ -285,3 +285,8 @@ PWA_APP_ICONS = [
 
 GOOGLE_API_KEY = os.environ.get('GOOGLE_API_KEY')
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://payment-stage.ecpay.com.tw',
+    'https://payment.ecpay.com.tw',
+]
