@@ -58,17 +58,14 @@ class StoreAdForm(forms.ModelForm):
             'ad_radius': forms.NumberInput(attrs={'min': 1, 'placeholder': '觸發距離 (公尺)'}),
         }
 
+    
     def clean(self):
         cleaned_data = super().clean()
-        payment_done = cleaned_data.get('payment_done')
-        payment_item = cleaned_data.get('payment_item')
-        payment_amount = cleaned_data.get('payment_amount')
-
-        if payment_done != '1':
-            raise forms.ValidationError("請先完成付款再提交廣告")
         
-        # 可選：檢查 payment_item 和 payment_amount 是否合理
-        if not payment_item or not payment_amount:
-            raise forms.ValidationError("付款資訊不完整，無法提交廣告")
+        # 移除付款檢查
+        # payment_done = cleaned_data.get('payment_done')
+        # if payment_done != '1':
+        #     raise forms.ValidationError("請先完成付款再提交廣告")
         
         return cleaned_data
+
