@@ -1,0 +1,136 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>待付款廣告</title>
+
+  <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/css/main.css' %}" rel="stylesheet">
+
+  <style>
+    body { padding-top: 100px; }
+    .payment-list { max-width: 800px; margin: auto; }
+    .payment-item { padding: 12px; border: 1px solid #ddd; margin-bottom: 10px; border-radius: 8px; background: #f8f9fa; }
+    .payment-item img { max-width: 150px; margin-right: 10px; }
+    .payment-item a { text-decoration: none; color: #fff; background-color: #63b3ed; padding: 5px 10px; border-radius: 5px; }
+    .payment-item a:hover { background-color: #4299e1; }
+  </style>
+</head>
+<body>
+
+
+<header id="header" class="header d-flex align-items-center fixed-top">
+    <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
+      <a href="index.html" class="logo d-flex align-items-center me-auto me-xl-0">
+        <h1 class="sitename">怪怪走開，護您安全</h1><span></span>
+      </a>
+      <nav id="navmenu" class="navmenu">
+        <ul>
+          <li><a href="{% url 'home' %}#hero">主頁</a></li>
+          <li><a href="index.html#services">簡介及功能介紹</a></li>
+          <li><a href="{% url 'report' %}">填寫表單</a></li>
+          <li><a href="{% url 'business_upload' %}">商家填單</a></li>
+          <li><a href="{% url 'about' %}">個人資料設定</a></li>
+          <li><a href="{% url 'chatroom_page' %}">聊天室</a></li>
+        <li class="dropdown">
+          <a href="#"><span>交流區</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+          <ul>
+            <li><a href="{% url 'post' %}#hero">我要發文</a></li>
+            <li><a href="{% url 'post_display' %}">貼文總覽</a></li>
+          </ul>
+        </li>
+          
+          <li class="dropdown"><a href="#"><span>地圖</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+            <ul>
+              <li><a href="{% url 'map' %}">事件地圖</a></li>
+              <li><a href="{% url 'store_map' %}">商家地圖</a></li>
+              <li><a href="{% url 'upload_store_ad' %}">商家廣告</a></li>
+            </ul> 
+          </li>
+          
+          <li><a href="{% url 'harassment_prevention' %}">防騷指南</a></li>
+
+        </ul>
+        <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+      </nav>
+      
+      <!-- ✅ 登入狀態 dropdown 按鈕 -->
+    {% if request.user.is_authenticated %}
+      <div class="dropdown">
+        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown"
+           style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
+          {{ request.user.username }}
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="{% url '01_userlogin_out' %}">登出</a></li>
+        </ul>
+      </div>
+    {% else %}
+      <div class="dropdown">
+        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown"
+           style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
+          登入
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="{% url 'userlogin' %}">一般使用者登入</a></li>
+          <li><a class="dropdown-item" href="{% url 'admin_login' %}">管理員登入</a></li>
+        </ul>
+      </div>
+    {% endif %}
+  </div>
+</header>
+
+<main class="payment-list">
+  <h1 class="text-center mb-4">待付款廣告</h1>
+
+  {% if payment_list %}
+    <div class="row g-3">
+    {% for item in payment_list %}
+      <div class="col-12">
+        <div class="card payment-item">
+          <div class="card-body d-flex flex-column flex-md-row justify-content-between">
+            <div>
+              {% if item.ad %}
+                <h5 class="card-title">商家: {{ item.ad.st.store_name }}</h5>
+                <p class="card-text"><strong>廣告內容:</strong> {{ item.ad.ad_content }}</p>
+                <p class="card-text"><strong>金額:</strong> {{ item.payment.amount }} 元</p>
+
+                <strong>圖片:</strong>
+                {% if item.images %}
+                  <div class="d-flex flex-wrap gap-2 mt-1">
+                    {% for img in item.images %}
+                      <img src="{{ img.image_url }}" alt="ad image" class="img-thumbnail" style="max-width:150px;">
+                    {% endfor %}
+                  </div>
+                {% else %}
+                  <p>無圖片</p>
+                {% endif %}
+              {% else %}
+                <p>廣告資料不存在</p>
+              {% endif %}
+            </div>
+            <div class="mt-3 mt-md-0 d-flex align-items-start">
+            {% if item.payment %}
+                <a href="{% url 'ecpay_checkout' %}?st_id={{ item.ad.st.st_id }}&amount={{ item.payment.amount }}" class="btn btn-primary">付款</a>
+            {% else %}
+                <a href="{% url 'ecpay_checkout' %}?st_id={{ item.ad.st.st_id }}&amount=100" class="btn btn-primary">付款</a>
+            {% endif %}
+            </div>
+
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+    </div>
+  {% else %}
+    <p class="text-center">目前沒有待付款廣告</p>
+  {% endif %}
+</main>
+
+
+
+<script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+</body>
+</html>
