@@ -163,7 +163,10 @@ urlpatterns = [
     path('test_payment_done/', views.test_payment_done, name='test_payment_done'),  # 模擬付款頁面完成
     path('ecpay/checkout/', views.ecpay_checkout, name='ecpay_checkout'),
     path('ecpay/return/', views.ecpay_return, name='ecpay_return'),
-    path('ecpay/result/', views.ecpay_result, name='ecpay_result'),
+    path('ecpay/done/', views.EC_payment_done, name='ecpay_done'),  # 新的完成頁
+    path('pending-payments/', views.pending_payments, name='pending_payments'),
+    path('pay-advertisement/<int:payment_id>/', views.pay_advertisement, name='pay_advertisement'),
+    
 
 
 
