@@ -4724,26 +4724,19 @@ def index(request):
     # ✅ 審核通過的狀態（同時相容文字/數字）
     approved_status = ["人工審核通過", "4", 4, "2", 2]
 
-    # ✅ 已通報案件數（只算通過）
-    report_count = PemapAll.objects.filter(review_status__in=approved_status).count()
+    # ✅ 已通報案件數（所有填單，不管狀態）
+    report_count = PemapAll.objects.count()
 
-    # ✅ 地圖上標記次數（事件+商家；事件只算通過，商家你若也有審核欄位可同樣加過濾）
+    # ✅ 地圖上標記次數（事件只算通過的 + 商家）
     map_mark_count = (
         PemapAll.objects.filter(review_status__in=approved_status).count()
         + StoreAll.objects.count()
     )
 
     # ===== 互動次數細項 =====
-    # 1) 交流區「貼文數」
     post_count = ChatInteraction.objects.count()
-
-    # 2) 交流區「留言數」（存在 ChatInteraction.comments 的 JSON 陣列）
     comment_count = _sum_json_list_lengths(ChatInteraction.objects.all(), "comments")
-
-    # 3) 交流區「按讚數」（可選：若要算按讚，打開這行；否則設成 0）
     like_count = _sum_json_list_lengths(ChatInteraction.objects.all(), "liked_user_ids")
-
-    # 4) 聊天室訊息 / 點擊 / 收藏聊天室
     chat_message_count = ChatMessage.objects.count()
     chat_click_count = ChatRoomClick.objects.count()
     chat_fav_room_count = FavoriteChatRoom.objects.count()
@@ -4752,7 +4745,7 @@ def index(request):
     interactions = (
         post_count
         + comment_count
-        + like_count            # 如果不想把按讚算進去，改成 + 0
+        + like_count
         + chat_message_count
         + chat_click_count
         + chat_fav_room_count
@@ -4764,6 +4757,7 @@ def index(request):
         "interactions": interactions,
     }
     return render(request, "index.html", ctx)
+
 
 
 
