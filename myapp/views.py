@@ -403,8 +403,7 @@ def anonymous_chat(request):
     person_name = request.GET.get('person', '未知人物')  # 獲取 URL 參數中的人物名稱
     return render(request, 'anonymous-chat.html', {'person_name': person_name})
 
-def map_view(request):
-    return render(request, 'map.html')
+
 
 def region_selector(request):
     return render(request, 'region_page.html')
@@ -2058,19 +2057,25 @@ def datetime_handler(obj):
         return obj.isoformat()
     raise TypeError("Type not serializable")
 
+import json
+from django.core.serializers.json import DjangoJSONEncoder
+from django.shortcuts import render
+from .models import PemapWithSubkind
+
 def map_view(request):
-    # 取出你需要的欄位，調整欄位名稱和模型
     reports = PemapWithSubkind.objects.values(
-        "display_name", "kind", "subkind", "latitude", "longitude", "address", "img_url", "time_created"
+        "display_name", "kind", "subkind", "latitude", "longitude", 
+        "address", "img_url", "time_created"
     )
     reports_list = list(reports)
 
-    # 將包含 datetime 的 list 用 json.dumps 並轉成 ISO 格式字串
-    reports_json = json.dumps(reports_list, default=datetime_handler, ensure_ascii=False)
+    # 直接用 DjangoJSONEncoder，自動把 datetime 轉 ISO 格式
+    reports_json = json.dumps(reports_list, cls=DjangoJSONEncoder, ensure_ascii=False)
 
     return render(request, "999map.html", {
         "reports_json": reports_json
     })
+
 
 # 可以跑分類的,但是有億點久
 def reports_with_subkind_json(request):
