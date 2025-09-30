@@ -24,22 +24,48 @@
   <link href="{% static 'assets/vendor/simple-datatables/style.css' %}" rel="stylesheet">
 
   <link href="{% static 'assets/css/main.css' %}" rel="stylesheet">
+  
+  <style>
+    .hero {
+      width: 100%;
+      min-height: 100vh;
+      height: 100vh;
+      background: url("{% static 'assets/img/1.png' %}") no-repeat center center;
+      background-size: cover; /* 鋪滿，不留邊，必要時裁切 */
+      background-position: center center; /* 桌機預設置中 */
+    }
+
+    @media (max-width: 768px) {
+      .hero {
+       background-position: calc(50% + 30px) center; /* 往右微調20px */
+      }
+    }
+
+    @supports (height: 100dvh) {
+      .hero {
+        height: 100dvh; /* 修正手機 PWA 100vh bug */
+      }
+    }
+    </style>
 </head>
 
+<body class="index-page">
+  </head>
 <body class="index-page">
   <header id="header" class="header d-flex align-items-center fixed-top">
     <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
       <a href="index.html" class="logo d-flex align-items-center me-auto me-xl-0">
-        <h1 class="sitename">怪怪走開，護您安全</h1><span></span>
+        <h1 class="sitename">怪怪走開
+          護您安全</h1><span></span>
       </a>
       <nav id="navmenu" class="navmenu">
-        <ul>
-          <li><a href="{% url 'home' %}#hero">主頁</a></li>
-          <li><a href="{% url 'home' %}#services">簡介及功能介紹</a></li>
-          <li><a href="{% url 'report' %}">填寫表單</a></li>
-          <li><a href="{% url 'business_upload' %}">商家填單</a></li>
-          <li><a href="{% url 'about' %}">個人資料設定</a></li>
-          <li><a href="{% url 'chatroom_page' %}">聊天室</a></li>
+      <ul>
+        <li><a href="{% url 'home' %}#hero">主頁</a></li>
+        <li><a href="{% url 'home' %}#services">簡介及功能介紹</a></li>
+        <li><a href="{% url 'report' %}">填寫表單</a></li>
+        <li><a href="{% url 'business_upload' %}">商家填單</a></li>
+        <li><a href="{% url 'about' %}">個人資料設定</a></li>
+        <li><a href="{% url 'chatroom_page' %}">聊天室</a></li>
         <li class="dropdown">
           <a href="#"><span>交流區</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
           <ul>
@@ -47,48 +73,43 @@
             <li><a href="{% url 'post_display' %}">貼文總覽</a></li>
           </ul>
         </li>
-          
-          <li class="dropdown"><a href="#"><span>地圖</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
-            <ul>
-              <li><a href="{% url 'map' %}">事件地圖</a></li>
-              <li><a href="{% url 'store_map' %}">商家地圖</a></li>
-            </ul> 
-          </li>
-          
-          <li><a href="{% url 'harassment_prevention' %}">防騷指南</a></li>
-
-        </ul>
-        <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
-      </nav>
+        <li class="dropdown"><a href="#"><span>地圖</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+          <ul>
+            <li><a href="{% url 'map' %}">事件地圖</a></li>
+            <li><a href="{% url 'store_map' %}">商家地圖</a></li>
+            <li><a href="{% url 'upload_store_ad' %}">商家廣告</a></li>
+          </ul>
+        </li>
+        <li><a href="{% url 'harassment_prevention' %}">防騷指南</a></li>
+      </ul>
+      <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+    </nav>
     {% if request.user.is_authenticated %}
-    <div class="dropdown">
-      <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown" style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
-        {{ request.user.username }}
-      </a>
-      <ul class="dropdown-menu dropdown-menu-end">
-        <li><a class="dropdown-item" href="{% url '01_userlogin_out' %}">登出</a></li>
-      </ul>
-    </div>
+      <div class="dropdown">
+        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown" style="background-color:#63b3ed;color:white;border-radius:8px;padding:8px 20px;">
+          {{ request.user.username }}
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="{% url '01_userlogin_out' %}">登出</a></li>
+        </ul>
+      </div>
     {% else %}
-    <div class="dropdown">
-      <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown" style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
-        登入
-      </a>
-      <ul class="dropdown-menu dropdown-menu-end">
-        <li><a class="dropdown-item" href="{% url 'userlogin' %}">一般使用者登入</a></li>
-        <li><a class="dropdown-item" href="{% url 'admin_login' %}">管理員登入</a></li>
-      </ul>
-    </div>
+      <div class="dropdown">
+        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown" style="background-color:#63b3ed;color:white;border-radius:8px;padding:8px 20px;">
+          登入
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="{% url 'userlogin' %}">一般使用者登入</a></li>
+          <li><a class="dropdown-item" href="{% url 'admin_login' %}">管理員登入</a></li>
+        </ul>
+      </div>
     {% endif %}
-    </div>
-  </header>
+  </div>
+</header>
+  <section class="hero">
+    <div class="hero-content"></div>
+  </section>
   <main class="main">
-
-    <!-- Hero Section -->
-    <section class="hero">
-      <img src="{% static 'assets/img/1.png' %}" alt="Hero Image">
-    </section>
-
     
 
     <!-- Admin Profile Edit Section -->
