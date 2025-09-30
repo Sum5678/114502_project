@@ -31,51 +31,156 @@
   <link href="{% static 'assets/css/main.css' %}" rel="stylesheet" />
 
   <style>
-    #map {
-      width: 100%;
-      height: 600px;
-      border-radius: 8px;
-    }
+  /* ---------- 地圖容器 ---------- */
+  #map {
+    width: 100%;
+    height: 600px;
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+    transition: box-shadow 0.3s;
+  }
+  #map:hover {
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  }
 
+  /* ---------- 搜尋導航框 ---------- */
+  #searchContainer {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 10;
+    background: #ffffffee;
+    padding: 12px 18px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    font-family: 'Open Sans', sans-serif;
+  }
 
-    #searchContainer {
-      position: absolute;
-      top: 15px;
-      left: 15px;
-      z-index: 10;
-      background: rgba(255, 255, 255, 0.9);
-      padding: 10px 15px;
-      border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      font-family: 'Open Sans', sans-serif;
-    }
+  #searchContainer input {
+    width: 280px;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: 0.2s;
+  }
+  #searchContainer input:focus {
+    outline: none;
+    border-color: #4285F4;
+    box-shadow: 0 0 5px rgba(66,133,244,0.5);
+  }
 
-    #searchContainer input {
-      width: 250px;
-      padding: 6px 10px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 14px;
-    }
+  #searchContainer button {
+    background-color: #4285F4;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: 0.2s;
+  }
+  #searchContainer button:hover {
+    background-color: #357ae8;
+  }
 
-    #searchContainer button {
-      background-color: #4285F4;
-      color: white;
-      border: none;
-      padding: 6px 12px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 14px;
-    }
+  /* ---------- 路線資訊 ---------- */
+  #routeInfo {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    z-index: 10;
+    background: #fffce0;
+    padding: 12px 18px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    font-family: 'Open Sans', sans-serif;
+    font-size: 14px;
+    max-width: 320px;
+  }
 
-    #searchContainer button:hover {
-      background-color: #357AE8;
-    }
+  /* ---------- 選單表單 ---------- */
+  .form-label {
+    font-weight: 600;
+    margin-bottom: 6px;
+    display: block;
+  }
 
-  </style>
+  select.form-select,
+  input.form-control {
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    transition: 0.2s;
+  }
+
+  select.form-select:focus,
+  input.form-control:focus {
+    outline: none;
+    border-color: #4285F4;
+    box-shadow: 0 0 5px rgba(66,133,244,0.3);
+  }
+
+  .container {
+    margin-top: 20px;
+    margin-bottom: 20px;
+  }
+
+  /* ---------- hero 圖片 ---------- */
+  section.hero img {
+    width: 100%;
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+  }
+
+  /* ---------- footer ---------- */
+  footer.footer {
+    background-color: #f8f9fa;
+    padding: 25px 0;
+    font-size: 14px;
+    color: #555;
+  }
+  footer.footer a {
+    color: #4285F4;
+    text-decoration: none;
+  }
+  footer.footer a:hover {
+    text-decoration: underline;
+  }
+
+  /* ---------- dropdown 及按鈕 ---------- */
+  .btn-getstarted {
+    border-radius: 8px;
+    padding: 6px 16px;
+    font-weight: 500;
+  }
+
+  /* ---------- 滾動頂部按鈕 ---------- */
+  #scroll-top {
+    background-color: #4285F4;
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    bottom: 40px;
+    right: 40px;
+  }
+  #scroll-top i {
+    color: #fff;
+    font-size: 22px;
+  }
+
+  /* ---------- 下拉選單微調 ---------- */
+  #kindFilter, #subkindFilter {
+    max-width: 300px;
+    margin-bottom: 10px;
+  }
+
+</style>
+
 </head>
 
 <body class="index-page">
@@ -181,9 +286,9 @@
         
 
 
-        <div class="container">
+        <!-- <div class="container">
           <div id="map"></div>
-        </div>
+        </div> -->
 
         <!-- 後端傳來的 JSON 資料 -->
         <script id="reportData" type="application/json">
@@ -191,11 +296,7 @@
         </script>
       </header>
 
-      <footer>
-        <p>&copy; 2025 動物關懷平台</p>
-       
-
-      </footer>
+      
     </section>
 
   </main>
@@ -305,6 +406,8 @@
         }
       });
     });
+    // ----------------- ✅ 初始載入全部事件 -----------------
+    fetchReportsAndRenderMarkers("全部", "");
   }
 
     // ---------------------- 搜尋導航（Routes API 版本） ----------------------
@@ -501,8 +604,13 @@
 
 
   // ---------------------- 路線規劃 ----------------------
+
+
+
+
   function calculateAndDisplaySafeRoute(destination) {
     if (!userMarker) { alert("尚未取得使用者位置"); return; }
+
     const origin = userMarker.getPosition();
 
     directionsService.route({
@@ -512,12 +620,17 @@
       provideRouteAlternatives: true
     }, (response, status) => {
       if (status === "OK") {
-        // 找安全路線
-        const safeRoute = response.routes.find(r => !isRouteDangerous(r)) || response.routes[0];
-        if (!safeRoute) { alert("找不到路線"); return; }
+        // 嘗試找安全路線（避開事件 100 公尺）
+        let safeRoute = response.routes.find(r => !isRouteDangerous(r));
 
-        // 渲染路線
-        directionsRenderer.setDirections({ routes: [safeRoute] });
+        if (!safeRoute) {
+          alert("⚠ 找不到完全避開事件的路線，將顯示第一條候選路線");
+          safeRoute = response.routes[0];
+        }
+
+        // 顯示完整 DirectionsResult，並指定路線
+        directionsRenderer.setDirections(response);
+        directionsRenderer.setRouteIndex(response.routes.indexOf(safeRoute));
 
         // 顯示距離與時間
         displayRouteInfo(safeRoute);
@@ -527,24 +640,36 @@
       }
     });
   }
-
+  
+  
 
   // ---------------------- 判斷路線是否靠近事件 ----------------------
   function isRouteDangerous(route) {
     if (!reports || reports.length === 0) return false;
-    return route.overview_path.some(p => reports.some(r => typeof r.latitude === "number" && typeof r.longitude === "number" && getDistanceMeters(p.lat(), p.lng(), r.latitude, r.longitude) <= dangerDistance));
+    // overview_path 是 LatLng 陣列
+    return route.overview_path.some(p =>
+      reports.some(r =>
+        typeof r.latitude === "number" &&
+        typeof r.longitude === "number" &&
+        getDistanceMeters(p.lat(), p.lng(), r.latitude, r.longitude) <= dangerDistance
+      )
+    );
   }
 
-  // ---------------------- 顯示路線距離時間 ----------------------
+  // ---------------------- 顯示距離時間 ----------------------
   function displayRouteInfo(route) {
     if (!route) return;
     let totalDistance = 0, totalDuration = 0;
+
     route.legs.forEach(l => {
       totalDistance += l.distance.value;
       totalDuration += l.duration.value;
     });
-    document.getElementById("routeText").innerText = `距離: ${(totalDistance / 1000).toFixed(2)} 公里，預估步行時間: ${Math.round(totalDuration / 60)} 分鐘`;
+
+    document.getElementById("routeText").innerText = 
+      `距離: ${(totalDistance / 1000).toFixed(2)} 公里，預估步行時間: ${Math.round(totalDuration / 60)} 分鐘`;
   }
+
 
   // ---------------------- 計算錐形 ----------------------
   function calculateConePath(pos,heading,accuracy){
@@ -676,6 +801,7 @@
 
   <footer id="footer" class="footer position-relative light-background">
     <div class="container copyright text-center mt-4">
+      <p>&copy; 怪怪走開，護您安全平台-事件地圖</p>
       <p>© <span>Copyright</span> <strong class="sitename">Append</strong> <span>All Rights Reserved</span></p>
       <div class="credits">
         Designed by <a href="https://bootstrapmade.com/">BootstrapMade</a>
@@ -685,6 +811,7 @@
       Icon by <a href="https://www.flaticon.com/free-icons/paw" title="paw icons">Freepik - Flaticon</a>
     </div>
   </footer>
+
 
   <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i
       class="bi bi-arrow-up-short"></i></a>
