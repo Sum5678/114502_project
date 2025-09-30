@@ -47,7 +47,30 @@
     color: white;
   }
   </style>
+  <style>
+    .hero {
+      width: 100%;
+      min-height: 100vh;
+      height: 100vh;
+      background: url("{% static 'assets/img/1.png' %}") no-repeat center center;
+      background-size: cover; /* 鋪滿，不留邊，必要時裁切 */
+      background-position: center center; /* 桌機預設置中 */
+    }
 
+    @media (max-width: 768px) {
+      .hero {
+       background-position: calc(50% + 30px) center; /* 往右微調20px */
+      }
+    }
+
+    @supports (height: 100dvh) {
+      .hero {
+        height: 100dvh; /* 修正手機 PWA 100vh bug */
+      }
+    }
+
+
+  </style>
 
 </head>
 <body class="index-page">
@@ -116,11 +139,12 @@
     </div>
   </header>
 
+  <section class="hero">
+    <div class="hero-content"></div>
+  </section>
+
   <main class="main">
-    <!-- Hero Section -->
-    <section class="hero">
-      <img src="{% static 'assets/img/1.png' %}" alt="Hero Image">
-    </section>
+    
 
 <!-- Stats Section -->
 <section id="stats" class="stats section">
