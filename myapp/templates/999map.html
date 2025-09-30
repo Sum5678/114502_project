@@ -526,48 +526,8 @@
     map.setCenter(pos);
   }
 
-  // ---------------------- Routes API 路線規劃 ----------------------
-  async function calculateRouteWithRoutesAPI(destination) {
-    if (!userMarker) { alert("尚未取得使用者位置"); return; }
 
-    const origin = userMarker.getPosition();
-    const url = "https://routes.googleapis.com/directions/v2:computeRoutes?key=YOUR_API_KEY"; // 替換成你的 API Key
 
-    const body = {
-      origin: { latitude: origin.lat(), longitude: origin.lng() },
-      destination: { latitude: destination.lat, longitude: destination.lng },
-      travelMode: "WALKING",
-      routingPreference: "TRAFFIC_AWARE_OPTIMAL",
-      computeAlternativeRoutes: true
-    };
-
-    try {
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body)
-      });
-      const data = await res.json();
-      if (!data.routes || data.routes.length === 0) {
-        alert("找不到路線");
-        return;
-      }
-
-      // 找到安全路線（避開事件 100 公尺）
-      let safeRoute = data.routes.find(r => !isRouteDangerousRoutesAPI(r));
-      if (!safeRoute) {
-        alert("⚠ 找不到避開事件 100 公尺的安全路線，將顯示最近的一條");
-        safeRoute = data.routes[0];
-      }
-
-      renderRouteOnMap(safeRoute);
-      displayRouteInfoRoutesAPI(safeRoute);
-    } catch (e) {
-      console.error("Routes API 錯誤:", e);
-      alert("路線規劃失敗，請稍後再試");
-    }
-  }
-  
 
 
 
@@ -578,25 +538,6 @@
     if (!reports || reports.length === 0 || !route.polyline || route.polyline.length === 0) return false;
     const path = google.maps.geometry.encoding.decodePath(route.polyline[0].encodedPolyline);
     return path.some(p => reports.some(r => typeof r.latitude === "number" && typeof r.longitude === "number" && getDistanceMeters(p.lat(), p.lng(), r.latitude, r.longitude) <= dangerDistance));
-  }
-
-
-
-
-  // ---------------------- 路線渲染 ----------------------
-  function renderRouteOnMap(route) {
-    if (window.routePolyline) window.routePolyline.setMap(null);
-    const path = google.maps.geometry.encoding.decodePath(route.polyline[0].encodedPolyline);
-    window.routePolyline = new google.maps.Polyline({
-      path,
-      map,
-      strokeColor: "#4285F4",
-      strokeOpacity: 0.8,
-      strokeWeight: 5
-    });
-    const bounds = new google.maps.LatLngBounds();
-    path.forEach(p => bounds.extend(p));
-    map.fitBounds(bounds);
   }
 
 
