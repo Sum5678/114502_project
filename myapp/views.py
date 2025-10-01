@@ -4459,7 +4459,9 @@ def upload_store_ad(request):
 # ---------------- 管理員審核廣告 ----------------
 def admin_review_ads(request):
     ads = StoreAdHistory.objects.filter(status='pending').order_by('created_at')
-    return render(request, 'admin_review_ads.html', {'ads': ads})
+    context = {'ads': ads,}
+    context.update(get_unreviewed_counts())
+    return render(request, 'admin_review_ads.html', context)
 
 
 from django.shortcuts import get_object_or_404, redirect

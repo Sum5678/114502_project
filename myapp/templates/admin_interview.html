@@ -60,7 +60,12 @@
                   <span class="badge bg-danger ms-2">{{ unreviewed_review_count }}</span>
                 {% endif %}
               </a></li>
-              <li><a href="{% url 'admin_review_ads' %}">廣告審核</a></li>
+              <li>
+              <a href="{% url 'admin_review_ads' %}">廣告審核
+                {% if unreviewed_ads_count > 0 %}
+                  <span class="badge bg-danger ms-2">{{ unreviewed_ads_count }}</span>
+                {% endif %}
+              </a></li>
             </ul> 
           </li>
           
@@ -68,6 +73,7 @@
             <ul>
               <li><a href="{% url 'admin_decide' %}">事件審核紀錄</a></li>
               <li><a href="{% url 'store_decide' %}">商家審核紀錄</a></li>
+              <li><a href="{% url 'report_decide' %}">交流區舉報審核紀錄</a></li>
             </ul> 
           </li>
           <!-- ✅ 新增的下拉式選單 -->
