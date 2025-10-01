@@ -200,7 +200,38 @@
 
 
 </style>
+  <style>
+  #header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 999;
+    background: #fff;   /* 白底避免透明 */
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  }
 
+  #navmenu ul li a {
+    color: #033e6b;      /* 深藍字，避免和背景混掉 */
+  }
+
+  #navmenu ul li a:hover {
+    color: #63b3ed;      /* 滑過換藍色 */
+    
+  }
+  .sitename {
+    color: #033e6b !important; /* 固定藍色 */
+    font-weight: 700;          /* 粗體 */
+    margin: 0;                 /* 避免跑版 */
+
+    }
+    .card-lightblue {
+  border: 2px solid #c4ddf6;   /* 淡藍色框 */
+  border-radius: 10px;         /* 圓角 */
+}
+
+  
+  </style>
 </head>
 
 <body class="index-page">
@@ -253,18 +284,18 @@
 </header>
 
 <main class="main mt-5 pt-5">
-    <section class="hero">
-      <img src="{% static 'assets/img/1.png' %}" alt="Hero Image" />
-    </section>
-
     <section id="injury-map">
-      <header>
-
-        
+  <div class="container">
+    <div class="section-title">
+      <h2>事件地圖</h2>
+      <p>可查看回報的事件分佈位置</p>
+    </div>
 
 
         <div class="container my-4">
-          <div class="card shadow-sm border-0">
+          <div class="card shadow-sm card-lightblue">
+
+
             <div class="card-body">
               <h5 class="card-title mb-3">
                 <i class="bi bi-funnel-fill text-primary me-2"></i> 事件篩選
@@ -758,18 +789,12 @@
     src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAUuPZMMJvgVWftmqVyzfX8mKTwMX4kA6o&libraries=places,geometry&callback=initMap">
   </script>
 
+  <!-- Footer -->
   <footer id="footer" class="footer position-relative light-background">
-    <div class="container copyright text-center mt-4">
-      <p>&copy; 怪怪走開，護您安全平台-事件地圖</p>
-      <p>© <span>Copyright</span> <strong class="sitename">Append</strong> <span>All Rights Reserved</span></p>
-      <div class="credits">
-        Designed by <a href="https://bootstrapmade.com/">BootstrapMade</a>
-      </div>
-      <div class="credits">
-        Icon by <a href="https://www.flaticon.com/free-icons/paw" title="paw icons">Freepik - Flaticon</a>
-      </div>
+    <div class="container text-center mt-4">
+      <p>© Copyright <strong class="sitename">怪怪走開，護您安全</strong> All Rights Reserved</p>
+      <div class="credits">Designed by <a href="https://bootstrapmade.com/">BootstrapMade</a></div>
     </div>
-    
   </footer>
 
 

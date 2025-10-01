@@ -256,11 +256,13 @@
   </section>
 </main>
 
-<footer id="footer" class="footer position-relative light-background">
-  <div class="container copyright text-center mt-4">
-    <p>© Copyright <strong class="sitename">怪怪走開</strong> All Rights Reserved</p>
-  </div>
-</footer>
+<!-- Footer -->
+  <footer id="footer" class="footer position-relative light-background">
+    <div class="container text-center mt-4">
+      <p>© Copyright <strong class="sitename">怪怪走開，護您安全</strong> All Rights Reserved</p>
+      <div class="credits">Designed by <a href="https://bootstrapmade.com/">BootstrapMade</a></div>
+    </div>
+  </footer>
 
 <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center">
   <i class="bi bi-arrow-up-short"></i>
@@ -403,6 +405,27 @@ document.addEventListener("DOMContentLoaded", function() {
   // 初始化 single replaceState
   history.replaceState({ search: "" }, "", "");
 });
+</script>
+<script src="https://unpkg.com/pulltorefreshjs"></script>
+<script src="{% static 'assets/js/refresh.js' %}"></script>
+<script>
+  function refreshReports() {
+    return fetch('/api/report_list')
+      .then(res => res.json())
+      .then(data => {
+        const container = document.getElementById('report-items');
+        container.innerHTML = '';
+        data.forEach(item => {
+          container.innerHTML += `<div>${item.display_name} - ${item.address}</div>`;
+        });
+      });
+  }
+
+  // 啟用下拉刷新
+  setupPullToRefresh(refreshReports);
+
+  // 首次載入
+  document.addEventListener("DOMContentLoaded", refreshReports);
 </script>
 
 </body>

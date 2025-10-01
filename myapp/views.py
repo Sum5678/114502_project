@@ -11,6 +11,7 @@ from .utils import get_unreviewed_counts
 import datetime
 from django.views.decorators.csrf import csrf_exempt
 from myapp.sdk.ecpay_payment_sdk import ECPayPaymentSdk
+import requests
 
 
 def report_view(request):
@@ -242,6 +243,7 @@ def taiwan_regions_edit(request, id):
         'form': form, 
         'action': '編輯',
         }
+    context.update(get_unreviewed_counts())
     return render(request, 'taiwan_regions_edit.html', context)
 
 def taiwan_regions_delete(request, id):
@@ -1726,7 +1728,8 @@ def pemap_judge(request):
     admin_name = request.session.get('admin_name')
 
     if not admin_id:
-        return redirect('admin_login')  # 未登入導回登入頁
+        context.update(get_unreviewed_counts())
+        return redirect('admin_login',context)  # 未登入導回登入頁
 
     all_data = PemapAll.objects.all().order_by('-time_created')  # 最新的在上
 
@@ -1793,16 +1796,13 @@ def pemap_judge_step1(request, p_id):
                 return redirect(url)
 
             return redirect('pemap_judge')
-
-    return render(request, 'pemap_judge_step1.html', {
+    context = {
         'item': form_data,
         'admin_id': admin_id,
         'admin_name': admin_name,
-    })
-
-
-
-
+    }
+    context.update(get_unreviewed_counts())
+    return render(request, 'pemap_judge_step1.html', context)
 
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
@@ -1832,13 +1832,15 @@ def store_judge_step1(request, st_id):
             store.admin_id = admin_id
             store.save()
             return redirect('store_judge')  # 審核完返回列表頁
-
-    return render(request, 'store_judge_step1.html', {
+    
+    context = {
         'store': store,
         'store_ad': store_ad,
         'admin_id': admin_id,
         'admin_name': admin_name,
-    })
+    }
+    context.update(get_unreviewed_counts())
+    return render(request, 'store_judge_step1.html', context)
 
 
 
@@ -1871,22 +1873,19 @@ def store_judge_view(request, st_id):
     # GET 請求 → 顯示 step1 表單
     return render(request, 'store_judge_step1.html', {'store': store})
 
+        return redirect('store_judge')
+    
+    context = {'store': store,}
+    context.update(get_unreviewed_counts())
+    return render(request, 'store_judge_step1.html', context)
+
 
 
 def store_step2_view(request, st_id):
     store = get_object_or_404(StoreAll, st_id=st_id)
-    return render(request, 'store_step2.html', {'store': store})
-
-
-
-
-
-
-
-
-import requests
-from django.shortcuts import render, redirect, get_object_or_404
-from .models import PemapAll
+    context = {'store': store,}
+    context.update(get_unreviewed_counts())
+    return render(request, 'store_step2.html', context)
 
 #--------- 使用 Google Maps API 反查地址 ----------
 def reverse_geocode_google(lat, lng):
@@ -1932,7 +1931,7 @@ def admin_index(request):
         'admin_id': request.session.get('admin_id'),
         'admin_name': request.session.get('admin_name'),
     }
-    context.update(get_unreviewed_counts())  # 🔹 加入紅點數
+    context.update(get_unreviewed_counts())
     return render(request, 'admin_index.html', context)
 
 
@@ -3667,11 +3666,17 @@ def review_reports(request):
     }
     latest_reports = list(AbuseReport.objects.all().order_by('-created_at')[:10])
 
-    return render(request, 'admin_review_reports.html', {
-        'reports': reports, 'status': status, 'q': q,
-        'report_counts': report_counts, 'latest_reports': latest_reports,
-        'admin_name': admin_name, 'admin_id': admin_id,
-    })
+    context = {
+        'reports': reports,
+        'status': status,
+        'q': q,
+        'report_counts': report_counts,
+        'latest_reports': latest_reports,
+        'admin_name': admin_name,
+        'admin_id': admin_id,
+    }
+    context.update(get_unreviewed_counts())
+    return render(request, 'admin_review_reports.html',context)
 
 
 # ===== 管理員「最終審核紀錄」頁（僅顯示 action_taken / rejected） =====
@@ -3680,12 +3685,16 @@ def review_reports(request):
 def report_decide(request):
     admin_id = request.session.get('admin_id')
     admin_name = request.session.get('admin_name') or '管理員'
-
+    context = {
+            'reports': [], 
+            'status': '',
+            'q': '',
+            'admin_name': admin_name,
+            'admin_id': admin_id,
+        }
+    context.update(get_unreviewed_counts())
     if AbuseReport is None:
-        return render(request, 'admin_report_decide.html', {
-            'reports': [], 'status': '', 'q': '',
-            'admin_name': admin_name, 'admin_id': admin_id,
-        })
+        return render(request, 'admin_report_decide.html', context)
 
     status = (request.GET.get('status') or '').strip()   # 可選：action_taken / rejected / 空(全部)
     q = (request.GET.get('q') or '').strip()
@@ -3701,11 +3710,15 @@ def report_decide(request):
         )
 
     reports = list(qs[:300])
-
-    return render(request, 'admin_report_decide.html', {
-        'reports': reports, 'status': status, 'q': q,
-        'admin_name': admin_name, 'admin_id': admin_id,
-    })
+    context = {
+        'reports': reports,
+        'status': status,
+        'q': q,
+        'admin_name': admin_name,
+        'admin_id': admin_id,
+    }
+    context.update(get_unreviewed_counts())
+    return render(request, 'admin_report_decide.html',context )
 
 
 # ===== 管理員動作（採取行動 / 駁回） =====
@@ -3972,84 +3985,7 @@ def post_detail(request, post_id):
         "profile_nickname1": nick1,
         "profile_nickname2": nick2,
     })
-
-
-
 # ------------ /交流區後端（整合版）------------
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# from .models import ChatInteraction  # ✅ 不再匯入 ThisUserProfile
-# from datetime import datetime
-# from django.contrib.auth.decorators import login_required
-# from django.shortcuts import render, redirect
-# import bleach  # ✅ 引入 bleach 套件
-# ALLOWED_TAGS = ['a']
-# ALLOWED_ATTRIBUTES = {
-#     'a': ['href', 'target', 'rel']
-# }
-
-# # ✅ bleach 白名單設定：只允許 <a> 並限制安全屬性
-
-# @login_required(login_url='/01userlogin/')
-# def post(request):
-#     if request.method == 'POST':
-#         # ✅ 固定暱稱為 (匿名)
-#         nickname = "(匿名)"
-#         bgcolor = request.POST.get('bgcolor')
-#         avatar_style = request.POST.get('avatar_style')
-#         title = request.POST.get('title')
-#         raw_content = request.POST.get('content')
-
-#         # ✅ 透過 bleach 淨化 HTML，僅保留安全 <a> 標籤
-#         clean_content = bleach.clean(
-#             raw_content,
-#             tags=ALLOWED_TAGS,
-#             attributes=ALLOWED_ATTRIBUTES,
-#             protocols=['http', 'https'],
-#             strip=True
-#         )
-
-#         avatar_url = f"https://api.dicebear.com/7.x/{avatar_style}/svg?seed={nickname}&backgroundColor={bgcolor}"
-
-#         # ✅ 儲存進資料庫
-#         ChatInteraction.objects.create(
-#             user=request.user,
-#             nickname=nickname,
-#             bgcolor=bgcolor,
-#             avatar_style=avatar_style,
-#             avatar_url=avatar_url,
-#             title=title,
-#             message_content=clean_content,
-#             created_at=datetime.now()
-#         )
-
-#         return redirect('post_display')  # 發文成功轉跳至展示頁
-
-#     return render(request, 'post.html')
-
-
-# ✅ 展示頁保持不變（但顯示時可用 |safe，前提是內容已淨化）
 
 
 #------------事件表單拒絕後傳送-------
@@ -4472,7 +4408,9 @@ def upload_store_ad(request):
 # ---------------- 管理員審核廣告 ----------------
 def admin_review_ads(request):
     ads = StoreAdHistory.objects.filter(status='pending').order_by('created_at')
-    return render(request, 'admin_review_ads.html', {'ads': ads})
+    context = {'ads': ads,}
+    context.update(get_unreviewed_counts())
+    return render(request, 'admin_review_ads.html', context)
 
 
 from django.shortcuts import get_object_or_404, redirect
