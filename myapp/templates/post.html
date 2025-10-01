@@ -304,5 +304,23 @@
 
 <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
 <script src="{% static 'assets/js/main.js' %}"></script>
+<script src="https://unpkg.com/pulltorefreshjs"></script>
+<script src="{% static 'assets/js/refresh.js' %}"></script>
+<script>
+  function refreshReportList() {
+    return fetch('/api/report_list')
+      .then(res => res.json())
+      .then(data => {
+        const container = document.getElementById('report-list');
+        container.innerHTML = '';
+        data.forEach(item => {
+          container.innerHTML += `<div>${item.display_name} - ${item.kind}</div>`;
+        });
+      });
+  }
+
+  setupPullToRefresh(refreshReportList);
+  document.addEventListener("DOMContentLoaded", refreshReportList);
+</script>
 </body>
 </html>
