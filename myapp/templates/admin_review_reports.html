@@ -25,42 +25,43 @@
 
   <!-- 導覽列 -->
   <header id="header" class="header d-flex align-items-center fixed-top">
-    <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
-      <a href="{% url 'admin_index' %}" class="logo d-flex flex-column align-items-start me-auto me-xl-0">
-        <h1 class="sitename">交流區檢舉審核</h1>
-        <!-- ★ 管理員顯示（安全版） -->
-        <small class="text-muted">
-          <strong>
-            {% if admin_name %}
-              {{ admin_name }}
-            {% elif request.user.is_authenticated %}
-              {{ request.user.get_username }}
-            {% else %}
-              訪客
-            {% endif %}
-          </strong> 管理員　
-          <span>
-            您的管理員id是:
-            {% if admin_id %}
-              {{ admin_id }}
-            {% elif request.user.is_authenticated %}
-              {{ request.user.id }}
-            {% else %}
-              —
-            {% endif %}
-          </span>
-        </small>
-      </a>
+  <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
+    <!-- 管理員資訊 -->
+    <a href="{% url 'admin_index' %}" class="logo d-flex flex-column align-items-start me-auto me-xl-0">
+      <h1 class="sitename">{{ admin_name }} 管理員</h1>
+      <h1 class="sitename">您的管理員id是: {{ admin_id }}</h1>
+    </a>
+
 
       <nav id="navmenu" class="navmenu">
         <ul>
           <li><a href="{% url 'admin_index' %}#hero">管理員主頁</a></li>
           <li><a href="{% url 'admin_interview' %}">管理員自我介紹</a></li>
           <li class="dropdown"><a href="#"><span>清單審核</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
-            <ul>
-              <li><a href="{% url 'pemap_judge' %}">事件清單審核</a></li>
-              <li><a href="{% url 'store_judge' %}">商家清單審核</a></li>
-              <li><a href="{% url 'review_reports' %}" class="active">交流區檢舉清單</a></li>
+           <ul>
+              <li>
+                <a href="{% url 'pemap_judge' %}">
+                  事件清單審核
+                  {% if unreviewed_events_count > 0 %}
+                    <span class="badge bg-danger ms-2">{{ unreviewed_events_count }}</span>
+                  {% endif %}
+                </a></li>
+              <li><a href="{% url 'store_judge' %}">商家清單審核
+                {% if unreviewed_stores_count > 0 %}
+                  <span class="badge bg-danger ms-2">{{ unreviewed_stores_count }}</span>
+                {% endif %}
+              </a></li>
+              <li><a href="{% url 'review_reports' %}">交流區檢舉清單
+                {% if unreviewed_review_count > 0 %}
+                  <span class="badge bg-danger ms-2">{{ unreviewed_review_count }}</span>
+                {% endif %}
+              </a></li>
+              <li>
+              <a href="{% url 'admin_review_ads' %}">廣告審核
+                {% if unreviewed_ads_count > 0 %}
+                  <span class="badge bg-danger ms-2">{{ unreviewed_ads_count }}</span>
+                {% endif %}
+              </a></li>
             </ul>
           </li>
           <li class="dropdown"><a href="#"><span>我的審核紀錄</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>

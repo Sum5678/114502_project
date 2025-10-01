@@ -11,6 +11,25 @@
   <link href="{% static 'assets/img/icon-512.png' %}" rel="icon">
   <link href="{% static 'assets/vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet">
   <style>
+  #header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 999;
+    background: #fff;   /* 白底避免透明 */
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  }
+
+  #navmenu ul li a {
+    color: #033e6b;      /* 深藍字，避免和背景混掉 */
+  }
+
+  #navmenu ul li a:hover {
+    color: #63b3ed;      /* 滑過換藍色 */
+  }
+  </style>
+  <style>
     /* 限制搜尋聊天室列表高度，超出自動捲動 */
     #userChatrooms {
       max-height: 100px; /* 可以改成你想要的高度 */
@@ -244,19 +263,19 @@
 
 <body class="index-page">
 
-<header id="header" class="header d-flex align-items-center fixed-top bg-white shadow-sm">
-  <div class="container-fluid d-flex justify-content-between align-items-center">
-    <a href="{% url 'home' %}" class="logo d-flex align-items-center">
-      <h1 class="sitename mb-0">怪怪走開，護您安全</h1>
+<header id="header" class="header d-flex align-items-center fixed-top">
+  <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
+    <a href="{% url 'home' %}" class="logo d-flex align-items-center me-auto me-xl-0">
+      <h1 class="sitename" style="color:#033e6b;">怪怪走開，護您安全</h1>
     </a>
     <nav id="navmenu" class="navmenu">
-        <ul>
-          <li><a href="{% url 'home' %}#hero">主頁</a></li>
-          <li><a href="{% url 'home' %}#services">簡介及功能介紹</a></li>
-          <li><a href="{% url 'report' %}">填寫表單</a></li>
-          <li><a href="{% url 'business_upload' %}">商家填單</a></li>
-          <li><a href="{% url 'about' %}">個人資料設定</a></li>
-          <li><a href="{% url 'chatroom_page' %}">聊天室</a></li>
+      <ul>
+        <li><a href="{% url 'home' %}#hero">主頁</a></li>
+        <li><a href="{% url 'home' %}#services">簡介及功能介紹</a></li>
+        <li><a href="{% url 'report' %}">填寫表單</a></li>
+        <li><a href="{% url 'business_upload' %}">商家填單</a></li>
+        <li><a href="{% url 'about' %}">個人資料設定</a></li>
+        <li><a href="{% url 'chatroom_page' %}">聊天室</a></li>
         <li class="dropdown">
           <a href="#"><span>交流區</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
           <ul>
@@ -264,29 +283,35 @@
             <li><a href="{% url 'post_display' %}">貼文總覽</a></li>
           </ul>
         </li>
-          
-          <li class="dropdown"><a href="#"><span>地圖</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
-            <ul>
-              <li><a href="{% url 'map' %}">事件地圖</a></li>
-              <li><a href="{% url 'store_map' %}">商家地圖</a></li>
-            </ul> 
-          </li>
-          
-          <li><a href="{% url 'harassment_prevention' %}">防騷指南</a></li>
-
-        </ul>
-        <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
-      </nav>
+        <li class="dropdown"><a href="#"><span>地圖</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+          <ul>
+            <li><a href="{% url 'map' %}">事件地圖</a></li>
+            <li><a href="{% url 'store_map' %}">商家地圖</a></li>
+          </ul>
+        </li>
+        <li><a href="{% url 'harassment_prevention' %}">防騷指南</a></li>
+      </ul>
+      <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+    </nav>
     {% if request.user.is_authenticated %}
       <div class="dropdown">
-        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown" aria-expanded="false">{{ request.user.username }}</a>
+        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown" style="background-color:#63b3ed;color:white;border-radius:8px;padding:8px 20px;">
+          {{ request.user.username }}
+        </a>
         <ul class="dropdown-menu dropdown-menu-end">
-          <li><a class="dropdown-item" href="{% url 'about' %}">個人資料設定</a></li>
           <li><a class="dropdown-item" href="{% url '01_userlogin_out' %}">登出</a></li>
         </ul>
       </div>
     {% else %}
-      <a class="btn-getstarted btn btn-primary px-3" href="{% url 'userlogin' %}">登入</a>
+      <div class="dropdown">
+        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown" style="background-color:#63b3ed;color:white;border-radius:8px;padding:8px 20px;">
+          登入
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="{% url 'userlogin' %}">一般使用者登入</a></li>
+          <li><a class="dropdown-item" href="{% url 'admin_login' %}">管理員登入</a></li>
+        </ul>
+      </div>
     {% endif %}
   </div>
 </header>
@@ -703,6 +728,27 @@
       openChatroom(chatrooms[0].id);
     }
   });
+</script>
+<script src="https://unpkg.com/pulltorefreshjs"></script>
+<script src="{% static 'assets/js/refresh.js' %}"></script>
+<script>
+  function refreshReports() {
+    return fetch('/api/report_list')
+      .then(res => res.json())
+      .then(data => {
+        const container = document.getElementById('report-items');
+        container.innerHTML = '';
+        data.forEach(item => {
+          container.innerHTML += `<div>${item.display_name} - ${item.address}</div>`;
+        });
+      });
+  }
+
+  // 啟用下拉刷新
+  setupPullToRefresh(refreshReports);
+
+  // 首次載入
+  document.addEventListener("DOMContentLoaded", refreshReports);
 </script>
 
 
