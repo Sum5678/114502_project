@@ -4302,14 +4302,63 @@ def toggle_favorite(request):
 
 
 # ----------------看別人的--------------------------
+# views.py
+from django.shortcuts import render, redirect
+from .models import ThisUserProfile
 
-from django.shortcuts import render, get_object_or_404
-from .models import ThisUserProfile  # 假設你的使用者資料表叫 UserProfile
+def user_search(request):
+    query = request.GET.get('q', '')
+    results = []
 
-def public_profile(request, gmail):
-    # 用 gmail 找使用者
-    user = get_object_or_404(ThisUserProfile, gmail=gmail)
-    return render(request, "public_profile.html", {"profile_user": user})
+    if query:
+        results = ThisUserProfile.objects.filter(username__icontains=query)
+
+    context = {
+        'query': query,
+        'results': results
+    }
+    return render(request, 'user_search.html', context)
+
+
+
+
+def user_profile_detail(request, username):
+    user = get_object_or_404(ThisUserProfile, username=username)
+
+    images_list = []
+    if user.user_images:
+        # 移除換行、空白、前後多餘逗號
+        clean_images = user.user_images.replace('\n','').replace('\r','').strip(', ')
+        
+        # 如果資料庫已經存完整前綴 data:image/jpeg;base64,
+        # 就直接使用
+        if clean_images:
+            images_list = [clean_images]
+
+
+
+
+    # 會員顏色/徽章設定
+    level_names = {
+        0: ("普通", "secondary", "#6c757d"),
+        1: ("銅牌", "warning", "#b87333"),
+        2: ("銀牌", "light", "#c0c0c0"),
+        3: ("金牌", "warning", "#ffd700"),
+        4: ("白金", "info", "#e5e4e2"),
+        5: ("鑽石", "primary", "#0dcaf0")
+    }
+    level_name, level_badge, level_color = level_names.get(user.membership_level, ("普通", "secondary", "#6c757d"))
+
+    context = {
+        'user': user,
+        'images_list': images_list,
+        'level_style': {
+            'name': level_name,
+            'badge': level_badge,
+            'color': level_color
+        }
+    }
+    return render(request, 'user_profile_detail.html', context)
 
 
 
@@ -4591,85 +4640,85 @@ def pay_advertisement(request, payment_id):
 
 
 # -------------付費------------
-def test_payment(request):
-    user = ThisUserProfile.objects.first()  # 測試用
-    default_amount = request.GET.get('amount', 0)
-    item = request.GET.get('item', '未知品項')
-    st_id = request.GET.get('st_id')  # 商家編號
-    next_url = request.GET.get('next', '/')
+# def test_payment(request):
+#     user = ThisUserProfile.objects.first()  # 測試用
+#     default_amount = request.GET.get('amount', 0)
+#     item = request.GET.get('item', '未知品項')
+#     st_id = request.GET.get('st_id')  # 商家編號
+#     next_url = request.GET.get('next', '/')
 
-    if request.method == "POST":
-        amount = int(request.POST.get('amount', 0))
-        item = request.POST.get('item', '未知品項')
-        st_id = request.POST.get('st_id')
-        next_url = request.POST.get('next', '/')
-        transaction_id = str(uuid.uuid4())
+#     if request.method == "POST":
+#         amount = int(request.POST.get('amount', 0))
+#         item = request.POST.get('item', '未知品項')
+#         st_id = request.POST.get('st_id')
+#         next_url = request.POST.get('next', '/')
+#         transaction_id = str(uuid.uuid4())
 
-        # 建立付款紀錄
-        UserPayment.objects.create(
-            user=user,
-            amount=amount,
-            item=item,
-            st_id=st_id,
-            transaction_id=transaction_id,
-            is_used=True
-        )
+#         # 建立付款紀錄
+#         UserPayment.objects.create(
+#             user=user,
+#             amount=amount,
+#             item=item,
+#             st_id=st_id,
+#             transaction_id=transaction_id,
+#             is_used=True
+#         )
 
-        # 更新會員等級
-        user.total_paid += amount
-        if user.total_paid >= 1111:
-            user.membership_level = 5
-        elif user.total_paid >= 900:
-            user.membership_level = 4
-        elif user.total_paid >= 600:
-            user.membership_level = 3
-        elif user.total_paid >= 300:
-            user.membership_level = 2
-        elif user.total_paid >= 30:
-            user.membership_level = 1
-        else:
-            user.membership_level = 0
-        user.save()
+#         # 更新會員等級
+#         user.total_paid += amount
+#         if user.total_paid >= 1111:
+#             user.membership_level = 5
+#         elif user.total_paid >= 900:
+#             user.membership_level = 4
+#         elif user.total_paid >= 600:
+#             user.membership_level = 3
+#         elif user.total_paid >= 300:
+#             user.membership_level = 2
+#         elif user.total_paid >= 30:
+#             user.membership_level = 1
+#         else:
+#             user.membership_level = 0
+#         user.save()
 
-        # ✅ POST 成功後回傳 JS 通知父頁面
-        return render(request, "test_payment_done.html", {
-            "item": item,
-            "amount": amount,
-            "next": next_url
-        })
+#         # ✅ POST 成功後回傳 JS 通知父頁面
+#         return render(request, "test_payment_done.html", {
+#             "item": item,
+#             "amount": amount,
+#             "next": next_url
+#         })
 
-    return render(request, "test_payment.html", {
-        "default_amount": default_amount,
-        "item": item,
-        "st_id": st_id,
-        "next": next_url,
-        "user": user
-    })
-
-
+#     return render(request, "test_payment.html", {
+#         "default_amount": default_amount,
+#         "item": item,
+#         "st_id": st_id,
+#         "next": next_url,
+#         "user": user
+#     })
 
 
-def test_payment_done(request):
-    # 這裡可以做一些完成後的處理，例如顯示付款成功訊息
-    return render(request, "test_payment_done.html")
 
 
-from django.shortcuts import render
-from .models import PemapAll, StoreAll, ChatInteraction
-from .models import ChatMessage, ChatRoomClick, FavoriteChatRoom
-import json
+# def test_payment_done(request):
+#     # 這裡可以做一些完成後的處理，例如顯示付款成功訊息
+#     return render(request, "test_payment_done.html")
 
-def _sum_json_list_lengths(qs, field):
-    """把 TextField(JSON字串) 逐筆載入後回傳清單長度總和。壞字串一律當 0。"""
-    total = 0
-    for s in qs.values_list(field, flat=True):
-        try:
-            data = json.loads(s or "[]")
-            if isinstance(data, list):
-                total += len(data)
-        except Exception:
-            pass
-    return total
+
+# from django.shortcuts import render
+# from .models import PemapAll, StoreAll, ChatInteraction
+# from .models import ChatMessage, ChatRoomClick, FavoriteChatRoom
+# import json
+
+# def _sum_json_list_lengths(qs, field):
+#     """把 TextField(JSON字串) 逐筆載入後回傳清單長度總和。壞字串一律當 0。"""
+#     total = 0
+#     for s in qs.values_list(field, flat=True):
+#         try:
+#             data = json.loads(s or "[]")
+#             if isinstance(data, list):
+#                 total += len(data)
+#         except Exception:
+#             pass
+#     return total
 
 
 

@@ -150,8 +150,6 @@ urlpatterns = [
     path('this_user_profile/update/', views.update_user_profile, name='update_user_profile'),
     path('this_user_profile/', views.this_user_profile_redirect, name='this_user_profile'),
     path('user_data/', views.user_data_view, name='user_data'),  #   非第一次登入看資料頁
-    path("user/<int:pk>/", views.public_profile, name="public_profile"), #給別人看的
-    path('public_profile/gmail/<str:gmail>/', views.public_profile, name='public_profile'),#給別人看的
     # 商家廣告：上傳處理
     path("store/upload-ad/", views.upload_store_ad, name="upload_store_ad"),
     # 商家廣告：上傳頁面
@@ -159,8 +157,8 @@ urlpatterns = [
     # API
     path("api/get_store_ad/", views.get_store_ad, name="api_get_store_ad"),
     path("/api/stores-with-ads/", views.stores_with_ads, name="stores_with_ads"),
-    path('test_payment/', views.test_payment, name='test_payment'),  # 模擬付款頁面
-    path('test_payment_done/', views.test_payment_done, name='test_payment_done'),  # 模擬付款頁面完成
+    # path('test_payment/', views.test_payment, name='test_payment'),  # 模擬付款頁面
+    # path('test_payment_done/', views.test_payment_done, name='test_payment_done'),  # 模擬付款頁面完成
     path('ecpay/checkout/', views.ecpay_checkout, name='ecpay_checkout'),
     path('ecpay/return/', views.ecpay_return, name='ecpay_return'),
     path('ecpay/done/', views.EC_payment_done, name='ecpay_done'),  # 新的完成頁
@@ -168,7 +166,8 @@ urlpatterns = [
     path('pay-advertisement/<int:payment_id>/', views.pay_advertisement, name='pay_advertisement'),
     # 新增取消路由
     path("ad/cancel/<str:history_id>/", views.cancel_ad, name="cancel_ad"),
-    
+    path('user_search/', views.user_search, name='user_search'),
+    path('profile/<str:username>/', views.user_profile_detail, name='user_profile_detail'),#給別人看的
     
 
 
