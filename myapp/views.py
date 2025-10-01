@@ -11,6 +11,7 @@ from .utils import get_unreviewed_counts
 import datetime
 from django.views.decorators.csrf import csrf_exempt
 from myapp.sdk.ecpay_payment_sdk import ECPayPaymentSdk
+import requests
 
 
 def report_view(request):
@@ -1725,7 +1726,8 @@ def pemap_judge(request):
     admin_name = request.session.get('admin_name')
 
     if not admin_id:
-        return redirect('admin_login')  # 未登入導回登入頁
+        context.update(get_unreviewed_counts())
+        return redirect('admin_login',context)  # 未登入導回登入頁
 
     all_data = PemapAll.objects.all().order_by('-time_created')  # 最新的在上
 
@@ -1792,12 +1794,13 @@ def pemap_judge_step1(request, p_id):
                 return redirect(url)
 
             return redirect('pemap_judge')
-
-    return render(request, 'pemap_judge_step1.html', {
+    context = {
         'item': form_data,
         'admin_id': admin_id,
         'admin_name': admin_name,
-    })
+    }
+    context.update(get_unreviewed_counts())
+    return render(request, 'pemap_judge_step1.html', context)
 
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
@@ -1866,17 +1869,6 @@ def store_step2_view(request, st_id):
     context = {'store': store,}
     context.update(get_unreviewed_counts())
     return render(request, 'store_step2.html', context)
-
-
-
-
-
-
-
-
-import requests
-from django.shortcuts import render, redirect, get_object_or_404
-from .models import PemapAll
 
 #--------- 使用 Google Maps API 反查地址 ----------
 def reverse_geocode_google(lat, lng):
