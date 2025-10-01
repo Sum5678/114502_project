@@ -1237,7 +1237,7 @@ from django.http import JsonResponse
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
-import os
+import base64
 from .models import StoreAll, StoreAd, StoreAdImage
 
 @login_required(login_url='/01userlogin/')
@@ -1255,10 +1255,9 @@ def submit_store(request):
             poster_id = int(request.POST.get('poster_id', 1))
             created_at = request.POST.get('created_at')
             ad_content = request.POST.get('ad_content', '')
-
             st_id = int(request.POST.get('st_id'))
 
-            # 🔹 防呆：經緯度不能空
+            # 防呆：經緯度不能空
             if not latitude or not longitude:
                 return JsonResponse({'status': 'error', 'message': '請先在地圖上選擇位置'})
 
@@ -1274,43 +1273,38 @@ def submit_store(request):
                 poster_id=poster_id,
                 store_name=bs_name,
                 address=bs_address,
-                latitude=float(latitude),
-                longitude=float(longitude),
+                latitude=latitude,
+                longitude=longitude,
                 business_hours=business_hours,
                 phone=phone,
                 created_at=created_at,
                 reviewed_at=None,
                 review_status="pending",
                 admin_id=9999,
-                user_id=request.user.id,         # ✅ 改這裡
+                user_id=request.user.id,
                 poster_gmail=request.user.email,
-                submitted_by=request.user.id 
+                submitted_by = request.user
             )
 
             # 建立廣告
             store_ad = StoreAd.objects.create(
-                st_id=int(store.st_id),
+                st_id=store.st_id,
                 ad_content=ad_content,
                 created_at=timezone.now(),
                 updated_at=timezone.now(),
             )
 
-            # 處理多張圖片，上傳到 media/ads/
+            # 處理多張圖片，用 Base64 儲存
             images = request.FILES.getlist('ad_images')
-            ad_folder = os.path.join(settings.MEDIA_ROOT, 'ads')
-            os.makedirs(ad_folder, exist_ok=True)
 
             for img in images:
-                # 保存檔案
-                file_path = os.path.join(ad_folder, img.name)
-                with open(file_path, 'wb+') as f:
-                    for chunk in img.chunks():
-                        f.write(chunk)
-                # 存資料庫 URL
-                image_url = f"{settings.MEDIA_URL}ads/{img.name}"
+                img_content = img.read()
+                img_base64 = base64.b64encode(img_content).decode('utf-8')
+                data_url = f"data:{img.content_type};base64,{img_base64}"
+
                 StoreAdImage.objects.create(
                     st_id=store_ad.st_id,
-                    image_url=image_url,
+                    image_url=data_url,
                     created_at=timezone.now()
                 )
 
@@ -1320,6 +1314,7 @@ def submit_store(request):
             return JsonResponse({'status': 'error', 'message': str(e)})
 
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
+
 
 
 
@@ -1447,6 +1442,13 @@ class PemapAllListView(ListView):
     template_name = 'pemapall_list.html'
     context_object_name = 'pemap_list'
 
+    def get_queryset(self):
+        # 排除人工審核通過 / 人工審核未通過
+        return PemapAll.objects.exclude(
+            review_status__in=["人工審核通過", "人工審核未通過"]
+        )
+
+                                        
 # @method_decorator(staff_member_required, name='dispatch')
 class PemapAllUpdateView(UpdateView):
     model = PemapAll
@@ -1846,22 +1848,37 @@ def store_judge_step1(request, st_id):
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import StoreAll
 
+from django.shortcuts import render, get_object_or_404, redirect
+from .models import StoreAll
+
 def store_judge_view(request, st_id):
     store = get_object_or_404(StoreAll, st_id=st_id)
 
     if request.method == 'POST':
         review_status = request.POST.get('review_status')
-        store.review_status = review_status
-        store.save()
+        
+        # 更新商家審核狀態
+        if review_status and review_status != store.review_status:
+            store.review_status = review_status
+            store.save()
 
+        # 根據狀態跳轉
         if review_status == 'rejected':
+            # 退回 → 去 step2 撰寫通知信
             return redirect('store_step2', st_id=store.st_id)
+        else:
+            # 其他 → 回到商家清單
+            return redirect('store_judge')
+
+    # GET 請求 → 顯示 step1 表單
+    return render(request, 'store_judge_step1.html', {'store': store})
 
         return redirect('store_judge')
     
     context = {'store': store,}
     context.update(get_unreviewed_counts())
     return render(request, 'store_judge_step1.html', context)
+
 
 
 def store_step2_view(request, st_id):

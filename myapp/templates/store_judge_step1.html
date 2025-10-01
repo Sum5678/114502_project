@@ -91,23 +91,60 @@
 
     <!-- 店家審核區塊 -->
     <section class="container my-5">
-      <h1 class="mb-4">審核店家：{{ store.store_name }}</h1>
+      
       <a href="{% url 'store_judge' %}" class="btn btn-secondary mb-4">返回店家列表</a>
+      <h1 class="mb-4">審核店家：{{ store.store_name }}</h1>
 
       <div class="row g-4 align-items-start">
         <!-- Google Maps 區塊 -->
         <div class="col-md-6">
           <div class="card shadow-sm">
             <div class="card-body p-2">
-              <iframe
+              
+              <!-- <iframe
                 class="w-100"
                 height="300"
                 frameborder="0"
                 style="border:0; border-radius: 8px;"
                 referrerpolicy="no-referrer-when-downgrade"
-                src="https://www.google.com/maps?q={{ store.address|urlencode }}&output=embed"
+                src="https://www.google.com/maps?q={{ store.latitude }},{{ store.longitude }}&z=15&output=embed"
                 allowfullscreen>
-              </iframe>
+              </iframe> -->
+
+              <!-- Google Map 容器 -->
+              <div id="map" class="w-100" style="height:300px; border-radius:8px;"></div>
+
+              <!-- 載入 Google Maps JS API (帶你的 key) -->
+              <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAUuPZMMJvgVWftmqVyzfX8mKTwMX4kA6o&callback=initMap" async defer></script>
+
+              <script>
+                function initMap() {
+                  // Django 傳過來的座標 (用 parseFloat 保證轉數字)
+                  const storeLocation = { 
+                    lat: parseFloat("{{ store.latitude|default:0 }}"), 
+                    lng: parseFloat("{{ store.longitude|default:0 }}") 
+                  };
+
+                  // 建立地圖
+                  const map = new google.maps.Map(document.getElementById("map"), {
+                    zoom: 15,
+                    center: storeLocation
+                  });
+
+                  // 加入自訂 icon 的 marker
+                  new google.maps.Marker({
+                    position: storeLocation,
+                    map: map,
+                    icon: {
+                      url: "{% static 'assets/img/shop_icon.png' %}", // icon 圖片
+                      scaledSize: new google.maps.Size(30, 30)        // 調整大小
+                    }
+                  });
+                }
+              </script>
+
+
+
             </div>
           </div>
         </div>
@@ -117,9 +154,10 @@
           <div class="card shadow-sm">
             <div class="card-body">
               <h5 class="card-title mb-3">店家資訊</h5>
+              <p><strong>店名：</strong>{{ store.store_name }}</p>
               <p><strong>店家ID：</strong>{{ store.st_id }}</p>
-              <p><strong>上傳者暱稱：</strong>{{ store.poster_id }}</p>
-              <p><strong>地址：</strong>{{ store.address }}</p>
+              <p><strong>上傳者ID：</strong>{{ store.poster_id }}</p>  <!--  #this user_id-->
+              <p><strong>地址：(請參考地圖位置)</strong></p>
               <p><strong>營業時間：</strong>{{ store.business_hours }}</p>
               <p><strong>電話：</strong>{{ store.phone }}</p>
               <p><strong>上傳時間：</strong>{{ store.created_at }}</p>
@@ -140,6 +178,8 @@
                 <img src="{{ img.image_url }}" class="img-fluid rounded" alt="廣告圖片">
               </div>
               {% endfor %}
+
+
             </div>
           </div>
         </div>
