@@ -104,7 +104,7 @@
         <div class="card shadow-sm">
           <div class="card-body">
             <h5 class="card-title mb-3">事件資訊</h5>
-            <p><strong>暱稱：</strong>{{ item.display_name }}</p>
+            <p><strong>事件名稱：</strong>{{ item.display_name }}</p>
             <p><strong>投稿者 Email：</strong>{{ item.poster_gmail|default:"未提供" }}</p>
             <p><strong>分類：</strong>{{ item.kind }}</p>
             <p><strong>理由：</strong>{{ item.reason }}</p>
@@ -139,8 +139,8 @@
             <label for="review_status" class="form-label fw-bold">審核狀態</label>
             <select name="review_status" id="review_status" class="form-select">
               <option value="未審核" {% if item.review_status == "未審核" %}selected{% endif %}>未審核</option>
-              <option value="AI 審核通過" {% if item.review_status == "AI 審核通過" %}selected{% endif %}>AI 審核通過</option>
-              <option value="AI 審核未通過，需人工審核" {% if item.review_status == "AI 審核未通過，需人工審核" %}selected{% endif %}>AI 審核未通過，需人工審核</option>
+              <!-- <option value="AI 審核通過" {% if item.review_status == "AI 審核通過" %}selected{% endif %}>AI 審核通過</option>
+              <option value="AI 審核未通過，需人工審核" {% if item.review_status == "AI 審核未通過，需人工審核" %}selected{% endif %}>AI 審核未通過，需人工審核</option> -->
               <option value="人工審核通過" {% if item.review_status == "人工審核通過" %}selected{% endif %}>人工審核通過</option>
               <option value="人工審核未通過" {% if item.review_status == "人工審核未通過" %}selected{% endif %}>人工審核未通過</option>
             </select>

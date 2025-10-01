@@ -111,26 +111,28 @@
               </thead>
               <tbody>
                 {% for item in data %}
-                  <tr>
-                    <td>{{ item.p_id }}</td>
-                    <td>{{ item.display_name }}</td>
-                    <td>{{ item.kind }}</td>
-                    <td>{{ item.reason|truncatechars:30 }}</td>
-                    <td>{{ item.latitude }}, {{ item.longitude }}</td>
-                    <td>{{ item.time_created }}</td>
-                    <td>{{ item.review_status }}</td>
-                    <td>{{ item.admin_id }}</td>
-
-                    <td>
-                      <a href="{% url 'pemap_judge_step1' item.p_id %}" class="btn btn-sm btn-primary">進入審核</a>
-                    </td>
-                  </tr>
+                  {% if item.review_status != '人工審核通過' and item.review_status != '人工審核未通過' %}
+                    <tr>
+                      <td>{{ item.p_id }}</td>
+                      <td>{{ item.display_name }}</td>
+                      <td>{{ item.kind }}</td>
+                      <td>{{ item.reason|truncatechars:30 }}</td>
+                      <td>{{ item.latitude }}, {{ item.longitude }}</td>
+                      <td>{{ item.time_created }}</td>
+                      <td>{{ item.review_status }}</td>
+                      <td>{{ item.admin_id }}</td>
+                      <td>
+                        <a href="{% url 'pemap_judge_step1' item.p_id %}" class="btn btn-sm btn-primary">進入審核</a>
+                      </td>
+                    </tr>
+                  {% endif %}
                 {% empty %}
                   <tr>
-                    <td colspan="8">目前尚無資料</td>
+                    <td colspan="9">目前尚無資料</td>
                   </tr>
                 {% endfor %}
               </tbody>
+
             </table>
           </div>
         </div>
