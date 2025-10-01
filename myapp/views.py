@@ -1440,6 +1440,13 @@ class PemapAllListView(ListView):
     template_name = 'pemapall_list.html'
     context_object_name = 'pemap_list'
 
+    def get_queryset(self):
+        # 排除人工審核通過 / 人工審核未通過
+        return PemapAll.objects.exclude(
+            review_status__in=["人工審核通過", "人工審核未通過"]
+        )
+
+                                        
 # @method_decorator(staff_member_required, name='dispatch')
 class PemapAllUpdateView(UpdateView):
     model = PemapAll
@@ -1839,20 +1846,31 @@ def store_judge_step1(request, st_id):
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import StoreAll
 
+from django.shortcuts import render, get_object_or_404, redirect
+from .models import StoreAll
+
 def store_judge_view(request, st_id):
     store = get_object_or_404(StoreAll, st_id=st_id)
 
     if request.method == 'POST':
         review_status = request.POST.get('review_status')
-        store.review_status = review_status
-        store.save()
+        
+        # 更新商家審核狀態
+        if review_status and review_status != store.review_status:
+            store.review_status = review_status
+            store.save()
 
+        # 根據狀態跳轉
         if review_status == 'rejected':
+            # 退回 → 去 step2 撰寫通知信
             return redirect('store_step2', st_id=store.st_id)
+        else:
+            # 其他 → 回到商家清單
+            return redirect('store_judge')
 
-        return redirect('store_judge')
-
+    # GET 請求 → 顯示 step1 表單
     return render(request, 'store_judge_step1.html', {'store': store})
+
 
 
 def store_step2_view(request, st_id):
