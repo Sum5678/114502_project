@@ -26,30 +26,12 @@
 <!-- 導覽列（與其他頁面一致） -->
 <header id="header" class="header d-flex align-items-center fixed-top">
   <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
+    <!-- 管理員資訊 -->
     <a href="{% url 'admin_index' %}" class="logo d-flex flex-column align-items-start me-auto me-xl-0">
-      <h1 class="sitename">交流區舉報審核紀錄</h1>
-      <small class="text-muted">
-        <strong>
-          {% if admin_name %}
-            {{ admin_name }}
-          {% elif request.user.is_authenticated %}
-            {{ request.user.get_username }}
-          {% else %}
-            訪客
-          {% endif %}
-        </strong> 管理員　
-        <span>
-          ID:
-          {% if admin_id %}
-            {{ admin_id }}
-          {% elif request.user.is_authenticated %}
-            {{ request.user.id }}
-          {% else %}
-            —
-          {% endif %}
-        </span>
-      </small>
+      <h1 class="sitename">{{ admin_name }} 管理員</h1>
+      <h1 class="sitename">您的管理員id是: {{ admin_id }}</h1>
     </a>
+
 
     <nav id="navmenu" class="navmenu">
       <ul>
