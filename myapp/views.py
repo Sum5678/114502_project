@@ -1799,10 +1799,6 @@ def pemap_judge_step1(request, p_id):
         'admin_name': admin_name,
     })
 
-
-
-
-
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
 from .models import StoreAll
@@ -1831,13 +1827,15 @@ def store_judge_step1(request, st_id):
             store.admin_id = admin_id
             store.save()
             return redirect('store_judge')  # 審核完返回列表頁
-
-    return render(request, 'store_judge_step1.html', {
+    
+    context = {
         'store': store,
         'store_ad': store_ad,
         'admin_id': admin_id,
         'admin_name': admin_name,
-    })
+    }
+    context.update(get_unreviewed_counts())
+    return render(request, 'store_judge_step1.html', context)
 
 
 
@@ -1857,13 +1855,17 @@ def store_judge_view(request, st_id):
             return redirect('store_step2', st_id=store.st_id)
 
         return redirect('store_judge')
-
-    return render(request, 'store_judge_step1.html', {'store': store})
+    
+    context = {'store': store,}
+    context.update(get_unreviewed_counts())
+    return render(request, 'store_judge_step1.html', context)
 
 
 def store_step2_view(request, st_id):
     store = get_object_or_404(StoreAll, st_id=st_id)
-    return render(request, 'store_step2.html', {'store': store})
+    context = {'store': store,}
+    context.update(get_unreviewed_counts())
+    return render(request, 'store_step2.html', context)
 
 
 
@@ -1920,7 +1922,7 @@ def admin_index(request):
         'admin_id': request.session.get('admin_id'),
         'admin_name': request.session.get('admin_name'),
     }
-    context.update(get_unreviewed_counts())  # 🔹 加入紅點數
+    context.update(get_unreviewed_counts())
     return render(request, 'admin_index.html', context)
 
 
