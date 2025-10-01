@@ -166,29 +166,6 @@
   <script src="{% static 'assets/vendor/isotope-layout/isotope.pkgd.min.js' %}"></script>
   <script src="{% static 'assets/vendor/swiper/swiper-bundle.min.js' %}"></script>
   <script src="{% static 'assets/js/main.js' %}"></script>
-
-<script src="https://unpkg.com/pulltorefreshjs"></script>
-<script src="{% static 'assets/js/refresh.js' %}"></script>
-<script>
-  function refreshReports() {
-    return fetch('/api/report_list')
-      .then(res => res.json())
-      .then(data => {
-        const container = document.getElementById('report-items');
-        container.innerHTML = '';
-        data.forEach(item => {
-          container.innerHTML += `<div>${item.display_name} - ${item.address}</div>`;
-        });
-      });
-  }
-
-  // 啟用下拉刷新
-  setupPullToRefresh(refreshReports);
-
-  // 首次載入
-  document.addEventListener("DOMContentLoaded", refreshReports);
-</script>
-
 </body>
 </html>
 
