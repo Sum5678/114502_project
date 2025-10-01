@@ -3654,11 +3654,17 @@ def review_reports(request):
     }
     latest_reports = list(AbuseReport.objects.all().order_by('-created_at')[:10])
 
-    return render(request, 'admin_review_reports.html', {
-        'reports': reports, 'status': status, 'q': q,
-        'report_counts': report_counts, 'latest_reports': latest_reports,
-        'admin_name': admin_name, 'admin_id': admin_id,
-    })
+    context = {
+        'reports': reports,
+        'status': status,
+        'q': q,
+        'report_counts': report_counts,
+        'latest_reports': latest_reports,
+        'admin_name': admin_name,
+        'admin_id': admin_id,
+    }
+    context.update(get_unreviewed_counts())
+    return render(request, 'admin_review_reports.html',context)
 
 
 # ===== 管理員「最終審核紀錄」頁（僅顯示 action_taken / rejected） =====
@@ -3959,84 +3965,7 @@ def post_detail(request, post_id):
         "profile_nickname1": nick1,
         "profile_nickname2": nick2,
     })
-
-
-
 # ------------ /交流區後端（整合版）------------
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# from .models import ChatInteraction  # ✅ 不再匯入 ThisUserProfile
-# from datetime import datetime
-# from django.contrib.auth.decorators import login_required
-# from django.shortcuts import render, redirect
-# import bleach  # ✅ 引入 bleach 套件
-# ALLOWED_TAGS = ['a']
-# ALLOWED_ATTRIBUTES = {
-#     'a': ['href', 'target', 'rel']
-# }
-
-# # ✅ bleach 白名單設定：只允許 <a> 並限制安全屬性
-
-# @login_required(login_url='/01userlogin/')
-# def post(request):
-#     if request.method == 'POST':
-#         # ✅ 固定暱稱為 (匿名)
-#         nickname = "(匿名)"
-#         bgcolor = request.POST.get('bgcolor')
-#         avatar_style = request.POST.get('avatar_style')
-#         title = request.POST.get('title')
-#         raw_content = request.POST.get('content')
-
-#         # ✅ 透過 bleach 淨化 HTML，僅保留安全 <a> 標籤
-#         clean_content = bleach.clean(
-#             raw_content,
-#             tags=ALLOWED_TAGS,
-#             attributes=ALLOWED_ATTRIBUTES,
-#             protocols=['http', 'https'],
-#             strip=True
-#         )
-
-#         avatar_url = f"https://api.dicebear.com/7.x/{avatar_style}/svg?seed={nickname}&backgroundColor={bgcolor}"
-
-#         # ✅ 儲存進資料庫
-#         ChatInteraction.objects.create(
-#             user=request.user,
-#             nickname=nickname,
-#             bgcolor=bgcolor,
-#             avatar_style=avatar_style,
-#             avatar_url=avatar_url,
-#             title=title,
-#             message_content=clean_content,
-#             created_at=datetime.now()
-#         )
-
-#         return redirect('post_display')  # 發文成功轉跳至展示頁
-
-#     return render(request, 'post.html')
-
-
-# ✅ 展示頁保持不變（但顯示時可用 |safe，前提是內容已淨化）
 
 
 #------------事件表單拒絕後傳送-------
