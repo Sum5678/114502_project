@@ -112,26 +112,30 @@
             </thead>
             <tbody>
                 {% for item in store_list %}
-                <tr>
-                    <td>{{ item.st_id }}</td>
-                    <td>{{ item.poster_id }}</td>
-                    <td>{{ item.store_name }}</td>
-                    <td>{{ item.address|truncatechars:25 }}</td>
-                    <td>{{ item.business_hours }}</td>
-                    <td>{{ item.phone }}</td>
-                    <td>{{ item.created_at }}</td>
-                    <td>{{ item.review_status }}</td>
-                    <td>{{ item.admin_id }}</td>
-                    <td>
-                    <a href="{% url 'store_judge_step1' item.st_id %}" class="btn btn-sm btn-primary">進入審核</a>
-                    </td>
-                </tr>
+                    {% if item.review_status == 'pending' %}
+                    <tr>
+                        <td>{{ item.st_id }}</td>
+                        <td>{{ item.poster_id }}</td>
+                        <td>{{ item.store_name }}</td>
+                        <td>{{ item.address|truncatechars:25 }}</td>
+                        <td>{{ item.business_hours }}</td>
+                        <td>{{ item.phone }}</td>
+                        <td>{{ item.created_at }}</td>
+                        <td>{{ item.review_status }}</td>
+                        <td>{{ item.admin_id }}</td>
+                        <td>
+                            <a href="{% url 'store_judge_step1' item.st_id %}" class="btn btn-sm btn-primary">進入審核</a>
+                        </td>
+                    </tr>
+                    {% endif %}
                 {% empty %}
                 <tr>
-                    <td colspan="9">目前尚無資料</td>
+                    <td colspan="10">目前尚無資料</td>
                 </tr>
                 {% endfor %}
             </tbody>
+
+
             </table>
         </div>
         </div>
