@@ -1235,7 +1235,7 @@ from django.http import JsonResponse
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
-import os
+import base64
 from .models import StoreAll, StoreAd, StoreAdImage
 
 @login_required(login_url='/01userlogin/')
@@ -1253,10 +1253,9 @@ def submit_store(request):
             poster_id = int(request.POST.get('poster_id', 1))
             created_at = request.POST.get('created_at')
             ad_content = request.POST.get('ad_content', '')
-
             st_id = int(request.POST.get('st_id'))
 
-            # 🔹 防呆：經緯度不能空
+            # 防呆：經緯度不能空
             if not latitude or not longitude:
                 return JsonResponse({'status': 'error', 'message': '請先在地圖上選擇位置'})
 
@@ -1272,43 +1271,38 @@ def submit_store(request):
                 poster_id=poster_id,
                 store_name=bs_name,
                 address=bs_address,
-                latitude=float(latitude),
-                longitude=float(longitude),
+                latitude=latitude,
+                longitude=longitude,
                 business_hours=business_hours,
                 phone=phone,
                 created_at=created_at,
                 reviewed_at=None,
                 review_status="pending",
                 admin_id=9999,
-                user_id=request.user.id,         # ✅ 改這裡
+                user_id=request.user.id,
                 poster_gmail=request.user.email,
-                submitted_by=request.user.id 
+                submitted_by = request.user
             )
 
             # 建立廣告
             store_ad = StoreAd.objects.create(
-                st_id=int(store.st_id),
+                st_id=store.st_id,
                 ad_content=ad_content,
                 created_at=timezone.now(),
                 updated_at=timezone.now(),
             )
 
-            # 處理多張圖片，上傳到 media/ads/
+            # 處理多張圖片，用 Base64 儲存
             images = request.FILES.getlist('ad_images')
-            ad_folder = os.path.join(settings.MEDIA_ROOT, 'ads')
-            os.makedirs(ad_folder, exist_ok=True)
 
             for img in images:
-                # 保存檔案
-                file_path = os.path.join(ad_folder, img.name)
-                with open(file_path, 'wb+') as f:
-                    for chunk in img.chunks():
-                        f.write(chunk)
-                # 存資料庫 URL
-                image_url = f"{settings.MEDIA_URL}ads/{img.name}"
+                img_content = img.read()
+                img_base64 = base64.b64encode(img_content).decode('utf-8')
+                data_url = f"data:{img.content_type};base64,{img_base64}"
+
                 StoreAdImage.objects.create(
                     st_id=store_ad.st_id,
-                    image_url=image_url,
+                    image_url=data_url,
                     created_at=timezone.now()
                 )
 
@@ -1318,6 +1312,7 @@ def submit_store(request):
             return JsonResponse({'status': 'error', 'message': str(e)})
 
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
+
 
 
 
