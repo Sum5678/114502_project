@@ -4186,15 +4186,14 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
 from django.conf import settings
-import google.generativeai as genai
+import google.generativeai as genai 
 
 # ------------------ 設定 Gemini API ------------------
+
 genai.configure(api_key=settings.GOOGLE_API_KEY)
 
-# 你可以用 list_models() 確認可用模型名稱
-# print(genai.list_models())
-
-model = genai.GenerativeModel("gemini-1.5-flash")  # 或 list_models() 顯示可用的其他模型
+# 使用穩定版模型
+model = genai.GenerativeModel("models/gemini-2.5-flash")
 
 # ------------------ 即時檢查與改寫訊息 ------------------
 @login_required
