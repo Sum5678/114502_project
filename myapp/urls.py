@@ -166,6 +166,9 @@ urlpatterns = [
     path('ecpay/done/', views.EC_payment_done, name='ecpay_done'),  # 新的完成頁
     path('pending-payments/', views.pending_payments, name='pending_payments'),
     path('pay-advertisement/<int:payment_id>/', views.pay_advertisement, name='pay_advertisement'),
+    # 新增取消路由
+    path("ad/cancel/<str:history_id>/", views.cancel_ad, name="cancel_ad"),
+    
     
 
 

@@ -1873,11 +1873,11 @@ def store_judge_view(request, st_id):
     # GET 請求 → 顯示 step1 表單
     return render(request, 'store_judge_step1.html', {'store': store})
 
-        return redirect('store_judge')
+    #     return redirect('store_judge')
     
-    context = {'store': store,}
-    context.update(get_unreviewed_counts())
-    return render(request, 'store_judge_step1.html', context)
+    # context = {'store': store,}
+    # context.update(get_unreviewed_counts())
+    # return render(request, 'store_judge_step1.html', context)
 
 
 
@@ -4759,7 +4759,6 @@ def ecpay_checkout(request):
         'TradeDesc': '廣告上架付款',
         'ItemName': item_name,
         'ReturnURL': 'http://127.0.0.1:8000/ecpay/return/',   # 綠界伺服器回呼
-        # 'OrderResultURL': f'http://127.0.0.1:8000/ecpay/payment_done/{merchant_trade_no}/', # 付款完成導回
         'OrderResultURL': 'http://127.0.0.1:8000/ecpay/done/',# 付款完成導回
         'ClientBackURL': '',  # 不需要
         'NeedExtraPaidInfo': 'Y',
@@ -4820,14 +4819,23 @@ def ecpay_return(request):
         try:
             payment = UserPayment.objects.get(transaction_id=merchant_trade_no)
             if rtn_code == "1":
+                # ✅ 更新付款紀錄
                 payment.is_used = True
                 payment.save()
+
+                # ✅ 更新廣告狀態（上架）
+                from myapp.models import StoreAdHistory
+                ad = StoreAdHistory.objects.filter(st_id=payment.st_id).first()
+                if ad:
+                    ad.payment = payment
+                    ad.status = "paid"      # 你可以改成 "active" 或 "上架"
+                    ad.save()
+
         except UserPayment.DoesNotExist:
             pass
 
         return HttpResponse("1|OK")  # ✅ 綠界規定必須回傳
     return HttpResponse("Error")
-
 
 # -------------------------------
 # 付款完成頁（小視窗）
@@ -4846,3 +4854,27 @@ def EC_payment_done(request, transaction_id=None):
         'amount': amount,
         'transaction_id': transaction_id
     })
+
+
+# views.py
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from myapp.models import StoreAdHistory
+
+@csrf_exempt
+def cancel_ad(request, history_id):
+    if request.method == "POST":
+        try:
+            ad_history = StoreAdHistory.objects.get(history_id=history_id)
+            # 只允許本人取消
+            if ad_history.st.poster_gmail != request.user.email:
+                return JsonResponse({"status": "error", "message": "權限不足"})
+
+            ad_history.delete()  # 或設 is_cancelled = True
+            return JsonResponse({"status": "ok"})
+        except StoreAdHistory.DoesNotExist:
+            return JsonResponse({"status": "error", "message": "廣告不存在"})
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)})
+
+    return JsonResponse({"status": "error", "message": "只接受 POST"})

@@ -1,3 +1,45 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>付款完成</title>
+<link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+<style>
+body { padding: 50px; text-align: center; font-family: Arial, sans-serif; }
+h1 { color: #63b3ed; margin-bottom: 20px; }
+p { font-size: 18px; }
+</style>
+</head>
+<body>
+
+<h1>付款完成 ✅</h1>
+<p>感謝您的付款，視窗即將關閉...</p>
+
+<script>
+  // 2 秒後跳回 pending-payments 頁面
+  setTimeout(function(){
+    // 如果是 popup 視窗
+    if (window.opener) {
+        window.opener.location.href = "{% url 'pending_payments' %}";
+        window.close();
+    } else {
+        // 非 popup 直接跳轉
+        window.location.href = "{% url 'pending_payments' %}";
+    }
+  }, 2000);
+</script>
+
+<script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+</body>
+</html>
+
+
+
+
+
+<!--
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
@@ -50,34 +92,4 @@ localStorage.setItem("payment_result", JSON.stringify({
 
 
 
-
-
-
-
-
-
-
-
-<!-- templates/ec_payment_done.html
-<html>
-<head>
-    <meta charset="utf-8">
-    <title>付款完成</title>
-</head>
-<body>
-    <p>付款完成，正在返回...</p>
-    <script>
-        console.log("正在通知父頁：付款完成");
-        if (window.opener) {
-            window.opener.postMessage({
-                type: "PAYMENT_SUCCESS",
-                st_id: "{{ st_id }}",
-                item: "{{ item }}",
-                amount: "{{ amount }}"
-            }, "*");
-        }
-        setTimeout(() => window.close(), 1000);
-    </script>
-
-</body>
-</html> -->
+-->
