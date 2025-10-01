@@ -3673,12 +3673,16 @@ def review_reports(request):
 def report_decide(request):
     admin_id = request.session.get('admin_id')
     admin_name = request.session.get('admin_name') or '管理員'
-
+    context = {
+            'reports': [], 
+            'status': '',
+            'q': '',
+            'admin_name': admin_name,
+            'admin_id': admin_id,
+        }
+    context.update(get_unreviewed_counts())
     if AbuseReport is None:
-        return render(request, 'admin_report_decide.html', {
-            'reports': [], 'status': '', 'q': '',
-            'admin_name': admin_name, 'admin_id': admin_id,
-        })
+        return render(request, 'admin_report_decide.html', context)
 
     status = (request.GET.get('status') or '').strip()   # 可選：action_taken / rejected / 空(全部)
     q = (request.GET.get('q') or '').strip()
@@ -3694,11 +3698,15 @@ def report_decide(request):
         )
 
     reports = list(qs[:300])
-
-    return render(request, 'admin_report_decide.html', {
-        'reports': reports, 'status': status, 'q': q,
-        'admin_name': admin_name, 'admin_id': admin_id,
-    })
+    context = {
+        'reports': reports,
+        'status': status,
+        'q': q,
+        'admin_name': admin_name,
+        'admin_id': admin_id,
+    }
+    context.update(get_unreviewed_counts())
+    return render(request, 'admin_report_decide.html',context )
 
 
 # ===== 管理員動作（採取行動 / 駁回） =====
