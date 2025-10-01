@@ -178,7 +178,6 @@ from django.contrib.auth.models import User
 class PemapAll(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     p_id = models.AutoField(primary_key=True)
-    poster_id = models.CharField(max_length=255)  # 自動生成
     display_name = models.CharField(max_length=100)
     kind = models.CharField(max_length=100)
     reason = models.TextField()
