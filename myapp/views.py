@@ -242,6 +242,7 @@ def taiwan_regions_edit(request, id):
         'form': form, 
         'action': '編輯',
         }
+    context.update(get_unreviewed_counts())
     return render(request, 'taiwan_regions_edit.html', context)
 
 def taiwan_regions_delete(request, id):
