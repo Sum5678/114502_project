@@ -48,12 +48,9 @@
             height: 2px;
             background: #0d6efd;
         }
-        .section-title h2::before {
-            left: -70px;
-        }
-        .section-title h2::after {
-            right: -70px;
-        }
+        .section-title h2::before { left: -70px; }
+        .section-title h2::after { right: -70px; }
+
         .img-button {
             width: 290px;
             height: 260px;
@@ -85,19 +82,19 @@
     </style>
 </head>
 <body>
-    <header id="header" class="header d-flex align-items-center fixed-top">
-    <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
-      <a href="index.html" class="logo d-flex align-items-center me-auto me-xl-0">
-        <h1 class="sitename">怪怪走開，護您安全</h1><span></span>
-      </a>
-      <nav id="navmenu" class="navmenu">
-        <ul>
-          <li><a href="{% url 'home' %}#hero">主頁</a></li>
-          <li><a href="{% url 'home' %}#services">簡介及功能介紹</a></li>
-          <li><a href="{% url 'report' %}">填寫表單</a></li>
-          <li><a href="{% url 'business_upload' %}">商家填單</a></li>
-          <li><a href="{% url 'about' %}">個人資料設定</a></li>
-          <li><a href="{% url 'chatroom_page' %}">聊天室</a></li>
+<header id="header" class="header d-flex align-items-center fixed-top">
+  <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
+    <a href="{% url 'home' %}" class="logo d-flex align-items-center me-auto me-xl-0">
+      <h1 class="sitename">怪怪走開，護您安全</h1>
+    </a>
+    <nav id="navmenu" class="navmenu">
+      <ul>
+        <li><a href="{% url 'home' %}#hero">主頁</a></li>
+        <li><a href="{% url 'home' %}#services">簡介及功能介紹</a></li>
+        <li><a href="{% url 'report' %}">填寫表單</a></li>
+        <li><a href="{% url 'business_upload' %}">商家填單</a></li>
+        <li><a href="{% url 'about' %}">個人資料設定</a></li>
+        <li><a href="{% url 'chatroom_page' %}">聊天室</a></li>
         <li class="dropdown">
           <a href="#"><span>交流區</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
           <ul>
@@ -105,21 +102,18 @@
             <li><a href="{% url 'post_display' %}">貼文總覽</a></li>
           </ul>
         </li>
-          
-          <li class="dropdown"><a href="#"><span>地圖</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
-            <ul>
-              <li><a href="{% url 'map' %}">事件地圖</a></li>
-              <li><a href="{% url 'store_map' %}">商家地圖</a></li>
-            </ul> 
-          </li>
-          
-          <li><a href="{% url 'harassment_prevention' %}">防騷指南</a></li>
+        <li class="dropdown">
+          <a href="#"><span>地圖</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+          <ul>
+            <li><a href="{% url 'map' %}">事件地圖</a></li>
+            <li><a href="{% url 'store_map' %}">商家地圖</a></li>
+          </ul>
+        </li>
+        <li><a href="{% url 'harassment_prevention' %}">防騷指南</a></li>
+      </ul>
+      <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+    </nav>
 
-        </ul>
-        <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
-      </nav>
-      
-      <!-- ✅ 登入狀態 dropdown 按鈕 -->
     {% if request.user.is_authenticated %}
       <div class="dropdown">
         <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown"
@@ -145,92 +139,25 @@
   </div>
 </header>
 
-<!-- <header id="header" class="header d-flex align-items-center fixed-top">
-    <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
-        <a href="{% url 'home' %}" class="logo d-flex align-items-center me-auto me-xl-0">
-            <h1 class="sitename" style="color: #033e6b;">怪怪走開，護您安全</h1>
-        </a>
-         <nav id="navmenu" class="navmenu">
-            <ul>
-                <li><a href="{% url 'home' %}#hero" class="active">主頁</a></li>
-                <li><a href="{% url 'home' %}#services" class="active">簡介及功能介紹</a></li>
-                <li><a href="{% url 'report' %}" class="active">填寫表單</a></li>
-                <li><a href="{% url 'business_upload' %}" class="active">商家填單</a></li>
-                <li><a href="{% url 'post' %}#hero" class="active">我要發文</a></li>
-                <li><a href="{% url 'map' %}" class="active">事件地圖</a></li>
-                <li><a href="{% url 'harassment_prevention' %}" class="active">防騷指南</a></li>
-                <li class="dropdown">
-                    <a href="#" class="active"><span>Dropdown</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
-                    <ul>
-                        <li><a href="#">Dropdown 1</a></li>
-                        <li class="dropdown"><a href="#"><span>Deep Dropdown</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
-                            <ul>
-                                <li><a href="#">Deep Dropdown 1</a></li>
-                                <li><a href="#">Deep Dropdown 2</a></li>
-                                <li><a href="#">Deep Dropdown 3</a></li>
-                                <li><a href="#">Deep Dropdown 4</a></li>
-                                <li><a href="#">Deep Dropdown 5</a></li>
-                            </ul>
-                        </li>
-                        <li><a href="#">Dropdown 2</a></li>
-                        <li><a href="#">Dropdown 3</a></li>
-                        <li><a href="#">Dropdown 4</a></li>
-                    </ul>
-                </li>
-                <li><a href="{% url 'home' %}#contact" class="active">Contact</a></li>
-            </ul>
-            <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
-        </nav> 
-        <nav id="navmenu" class="navmenu">
-            <ul>
-            <li><a href="{% url 'home' %}#hero">主頁</a></li>
-            <li><a href="index.html#services">簡介及功能介紹</a></li>
-            <li><a href="{% url 'report' %}">填寫表單</a></li>
-            <li><a href="{% url 'business_upload' %}">商家填單</a></li>
-            <li><a href="{% url 'about' %}">個人資料設定</a></li>
-            <li><a href="{% url 'chatroom_page' %}">聊天室</a></li>
-            <li class="dropdown">
-            <a href="#"><span>交流區</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
-            <ul>
-                <li><a href="{% url 'post' %}#hero">我要發文</a></li>
-                <li><a href="{% url 'post_display' %}">貼文總覽</a></li>
-            </ul>
-            </li>
-            
-            <li class="dropdown"><a href="#"><span>地圖</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
-                <ul>
-                <li><a href="{% url 'map' %}">事件地圖</a></li>
-                <li><a href="{% url 'store_map' %}">商家地圖</a></li>
-                </ul> 
-            </li>
-            
-            <li><a href="{% url 'harassment_prevention' %}">防騷指南</a></li>
-
-            </ul>
-            <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
-        </nav>
-        <a class="btn-getstarted" href="{% url 'userlogin' %}">登入</a>
-    </div>
-</header> -->
-
 <main class="main">
-    <!-- Hero 區塊 -->
-    <div class="container" data-aos="fade-up">
-        <div class="section-title">
-            <h2>防身相關知識網頁</h2>
-            <p>透過線上學習資源，了解防身技巧與實用安全知識，幫助你在面對危險時能冷靜應對、保護自己。</p>
-        </div>
-        <div class="button-container">
-            {% for page in pages %}
-            <div class="d-flex flex-column align-items-center">
-                <form action="{{ page.url }}" target="_blank">
-                    <button type="submit" class="img-button" style="background-image: url('{% url 'education_image' page.id %}');"></button>
-                </form>
-                <p class="button-text">{{ page.title }}</p>
-            </div>
-            {% endfor %}
-        </div>
+  <div class="container" data-aos="fade-up">
+    <div class="section-title">
+      <h2>防身相關知識網頁</h2>
+      <p>透過線上學習資源，了解防身技巧與實用安全知識，幫助你在面對危險時能冷靜應對、保護自己。</p>
     </div>
+    <div class="button-container">
+      {% for page in pages %}
+      <div class="d-flex flex-column align-items-center">
+        <form action="{{ page.url }}" target="_blank">
+          <!-- ✅ 這裡改成直接用 page.image.url 來抓圖 -->
+          <button type="submit" class="img-button" 
+            style="background-image: url('{% url 'education_image' page.id %}');"></button>
+        </form>
+        <p class="button-text">{{ page.title }}</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
 </main>
 
 <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
