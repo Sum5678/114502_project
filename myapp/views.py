@@ -155,22 +155,18 @@ def education_delete(request, pk):
     return redirect('education_delete_confirm', pk=pk)  # 若不是 POST，就導回確認頁
 
 
-@xframe_options_exempt
-@csrf_exempt
-@admin_login_required
 
-
+@csrf_exempt  # 避免 CSRF 對 GET 的影響
 def education_image(request, page_id):
     try:
         page = EducationPage.objects.get(id=page_id)
-        if page.image_url:  # 你的 LONGBLOB 資料
-            # 將 BinaryField 的 bytes 直接傳給 HttpResponse
-            img_data = bytes(page.image_url)  # 確保是 bytes
-            return HttpResponse(img_data, content_type="image/png")  # 根據實際格式改 image/png 或 image/jpeg
+        if page.image_url:
+            img_data = bytes(page.image_url)
+            return HttpResponse(img_data, content_type="image/png")
         else:
-            return HttpResponse("No image found.", status=404)
+            return HttpResponse("No image found", status=404)
     except EducationPage.DoesNotExist:
-        return HttpResponse("Page not found.", status=404)
+        return HttpResponse("Page not found", status=404)
 
 
 #最近警局
