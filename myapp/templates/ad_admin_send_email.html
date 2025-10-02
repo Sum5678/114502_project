@@ -15,7 +15,7 @@
     <p><strong>商家名稱：</strong> {{ item.st.store_name }}</p>
     <p><strong>廣告內容：</strong> {{ item.ad_content }}</p>
     <p><strong>方案半徑：</strong> {{ item.ad_radius }} 公尺</p>
-    <p><strong>收件者：</strong> {{ to_email }}</p>
+    <p><strong>收件者：</strong> {{ item.st.poster_gmail}}</p>
 
     <form method="POST">
       {% csrf_token %}
@@ -30,16 +30,15 @@
         <textarea class="form-control" id="message" name="message" rows="6">
 尊敬的 {{ item.st.store_name }} 商家您好，
 
-您的廣告申請「{{ item.ad_content }}」已通過審核。
-
-請依照方案半徑 {{ item.ad_radius }} 公尺完成付款，以啟用廣告。
+您的廣告申請「{{ item.ad_content }}」已審核完畢。
+您選擇的方案半徑為: {{ item.ad_radius }}。
 
 感謝您的配合。
         </textarea>
       </div>
 
       <button type="submit" class="btn btn-primary">寄送信件</button>
-      <a href="{% url 'admin_review_ads' %}" class="btn btn-secondary">返回廣告審核列表</a>
+      <a href="{% url 'my_ad_reviews' %}" class="btn btn-secondary">返回廣告審核列紀錄表</a>
     </form>
 
   </div>

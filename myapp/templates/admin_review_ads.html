@@ -141,9 +141,10 @@
                   <a href="{% url 'review_store_ad' ad.history_id 'approve' %}" class="btn btn-success btn-sm me-1">
                     <i class="bi bi-check-circle"></i> 通過
                   </a>
-                  <a href="{% url 'review_store_ad' ad.history_id 'reject' %}" class="btn btn-danger btn-sm">
-                    <i class="bi bi-x-circle"></i> 拒絕
+                  <a href="{% url 'ad_admin_send_email_action' history_id=ad.history_id action='reject' %}" class="btn btn-sm btn-danger">
+                      拒絕 & 通知商家
                   </a>
+
                 </td>
               </tr>
               {% endfor %}
