@@ -444,19 +444,24 @@ class StoreAdHistory(models.Model):
     ad_content = models.TextField(blank=True, null=True)
     ad_radius = models.IntegerField(default=10)
     enabled = models.BooleanField(default=True)
-    
+
     STATUS_CHOICES = [
         ('pending', '待審核'),
         ('approved', '已批准'),
         ('rejected', '已拒絕'),
     ]
-    
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     created_at = models.DateTimeField(auto_now_add=True)
     reviewed_at = models.DateTimeField(blank=True, null=True)
-    admin_id = models.IntegerField(blank=True, null=True)
 
-    # ✅ 新增付款外鍵
+    # 🔹 關聯到 Admins 表，而不是單純存 int
+    admin = models.ForeignKey(
+        'Admins',
+        null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name='reviewed_ads'
+    )
+
     payment = models.ForeignKey(
         'UserPayment',
         null=True,
@@ -467,7 +472,38 @@ class StoreAdHistory(models.Model):
 
     class Meta:
         db_table = "store_ad_history"
-        managed = False  # 如果你已經用 SQL 建表，可以保持 False
+        managed = False
+
+# class StoreAdHistory(models.Model):
+#     history_id = models.AutoField(primary_key=True)
+#     st = models.ForeignKey(StoreAll, on_delete=models.CASCADE, related_name='ad_histories')
+#     ad_content = models.TextField(blank=True, null=True)
+#     ad_radius = models.IntegerField(default=10)
+#     enabled = models.BooleanField(default=True)
+    
+#     STATUS_CHOICES = [
+#         ('pending', '待審核'),
+#         ('approved', '已批准'),
+#         ('rejected', '已拒絕'),
+#     ]
+    
+#     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+#     created_at = models.DateTimeField(auto_now_add=True)
+#     reviewed_at = models.DateTimeField(blank=True, null=True)
+#     admin_id = models.IntegerField(blank=True, null=True)
+
+#     # ✅ 新增付款外鍵
+#     payment = models.ForeignKey(
+#         'UserPayment',
+#         null=True,
+#         blank=True,
+#         on_delete=models.SET_NULL,
+#         related_name='ad_histories'
+#     )
+
+#     class Meta:
+#         db_table = "store_ad_history"
+#         managed = False  # 如果你已經用 SQL 建表，可以保持 False
 
 
 
