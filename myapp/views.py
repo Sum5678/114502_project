@@ -4252,7 +4252,17 @@ genai.configure(api_key=settings.GOOGLE_API_KEY)
 # 使用穩定版模型
 model = genai.GenerativeModel("models/gemini-2.5-flash")
 
-# ------------------ 即時檢查與改寫訊息 ------------------
+## ------------------ 即時檢查與改寫訊息（含明顯違法提示） ------------------
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST
+from django.http import JsonResponse
+import json
+import re
+
+
+
+
+
 @login_required
 @require_POST
 def check_message(request):
@@ -4265,7 +4275,6 @@ def check_message(request):
 
     if not message:
         return JsonResponse({'status': 'ok'})  # 空訊息直接通過
-
     try:
         prompt = f"""
 你是一個中文訊息安全審查助手。
@@ -4277,28 +4286,41 @@ def check_message(request):
 規則：
 1. 如果訊息完全安全、友善，請只回覆「安全」兩個字。
 2. 如果訊息包含不當、攻擊性、歧視或可能引發法律問題的內容，
-   請改寫成友善、中性、不觸法的版本，並只回覆改寫後的文字。
-3. 不要回覆任何解釋或額外文字，只能回覆「安全」或改寫後的內容。
+   請保留訊息的原意，只修改不適當字眼，使其友善、中性、不違法。
+   不要使用固定句子。
+3. 如果訊息傳送任何教唆犯罪,販毒,槍械買賣 輸出:訊息包含敏感或違法內容，例如毒品、販毒、槍械、性騷擾或性侵相關訊息。根據中華民國法律及本聊天室規定，這類內容不可在聊天室討論。請修改您的訊息，避免涉及違法或令人不適的內容，並保持友善與尊重。
+4. 不要回覆任何解釋或額外文字，只能回覆「安全」或改寫後的內容。
 
 範例：
 輸入：你這個垃圾
-輸出：我希望我們能好好溝通。
+輸出：我覺得我們可以好好溝通。
+
+輸入：你怎麼不去死
+輸出：和你相處我很不開心。
+
+輸入：神經病
+輸出：不理解但尊重。
 
 輸入：今天天氣真好。
 輸出：安全
+
+輸入：早安
+輸出：安全
 """
+        # 呼叫你的 AI 模型
         response = model.generate_content(prompt)
 
         # 取得回覆文字
         gemini_text = getattr(response, "text", "").strip()
-        if not gemini_text and hasattr(response, "candidates"):
+        if not gemini_text and hasattr(response, "candidates") and response.candidates:
             gemini_text = response.candidates[0].content.parts[0].text.strip()
 
-        # 判斷「安全」回覆
+        # 安全訊息
         if gemini_text.strip("。.! ") == "安全":
             return JsonResponse({'status': 'ok'})
-        else:
-            return JsonResponse({'status': 'rewritten', 'suggestion': gemini_text})
+
+        # 改寫訊息 → 前端顯示確認
+        return JsonResponse({'status': 'rewritten', 'suggestion': gemini_text})
 
     except Exception as e:
         print(f"Gemini API 呼叫失敗: {e}")

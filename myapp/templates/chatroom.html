@@ -423,6 +423,7 @@
 <script src="{% static 'assets/vendor/aos/aos.js' %}"></script>
 <script src="{% static 'assets/js/main.js' %}"></script>
 
+
 <script>
   // 從後端模板拿到聊天室資料
   const chatrooms = JSON.parse('{{ chatrooms_json|escapejs }}');
@@ -479,25 +480,25 @@
 
   // 渲染聊天室列表
   function renderUserChatrooms(filter='') {
-    if (!userChatroomsContainer) return;
-    userChatroomsContainer.innerHTML = '';
-    const filtered = chatrooms.filter(r => {
-      const text = (r.city + ' ' + r.district).toLowerCase();
-      return text.includes(filter.toLowerCase());
-    });
-    if (filtered.length === 0) {
-      userChatroomsContainer.innerHTML = '<p class="text-muted">沒有符合的聊天室</p>';
-      return;
-    }
-    filtered.forEach(room => {
-      const div = document.createElement('div');
-      div.className = 'chatroom-item';
-      div.textContent = `${room.city} ${room.district} 聊天室（收藏數：${room.fav_count||0}）`;
-      div.setAttribute('data-id', room.id);
-      div.onclick = () => openChatroom(room.id);
-      userChatroomsContainer.appendChild(div);
-    });
-  }
+    if (!userChatroomsContainer) return;
+    userChatroomsContainer.innerHTML = '';
+    const fragment = document.createDocumentFragment();
+    const filtered = chatrooms.filter(r => (r.city + ' ' + r.district).toLowerCase().includes(filter.toLowerCase()));
+    if (filtered.length === 0) {
+      userChatroomsContainer.innerHTML = '<p class="text-muted">沒有符合的聊天室</p>';
+      return;
+    }
+    filtered.forEach(room => {
+      const div = document.createElement('div');
+      div.className = 'chatroom-item';
+      div.textContent = `${room.city} ${room.district} 聊天室（收藏數：${room.fav_count||0}）`;
+      div.setAttribute('data-id', room.id);
+      div.onclick = () => openChatroom(room.id);
+      fragment.appendChild(div);
+    });
+    userChatroomsContainer.appendChild(fragment);
+  }
+
 
   document.getElementById('chatroomSearchInput').addEventListener('input', function () {
     renderUserChatrooms(this.value);
@@ -729,8 +730,9 @@
     }
   });
 </script>
-<script src="https://unpkg.com/pulltorefreshjs"></script>
+<script src="https://unpkg.com/pulltorefreshjs/dist/pulltorefresh.min.js"></script>
 <script src="{% static 'assets/js/refresh.js' %}"></script>
+
 <script>
   function refreshReports() {
     return fetch('/api/report_list')
