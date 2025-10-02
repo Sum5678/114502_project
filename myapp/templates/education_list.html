@@ -148,6 +148,7 @@
             {% for page in pages %}
             <div class="card border-0 text-center" style="width: 260px;">
               <a href="{{ page.url }}" target="_blank">
+                <!-- ✅ 使用 education_image view 回傳圖片 -->
                 <div class="img-button" style="background-image: url('{% url 'education_image' page.id %}');"></div>
               </a>
               <p class="mt-2 fw-semibold">{{ page.title }}</p>
@@ -201,7 +202,6 @@
       <small>© 2025 台灣地區管理系統. All rights reserved.</small>
     </div>
   </footer>
-
   <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
   <script src="{% static 'assets/vendor/aos/aos.js' %}"></script>
   <script src="{% static 'assets/js/main.js' %}"></script>
