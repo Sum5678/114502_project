@@ -4087,20 +4087,18 @@ def admin_send_email(request, p_id):
     })
 
 
-#-----------商家廣告傳送-------
-
+#-----------商家廣告拒絕後傳送-------
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib import messages
-from django.core.mail import send_mail
+from django.core.mail import EmailMessage
 from django.conf import settings
 from django.utils import timezone
-from django.contrib.auth.decorators import login_required
-from .models import StoreAdHistory, StoreAll
+from .models import StoreAdHistory
 
-@login_required
+@admin_login_required
 def ad_admin_send_email(request, history_id, action=None):
     """
-    統一的寄信 view
+    統一寄信 view
     - action=None : 一般通知
     - action='reject' : 拒絕廣告
     """
@@ -4108,23 +4106,50 @@ def ad_admin_send_email(request, history_id, action=None):
     store = ad_history.st
     to_email = store.poster_gmail
 
-    # 預設信件主題與訊息
+    # 預設信件
     if action == 'reject':
         default_subject = "關於您的廣告申請被拒絕通知"
-        default_message = f"您好，您的廣告（ID: {ad_history.history_id}）經審核後不符合規範，已被拒絕。"
+        default_message = f"""
+尊敬的 {store.store_name} 商家您好，
+
+您的廣告（ID: {ad_history.history_id}）經審核後不符合規範，已被拒絕。
+
+感謝您的配合。
+"""
     else:
         default_subject = "關於您的廣告通知"
-        default_message = f"您好，您的廣告（ID: {ad_history.history_id}）有新的狀態更新。"
+        default_message = f"""
+尊敬的 {store.store_name} 商家您好，
+
+您的廣告（ID: {ad_history.history_id}）有新的狀態更新。
+
+感謝您的配合。
+"""
 
     if request.method == 'POST':
         subject = request.POST.get('subject', default_subject)
         message = request.POST.get('message', default_message)
 
         try:
-            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [to_email])
+            # HTML 信件，附上圖片連結
+            img_html = ""
+            for img in ad_history.images.all():
+                img_html += f'<img src="{img.image_url}" style="max-width:300px;margin-bottom:10px;"><br>'
+
+            email_body = f"<pre>{message}</pre>{img_html}"
+
+            email = EmailMessage(
+                subject=subject,
+                body=email_body,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[to_email]
+            )
+            email.content_subtype = "html"
+            email.send()
+
             messages.success(request, "信件已成功寄出！")
 
-            # ✅ 如果是拒絕，更新狀態與審核時間
+            # 如果拒絕，更新狀態
             if action == 'reject':
                 ad_history.status = 'rejected'
                 ad_history.reviewed_at = timezone.now()
@@ -4143,6 +4168,62 @@ def ad_admin_send_email(request, history_id, action=None):
         'default_message': default_message,
         'action': action,
     })
+
+
+# from django.shortcuts import get_object_or_404, redirect, render
+# from django.contrib import messages
+# from django.core.mail import send_mail
+# from django.conf import settings
+# from django.utils import timezone
+# from django.contrib.auth.decorators import login_required
+# from .models import StoreAdHistory, StoreAll
+
+# @admin_login_required
+# def ad_admin_send_email(request, history_id, action=None):
+#     """
+#     統一的寄信 view
+#     - action=None : 一般通知
+#     - action='reject' : 拒絕廣告
+#     """
+#     ad_history = get_object_or_404(StoreAdHistory, pk=history_id)
+#     store = ad_history.st
+#     to_email = store.poster_gmail
+
+#     # 預設信件主題與訊息
+#     if action == 'reject':
+#         default_subject = "關於您的廣告申請被拒絕通知"
+#         default_message = f"您好，您的廣告（ID: {ad_history.history_id}）經審核後不符合規範，已被拒絕。"
+#     else:
+#         default_subject = "關於您的廣告通知"
+#         default_message = f"您好，您的廣告（ID: {ad_history.history_id}）有新的狀態更新。"
+
+#     if request.method == 'POST':
+#         subject = request.POST.get('subject', default_subject)
+#         message = request.POST.get('message', default_message)
+
+#         try:
+#             send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [to_email])
+#             messages.success(request, "信件已成功寄出！")
+
+#             # ✅ 如果是拒絕，更新狀態與審核時間
+#             if action == 'reject':
+#                 ad_history.status = 'rejected'
+#                 ad_history.reviewed_at = timezone.now()
+#                 ad_history.save()
+
+#             return redirect('admin_review_ads')
+
+#         except Exception as e:
+#             messages.error(request, f"寄信失敗: {str(e)}")
+#             return redirect('ad_admin_send_email', history_id=history_id)
+
+#     return render(request, 'ad_admin_send_email.html', {
+#         'item': ad_history,
+#         'to_email': to_email,
+#         'default_subject': default_subject,
+#         'default_message': default_message,
+#         'action': action,
+#     })
 
 
 

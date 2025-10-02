@@ -6,43 +6,127 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>寄送廣告通知信</title>
   <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+  <style>
+    .container { max-width: 700px; }
+    textarea.form-control { white-space: pre-wrap; }
+    .ad-image { max-width: 200px; margin-bottom: 10px; }
+  </style>
 </head>
+<body class="bg-light">
 
+  <div class="container my-5 p-4 bg-white shadow rounded">
 
-<body>
-  <div class="container my-5">
-    <h2>寄送廣告通知信</h2>
+    <h2 class="mb-4">寄送廣告通知信</h2>
+
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
+
     <p><strong>商家名稱：</strong> {{ item.st.store_name }}</p>
     <p><strong>廣告內容：</strong> {{ item.ad_content }}</p>
     <p><strong>方案半徑：</strong> {{ item.ad_radius }} 公尺</p>
-    <p><strong>收件者：</strong> {{ item.st.poster_gmail}}</p>
+    <p><strong>收件者：</strong> {{ item.st.poster_gmail }}</p>
+
+    {% if item.images.all %}
+      <p><strong>廣告圖片預覽：</strong></p>
+      {% for img in item.images.all %}
+        <img src="{{ img.image_url }}" alt="廣告圖片" class="ad-image">
+      {% endfor %}
+    {% endif %}
 
     <form method="POST">
       {% csrf_token %}
       <div class="mb-3">
         <label for="subject" class="form-label">主旨</label>
-        <input type="text" class="form-control" id="subject" name="subject" 
-               value="關於您的廣告審核與付款通知" required>
+        <input type="text" class="form-control" id="subject" name="subject"
+               value="{{ default_subject }}" required>
       </div>
 
       <div class="mb-3">
         <label for="message" class="form-label">內容</label>
-        <textarea class="form-control" id="message" name="message" rows="6">
-尊敬的 {{ item.st.store_name }} 商家您好，
-
-您的廣告申請「{{ item.ad_content }}」已審核完畢。
-您選擇的方案半徑為: {{ item.ad_radius }}。
-
-感謝您的配合。
-        </textarea>
+        <textarea class="form-control" id="message" name="message" rows="8">{{ default_message }}</textarea>
       </div>
 
       <button type="submit" class="btn btn-primary">寄送信件</button>
-      <a href="{% url 'my_ad_reviews' %}" class="btn btn-secondary">返回廣告審核列紀錄表</a>
+      <a href="{% url 'my_ad_reviews' %}" class="btn btn-secondary">返回廣告審核紀錄表</a>
     </form>
 
   </div>
 
-<script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+<!-- {% load static %}
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>寄送廣告通知信</title>
+
+  <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+
+  <style>
+    .container {
+      max-width: 700px;
+    }
+    textarea.form-control {
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body class="bg-light">
+
+  <div class="container my-5 p-4 bg-white shadow rounded">
+
+    <h2 class="mb-4">寄送廣告通知信</h2>
+
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
+
+    <p><strong>商家名稱：</strong> {{ item.st.store_name }}</p>
+    <p><strong>廣告內容：</strong> {{ item.ad_content }}</p>
+    <p><strong>方案半徑：</strong> {{ item.ad_radius }} 公尺</p>
+    <p><strong>收件者：</strong> {{ item.st.poster_gmail }}</p>
+
+    <form method="POST">
+      {% csrf_token %}
+      <div class="mb-3">
+        <label for="subject" class="form-label">主旨</label>
+        <input type="text" class="form-control" id="subject" name="subject"
+               value="{{ default_subject }}" required>
+      </div>
+
+      <div class="mb-3">
+        <label for="message" class="form-label">內容</label>
+        <textarea class="form-control" id="message" name="message" rows="8">{{ default_message }}</textarea>
+      </div>
+
+      <button type="submit" class="btn btn-primary">寄送信件</button>
+      <a href="{% url 'my_ad_reviews' %}" class="btn btn-secondary">返回廣告審核紀錄表</a>
+    </form>
+
+  </div>
+
+  <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+</body>
+</html> -->
