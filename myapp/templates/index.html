@@ -85,9 +85,22 @@
         <li><a href="{% url 'home' %}#hero">主頁</a></li>
         <li><a href="index.html#services">簡介及功能介紹</a></li>
         <li><a href="{% url 'report' %}">填寫表單</a></li>
-        <li><a href="{% url 'business_upload' %}">商家填單</a></li>
-        <li><a href="{% url 'about' %}">個人資料設定</a></li>
-        <li><a href="{% url 'chatroom_page' %}">聊天室</a></li>
+        <li class="dropdown"><a href="#"><span>商家</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+            <ul>
+              <li><a href="{% url 'business_upload' %}">商家填單</a></li>
+              <li><a href="{% url 'upload_store_ad' %}">商家廣告查看/更新</a></li>
+              <li><a href="{% url 'pending_payments' %}">商家待付款廣告</a></li>
+            </ul> 
+
+        <li class="dropdown"><a href="#"><span>用戶資料</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+            <ul>
+              <li><a href="{% url 'about' %}">個人資料設定</a></li>
+              <li><a href="{% url 'user_search' %}">用戶搜尋</a></li>
+              <li><a href="{% url 'admin_list' %}">查看管理員</a></li>
+            </ul> 
+          
+          <li><a href="{% url 'chatroom_page' %}">聊天室</a></li>
+        <li class="dropdown">
         <li class="dropdown">
           <a href="#"><span>交流區</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
           <ul>
@@ -99,8 +112,6 @@
           <ul>
             <li><a href="{% url 'map' %}">事件地圖</a></li>
             <li><a href="{% url 'store_map' %}">商家地圖</a></li>
-            <li><a href="{% url 'upload_store_ad' %}">商家廣告</a></li>
-            <li><a href="{% url 'pending_payments' %}">待付款廣告</a></li>
           </ul>
         </li>
         <li><a href="{% url 'harassment_prevention' %}">防騷指南</a></li>

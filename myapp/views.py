@@ -5141,3 +5141,12 @@ def cancel_ad(request, history_id):
             return JsonResponse({"status": "error", "message": str(e)})
 
     return JsonResponse({"status": "error", "message": "只接受 POST"})
+
+
+
+
+
+
+def admin_list(request):
+    admins = Admins.objects.all().values("admin_id", "name", "admin_gmail", "bio")
+    return render(request, "admin_list.html", {"admins": admins})

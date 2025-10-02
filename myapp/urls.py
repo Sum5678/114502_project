@@ -168,7 +168,8 @@ urlpatterns = [
     path("ad/cancel/<str:history_id>/", views.cancel_ad, name="cancel_ad"),
     path('user_search/', views.user_search, name='user_search'),
     path('profile/<str:username>/', views.user_profile_detail, name='user_profile_detail'),#給別人看的
-    
+    path("admins/", views.admin_list, name="admin_list"),
+    # ＃查看管理員
 
 
 

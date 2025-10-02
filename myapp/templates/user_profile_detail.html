@@ -1,24 +1,143 @@
+
 {% load static %}
-<!DOCTYPE html>
 <html lang="zh-Hant">
 
 <head>
-  <meta charset="utf-8">
-  <meta content="width=device-width, initial-scale=1.0" name="viewport">
-  <title>{% block title %}用戶詳細資料{% endblock %}</title>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>{% block title %}用戶詳細資料{% endblock %}</title>
+    <meta content="" name="description">
+    <meta content="" name="keywords">
 
-  <link href="{% static 'assets/img/favicon.png' %}" rel="icon">
-  <link href="{% static 'assets/img/apple-touch-icon.png' %}" rel="apple-touch-icon">
+    <!-- Favicons -->
+    <link href="{% static 'assets/img/icon-512.png' %}" rel="icon">
+    <link href="{% static 'assets/img/apple-touch-icon.png' %}" rel="apple-touch-icon">
+    <link href="{% static 'assets/vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet">
 
-  <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700|Nunito:300,400,600,700,800|Poppins:300,400,500,600,700" rel="stylesheet">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/boxicons/2.1.0/css/boxicons.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700|Nunito:300,400,600,700,800|Poppins:300,400,500,600,700" rel="stylesheet">
 
-  <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
-  <link href="{% static 'assets/css/main.css' %}" rel="stylesheet">
+    <!-- Icon CDN -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/boxicons/2.1.0/css/boxicons.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css" rel="stylesheet">
 
-  <style>
-        body { background-color: #f8f9fa; }
+    <!-- Vendor CSS -->
+    <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'assets/vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet">
+    <link href="{% static 'assets/vendor/boxicons/css/boxicons.min.css' %}" rel="stylesheet">
+    <link href="{% static 'assets/vendor/quill/quill.snow.css' %}" rel="stylesheet">
+    <link href="{% static 'assets/vendor/quill/quill.bubble.css' %}" rel="stylesheet">
+    <link href="{% static 'assets/vendor/simple-datatables/style.css' %}" rel="stylesheet">
+
+    <!-- Template Main CSS File -->
+    <link href="{% static 'assets/css/main.css' %}" rel="stylesheet">
+    <header id="header" class="header d-flex align-items-center fixed-top">
+    <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
+      <a href="index.html" class="logo d-flex align-items-center me-auto me-xl-0">
+        <h1 class="sitename">怪怪走開，護您安全</h1><span></span>
+      </a>
+      <nav id="navmenu" class="navmenu">
+        <ul>
+          <li><a href="{% url 'home' %}#hero">主頁</a></li>
+          <li><a href="{% url 'home' %}#services">簡介及功能介紹</a></li>
+          <li><a href="{% url 'report' %}">填寫表單</a></li>
+
+        <li class="dropdown"><a href="#"><span>商家</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+            <ul>
+              <li><a href="{% url 'business_upload' %}">商家填單</a></li>
+              <li><a href="{% url 'upload_store_ad' %}">商家廣告查看/更新</a></li>
+              <li><a href="{% url 'pending_payments' %}">商家待付款廣告</a></li>
+            </ul> 
+
+        <li class="dropdown"><a href="#"><span>用戶資料</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+            <ul>
+              <li><a href="{% url 'about' %}">個人資料設定</a></li>
+              <li><a href="{% url 'user_search' %}">用戶搜尋</a></li>
+              <li><a href="{% url 'admin_list' %}">查看管理員</a></li>
+            </ul> 
+          
+          <li><a href="{% url 'chatroom_page' %}">聊天室</a></li>
+        <li class="dropdown">
+          <a href="#"><span>交流區</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+          <ul>
+            <li><a href="{% url 'post' %}#hero">我要發文</a></li>
+            <li><a href="{% url 'post_display' %}">貼文總覽</a></li>
+          </ul>
+        </li>
+          
+          <li class="dropdown"><a href="#"><span>地圖</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+            <ul>
+              <li><a href="{% url 'map' %}">事件地圖</a></li>
+              <li><a href="{% url 'store_map' %}">商家地圖</a></li>       
+            </ul> 
+          </li>
+          
+          <li><a href="{% url 'harassment_prevention' %}">防騷指南</a></li>
+          <li>
+          <a href="#" id="report110Btn"
+            class="btn btn-danger"
+            style="color:white; border-radius:8px; padding:6px 14px; margin-left:10px;">
+            110 視訊報案
+          </a>
+        </li>
+
+        </ul>
+        <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+      </nav>
+      
+      <!-- ✅ 登入狀態 dropdown 按鈕 -->
+    {% if request.user.is_authenticated %}
+      <div class="dropdown">
+        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown"
+           style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
+          {{ request.user.username }}
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="{% url '01_userlogin_out' %}">登出</a></li>
+        </ul>
+      </div>
+    {% else %}
+      <div class="dropdown">
+        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown"
+           style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
+          登入
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="{% url 'userlogin' %}">一般使用者登入</a></li>
+          <li><a class="dropdown-item" href="{% url 'admin_login' %}">管理員登入</a></li>
+        </ul>
+      </div>
+    {% endif %}
+  </div>
+</header>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>上傳廣告</title>
+
+<link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+<link href="{% static 'assets/css/main.css' %}" rel="stylesheet">
+
+<style>
+.upload-ad-section {
+  padding: 120px 20px 60px; /* 上面 120px，左右 20px，下面 60px */
+  background-color: #f8f9fa;
+}
+ /* NavMenu 樣式 */
+  #navmenu ul li a {
+    color: #033e6b;      /* 深藍字 */
+  }
+
+  #navmenu ul li a:hover {
+    color: #63b3ed;      /* 滑過換淺藍 */
+  }
+
+.upload-ad-card { max-width: 700px; margin: auto; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);}
+.upload-ad-card h2 { font-weight: 600; color: #2c3e50; margin-bottom: 20px;}
+.btn-primary { background-color: #63b3ed; border: none; padding: 10px 20px; border-radius: 8px; transition: 0.3s;}
+.btn-primary:hover { background-color: #4299e1;}
+.carousel-item img { max-height: 300px; object-fit: cover; width: 100%; }
+.message { color: green; font-weight: bold; margin-bottom: 10px; }
+body { background-color: #f8f9fa; }
         .profile-card {
             border-radius: 15px;
             padding: 30px;
@@ -69,92 +188,23 @@
 
         .badge-level { font-size:1rem; padding:0.5em 0.8em; }
 
-    </style>
+</style>
 </head>
 
-<body class="index-page">
+<body>
 
-<header id="header" class="header d-flex align-items-center fixed-top">
-    <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
-      <a href="index.html" class="logo d-flex align-items-center me-auto me-xl-0">
-        <h1 class="sitename">怪怪走開，護您安全</h1><span></span>
-      </a>
-      <nav id="navmenu" class="navmenu">
-        <ul>
-          <li><a href="{% url 'home' %}#hero">主頁</a></li>
-          <li><a href="{% url 'home' %}#services">簡介及功能介紹</a></li>
-          <li><a href="{% url 'report' %}">填寫表單</a></li>
-
-        <li class="dropdown"><a href="#"><span>商家</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
-            <ul>
-              <li><a href="{% url 'business_upload' %}">商家填單</a></li>
-              <li><a href="{% url 'upload_store_ad' %}">商家廣告查看/更新</a></li>
-              <li><a href="{% url 'pending_payments' %}">商家待付款廣告</a></li>
-            </ul> 
-
-        <li class="dropdown"><a href="#"><span>用戶資料</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
-            <ul>
-              <li><a href="{% url 'about' %}">個人資料設定</a></li>
-              <li><a href="{% url 'user_search' %}">用戶搜尋</a></li>
-            </ul> 
-          
-          <li><a href="{% url 'chatroom_page' %}">聊天室</a></li>
-        <li class="dropdown">
-          <a href="#"><span>交流區</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
-          <ul>
-            <li><a href="{% url 'post' %}#hero">我要發文</a></li>
-            <li><a href="{% url 'post_display' %}">貼文總覽</a></li>
-          </ul>
-        </li>
-          
-          <li class="dropdown"><a href="#"><span>地圖</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
-            <ul>
-              <li><a href="{% url 'map' %}">事件地圖</a></li>
-              <li><a href="{% url 'store_map' %}">商家地圖</a></li>       
-            </ul> 
-          </li>
-          
-          <li><a href="{% url 'harassment_prevention' %}">防騷指南</a></li>
-
-        </ul>
-        <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
-      </nav>
-      
-      <!-- ✅ 登入狀態 dropdown 按鈕 -->
-    {% if request.user.is_authenticated %}
-      <div class="dropdown">
-        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown"
-           style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
-          {{ request.user.username }}
-        </a>
-        <ul class="dropdown-menu dropdown-menu-end">
-          <li><a class="dropdown-item" href="{% url '01_userlogin_out' %}">登出</a></li>
-        </ul>
-      </div>
-    {% else %}
-      <div class="dropdown">
-        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown"
-           style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
-          登入
-        </a>
-        <ul class="dropdown-menu dropdown-menu-end">
-          <li><a class="dropdown-item" href="{% url 'userlogin' %}">一般使用者登入</a></li>
-          <li><a class="dropdown-item" href="{% url 'admin_login' %}">管理員登入</a></li>
-        </ul>
-      </div>
-    {% endif %}
-  </div>
-</header>
 
 <main class="main">
   <!-- Hero Section -->
-  <section class="hero">
-    <img src="{% static 'assets/img/1.png' %}" alt="Hero Image">
-  </section>
+   
+  
 
   <!-- User Profile Section -->
   <section id="user-profile" class="section light-background">
     <div class="container" data-aos="fade-up">
+    <div class="section-title">
+        <h2>用戶詳細資料</h2>
+    </div>
       <div class="profile-card text-center level-{{ user.membership_level }}">
         <h2 style="color: {{ level_style.color }}">{{ user.username }}</h2>
         <span class="badge bg-{{ level_style.badge }} badge-level">{{ level_style.name }}</span>
@@ -182,31 +232,24 @@
   </section>
 </main>
 
-
-<footer id="footer" class="footer position-relative light-background">
-  <div class="container text-center mt-4">
-    <p>© Copyright <strong class="sitename">怪怪走開，護您安全</strong> All Rights Reserved</p>
-    <div class="credits">Designed by <a href="https://bootstrapmade.com/">BootstrapMade</a></div>
-  </div>
-</footer>
-
-<a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
-<div id="preloader"></div>
-
 <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
-<script src="{% static 'assets/vendor/aos/aos.js' %}"></script>
-<script src="{% static 'assets/js/main.js' %}"></script>
+  <script src="{% static 'assets/vendor/php-email-form/validate.js' %}"></script>
+  <script src="{% static 'assets/vendor/aos/aos.js' %}"></script>
+  <script src="{% static 'assets/vendor/glightbox/js/glightbox.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/purecounter/purecounter_vanilla.js' %}"></script>
+  <script src="{% static 'assets/vendor/imagesloaded/imagesloaded.pkgd.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/isotope-layout/isotope.pkgd.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/swiper/swiper-bundle.min.js' %}"></script>
+  <script src="{% static 'assets/js/main.js' %}"></script>
+  <script src="https://unpkg.com/pulltorefreshjs"></script>
+<script src="{% static 'assets/js/refresh.js' %}"></script>
+<script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+<script>
+
+</script>
+
 </body>
 </html>
-
-
-
-
-
-
-
-
-
 
 
 

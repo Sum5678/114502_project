@@ -1,15 +1,101 @@
 {% load static %}
-<!DOCTYPE html>
 <html lang="zh-Hant">
+
 <head>
+    <header id="header" class="header d-flex align-items-center fixed-top">
+    <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
+      <a href="index.html" class="logo d-flex align-items-center me-auto me-xl-0">
+        <h1 class="sitename">怪怪走開
+          護您安全</h1><span></span>
+      </a>
+      <nav id="navmenu" class="navmenu">
+      <ul>
+        <li><a href="{% url 'home' %}#hero">主頁</a></li>
+        <li><a href="index.html#services">簡介及功能介紹</a></li>
+        <li><a href="{% url 'report' %}">填寫表單</a></li>
+        <li class="dropdown"><a href="#"><span>商家</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+            <ul>
+              <li><a href="{% url 'business_upload' %}">商家填單</a></li>
+              <li><a href="{% url 'upload_store_ad' %}">商家廣告查看/更新</a></li>
+              <li><a href="{% url 'pending_payments' %}">商家待付款廣告</a></li>
+            </ul> 
+
+        <li class="dropdown"><a href="#"><span>用戶資料</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+            <ul>
+              <li><a href="{% url 'about' %}">個人資料設定</a></li>
+              <li><a href="{% url 'user_search' %}">用戶搜尋</a></li>
+              <li><a href="{% url 'admin_list' %}">查看管理員</a></li>
+            </ul> 
+          
+          <li><a href="{% url 'chatroom_page' %}">聊天室</a></li>
+        <li class="dropdown">
+        <li class="dropdown">
+          <a href="#"><span>交流區</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+          <ul>
+            <li><a href="{% url 'post' %}#hero">我要發文</a></li>
+            <li><a href="{% url 'post_display' %}">貼文總覽</a></li>
+          </ul>
+        </li>
+        <li class="dropdown"><a href="#"><span>地圖</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+          <ul>
+            <li><a href="{% url 'map' %}">事件地圖</a></li>
+            <li><a href="{% url 'store_map' %}">商家地圖</a></li>
+          </ul>
+        </li>
+        <li><a href="{% url 'harassment_prevention' %}">防騷指南</a></li>
+        <li>
+          <a href="#" id="report110Btn"
+            class="btn btn-danger"
+            style="color:white; border-radius:8px; padding:6px 14px; margin-left:10px;">
+            110 視訊報案
+          </a>
+        </li>
+      </ul>
+      <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+    </nav>
+    {% if request.user.is_authenticated %}
+      <div class="dropdown">
+        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown" style="background-color:#63b3ed;color:white;border-radius:8px;padding:8px 20px;">
+          {{ request.user.username }}
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="{% url '01_userlogin_out' %}">登出</a></li>
+        </ul>
+      </div>
+    {% else %}
+      <div class="dropdown">
+        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown" style="background-color:#63b3ed;color:white;border-radius:8px;padding:8px 20px;">
+          登入
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="{% url 'userlogin' %}">一般使用者登入</a></li>
+          <li><a class="dropdown-item" href="{% url 'admin_login' %}">管理員登入</a></li>
+        </ul>
+      </div>
+    {% endif %}
+  </div>
+</header>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>待付款廣告</title>
+<title>上傳廣告</title>
 
 <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
 <link href="{% static 'assets/css/main.css' %}" rel="stylesheet">
 
 <style>
+.upload-ad-section {
+  padding: 120px 20px 60px; /* 上面 120px，左右 20px，下面 60px */
+  background-color: #f8f9fa;
+}
+
+.upload-ad-card { max-width: 700px; margin: auto; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);}
+.upload-ad-card h2 { font-weight: 600; color: #2c3e50; margin-bottom: 20px;}
+.btn-primary { background-color: #63b3ed; border: none; padding: 10px 20px; border-radius: 8px; transition: 0.3s;}
+.btn-primary:hover { background-color: #4299e1;}
+.carousel-item img { max-height: 300px; object-fit: cover; width: 100%; }
+.message { color: green; font-weight: bold; margin-bottom: 10px; }
+
+
 body { padding-top: 100px; }
 .payment-list { max-width: 800px; margin: auto; }
 .payment-item { padding: 12px; border: 1px solid #ddd; margin-bottom: 10px; border-radius: 8px; background: #f8f9fa; }
@@ -20,35 +106,10 @@ body { padding-top: 100px; }
 .payment-item button.btn-danger { background-color: #e53e3e; border: none; }
 .payment-item button.btn-danger:hover { background-color: #c53030; }
 </style>
-
-<meta name="csrf-token" content="{{ csrf_token }}">
 </head>
+
 <body>
 
-<header id="header" class="header d-flex align-items-center fixed-top">
-  <div class="container-fluid d-flex justify-content-between">
-    <a href="{% url 'home' %}" class="logo"><h1>怪怪走開，護您安全</h1></a>
-    <nav id="navmenu" class="navmenu">
-      <ul>
-        <li><a href="{% url 'home' %}#hero">主頁</a></li>
-        <li><a href="{% url 'report' %}">填寫表單</a></li>
-        <li><a href="{% url 'business_upload' %}">商家填單</a></li>
-        <li><a href="{% url 'about' %}">個人資料設定</a></li>
-        <li><a href="{% url 'chatroom_page' %}">聊天室</a></li>
-      </ul>
-    </nav>
-    {% if request.user.is_authenticated %}
-      <div class="dropdown">
-        <a class="btn btn-primary dropdown-toggle" href="#" data-bs-toggle="dropdown">{{ request.user.username }}</a>
-        <ul class="dropdown-menu dropdown-menu-end">
-          <li><a class="dropdown-item" href="{% url '01_userlogin_out' %}">登出</a></li>
-        </ul>
-      </div>
-    {% else %}
-      <a class="btn btn-primary" href="{% url 'userlogin' %}">登入</a>
-    {% endif %}
-  </div>
-</header>
 
 <main class="payment-list">
 <h1 class="text-center mb-4">待付款廣告</h1>
@@ -143,6 +204,31 @@ $(document).ready(function(){
 });
 </script>
 
-<script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
