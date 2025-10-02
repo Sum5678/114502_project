@@ -150,8 +150,9 @@
       <div class="d-flex flex-column align-items-center">
         <form action="{{ page.url }}" target="_blank">
           <!-- ✅ 這裡改成直接用 page.image.url 來抓圖 -->
-          <button type="submit" class="img-button" 
-            style="background-image: url('{% url 'education_image' page.id %}');"></button>
+          <button type="submit" class="img-button"
+                  style="background-image: url('{% url "education_image" page.id %}');">
+          </button>
         </form>
         <p class="button-text">{{ page.title }}</p>
       </div>
