@@ -236,8 +236,13 @@ urlpatterns = [
     path("adminad/review-ads/", views.admin_review_ads, name="admin_review_ads"),
     # 將 st_id 改為 history_id
     path("adminad/review-ads/<int:history_id>/<str:action>/", views.review_store_ad, name="review_store_ad"),  #廣告審核
+    # path("adminad/reject-email/<int:history_id>/", views.send_reject_email, name="send_reject_email"), # 廣告拒絕 → 寄信頁面
+
     path('my-ad-reviews/', views.my_ad_reviews, name='my_ad_reviews'),
-    path('ad/send-email/<int:history_id>/', views.ad_admin_send_email, name='ad_admin_send_email'),
+    # urls.py
+    path('ad-send-email/<int:history_id>/', views.ad_admin_send_email, name='ad_admin_send_email'),
+    path('ad-send-email/<int:history_id>/<str:action>/', views.ad_admin_send_email, name='ad_admin_send_email_action'),
+
 
 
 
@@ -260,6 +265,25 @@ urlpatterns = [
 
 
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # 原本沒有這些路徑
