@@ -236,6 +236,10 @@ urlpatterns = [
     path("adminad/review-ads/", views.admin_review_ads, name="admin_review_ads"),
     # 將 st_id 改為 history_id
     path("adminad/review-ads/<int:history_id>/<str:action>/", views.review_store_ad, name="review_store_ad"),  #廣告審核
+    path('my-ad-reviews/', views.my_ad_reviews, name='my_ad_reviews'),
+    path('ad/send-email/<int:history_id>/', views.ad_admin_send_email, name='ad_admin_send_email'),
+
+
 
 
 
