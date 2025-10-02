@@ -13,6 +13,8 @@ from django.views.decorators.csrf import csrf_exempt
 from myapp.sdk.ecpay_payment_sdk import ECPayPaymentSdk
 import requests
 
+from django.views.decorators.clickjacking import xframe_options_exempt
+from django.views.decorators.csrf import csrf_exempt
 
 def report_view(request):
     return render(request, 'report.html')
@@ -152,12 +154,23 @@ def education_delete(request, pk):
         return redirect('education_list')
     return redirect('education_delete_confirm', pk=pk)  # 若不是 POST，就導回確認頁
 
+
+@xframe_options_exempt
+@csrf_exempt
 @admin_login_required
-def education_image(request, pk):
-    page = get_object_or_404(EducationPage, pk=pk)
-    if page.image_url:
-        return HttpResponse(page.image_url, content_type="image/png")
-    return HttpResponse(status=404)
+
+
+def education_image(request, page_id):
+    try:
+        page = EducationPage.objects.get(id=page_id)
+        if page.image_url:  # 你的 LONGBLOB 資料
+            # 將 BinaryField 的 bytes 直接傳給 HttpResponse
+            img_data = bytes(page.image_url)  # 確保是 bytes
+            return HttpResponse(img_data, content_type="image/png")  # 根據實際格式改 image/png 或 image/jpeg
+        else:
+            return HttpResponse("No image found.", status=404)
+    except EducationPage.DoesNotExist:
+        return HttpResponse("Page not found.", status=404)
 
 
 #最近警局
