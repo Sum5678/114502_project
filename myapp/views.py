@@ -4089,20 +4089,49 @@ def admin_send_email(request, p_id):
 
 #-----------商家廣告傳送-------
 
+from django.shortcuts import get_object_or_404, redirect, render
+from django.contrib import messages
+from django.core.mail import send_mail
+from django.conf import settings
+from django.utils import timezone
+from django.contrib.auth.decorators import login_required
+from .models import StoreAdHistory, StoreAll
+
 @login_required
-def ad_admin_send_email(request, history_id):
+def ad_admin_send_email(request, history_id, action=None):
+    """
+    統一的寄信 view
+    - action=None : 一般通知
+    - action='reject' : 拒絕廣告
+    """
     ad_history = get_object_or_404(StoreAdHistory, pk=history_id)
     store = ad_history.st
     to_email = store.poster_gmail
 
+    # 預設信件主題與訊息
+    if action == 'reject':
+        default_subject = "關於您的廣告申請被拒絕通知"
+        default_message = f"您好，您的廣告（ID: {ad_history.history_id}）經審核後不符合規範，已被拒絕。"
+    else:
+        default_subject = "關於您的廣告通知"
+        default_message = f"您好，您的廣告（ID: {ad_history.history_id}）有新的狀態更新。"
+
     if request.method == 'POST':
-        subject = request.POST.get('subject', '關於您的廣告審核與付款通知')
-        message = request.POST.get('message', '')
+        subject = request.POST.get('subject', default_subject)
+        message = request.POST.get('message', default_message)
 
         try:
             send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [to_email])
             messages.success(request, "信件已成功寄出！")
+
+            # ✅ 如果是拒絕，更新狀態與審核時間
+            if action == 'reject':
+                ad_history.status = 'rejected'
+                ad_history.reviewed_at = timezone.now()
+                ad_history.save()
+
             return redirect('admin_review_ads')
+
         except Exception as e:
             messages.error(request, f"寄信失敗: {str(e)}")
             return redirect('ad_admin_send_email', history_id=history_id)
@@ -4110,6 +4139,9 @@ def ad_admin_send_email(request, history_id):
     return render(request, 'ad_admin_send_email.html', {
         'item': ad_history,
         'to_email': to_email,
+        'default_subject': default_subject,
+        'default_message': default_message,
+        'action': action,
     })
 
 
@@ -4288,7 +4320,7 @@ def check_message(request):
 2. 如果訊息包含不當、攻擊性、歧視或可能引發法律問題的內容，
    請保留訊息的原意，只修改不適當字眼，使其友善、中性、不違法。
    不要使用固定句子。
-3. 如果訊息傳送任何教唆犯罪,販毒,槍械買賣 輸出:訊息包含敏感或違法內容，例如毒品、販毒、槍械、性騷擾或性侵相關訊息。根據中華民國法律及本聊天室規定，這類內容不可在聊天室討論。請修改您的訊息，避免涉及違法或令人不適的內容，並保持友善與尊重。
+3. 如果訊息傳送任何教唆犯罪,販毒,槍械買賣 輸出:訊息包含敏感或違法內容，例如毒品、販毒、槍械、性騷擾或性侵相關訊息。根據中華民國法律及本聊天室規定，這類內容不可在聊天室討論。
 4. 不要回覆任何解釋或額外文字，只能回覆「安全」或改寫後的內容。
 
 範例：
@@ -4606,8 +4638,12 @@ def review_store_ad(request, history_id, action):
                 ad_history.save()
 
     elif action == "reject":
-        ad_history.status = "rejected"
-        ad_history.save()
+            ad_history.status = "rejected"
+            ad_history.save()
+
+            # 👇 跳去 email 頁面（而不是馬上寄）
+            return redirect("ad_admin_send_email", history_id=ad_history.id)
+
 
     return redirect('admin_review_ads')  # 返回管理員審核頁
 
