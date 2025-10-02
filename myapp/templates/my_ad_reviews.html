@@ -1,4 +1,3 @@
-<!-- 在 SQL Injection 使用 Django ORM + ModelForm 來達到安全 -->
 <!DOCTYPE html>
 {% load static %}
 <html lang="zh-Hant">
@@ -6,13 +5,10 @@
 <head>
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0" name="viewport">
-  <title>{% block title %}首頁{% endblock %}</title>
-  <meta content="" name="description">
-  <meta content="" name="keywords">
+  <title>{{ admin_name }} 的廣告審核紀錄</title>
 
   <link href="{% static 'assets/img/favicon.png' %}" rel="icon">
   <link href="{% static 'assets/img/apple-touch-icon.png' %}" rel="apple-touch-icon">
-
   <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700|Nunito:300,400,600,700,800|Poppins:300,400,500,600,700" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/boxicons/2.1.0/css/boxicons.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css" rel="stylesheet">
@@ -33,15 +29,12 @@
       <a href="index.html" class="logo d-flex flex-column align-items-start me-auto me-xl-0">
         <h1 class="sitename">{{ admin_name }} 管理員</h1>
         <h1 class="sitename">您的管理員id是: {{ admin_id }}</h1>
-        </a>
+      </a>
 
       <nav id="navmenu" class="navmenu">
         <ul>
           <li><a href="{% url 'admin_index' %}#hero" class="active">管理員主頁</a></li>
           <li><a href="{% url 'admin_interview' %}">管理員自我介紹</a></li>
-          <!-- <li><a href="{% url 'show_judge_page' %}">審核表單</a></li> -->
-          <!-- <li><a href="{% url 'pemap_judge' %}">事件清單審核</a></li> -->
-          
           <li class="dropdown"><a href="#"><span>清單審核</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
             <ul>
               <li><a href="{% url 'pemap_judge' %}">事件清單審核
@@ -54,30 +47,28 @@
                   <span class="badge bg-danger ms-2">{{ unreviewed_stores_count }}</span>
                 {% endif %}
               </a></li>
-              <!-- ✅ 新增：交流區檢舉審核 -->
               <li><a href="{% url 'review_reports' %}?status=pending">交流區檢舉審核
                 {% if unreviewed_review_count > 0 %}
                   <span class="badge bg-danger ms-2">{{ unreviewed_review_count }}</span>
                 {% endif %}
               </a></li>
-              <li>
-              <a href="{% url 'admin_review_ads' %}">廣告審核
+              <li><a href="{% url 'admin_review_ads' %}">廣告審核
                 {% if unreviewed_ads_count > 0 %}
                   <span class="badge bg-danger ms-2">{{ unreviewed_ads_count }}</span>
                 {% endif %}
               </a></li>
-            </ul> 
+            </ul>
           </li>
-          
+
           <li class="dropdown"><a href="#"><span>我的審核紀錄</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
             <ul>
               <li><a href="{% url 'admin_decide' %}">事件審核紀錄</a></li>
               <li><a href="{% url 'store_decide' %}">商家審核紀錄</a></li>
               <li><a href="{% url 'report_decide' %}">交流區舉報審核紀錄</a></li>
-              <li><a href="{% url 'my_ad_reviews' %}">商家廣告審核紀錄</a></li>
-            </ul> 
+              <li><a href="{% url 'my_ad_reviews' %}">廣告審核紀錄</a></li>
+            </ul>
           </li>
-          <!-- ✅ 新增的下拉式選單 -->
+
           <li class="dropdown"><a href="#"><span>管理工具</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
             <ul>
               <li><a href="{% url 'user_admin_list' %}">用戶管理</a></li>
@@ -88,64 +79,56 @@
             </ul>
           </li>
         </ul>
-          <!-- <li><a href="{% url 'admin_logout' %}">登出</a></li> -->
-        </ul>
         <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
       </nav>
       <a class="btn-getstarted" href="{% url 'admin_logout' %}">登出</a>
     </div>
   </header>
 
-  <main class="main">
-
-    <!-- Hero Section -->
-    <section class="hero">
-      <img src="{% static 'assets/img/1.png' %}" alt="Hero Image">
+  <main class="main mt-5 pt-5">
+    <section class="container my-5">
+      <h2>{{ admin_name }} 的廣告審核紀錄</h2>
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>廣告ID</th>
+            <th>商家名稱</th>
+            <th>廣告詞</th>
+            <th>狀態</th>
+            <th>審核時間</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for ad in reviews %}
+          <tr>
+            <td>{{ ad.history_id }}</td>
+            <td>{{ ad.st.store_name }}</td>
+            <td>{{ ad.ad_content }}</td>
+            <td>{{ ad.get_status_display }}</td>
+            <td>{{ ad.reviewed_at }}</td>
+            <td>
+              <a href="{% url 'ad_admin_send_email' history_id=ad.history_id %}" class="btn btn-sm btn-info">
+                聯絡商家
+              </a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5">尚無審核紀錄</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </section>
-
-    
-
-    <!-- Admin Profile Edit Section -->
-    <section id="admin-profile" class="admin-profile section light-background">
-      <div class="container" data-aos="fade-up">
-        <div class="profile-form bg-white p-4 shadow rounded">
-          <h2>管理員資料編輯</h2>
-
-          {% if message %}
-            <p class="message {% if '成功' in message %}text-success{% else %}text-danger{% endif %}">
-              {{ message }}
-            </p>
-          {% endif %}
-
-          <div class="info-item mb-2">
-            <label><strong>ID：</strong></label><span>{{ form.instance.admin_id }}</span>
-          </div>
-
-          <div class="info-item mb-3">
-            <label><strong>Email：</strong></label><span>{{ form.instance.admin_gmail }}</span>
-          </div>
-
-          <form method="post">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <button type="submit" class="btn btn-primary mt-2">儲存變更</button>
-          </form>
-        </div>
-      </div>
-    </section>
-
   </main>
 
-  <!-- Footer -->
-  <footer id="footer" class="footer position-relative light-background">
-    <div class="container text-center mt-4">
+  <footer id="footer" class="footer position-relative light-background mt-5">
+    <div class="container text-center">
       <p>© Copyright <strong class="sitename">怪怪走開，護您安全</strong> All Rights Reserved</p>
       <div class="credits">Designed by <a href="https://bootstrapmade.com/">BootstrapMade</a></div>
     </div>
   </footer>
-
-  <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
-  <div id="preloader"></div>
 
   <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
   <script src="{% static 'assets/vendor/php-email-form/validate.js' %}"></script>
