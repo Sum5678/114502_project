@@ -73,7 +73,7 @@ urlpatterns = [
     path('education-crud/edit/<int:pk>/', views.education_update, name='education_update'),
     path('education/delete/<int:pk>/confirm/', views.education_delete_confirm, name='education_delete_confirm'),
     path('education/delete/<int:pk>/', views.education_delete, name='education_delete'),
-    path('education-crud/image/<int:pk>/', views.education_image, name='education_image'), 
+    path('education_image/<int:page_id>/', views.education_image, name='education_image'),
 
     path('anonymous-chat/', views.anonymous_chat, name='anonymous-chat'),  # anonymous-chat 頁面
     path('index35/', views.index35, name='index35'),  # 新增 index35.html 路由
