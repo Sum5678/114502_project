@@ -2007,7 +2007,38 @@ def admin_decide_view(request):
     }
     context.update(get_unreviewed_counts())
     return render(request, 'admin_decide.html', context)
+
+
     
+from django.shortcuts import render, redirect
+from .models import StoreAdHistory
+
+def my_ad_reviews(request):
+    # 從 session 抓登入管理員 id
+    admin_id = request.session.get('admin_id')
+    admin_name = request.session.get('admin_name', '未知管理員')
+
+    if not admin_id:
+        return redirect('admin_login')
+
+    # 查出這個管理員審核過的廣告紀錄
+    reviews = StoreAdHistory.objects.filter(admin_id=admin_id).order_by('-reviewed_at')
+
+    context = {
+        'admin_id': admin_id,
+        'admin_name': admin_name,
+        'reviews': reviews
+    }
+
+    return render(request, 'my_ad_reviews.html', context)
+
+
+
+
+
+
+
+
 
 from .models import StoreAll
 
@@ -4056,13 +4087,30 @@ def admin_send_email(request, p_id):
     })
 
 
+#-----------商家廣告傳送-------
 
-# views.py
+@login_required
+def ad_admin_send_email(request, history_id):
+    ad_history = get_object_or_404(StoreAdHistory, pk=history_id)
+    store = ad_history.st
+    to_email = store.poster_gmail
 
+    if request.method == 'POST':
+        subject = request.POST.get('subject', '關於您的廣告審核與付款通知')
+        message = request.POST.get('message', '')
 
-# class PemapWithSubkindViewSet(viewsets.ReadOnlyModelViewSet):
-#     queryset = PemapWithSubkind.objects.all()
-#     serializer_class = PemapWithSubkindSerializer
+        try:
+            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [to_email])
+            messages.success(request, "信件已成功寄出！")
+            return redirect('admin_review_ads')
+        except Exception as e:
+            messages.error(request, f"寄信失敗: {str(e)}")
+            return redirect('ad_admin_send_email', history_id=history_id)
+
+    return render(request, 'ad_admin_send_email.html', {
+        'item': ad_history,
+        'to_email': to_email,
+    })
 
 
 
@@ -4472,19 +4520,26 @@ def admin_review_ads(request):
 
 from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
-from .models import StoreAdHistory, StoreAd, StoreAdImage, UserPayment, ThisUserProfile
+from .models import StoreAdHistory, StoreAd, StoreAdImage, UserPayment, ThisUserProfile, Admins
 
-from django.shortcuts import redirect
-
+# 假設 request.session['admin_id'] 有存登入管理員的 ID
 def review_store_ad(request, history_id, action):
     ad_history = get_object_or_404(StoreAdHistory, pk=history_id)
 
+    # 記錄是哪個管理員審的
+    try:
+        admin = Admins.objects.get(admin_id=request.session.get('admin_id'))
+        ad_history.admin = admin
+    except Admins.DoesNotExist:
+        admin = None
+
+    ad_history.reviewed_at = timezone.now()
+
     if action == "approve":
         ad_history.status = "approved"
-        ad_history.reviewed_at = timezone.now()
         ad_history.save()
 
-        if ad_history.ad_radius == 10:  # 免費方案
+        if ad_history.ad_radius == 10:  # ✅ 免費方案
             ad, created = StoreAd.objects.get_or_create(
                 st=ad_history.st,
                 defaults={
@@ -4500,10 +4555,13 @@ def review_store_ad(request, history_id, action):
                 ad.enabled = ad_history.enabled
                 ad.status = 'approved'
                 ad.save()
+
+            # ✅ 複製圖片（這裡假設你有 StoreAdHistory.images）
             ad.images.all().delete()
             for img in ad_history.images.all():
                 StoreAdImage.objects.create(st=ad, image_url=img.image_url)
-        else:  # 付費方案
+
+        else:  # ✅ 付費方案
             try:
                 user_profile = ThisUserProfile.objects.get(id=ad_history.st.user_id)
             except ThisUserProfile.DoesNotExist:
@@ -4512,7 +4570,8 @@ def review_store_ad(request, history_id, action):
             if user_profile:
                 price = AD_PRICE_SCHEME.get(ad_history.ad_radius, 0)
                 item_name = AD_ITEM_NAME.get(ad_history.ad_radius, f'方案 {ad_history.ad_radius}')
-                UserPayment.objects.create(
+
+                payment = UserPayment.objects.create(
                     user=user_profile,
                     st_id=ad_history.st.st_id,
                     amount=price,
@@ -4520,13 +4579,16 @@ def review_store_ad(request, history_id, action):
                     is_used=False
                 )
 
+                # ✅ 把付款紀錄連回廣告歷史
+                ad_history.payment = payment
+                ad_history.save()
+
     elif action == "reject":
         ad_history.status = "rejected"
-        ad_history.reviewed_at = timezone.now()
         ad_history.save()
 
-    # ✅ 一定要回傳 HttpResponse
-    return redirect('admin_review_ads')  # 這裡改成你的管理員審核頁 URL 名稱
+    return redirect('admin_review_ads')  # 返回管理員審核頁
+
 
 
 
