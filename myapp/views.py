@@ -4703,22 +4703,27 @@ def pay_advertisement(request, payment_id):
 #     return render(request, "test_payment_done.html")
 
 
-# from django.shortcuts import render
-# from .models import PemapAll, StoreAll, ChatInteraction
-# from .models import ChatMessage, ChatRoomClick, FavoriteChatRoom
-# import json
+from django.shortcuts import render
+from .models import PemapAll, StoreAll, ChatInteraction
+from .models import ChatMessage, ChatRoomClick, FavoriteChatRoom
+import json
 
-# def _sum_json_list_lengths(qs, field):
-#     """把 TextField(JSON字串) 逐筆載入後回傳清單長度總和。壞字串一律當 0。"""
-#     total = 0
-#     for s in qs.values_list(field, flat=True):
-#         try:
-#             data = json.loads(s or "[]")
-#             if isinstance(data, list):
-#                 total += len(data)
-#         except Exception:
-#             pass
-#     return total
+
+def _sum_json_list_lengths(qs, field):
+    """
+    把 TextField(JSON字串) 逐筆載入後回傳清單長度總和。
+    壞字串一律當 0。
+    """
+    total = 0
+    for s in qs.values_list(field, flat=True):
+        try:
+            data = json.loads(s or "[]")
+            if isinstance(data, list):
+                total += len(data)
+        except Exception:
+            pass
+    return total
+
 
 
 
