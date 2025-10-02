@@ -1,63 +1,166 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="zh-Hant">
+
 <head>
-    <meta charset="UTF-8">
-    <title>搜尋用戶</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            background-color: #f8f9fa;
-        }
-        .search-card {
-            margin-top: 50px;
-            padding: 30px;
-            border-radius: 15px;
-            background: white;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-        }
-        .user-item {
-            padding: 10px;
-            border-bottom: 1px solid #dee2e6;
-            transition: background 0.2s;
-        }
-        .user-item:hover {
-            background-color: #f1f3f5;
-        }
-    </style>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>{% block title %}搜尋用戶{% endblock %}</title>
+
+  <link href="{% static 'assets/img/favicon.png' %}" rel="icon">
+  <link href="{% static 'assets/img/apple-touch-icon.png' %}" rel="apple-touch-icon">
+
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700|Nunito:300,400,600,700,800|Poppins:300,400,500,600,700" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/boxicons/2.1.0/css/boxicons.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css" rel="stylesheet">
+
+  <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/css/main.css' %}" rel="stylesheet">
+
+  <style>
+    .search-card {
+        margin-top: 100px; /* header 固定後 margin */
+        padding: 30px;
+        border-radius: 15px;
+        background: white;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    }
+    .user-item {
+        padding: 10px;
+        border-bottom: 1px solid #dee2e6;
+        transition: background 0.2s;
+    }
+    .user-item:hover {
+        background-color: #f1f3f5;
+    }
+  </style>
 </head>
-<body>
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="search-card">
-                <h3 class="text-center mb-4">搜尋用戶</h3>
 
-                <!-- 搜尋表單 -->
-                <form method="get" action="">
-                    <div class="input-group mb-3">
-                        <input type="text" name="q" class="form-control" placeholder="輸入用戶名稱" value="{{ query }}">
-                        <button class="btn btn-primary" type="submit">搜尋</button>
-                    </div>
-                </form>
+<body class="index-page">
 
-                <!-- 搜尋結果 -->
-                {% if results %}
-                    <div class="list-group">
-                        {% for user in results %}
-                            <a href="{% url 'user_profile_detail' username=user.username %}" class="list-group-item list-group-item-action user-item">
-                                {{ user.username }} 
-                                <span class="badge bg-secondary">{{ user.membership_name }}</span>
-                            </a>
-                        {% endfor %}
-                    </div>
-                {% elif query %}
-                    <p class="text-center mt-3">沒有找到符合 "{{ query }}" 的用戶</p>
-                {% endif %}
-            </div>
-        </div>
+<header id="header" class="header d-flex align-items-center fixed-top">
+    <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
+      <a href="index.html" class="logo d-flex align-items-center me-auto me-xl-0">
+        <h1 class="sitename">怪怪走開，護您安全</h1><span></span>
+      </a>
+      <nav id="navmenu" class="navmenu">
+        <ul>
+          <li><a href="{% url 'home' %}#hero">主頁</a></li>
+          <li><a href="{% url 'home' %}#services">簡介及功能介紹</a></li>
+          <li><a href="{% url 'report' %}">填寫表單</a></li>
+
+        <li class="dropdown"><a href="#"><span>商家</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+            <ul>
+              <li><a href="{% url 'business_upload' %}">商家填單</a></li>
+              <li><a href="{% url 'upload_store_ad' %}">商家廣告查看/更新</a></li>
+              <li><a href="{% url 'pending_payments' %}">商家待付款廣告</a></li>
+            </ul> 
+
+        <li class="dropdown"><a href="#"><span>用戶資料</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+            <ul>
+              <li><a href="{% url 'about' %}">個人資料設定</a></li>
+              <li><a href="{% url 'user_search' %}">用戶搜尋</a></li>
+            </ul> 
+          
+          <li><a href="{% url 'chatroom_page' %}">聊天室</a></li>
+        <li class="dropdown">
+          <a href="#"><span>交流區</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+          <ul>
+            <li><a href="{% url 'post' %}#hero">我要發文</a></li>
+            <li><a href="{% url 'post_display' %}">貼文總覽</a></li>
+          </ul>
+        </li>
+          
+          <li class="dropdown"><a href="#"><span>地圖</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+            <ul>
+              <li><a href="{% url 'map' %}">事件地圖</a></li>
+              <li><a href="{% url 'store_map' %}">商家地圖</a></li>       
+            </ul> 
+          </li>
+          
+          <li><a href="{% url 'harassment_prevention' %}">防騷指南</a></li>
+
+        </ul>
+        <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+      </nav>
+      
+      <!-- ✅ 登入狀態 dropdown 按鈕 -->
+    {% if request.user.is_authenticated %}
+      <div class="dropdown">
+        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown"
+           style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
+          {{ request.user.username }}
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="{% url '01_userlogin_out' %}">登出</a></li>
+        </ul>
+      </div>
+    {% else %}
+      <div class="dropdown">
+        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown"
+           style="background-color: #63b3ed; color: white; border-radius: 8px; padding: 8px 20px;">
+          登入
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="{% url 'userlogin' %}">一般使用者登入</a></li>
+          <li><a class="dropdown-item" href="{% url 'admin_login' %}">管理員登入</a></li>
+        </ul>
+      </div>
+    {% endif %}
+  </div>
+</header>
+
+<main class="main">
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <img src="{% static 'assets/img/1.png' %}" alt="Hero Image">
+  </section>
+
+  <!-- User Search Section -->
+  <section id="user-search" class="section light-background">
+    <div class="container" data-aos="fade-up">
+      <div class="search-card">
+        <h2 class="text-center mb-4">搜尋用戶</h2>
+
+        <form method="get" action="{% url 'user_search' %}">
+          {% csrf_token %}
+          <div class="input-group mb-3">
+            <input type="text" name="q" class="form-control" placeholder="輸入用戶名稱" value="{{ query }}">
+            <button class="btn btn-primary" type="submit">搜尋</button>
+          </div>
+        </form>
+
+        {% if results %}
+          <div class="list-group">
+            {% for user in results %}
+              <a href="{% url 'user_profile_detail' username=user.username %}" class="list-group-item list-group-item-action user-item">
+                {{ user.username }}
+                <span class="badge bg-secondary">{{ user.membership_name }}</span>
+              </a>
+            {% endfor %}
+          </div>
+        {% elif query %}
+          <p class="text-center mt-3">沒有找到符合 "{{ query }}" 的用戶</p>
+        {% endif %}
+      </div>
     </div>
-</div>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  </section>
+
+</main>
+
+<footer id="footer" class="footer position-relative light-background">
+  <div class="container text-center mt-4">
+    <p>© Copyright <strong class="sitename">怪怪走開，護您安全</strong> All Rights Reserved</p>
+    <div class="credits">Designed by <a href="https://bootstrapmade.com/">BootstrapMade</a></div>
+  </div>
+</footer>
+
+<a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
+<div id="preloader"></div>
+
+<script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+<script src="{% static 'assets/vendor/aos/aos.js' %}"></script>
+<script src="{% static 'assets/js/main.js' %}"></script>
 </body>
 </html>
