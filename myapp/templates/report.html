@@ -170,8 +170,8 @@
 
             <!-- 姓名 -->
            <div class="col-md-6">
-              <label for="display_name" class="form-label">名稱</label>
-              <input type="text" class="form-control" id="display_name" name="display_name" placeholder="可填匿名" required>
+              <label for="display_name" class="form-label">事件名稱</label>
+              <input type="text" class="form-control" id="display_name" name="display_name" placeholder="可填可疑性質/分類名稱" required>
            </div>
 
             <!-- Gmail -->
@@ -381,7 +381,8 @@
         return;
       }
 
-      const name = isAnonymous ? "匿名" : nameInput.value.trim();
+      const name = nameInput.value.trim(); // 無論匿名與否都保留輸入
+
       const email = emailInput.value.trim();
       const kind = kindInput.value;
       const subkind = subkindInput.value;
