@@ -1,14 +1,48 @@
 {% load static %}
-<html lang="zh-Hant">
-
+<!DOCTYPE html>
+<html lang="zh-TW">
 <head>
-    <header id="header" class="header d-flex align-items-center fixed-top">
-    <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
-      <a href="index.html" class="logo d-flex align-items-center me-auto me-xl-0">
-        <h1 class="sitename">怪怪走開
-          護您安全</h1><span></span>
-      </a>
-      <nav id="navmenu" class="navmenu">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>商家廣告</title>
+  <meta name="description" content="">
+  <meta name="keywords" content="">
+  <!-- CSS -->
+  <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/aos/aos.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/css/main.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/img/icon-512.png' %}" rel="icon">
+  <link href="{% static 'assets/vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet">
+
+  <style>
+  #header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 999;
+    background: #fff;   /* 白底避免透明 */
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  }
+
+  #navmenu ul li a {
+    color: #033e6b;      /* 深藍字，避免和背景混掉 */
+  }
+
+  #navmenu ul li a:hover {
+    color: #63b3ed;      /* 滑過換藍色 */
+  }
+  </style>
+</head>
+
+<body class="index-page">
+
+<header id="header" class="header d-flex align-items-center fixed-top">
+  <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
+    <a href="{% url 'home' %}" class="logo d-flex align-items-center me-auto me-xl-0">
+      <h1 class="sitename" style="color:#033e6b;">怪怪走開，護您安全</h1>
+    </a>
+    <nav id="navmenu" class="navmenu">
       <ul>
         <li><a href="{% url 'home' %}#hero">主頁</a></li>
         <li><a href="index.html#services">簡介及功能介紹</a></li>
@@ -160,7 +194,23 @@
 </div>
 </section>
 </main>
+<!-- Footer -->
+  <footer id="footer" class="footer position-relative light-background">
+    <div class="container text-center mt-4">
+      <p>© Copyright <strong class="sitename">怪怪走開，護您安全</strong> All Rights Reserved</p>
+      <div class="credits">Designed by <a href="https://bootstrapmade.com/">BootstrapMade</a></div>
+    </div>
+  </footer>
 
+  <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center">
+    <i class="bi bi-arrow-up-short"></i>
+  </a>
+
+  <div id="preloader"></div>
+<!-- Bootstrap Scripts -->
+  <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/aos/aos.js' %}"></script>
+  <script src="{% static 'assets/js/main.js' %}"></script>
 <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
 <script>
 // ------------------------
