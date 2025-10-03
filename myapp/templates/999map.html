@@ -370,7 +370,26 @@
           </div>
 
         </div>
-
+        
+        <div class="modal fade" id="report110Modal" tabindex="-1" aria-labelledby="report110ModalLabel" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="border-radius: 12px;">
+              <div class="modal-header">
+                <h5 class="modal-title" id="report110ModalLabel">下載 110 視訊報案 APP</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
+              </div>
+              <div class="modal-body text-center">
+                <p>請選擇您的系統：</p>
+                <a href="https://play.google.com/store/apps/details?id=tw.gov.npa.videocall&pcampaignid=web_share" target="_blank" class="btn btn-lightblue w-100 mb-2">
+                  Android 下載 (Google Play)
+                </a>
+                <a href="https://apps.apple.com/tw/app/110%E8%A6%96%E8%A8%8A%E5%A0%B1%E6%A1%88/id1172052836" target="_blank" class="btn btn-lightblue w-100">
+                  iOS 下載 (App Store)
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
         
 
 
@@ -631,7 +650,7 @@
         let safeRoute = response.routes.find(r => !isRouteDangerous(r));
 
         if (!safeRoute) {
-          alert("⚠ 找不到完全避開事件的路線，將顯示第一條候選路線");
+          alert("⚠ 找不到完全避開事件的最快路線，將顯示第一條候選路線");
           safeRoute = response.routes[0];
         }
 
@@ -818,6 +837,8 @@
   <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i
       class="bi bi-arrow-up-short"></i></a>
   <div id="preloader"></div>
+
+  
 
   <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
   <script src="{% static 'assets/vendor/php-email-form/validate.js' %}"></script>

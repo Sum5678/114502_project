@@ -4817,7 +4817,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from .models import StoreAdHistory
 
-@login_required
+@login_required(login_url='/01userlogin/')
 def pending_payments(request):
     user_email = request.user.email
 
