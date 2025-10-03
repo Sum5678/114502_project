@@ -4282,7 +4282,7 @@ import json
 from google.cloud import language_v1
 
 # ------------------ 聊天室頁面 ------------------
-@login_required
+@login_required(login_url='/01userlogin/')
 def chatroom_view(request):
     try:
         user_profile = ThisUserProfile.objects.get(gmail=request.user.email)
@@ -4569,6 +4569,7 @@ AD_ITEM_NAME = {10:'免費方案', 20:'微型方案', 30:'小型方案', 50:'中
 
 # ----------------- 上傳廣告（GCS 版 + 半徑10公尺免費） -----------------
 @csrf_exempt
+@login_required(login_url='/01userlogin/')
 def upload_store_ad(request):
     pending_data = request.session.pop('pending_ad_data', None)
     pending_images = request.session.pop('pending_ad_images', [])
