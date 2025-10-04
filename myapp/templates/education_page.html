@@ -4,10 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>教育網頁資源</title>
+    <title>教育網頁</title>
     
     <!-- Favicons -->
-    <link href="{% static 'assets/img/favicon.png' %}" rel="icon">
+    <link href="{% static 'assets/img/icon-512.png' %}" rel="icon">
+    <link href="{% static 'assets/vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet">
     <link href="{% static 'assets/img/apple-touch-icon.png' %}" rel="apple-touch-icon">
 
     <!-- Google Fonts & Icons -->
@@ -19,6 +20,7 @@
     <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
     <link href="{% static 'assets/vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet">
     <link href="{% static 'assets/css/main.css' %}" rel="stylesheet">
+
   
     <style>
         body {
@@ -90,7 +92,7 @@
     <nav id="navmenu" class="navmenu">
       <ul>
         <li><a href="{% url 'home' %}#hero">主頁</a></li>
-        <li><a href="index.html#services">簡介及功能介紹</a></li>
+        <li><a href="{% url 'home' %}#services">簡介及功能介紹</a></li>
         <li><a href="{% url 'report' %}">填寫表單</a></li>
         <li class="dropdown"><a href="#"><span>商家</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
             <ul>
@@ -179,7 +181,13 @@
     </div>
   </div>
 </main>
-
+<!-- Footer -->
+  <footer id="footer" class="footer position-relative light-background">
+    <div class="container text-center mt-4">
+      <p>© Copyright <strong class="sitename">怪怪走開，護您安全</strong> All Rights Reserved</p>
+      <div class="credits">Designed by <a href="https://bootstrapmade.com/">BootstrapMade</a></div>
+    </div>
+  </footer>
 <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
 <script src="{% static 'assets/vendor/aos/aos.js' %}"></script>
 <script src="{% static 'assets/vendor/glightbox/js/glightbox.min.js' %}"></script>
