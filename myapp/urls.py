@@ -179,9 +179,7 @@ urlpatterns = [
     # API & 地圖相關
     path('api/incidents/', views.incident_list, name='incident_list'),#地圖顯示測試
     path('api/fake_incidents/', views.fake_incident_lookup, name='fake_incident_lookup'), #地圖顯示測試
-    path('lookup/', views.lookup_page, name='lookup_page'),#地圖顯示測試
     path('fake_incident_lookup/', views.fake_incident_lookup, name='fake_incident_lookup'),  # 重複可刪一個
-    path('map0257/', views.show_map, name='show_map'),
     path('mymap/', views.map_view, name='map_view'),
     path('api/reports/', views.reports_json, name='reports_json'),#地圖顯示測試again(pemap_all的)
     path('api/submit_report/', views.submit_report, name='submit_report'),

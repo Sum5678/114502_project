@@ -877,16 +877,7 @@ def incident_list(request):
     return JsonResponse(data, safe=False)
 
 
-###地圖讀資料測試
 
-from django.shortcuts import render    
-
-def lookup_page(request):
-    return render(request, '0257.html')
-
-def show_map(request):
-    # 處理邏輯
-    return render(request, 'map0257.html')
 
 
 
