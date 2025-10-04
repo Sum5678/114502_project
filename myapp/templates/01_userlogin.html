@@ -128,24 +128,18 @@
 
             {% if user.is_authenticated %}
             <!-- 如果用戶已經登入，顯示用戶資料 -->
-            <div class="logged-in-box">
+              <div class="logged-in-box">
                 <h3>歡迎回來，{{ user.username }}</h3>
                 <a href="{% url '01_userlogin_out' %}" class="google-btn btn btn-danger">登出</a>
-            </div>
+                <p class="mt-2 text-muted">歡迎使用怪怪走開，護您安全系統</p>
+              </div>
             {% else %}
             <!-- 否則顯示 Google 登入按鈕 -->
-            <div class="login-options">
+              <div class="login-options">
                 <a href="{% url 'social:begin' 'google-oauth2' %}" class="google-btn btn btn-primary">以 Google 登入</a>
                 <a href="https://accounts.google.com/signup" class="google-btn btn btn-outline-secondary" target="_blank">註冊 Google 帳戶</a>
-            </div>
-            {% endif %}
-
-            {% if messages %}
-            <div class="messages mt-3">
-                {% for message in messages %}
-                <div class="alert alert-info">{{ message }}</div>
-                {% endfor %}
-            </div>
+                <p class="mt-3 text-muted">歡迎登入，解鎖更多功能！</p>
+              </div>
             {% endif %}
         </div>
 
