@@ -264,15 +264,14 @@
 <body class="index-page">
 
 <header id="header" class="header d-flex align-items-center fixed-top">
-    <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
-      <a href="index.html" class="logo d-flex align-items-center me-auto me-xl-0">
-        <h1 class="sitename">怪怪走開
-          護您安全</h1><span></span>
-      </a>
-      <nav id="navmenu" class="navmenu">
+  <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
+    <a href="{% url 'home' %}" class="logo d-flex align-items-center me-auto me-xl-0">
+      <h1 class="sitename" style="color:#033e6b;">怪怪走開，護您安全</h1>
+    </a>
+    <nav id="navmenu" class="navmenu">
       <ul>
         <li><a href="{% url 'home' %}#hero">主頁</a></li>
-        <li><a href="index.html#services">簡介及功能介紹</a></li>
+        <li><a href="{% url 'home' %}#services">簡介及功能介紹</a></li>
         <li><a href="{% url 'report' %}">填寫表單</a></li>
         <li class="dropdown"><a href="#"><span>商家</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
             <ul>
@@ -336,6 +335,7 @@
     {% endif %}
   </div>
 </header>
+
 
 <main class="main mt-5 pt-5">
   <div class="container container-flex" data-aos="fade-up">
