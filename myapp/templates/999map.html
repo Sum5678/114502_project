@@ -1,16 +1,23 @@
-<!DOCTYPE html>
 {% load static %}
-
-<html lang="zh-Hant">
-
+<!DOCTYPE html>
+<html lang="zh-TW">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>事件地圖</title>
+  <meta name="description" content="">
+  <meta name="keywords" content="">
+  <!-- CSS -->
+  <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/aos/aos.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/css/main.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/img/icon-512.png' %}" rel="icon">
+  <link href="{% static 'assets/vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet">
 
-  <!-- Favicons -->
+  <!-- Favicons
   <link href="{% static 'assets/img/paw_icon.png' %}" rel="icon" type="image/png" />
   <link href="{% static 'assets/img/paw_icon.png' %}" rel="apple-touch-icon" />
+  -->
 
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700|Nunito:300,400,600,700,800|Poppins:300,400,500,600,700" rel="stylesheet" />
@@ -236,15 +243,15 @@
 
 <body class="index-page">
 
-<header id="header" class="header d-flex align-items-center fixed-top bg-white shadow-sm">
-  <div class="container-fluid d-flex justify-content-between align-items-center">
-    <a href="{% url 'home' %}" class="logo d-flex align-items-center">
-      <h1 class="sitename mb-0">怪怪走開，護您安全</h1>
+<header id="header" class="header d-flex align-items-center fixed-top">
+  <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
+    <a href="{% url 'home' %}" class="logo d-flex align-items-center me-auto me-xl-0">
+      <h1 class="sitename" style="color:#033e6b;">怪怪走開，護您安全</h1>
     </a>
     <nav id="navmenu" class="navmenu">
-        <ul>
+      <ul>
         <li><a href="{% url 'home' %}#hero">主頁</a></li>
-        <li><a href="index.html#services">簡介及功能介紹</a></li>
+        <li><a href="{% url 'home' %}#services">簡介及功能介紹</a></li>
         <li><a href="{% url 'report' %}">填寫表單</a></li>
         <li class="dropdown"><a href="#"><span>商家</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
             <ul>
@@ -284,18 +291,27 @@
           </a>
         </li>
       </ul>
-        <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
-      </nav>
+      <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+    </nav>
     {% if request.user.is_authenticated %}
       <div class="dropdown">
-        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown" aria-expanded="false">{{ request.user.username }}</a>
+        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown" style="background-color:#63b3ed;color:white;border-radius:8px;padding:8px 20px;">
+          {{ request.user.username }}
+        </a>
         <ul class="dropdown-menu dropdown-menu-end">
-          <li><a class="dropdown-item" href="{% url 'about' %}">個人資料設定</a></li>
           <li><a class="dropdown-item" href="{% url '01_userlogin_out' %}">登出</a></li>
         </ul>
       </div>
     {% else %}
-      <a class="btn-getstarted btn btn-primary px-3" href="{% url 'userlogin' %}">登入</a>
+      <div class="dropdown">
+        <a class="btn-getstarted dropdown-toggle" href="#" data-bs-toggle="dropdown" style="background-color:#63b3ed;color:white;border-radius:8px;padding:8px 20px;">
+          登入
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="{% url 'userlogin' %}">一般使用者登入</a></li>
+          <li><a class="dropdown-item" href="{% url 'admin_login' %}">管理員登入</a></li>
+        </ul>
+      </div>
     {% endif %}
   </div>
 </header>
