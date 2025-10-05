@@ -72,9 +72,6 @@ def error_404(request):
 def harassment_prevention(request):
     return render(request, 'harassment_prevention.html')
 
-def education_page(request):
-    return render(request, 'education_page.html')
-
 
 #禮品真的東西(主要是讓下面東西管理的東西要先登入才能編輯)
 from functools import wraps
