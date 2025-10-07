@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0" name="viewport">
-  <title>{% block title %}首頁{% endblock %}</title>
+  <title>{% block title %}審核廣告{% endblock %}</title>
   <meta content="" name="description">
   <meta content="" name="keywords">
 
@@ -75,7 +75,7 @@
             </ul> 
           </li>
           
-                    <li class="dropdown"><a href="#"><span>我的審核紀錄</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+          <li class="dropdown"><a href="#"><span>我的審核紀錄</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
             <ul>
               <li><a href="{% url 'admin_decide' %}">事件審核紀錄</a></li>
               <li><a href="{% url 'store_decide' %}">商家審核紀錄</a></li>
@@ -92,7 +92,6 @@
               <li><a href="{% url 'education_list' %}">教育網頁管理</a></li>
               <li><a href="{% url 'taiwan_regions_admin' %}">台灣縣市管理</a></li>
               <li><a href="{% url 'police_address_list' %}">最近警局管理</a></li>
-              <li><a href="#">其他工具</a></li>
             </ul>
           </li>
         </ul>

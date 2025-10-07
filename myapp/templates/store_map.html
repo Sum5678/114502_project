@@ -220,6 +220,14 @@ main {
     </section>
 
     <script>
+      const now = new Date(); 
+      const dayNames = ['週日','週一','週二','週三','週四','週五','週六'];
+      const today = dayNames[now.getDay()];
+      const hour = now.getHours();
+      const minute = now.getMinutes();
+
+
+
       function getDistance(lat1, lng1, lat2, lng2) {
           const R = 6371000; // 地球半徑公尺
           const toRad = x => x * Math.PI / 180;
@@ -253,6 +261,49 @@ main {
               setTimeout(() => container.removeChild(toast), 400);
           }, 3000);
       }
+
+      function isStoreOpen(business_hours) {
+        if (!business_hours) return false;
+
+        const now = new Date();
+        const dayNames = ['週日','週一','週二','週三','週四','週五','週六'];
+        const today = dayNames[now.getDay()];
+        const nowMinutes = now.getHours()*60 + now.getMinutes();
+
+        // 找今天營業時間
+        const todayHours = business_hours.split('|')
+        .map(s => s.trim())
+        .find(s => s.includes(today));
+
+
+        if (!todayHours || todayHours.includes('休息')) return false;
+
+        const periods = todayHours.replace(today, '').split('/').map(s => s.trim());
+
+        for (const period of periods) {
+            const [start, end] = period.split('-').map(t => t.trim());
+            if (!start || !end) continue;
+
+            let [startH, startM] = start.split(':').map(Number);
+            let [endH, endM] = end.split(':').map(Number);
+
+            let startMinutes = startH*60 + startM;
+            let endMinutes = endH*60 + endM;
+
+            // 跨午夜處理
+            if (endMinutes <= startMinutes) endMinutes += 24*60;
+            let currentMinutes = nowMinutes;
+            if (currentMinutes < startMinutes) currentMinutes += 24*60;
+
+            if (currentMinutes >= startMinutes && currentMinutes <= endMinutes) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+
 
       function initMap() {
           const map = new google.maps.Map(document.getElementById("map"), {
@@ -305,76 +356,85 @@ main {
       }
 
       // 抓所有商家 API，顯示在地圖
+      // 取得今天與現在時間
+      function getTodayMinutes() {
+          const now = new Date();
+          const dayNames = ['週日','週一','週二','週三','週四','週五','週六'];
+          const today = dayNames[now.getDay()];
+          const nowMinutes = now.getHours()*60 + now.getMinutes();
+          return { today, nowMinutes };
+      }
+
+      
+
+      // 載入商家
       function fetchStores(map) {
-        fetch('/api/stores-with-ads/')
-            .then(res => res.json())
-            .then(data => {
-                data.forEach((store, index) => {
-                    const lat = parseFloat(store.latitude);
-                    const lng = parseFloat(store.longitude);
-                    if (!isNaN(lat) && !isNaN(lng)) {
-                        const marker = new google.maps.Marker({
-                            position: { lat, lng },
-                            map,
-                            title: store.store_name,
-                            icon: {
-                                url: "{% static 'assets/img/shop_icon.png' %}",
-                                scaledSize: new google.maps.Size(30, 30)
-                            }
-                        });
+          fetch('/api/stores-with-ads/')
+              .then(res => res.json())
+              .then(data => {
+                  data.forEach((store, index) => {
+                      // ✅ 只顯示當前營業商家
+                      if (!isStoreOpen(store.business_hours)) return;
 
-                        // 🔹 InfoWindow 內容
-                        let content = `
-                            <div style="max-width:260px;">
-                                <strong>${store.store_name}</strong><br>
-                                地址: ${store.address}<br>
-                                電話: ${store.phone}<br>
-                                <p>廣告:${store.ad_content || ''}</p>
-                        `;
+                      const lat = parseFloat(store.latitude);
+                      const lng = parseFloat(store.longitude);
+                      if (isNaN(lat) || isNaN(lng)) return;
 
-                        // 如果有圖片，做 Bootstrap Carousel
-                        if (store.images && store.images.length > 0) {
-                            const carouselId = `carousel-${index}`;
-                            content += `
-                                <div id="${carouselId}" class="carousel slide" data-bs-ride="carousel" style="max-width:240px;">
-                                    <div class="carousel-inner">
-                            `;
-                            store.images.forEach((imgUrl, i) => {
-                                content += `
-                                    <div class="carousel-item ${i === 0 ? 'active' : ''}">
-                                        <img src="${imgUrl}" class="d-block w-100" 
-                                            style="height:150px; object-fit:cover; border-radius:6px;">
-                                    </div>
-                                `;
-                            });
-                            content += `
-                                    </div>
-                                    <button class="carousel-control-prev" type="button" data-bs-target="#${carouselId}" data-bs-slide="prev">
-                                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                                        <span class="visually-hidden">上一張</span>
-                                    </button>
-                                    <button class="carousel-control-next" type="button" data-bs-target="#${carouselId}" data-bs-slide="next">
-                                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                                        <span class="visually-hidden">下一張</span>
-                                    </button>
-                                </div>
-                            `;
-                        }
+                      const marker = new google.maps.Marker({
+                          position: { lat, lng },
+                          map,
+                          title: store.store_name,
+                          icon: {
+                              url: "{% static 'assets/img/shop_icon.png' %}",
+                              scaledSize: new google.maps.Size(30, 30)
+                          }
+                      });
 
-                        content += `</div>`;
+                      // InfoWindow 內容
+                      let content = `
+                          <div style="max-width:260px;">
+                              <strong>${store.store_name}</strong><br>
+                              電話: ${store.phone}<br>
+                              <p>廣告:${store.ad_content || ''}</p>
+                      `;
 
-                        const infoWindow = new google.maps.InfoWindow({
-                            content: content
-                        });
+                      if (store.images && store.images.length > 0) {
+                          const carouselId = `carousel-${index}`;
+                          content += `
+                              <div id="${carouselId}" class="carousel slide" data-bs-ride="carousel" style="max-width:240px;">
+                                  <div class="carousel-inner">
+                          `;
+                          store.images.forEach((imgUrl, i) => {
+                              content += `
+                                  <div class="carousel-item ${i === 0 ? 'active' : ''}">
+                                      <img src="${imgUrl}" class="d-block w-100"
+                                          style="height:150px; object-fit:cover; border-radius:6px;">
+                                  </div>
+                              `;
+                          });
+                          content += `
+                                  </div>
+                                  <button class="carousel-control-prev" type="button" data-bs-target="#${carouselId}" data-bs-slide="prev">
+                                      <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                      <span class="visually-hidden">上一張</span>
+                                  </button>
+                                  <button class="carousel-control-next" type="button" data-bs-target="#${carouselId}" data-bs-slide="next">
+                                      <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                      <span class="visually-hidden">下一張</span>
+                                  </button>
+                              </div>
+                          `;
+                      }
 
-                        marker.addListener('click', () => {
-                            infoWindow.open(map, marker);
-                        });
-                    }
-                });
-            })
-            .catch(err => { console.error("抓取商家資料錯誤：", err); });
-    }
+                      content += `</div>`;
+
+                      const infoWindow = new google.maps.InfoWindow({ content });
+                      marker.addListener('click', () => infoWindow.open(map, marker));
+                  });
+              })
+              .catch(err => { console.error("抓取商家資料錯誤：", err); });
+      }
+
 
 
       // 抓有廣告的商家資料，判斷距離
