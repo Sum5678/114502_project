@@ -9,7 +9,11 @@
   <meta content="" name="description">
   <meta content="" name="keywords">
 
+  <!-- ✅ 這裡放 icon 與 PWA 設定 -->
   <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/static/assets/img/icon-512.png?v=3">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
   <!-- Favicons -->
   <link href="{% static 'assets/img/icon-512.png' %}" rel="icon">
@@ -551,6 +555,20 @@ document.addEventListener("DOMContentLoaded", function () {
   // 首次載入
   document.addEventListener("DOMContentLoaded", refreshReports);
 </script>
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(registrations => {
+    for (let reg of registrations) {
+      reg.update();
+    }
+  });
+
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    window.location.reload();
+  });
+}
+</script>
+
 
 </body>
 
