@@ -8,7 +8,7 @@
   <title>{% block title %}首頁{% endblock %}</title>
   <meta content="" name="description">
   <meta content="" name="keywords">
-  
+
   <!-- ✅ 這裡放 icon 與 PWA 設定 -->
   <link rel="manifest" href="/manifest.json">
   <link rel="apple-touch-icon" href="/static/assets/img/icon-512.png?v=3">
@@ -555,6 +555,20 @@ document.addEventListener("DOMContentLoaded", function () {
   // 首次載入
   document.addEventListener("DOMContentLoaded", refreshReports);
 </script>
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(registrations => {
+    for (let reg of registrations) {
+      reg.update();
+    }
+  });
+
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    window.location.reload();
+  });
+}
+</script>
+
 
 </body>
 
