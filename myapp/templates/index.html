@@ -9,7 +9,11 @@
   <meta content="" name="description">
   <meta content="" name="keywords">
 
+  <!-- ✅ 這裡放 icon 與 PWA 設定 -->
   <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/static/assets/img/icon-512.png?v=3">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
   <!-- Favicons -->
   <link href="{% static 'assets/img/icon-512.png' %}" rel="icon">
@@ -518,7 +522,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (/android/i.test(userAgent)) {
       // Android → Google Play
-      window.open("https://play.google.com/store/apps/details?id=com.npa.call110", "_blank");
+      window.open("https://play.google.com/store/apps/details?id=tw.gov.npa.videocall", "_blank");
     } else if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
       // iOS → App Store
       window.open("https://apps.apple.com/tw/app/110%E8%A6%96%E8%A8%8A%E5%A0%B1%E6%A1%88/id1354793237", "_blank");
@@ -551,6 +555,20 @@ document.addEventListener("DOMContentLoaded", function () {
   // 首次載入
   document.addEventListener("DOMContentLoaded", refreshReports);
 </script>
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(registrations => {
+    for (let reg of registrations) {
+      reg.update();
+    }
+  });
+
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    window.location.reload();
+  });
+}
+</script>
+
 
 </body>
 

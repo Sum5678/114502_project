@@ -17,8 +17,6 @@ RUN pip install --no-cache-dir -r requirements.txt gunicorn
 
 # 複製整個專案程式
 COPY . .
-# 複製程式碼
-COPY . .
 
 # 收集靜態檔案
 RUN python manage.py collectstatic --noinput

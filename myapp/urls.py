@@ -37,13 +37,6 @@ urlpatterns = [
 
     path('', views.index, name='home'),
     path('index.html', views.index, name='index'),#主畫面
-    path('tables.html', views.tables, name='tables'),
-    path('register.html', views.register, name='register'),
-    path('password.html', views.password, name='password'),
-    path('login.html', views.login, name='login'),
-    path('layout-static.html', views.layout_static, name='layout-static'),
-    path('layout-sidenav-light.html', views.layout_sidenav_light, name='layout-sidenav-light'),
-    path('charts.html', views.charts, name='charts'),
     path('500.html', views.error_500, name='500'),
     path('401.html', views.error_401, name='401'),
     path('404.html', views.error_404, name='404'),
@@ -76,14 +69,7 @@ urlpatterns = [
     path('education_image/<int:page_id>/', views.education_image, name='education_image'),
 
     path('anonymous-chat/', views.anonymous_chat, name='anonymous-chat'),  # anonymous-chat 頁面
-    path('index35/', views.index35, name='index35'),  # 新增 index35.html 路由
     path('map/', views.map_view, name='map'),  # 添加 map.html 路由
-    path('001_login/', views.login_page, name='login_page'),  # 讓 /001_login 也能對應
-    path('area/', views.area_view, name='area'),
-    path('police/', views.region_selector, name='region_selector'),
-    path('mail/', views.mail, name='mail'),
-    path('autodial/', views.autodial_view, name='autodial'),
-    path('mychatroom/', views.mychatroom, name='mychatroom'),
     path('community/', views.community, name='community'),
     path('post/', views.post, name='post'),
     path('post_display/', views.post_display, name='post_display'),
@@ -130,13 +116,6 @@ urlpatterns = [
 
     #想的
     # 一般頁面
-    path('announcement/', views.announcement, name='announcement'),
-    path('form/', views.form, name='form'),
-    path('safety/', views.safety, name='safety'),
-    path('autodial/', views.autodial, name='autodial'),
-    # path('mymap/', views.mymap, name='mymap'),
-    #path('settings/', views.settings, name='settings'),
-    #path('write/', views.settings, name='write'),  # 同 settings，可保留或合併
 
     # 登入/登出相關
     # path('0101login/', views.login_page, name='login'),  # 另一登入頁
@@ -149,7 +128,7 @@ urlpatterns = [
     path('this_user_profile/create/', views.create_user_profile, name='create_user_profile'),
     path('this_user_profile/update/', views.update_user_profile, name='update_user_profile'),
     path('this_user_profile/', views.this_user_profile_redirect, name='this_user_profile'),
-    path('user_data/', views.user_data_view, name='user_data'),  #   非第一次登入看資料頁
+    # path('user_data/', views.user_data_view, name='user_data'),  #   非第一次登入看資料頁
     # 商家廣告：上傳處理
     path("store/upload-ad/", views.upload_store_ad, name="upload_store_ad"),
     # 商家廣告：上傳頁面
@@ -173,15 +152,10 @@ urlpatterns = [
 
 
 
-
-    path('profile/', views.profile, name='profile'),
-
     # API & 地圖相關
     path('api/incidents/', views.incident_list, name='incident_list'),#地圖顯示測試
     path('api/fake_incidents/', views.fake_incident_lookup, name='fake_incident_lookup'), #地圖顯示測試
-    path('fake_incident_lookup/', views.fake_incident_lookup, name='fake_incident_lookup'),  # 重複可刪一個
     path('mymap/', views.map_view, name='map_view'),
-    path('api/reports/', views.reports_json, name='reports_json'),#地圖顯示測試again(pemap_all的)
     path('api/submit_report/', views.submit_report, name='submit_report'),
     path('api/approved-locations/', views.approved_locations_api, name='approved_locations_api'),#事件地圖
     path('store_map/', views.store_map_view, name='store_map'),#商家地圖
@@ -215,9 +189,6 @@ urlpatterns = [
     path('pemap_judge_step1/<int:p_id>/', views.pemap_judge_step1, name='pemap_judge_step1'),
 
 
-    # AI 判斷
-    path('99judge/', views.show_judge_page, name='show_judge_page'),
-    path('ai_judge/', views.ai_judge, name='ai_judge'), #ai檢測
 
     # 管理員專用頁面
     path('admin_login/', views.admin_login, name='admin_login'),#管理員登入
@@ -241,6 +212,7 @@ urlpatterns = [
     # urls.py
     path('ad-send-email/<int:history_id>/', views.ad_admin_send_email, name='ad_admin_send_email'),
     path('ad-send-email/<int:history_id>/<str:action>/', views.ad_admin_send_email, name='ad_admin_send_email_action'),
+    path('99judge/', views.show_judge_page, name='show_judge_page'),
 
 
 
@@ -255,8 +227,6 @@ urlpatterns = [
     # 登入後判斷跳轉
     path('login/redirect/', views.login_redirect, name='login_redirect'),
 
-    # 動態聊天室房間（需放最底下，避免路由衝突）
-    path('<str:room_name>/', views.room, name='room'),
 
 
     # 其他路由
@@ -283,64 +253,3 @@ urlpatterns = [
 
 
 
-
-
-# 原本沒有這些路徑
-
-
-# 整理#想的
-#     path('announcement/', views.announcement, name='announcement'),
-#     path('chatroom/', views.chatroom, name='chatroom'),
-#     path('form/', views.form, name='form'),
-#     path('safety/', views.safety, name='safety'),
-#     path('autodial/', views.autodial, name='autodial'),
-#     path('mymap/', views.mymap, name='mymap'),
-#     path('0101login/', views.login_page, name='login'),  
-#     path('settings/', views.settings, name='settings'),
-#     path('write/', views.settings, name='write'),
-#     path('01userlogin/', views.user_login_page, name='userlogin'),
-#     path('profile/', views.profile, name='profile'),
-#     path('userlogin/', views.user_login_page, name='user_login_page'),
-#     path('01userlogin/', views.user_login_page),  # 第二條可選路徑，不需 name
-#     path('userlogin_out/', views.logout_view, name='01_userlogin_out'),  # 登出路由
-
-#     path('this_user_profile/', views.create_user_profile, name='create_user_profile'),
-#     path('this_user_profile', views.create_user_profile, name='create_user_profile'),
-#     path("this_user_profile", views.ThisUserProfile, name="this_user_profile"),
-#     path('this_user_profile', views.update_user_profile, name='update_user_profile'),
-
-#     path('api/incidents/', views.incident_list, name='incident_list'),#地圖顯示測試
-#     path('api/fake_incidents/', views.fake_incident_lookup, name='fake_incident_lookup'), #地圖顯示測試
-#     path('lookup/', views.lookup_page, name='lookup_page'),#地圖顯示測試
-#     path('fake_incident_lookup/', views.fake_incident_lookup, name='fake_incident_lookup'),#地圖顯示測試
-#     path('map0257/', views.show_map, name='show_map'),#地圖顯示測試
-#     path('999map/', views.map_view, name='map_view'),#地圖顯示測試again(pemap_all的)
-#     path('api/reports/', views.reports_json, name='reports_json'),#地圖顯示測試again(pemap_all的)
-    
-#     path('admin/pemap/approve/<int:p_id>/<int:stage>/', views.pemap_approve, name='pemap_approve'),  ##處理管理員對pemap資料狀態
-#     path('pemap/', PemapAllListView.as_view(), name='pemap_list'),##處理管理員對pemap資料狀態
-#     path('pemap/<int:p_id>/edit/', PemapAllUpdateView.as_view(), name='pemap_detail'),##處理管理員對pemap資料狀態
-
-    
-#     path('99judge/', views.show_judge_page, name='show_judge_page'),#ai檢測
-#     path('ai_judge/', views.ai_judge, name='ai_judge'),#ai檢測
-#     path('admin_login/', views.admin_login, name='admin_login'),
-#     path('admin_interview/', views.admin_interview, name='admin_interview'),#管理員自介
-#     path('admin_logout/', views.admin_logout, name='admin_logout'),#管理員登入
-#     path('pemap_judge/', views.pemap_judge, name='pemap_judge'),#審核事件
-#     path('pemap_judge_step1/<int:p_id>/', views.pemap_judge_step1, name='pemap_judge_step1'),
-#     path('admin_index/', views.admin_index, name='admin_index'),
-#     path('admin_register/', views.admin_register, name='admin_register'),
-    
-#     path('login/redirect/', views.login_redirect, name='login_redirect'),#使用者登入後有甜過基本資料就不用再填
-#     path('user_data/', views.user_data_view, name='user_data'),  # 非第一次登入看資料頁
-
-
-   
-
-#     path('<str:room_name>/', views.room, name='room'),
-
-#     # 其他路由
-#     #思璇
-#      #思璇
-#     path('api/submit_report/', views.submit_report, name='submit_report'),

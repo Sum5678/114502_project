@@ -1,60 +1,72 @@
-from django.shortcuts import render, get_object_or_404, redirect
-from .models import TaiwanRegion, PoliceAddress, PemapAll, StoreAll#資料表的
-from django.views.decorators.http import require_GET
+# ------------------------------
+# Django 基本功能
+# ------------------------------
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, HttpResponse
-from .forms import AutoDialForm
+from django.contrib import messages
+from django.contrib.auth import logout
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.hashers import make_password, check_password
+from django.contrib.auth.models import User
+from django.views.decorators.http import require_GET
 from django.views.decorators.csrf import csrf_exempt
-from django.utils import timezone
-import json
-from datetime import datetime
-from .utils import get_unreviewed_counts  
-import datetime
-from django.views.decorators.csrf import csrf_exempt
-from myapp.sdk.ecpay_payment_sdk import ECPayPaymentSdk
-import requests
-
 from django.views.decorators.clickjacking import xframe_options_exempt
-from django.views.decorators.csrf import csrf_exempt
+from django.views.generic import ListView, UpdateView
+from django.urls import reverse_lazy
+from django.utils import timezone
+from django.utils.decorators import method_decorator
+from django.contrib.admin.views.decorators import staff_member_required
+from functools import wraps
+
+# ------------------------------
+# 系統工具與標準庫
+# ------------------------------
+import os
+import json
+import base64
+import uuid
+import requests
+import datetime
+import numpy as np
+import cv2
+
+# ------------------------------
+# 本地應用程式模型
+# ------------------------------
+from .models import (
+    TaiwanRegion,
+    PoliceAddress,
+    PemapAll,
+    StoreAll,
+    UserProfile,
+    ThisUserProfile,
+    Incident,
+    Admins
+)
+
+# ------------------------------
+# 本地應用程式表單
+# ------------------------------
+from .forms import AutoDialForm
+
+# ------------------------------
+# 本地應用程式工具函式
+# ------------------------------
+from .utils import get_unreviewed_counts
+
+# ------------------------------
+# 第三方 SDK
+# ------------------------------
+from myapp.sdk.ecpay_payment_sdk import ECPayPaymentSdk
+
+
+
 
 def report_view(request):
     return render(request, 'report.html')
 
 def index(request):
     return render(request, 'index.html')  # 確保 index.html 在 templates/ 內
-
-# 另一個首頁版本（index35.html）
-def index35(request):
-    return render(request, 'index35.html')
-
-# 表格頁面
-def tables(request):
-    return render(request, 'tables.html')
-
-# 註冊頁面
-def register(request):
-    return render(request, 'register.html')
-
-# 密碼頁面
-def password(request):
-    return render(request, 'password.html')
-
-# 登入頁面
-def login(request):
-    return render(request, 'login.html')
-
-
-
-# 布局 - 靜態頁面
-def layout_static(request):
-    return render(request, 'layout-static.html')
-
-# 布局 - 輕量側邊欄頁面
-def layout_sidenav_light(request):
-    return render(request, 'layout-sidenav-light.html')
-
-# 圖表頁面
-def charts(request):
-    return render(request, 'charts.html')
 
 # 500 錯誤頁面
 def error_500(request):
@@ -413,89 +425,17 @@ def anonymous_chat(request):
 
 
 
-def region_selector(request):
-    return render(request, 'region_page.html')
-
-def mail(request):
-    return render(request, 'mail.html')
-
-def mychatroom(request):
-    return render(request, 'mychatroom.html')
-
 def community(request):
     return render(request, 'community.html')
 
 #-----------------想-------------------------
-def announcement(request):
-    return render(request, 'announcement.html')
-
 def chatroom(request):
     return render(request, 'chatroom.html')
 
-def form(request):
-    return render(request, 'form.html')
-
-def safety(request):
-    return render(request, 'safety.html')
-
-def autodial(request):
-    return render(request, 'autodial.html')
-
-def mymap(request):
-    return render(request, 'mymap.html')
-
-def login_page(request):
-    return render(request, '001_login.html')
-
-def area_view(request):
-    return render(request, 'area.html')
-    return render(request, '0101login.html')
 
 def settings(request):
     return render(request, 'settings.html')
 
-def write(request):
-    return render(request, 'write.html')
-
-
-#自動撥號
-FIXED_PHONE = '0900123456'
-
-def autodial_view(request):
-    initial_message = request.session.get('default_message', '')
-    form = AutoDialForm(initial={'default_message': initial_message})
-    result = None
-    confirm_stage = False
-
-    if request.method == 'POST':
-        form = AutoDialForm(request.POST)
-        if form.is_valid():
-            message = form.cleaned_data['default_message']
-            request.session['default_message'] = message
-            action = request.POST.get('action')
-
-            if action == 'call':
-                result = f"模擬撥打電話給 {FIXED_PHONE}"
-            elif action == 'message':
-                # 第一次送出為確認階段
-                if request.POST.get('confirm') != 'yes':
-                    confirm_stage = True  # 顯示確認畫面
-                else:
-                    result = f"✅ 成功傳送訊息給 {FIXED_PHONE}，內容是：{message}"
-
-    return render(request, 'autodial.html', {
-        'form': form,
-        'phone': FIXED_PHONE,
-        'result': result,
-        'confirm_stage': confirm_stage,
-    })
-
-
-#userloigin
-from django.shortcuts import render, redirect
-from django.contrib import messages
-from .models import UserProfile
-from django.contrib.auth.hashers import make_password, check_password
 
 
 def user_login_page(request):
@@ -537,46 +477,6 @@ def user_login_page(request):
     return render(request, '01_userlogin.html')
 
 
-# def user_login_page(request):
-#     if request.method == 'POST':
-#         # ✅ 登入邏輯
-#         if 'login' in request.POST:
-#             email = request.POST['email']
-#             password = request.POST['password']
-#             try:
-#                 user = UserProfile.objects.get(email=email)
-#                 if check_password(password, user.password):
-#                     request.session['user_id'] = user.id
-#                     messages.success(request, "登入成功！")
-#                     return redirect('login')  # 這裡是你說的 0101login/ 對應 name='login'
-#                 else:
-#                     messages.error(request, "密碼錯誤")
-#             except UserProfile.DoesNotExist:
-#                 messages.error(request, "帳號不存在")
-
-#         # ✅ 註冊邏輯：註冊後直接登入 + 跳首頁
-#         elif 'register' in request.POST:
-#             email = request.POST['email']
-#             nickname = request.POST['nickname']
-#             password = request.POST['password']
-
-#             if UserProfile.objects.filter(email=email).exists():
-#                 messages.error(request, "此帳號已被註冊")
-#             else:
-#                 hashed_pw = make_password(password)
-#                 user = UserProfile.objects.create(
-#                     email=email,
-#                     nickname=nickname,
-#                     password=hashed_pw
-#                 )
-#                 request.session['user_id'] = user.id
-#                 messages.success(request, "註冊成功，已自動登入")
-#                 return redirect('login_redirect')
-    
-#     return render(request, '01_userlogin.html')
-
-
-
 def login_redirect(request):
     user_id = request.session.get('user_id')
     if not user_id:
@@ -596,88 +496,15 @@ def login_redirect(request):
 
 
 
-##google登入
 
 
-def profile(request):
-    user = request.user
-    if user.is_authenticated:
-        try:
-            google_login = user.social_auth.filter(provider='google-oauth2').first()
-            extra_data = google_login.extra_data if google_login else {}
-            return render(request, 'profile.html', {'extra_data': extra_data})
-        except Exception as e:
-            return render(request, 'profile.html', {'error': str(e)})
-    return redirect('login')
 
-
-# def profile(request):
-#     user = request.user
-#     if user.is_authenticated:
-#         try:
-#             google_login = user.social_auth.filter(provider='google-oauth2').first()
-#             extra_data = google_login.extra_data
-#             google_id = google_login.uid
-#             email = user.email
-#             name = extra_data.get('name')
-#             picture = extra_data.get('picture')
-
-#             return render(request, 'profile.html', {
-#                 'google_id': google_id,
-#                 'email': email,
-#                 'name': name,
-#                 'picture': picture,
-#             })
-#         except UserSocialAuth.DoesNotExist:
-#             return render(request, 'profile.html', {
-#                 'error': '此帳號不是由 Google 登入',
-#             })
-#     return redirect('login')
-
-from django.contrib.auth import logout
-from django.shortcuts import redirect
 
 def logout_view(request):
     logout(request)  # 登出並清除 session
     return redirect('index')  # 重定向到登入頁
 
 
-
-####登入後填表的
-
-# def create_user_profile(request):
-#     user = request.user
-#     social_user = UserSocialAuth.objects.filter(user=user, provider='google-oauth2').first()
-#     if social_user:
-#         gmail = social_user.extra_data.get('email', '')
-#     else:
-#         gmail = ''
-
-
-#     if request.method == 'POST':
-#         # 根據當前登入的使用者資料創建或更新 ThisUserProfile
-#         profile, created = ThisUserProfile.objects.update_or_create(
-#             gmail=gmail,  # 使用 gmail 作為識別
-#             defaults={
-#                 'username': request.POST.get('username'),
-#                 'default_nickname1': request.POST.get('default_nickname1'),
-#                 'default_nickname2': request.POST.get('default_nickname2'),
-#                 'emergency_contact_phone': request.POST.get('emergency_contact_phone'),
-#                 'emergency_contact_gmail': request.POST.get('emergency_contact_gmail'),
-#                 'default_message': request.POST.get('default_message'),
-#                 'self_intro': request.POST.get('self_intro'),
-#             }
-#         )
-
-#         return render(request, 'thank_you.html')
-
-#     return render(request, 'usdata.html', {'gmail': gmail})
-
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib import messages
-from .models import ThisUserProfile, UserProfile
-
-from django.shortcuts import get_object_or_404
 
 def create_user_profile(request):
     user_id = request.session.get('user_id')
@@ -715,36 +542,7 @@ def create_user_profile(request):
         messages.success(request, "資料已成功儲存！")
         return redirect('user_data')
 
-    return render(request, 'usdata.html', {'gmail': user.email})
-
-
-
-
-
-# def create_user_profile(request):
-#     if request.method == 'POST':
-#         gmail = request.session.get('google_email')  # 從登入流程取得
-#         username = request.POST['username']
-#         ...
-#         # 透過 session 拿到 email
-#         user = UserProfile.objects.get(id=user_id)
-#         gmail = user.email  # 🔥 確保 gmail 是對的
-
-#         ThisUserProfile.objects.update_or_create(
-#             gmail=gmail,
-#             defaults={
-#                 'username': request.POST.get('username'),
-#                 'default_nickname1': request.POST.get('default_nickname1'),
-#                 'default_nickname2': request.POST.get('default_nickname2'),
-#                 'emergency_contact_phone': request.POST.get('emergency_contact_phone'),
-#                 'emergency_contact_gmail': request.POST.get('emergency_contact_gmail'),
-#                 'default_message': request.POST.get('default_message'),
-#                 'self_intro': request.POST.get('self_intro'),
-#             }
-#         )
-
-#         return redirect('user_dashboard')
-#     return render(request, 'usdata.html')
+    return render(request, 'about.html', {'gmail': user.email})
 
 
 def update_user_profile(request):
@@ -779,14 +577,15 @@ def update_user_profile(request):
 
     return render(request, 'thank_you.html')
 
-def user_data_view(request):
+def user_data(request):
     user_id = request.session.get('user_id')
     if not user_id:
         return redirect('user_login_page')
 
     user = get_object_or_404(UserProfile, id=user_id)
     profile = ThisUserProfile.objects.filter(gmail=user.email).first()
-    return render(request, 'user_data.html', {'profile': profile})
+    return render(request, 'about.html', {'profile': profile})
+
 # views.py
 from django.shortcuts import redirect
 
@@ -794,12 +593,6 @@ def this_user_profile_redirect(request):
     # 你可以判斷條件再決定跳去哪，這裡簡單示範直接跳到 create_user_profile
     return redirect('create_user_profile')  # 導向 /this_user_profile/create/
 
-
-##登入後顯示資料
-from django.shortcuts import render, redirect
-from django.contrib import messages
-from django.contrib.auth.hashers import check_password, make_password
-from .models import UserProfile, ThisUserProfile
 
 def user_login_page(request):
     if request.method == 'POST':
@@ -857,8 +650,7 @@ def google_login_success(request):
 
 
 
-from django.http import JsonResponse
-from .models import Incident
+
 
 def incident_list(request):
     incidents = Incident.objects.all().order_by('-time')
@@ -882,32 +674,12 @@ def incident_list(request):
 #--------------------------------01--------------------------------------------------------
 # -------------------------------- submit_report（我要填單功能） --------------------------------
 # myapp/views.py
-from django.views.decorators.csrf import csrf_exempt
-from django.http import JsonResponse
-from django.shortcuts import render, redirect
-from django.utils import timezone
-from functools import wraps
-import json
 
-from .models import PemapAll
-
-# def login_required_session(view_func):
-#     @wraps(view_func)
-#     def wrapped_view(request, *args, **kwargs):
-#         user_id = request.session.get('user_id')
-#         print(f"Debug: session user_id = {user_id}")  # 測試用，正式可註解掉
-#         if not user_id:
-#             print("未登入，導向登入頁")
-#             return redirect('userlogin')  # 確認此名稱是你登入頁的url name
-#         return view_func(request, *args, **kwargs)
-#     return wrapped_view
 
 
 
 
     
-def room(request, room_name):
-    return render(request, 'test_0610chatroom.html', {'room_name': room_name})
 #report_list_view
 from django.contrib.auth.decorators import login_required
 @login_required(login_url='/01userlogin/')
@@ -926,6 +698,15 @@ from django.utils import timezone
 import json
 
 from .models import PemapAll
+from django.conf import settings
+import os
+
+import google.generativeai as genai
+
+# 先設定 API KEY
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+model = genai.GenerativeModel("models/gemini-2.5-flash")
+
 
 # ✅ 顯示 report.html 表單頁面（未登入會導到登入頁）
 @login_required(login_url='/01userlogin/')
@@ -935,19 +716,7 @@ def report_view(request):
 
 # ✅ 接收 POST 資料 API（表單送出時）
 # @login_required(login_url='/01userlogin/')
-import base64
-import numpy as np
-import uuid
-from django.utils import timezone
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.contrib.auth.decorators import login_required
-from django.conf import settings
-import cv2
-import os
-import json
 
-from myapp.models import PemapAll  # 確保你有引入模型
 
 # 載入人臉辨識模型
 face_cascade = cv2.CascadeClassifier(
@@ -1025,30 +794,31 @@ def submit_report(request):
                 img_url = f"data:image/jpeg;base64,{img_base64_bytes}"
             # ========= ✅ 圖片處理結束 =========
 
-            # ========== AI 初步審核 ==========
+            # ========== ✅ Gemini AI 判斷 ==========
             description = reason.strip()
-            sensitive_categories = {
-                '仇恨言論': ['仇恨', '恨死', '殺光', '滅絕'],
-                '暴力': ['暴力', '打死', '砍', '攻擊', '虐待'],
-                '歧視': ['歧視', '種族主義', '排擠', '偏見'],
-            }
-            case_keywords = [
-                '案件', '事件', '警方', '警察', '報警', '報案', '證據',
-                '被跟蹤', '跟蹤', '尾隨', '偷拍', '性騷擾', '偷窺', '侵入',
-                '陌生男子', '紅衣男子', '追蹤', '恐嚇', '求助', '監視'
-            ]
+            review_status = "人工審核通過"  # 預設
 
             if not description or len(description) < 10:
-                review_status = '描述內容過短，不足以判斷'
+                review_status = "描述內容過短，不足以判斷"
             else:
-                has_sensitive_word = any(
-                    keyword in description
-                    for keywords in sensitive_categories.values()
-                    for keyword in keywords
-                )
-                is_case_related = any(kw in description for kw in case_keywords)
-
-                review_status = '需再由人工審核' if has_sensitive_word or not is_case_related else '人工審核通過'
+                model = genai.GenerativeModel("gemini-2.5-flash")
+                prompt = f"""
+                你是一個事件審核員小幫手。
+                使用者的輸入是：「{description}」
+                請判斷這段內容是否可能涉及違法、違反公開法、需要人工再次審核的事件。
+                - 如果有疑慮，回傳 "需再由人工審核"
+                - 如果安全且描述完整，回傳 "人工審核通過"
+                只需要回傳上述兩種結果之一。
+                """
+                try:
+                    response = model.generate_content(prompt)
+                    ai_reply = response.text.strip()
+                    if "需再由人工審核" in ai_reply:
+                        review_status = "需再由人工審核"
+                    else:
+                        review_status = "人工審核通過"
+                except Exception as e:
+                    review_status = f"AI判斷錯誤: {str(e)}"
 
             if is_anonymous:
                 poster_gmail = "anonymous@gmail.com"
@@ -1076,92 +846,9 @@ def submit_report(request):
 
     return JsonResponse({"status": "error", "message": "Invalid method"})
 
-# @csrf_exempt
-# def submit_report(request):
-#     if request.method == 'POST':
-#         try:
-#             data = json.loads(request.body)
 
-#             user = request.user  # ✅ 登入使用者
-#             display_name = data.get('display_name', '')
-#             kind = data.get('kind', '')
-#             reason = data.get('reason', '')
-#             address = data.get('address', '')
-
-#             # 經緯度處理
-#             latitude = 0
-#             longitude = 0
-#             if ',' in address:
-#                 parts = [p.strip() for p in address.split(',')]
-#                 if len(parts) >= 2:
-#                     try:
-#                         latitude = float(parts[0])
-#                         longitude = float(parts[1])
-#                     except ValueError:
-#                         pass
-
-#             img_url = data.get('img_url', '')
-
-#             # ====== AI 初步審核 ======
-#             description = reason.strip()
-#             sensitive_categories = {
-#                 '仇恨言論': ['仇恨', '恨死', '殺光', '滅絕'],
-#                 '暴力': ['暴力', '打死', '砍', '攻擊', '虐待'],
-#                 '歧視': ['歧視', '種族主義', '排擠', '偏見'],
-#             }
-#             case_related_keywords = [
-#                 '案件', '事件', '警方', '警察', '報警', '報案', '證據',
-#                 '被跟蹤', '跟蹤', '尾隨', '偷拍', '性騷擾', '偷窺', '侵入',
-#                 '陌生男子', '紅衣男子', '追蹤', '恐嚇', '求助', '監視'
-#             ]
-
-#             if not description or len(description) < 10:
-#                 review_status = '描述內容過短，不足以判斷'
-#             else:
-#                 has_sensitive_word = any(
-#                     keyword in description
-#                     for keywords in sensitive_categories.values()
-#                     for keyword in keywords
-#                 )
-#                 is_case_related = any(kw in description for kw in case_related_keywords)
-
-#                 if has_sensitive_word or not is_case_related:
-#                     review_status = '需再由人工審核'
-#                 else:
-#                     review_status = '人工審核通過'
-                    
-#             # =========================
-
-#             PemapAll.objects.create(
-#                 user=user,
-#                 display_name=display_name,
-#                 kind=kind,
-#                 reason=reason,
-#                 address=address,
-#                 latitude=latitude,
-#                 longitude=longitude,
-#                 img_url=img_url,
-#                 time_created=timezone.now(),
-#                 review_status=review_status,
-#                 admin_id=99999,
-#                 poster_gmail=data.get("poster_gmail"),
-#             )
-
-#             return JsonResponse({"status": "success", "review_status": review_status})
-
-#         except Exception as e:
-#             return JsonResponse({"status": "error", "message": str(e)})
-#     else:
-#         return JsonResponse({"status": "error", "message": "Invalid method"})
 
 #-----------------about---------------------------
-from django.shortcuts import render, redirect
-from .models import ThisUserProfile
-from django.contrib.auth.models import User
-import json
-from django.http import JsonResponse
-import base64
-
 @login_required(login_url='/01userlogin/')
 def about(request):
     user = request.user
@@ -1329,13 +1016,9 @@ def business_list_view(request):
     return render(request, 'business_list.html', {'stores': user_stores})
 
 #----------------聊天室-----------------------------
-from django.shortcuts import render
-
 def chatroom_map(request):
     return render(request, 'chatroom.html')  # HTML 檔名可自訂
 #------------PWA-------------------------
-from django.http import JsonResponse
-
 def manifest(request):
     return JsonResponse({
         "name": "怪怪走開護您安全",
@@ -1361,54 +1044,7 @@ def manifest(request):
 
 
 
-
-##測試資料能不能放到地圖上
-##暫時使用的是沒審核的pemap_all資料庫
-# from django.http import JsonResponse
-# from .models import Report
-
-# def reports_json(request):
-#     reports = Report.objects.filter(review_status='已審核').values(
-#         'latitude', 'longitude', 'display_name', 'reason', 'time_created'
-#     )
-#     data = list(reports)
-#     return JsonResponse(data, safe=False)
-
-def reports_json(request):
-    data = PemapAll.objects.filter(review_status='3').order_by('-time_reviewed')
-    results = []
-    for item in data:
-        if item.latitude is not None and item.longitude is not None:
-            results.append({
-                'latitude': float(item.latitude),
-                'longitude': float(item.longitude),
-                'display_name': item.display_name,
-                'reason': item.reason,
-                'time_created': item.time_created.strftime('%Y-%m-%d %H:%M:%S')
-            })
-    return JsonResponse(results, safe=False)
-
-
-# from django.http import JsonResponse
-# from .models import PemapAll  # 改成引用 PemapAll
-
-# def reports_json(request):
-#     reports = PemapAll.objects.filter(review_status='0').values(
-#         'latitude', 'longitude', 'display_name', 'reason', 'time_created'
-#     )
-#     data = list(reports)
-#     return JsonResponse(data, safe=False)
-
-
-
 ##處理管理員對pemap資料狀態
-from django.shortcuts import get_object_or_404, redirect
-from django.utils import timezone
-from django.contrib import messages
-from django.contrib.admin.views.decorators import staff_member_required
-from .models import PemapAll
-
-
 def pemap_approve(request, p_id, stage):
     obj = get_object_or_404(PemapAll, p_id=p_id)
     if stage == 1 and obj.review_status == 0:
@@ -1426,12 +1062,7 @@ def pemap_approve(request, p_id, stage):
     return redirect(request.META.get('HTTP_REFERER', '/admin/'))\
     
 
-from django.views.generic import ListView, UpdateView
-from django.urls import reverse_lazy
-from django.utils import timezone
-from django.contrib.admin.views.decorators import staff_member_required
-from django.utils.decorators import method_decorator
-from .models import PemapAll
+
 
 # @method_decorator(staff_member_required, name='dispatch')
 class PemapAllListView(ListView):
@@ -1459,192 +1090,10 @@ class PemapAllUpdateView(UpdateView):
         return super().form_valid(form)
 
 
-#================================================================================================
-# #仇恨言論檢測模組
-
-from django.shortcuts import render
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-import json
-
-
-def show_judge_page(request):
-    return render(request, '99judge.html')
-
-
-
-import openai
-from openai import OpenAI
-
-#OpenAI API 金鑰
-
-client = OpenAI(api_key="我的先拿下")
-
-
-
-import os
-import json
-import requests
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-
-@csrf_exempt
-def ai_judge(request):
-    if request.method != 'POST':
-        return JsonResponse({'result': 0, 'reason': '請使用 POST 請求'})
-
-    try:
-        data = json.loads(request.body)
-        description = data.get('description', '').strip()
-
-        if not description:
-            return JsonResponse({'result': 1, 'reason': '描述為空，請輸入內容'})
-
-        if len(description) < 10:
-            return JsonResponse({'result': 1, 'reason': '描述內容過短，請補充更多細節'})
-
-        prompt = f"""
-請判斷以下文字描述是否過於主觀，包含仇恨言論、恐懼煽動，或者不當內容？或是對案件描述太無關？
-若沒有，請只回覆「通過」；若有問題，請說明理由。
-
-文字描述：
-{description}
-"""
-
-        github_token = os.getenv("GITHUB_TOKEN")
-        if not github_token:
-            return JsonResponse({'result': 0, 'reason': '未設定 GITHUB_TOKEN 環境變數'})
-
-        url = "https://models.inference.ai.azure.com/chat/completions"
-        headers = {
-            "Authorization": f"Bearer {github_token}",
-            "Content-Type": "application/json",
-            "X-GitHub-Api-Version": "2023-07-01"
-        }
-        payload = {
-            "model": "gpt-4o-mini",
-            "messages": [{"role": "user", "content": prompt}],
-            "temperature": 0
-        }
-
-        response = requests.post(url, headers=headers, json=payload)
-        response.raise_for_status()
-
-        reply = response.json()["choices"][0]["message"]["content"].strip()
-
-        print("AI 回傳全文:", reply)  # <--- 這行會在伺服器終端或日誌中印出
-
-
-        if "通過" in reply:
-            return JsonResponse({'result': 0, 'reason': '描述符合規範，無需人工審核'})
-        else:
-            return JsonResponse({'result': 2, 'reason': reply})
-
-    except Exception as e:
-        return JsonResponse({'result': 0, 'reason': f"系統錯誤：{str(e)}"})
-
-
-# from django.views.decorators.csrf import csrf_exempt
-# from django.http import JsonResponse
-# import json
-
-# @csrf_exempt
-# def ai_judge(request):
-#     if request.method != 'POST':
-#         return JsonResponse({'result': 2, 'reason': '請使用 POST 請求'})
-
-#     try:
-#         data = json.loads(request.body)
-#         description = data.get('description', '').strip()
-
-#         if not description or len(description) < 10:
-#             return JsonResponse({'result': 1, 'reason': '描述內容過短，不足以判斷'})
-
-#         # 敏感詞分類詞庫
-#         sensitive_categories = {
-#             '仇恨言論': ['仇恨', '恨死', '殺光', '滅絕'],
-#             '暴力': ['暴力', '打死', '砍', '攻擊', '虐待'],
-#             '歧視': ['歧視', '種族主義', '排擠', '偏見'],
-#         }
-
-#         # 檢查是否含敏感詞
-#         has_sensitive_word = any(
-#             keyword in description
-#             for keywords in sensitive_categories.values()
-#             for keyword in keywords
-#         )
-
-#         # 案件關聯詞彙
-#         case_related_keywords = [
-#             '案件', '事件', '警方', '警察', '報警', '報案', '證據',
-#             '被跟蹤', '跟蹤', '尾隨', '偷拍', '性騷擾', '偷窺', '侵入',
-#             '陌生男子', '紅衣男子', '追蹤', '恐嚇', '求助', '監視'
-#         ]
-#         is_case_related = any(kw in description for kw in case_related_keywords)
-
-#         if has_sensitive_word or not is_case_related:
-#             return JsonResponse({'result': 2, 'reason': '需再由人工審核'})
-
-#         return JsonResponse({'result': 0, 'reason': '人工審核通過'})
-
-#     except Exception as e:
-#         return JsonResponse({'result': 2, 'reason': f'系統錯誤：{str(e)}'})
-
-
-
-
-
-###容易爆額度先關
-# 原本要用openai的chatgpt但我沒付費額度會不夠
-# 就先用上面比較簡單的判斷方式
-
-# @csrf_exempt
-# def ai_judge(request):
-#     if request.method == 'POST':
-#         try:
-#             data = json.loads(request.body)
-#             description = data.get('description', '')
-
-#             if not description.strip():
-#                 return JsonResponse({'result': 0, 'reason': '描述為空'})
-
-#             prompt = f"""
-# 請判斷以下文字描述是否過於主觀，包含仇恨言論、恐懼煽動，或者不當內容？或是對與案件描述太無關？
-# 若沒有，請只回覆「通過」；若有問題，請說明理由。
-
-# 文字描述：
-# {description}
-# """
-
-#             response = client.chat.completions.create(
-#                 model="gpt-3.5-turbo",
-#                 messages=[
-#                     {"role": "user", "content": prompt}
-#                 ],
-#                 temperature=0
-#             )
-
-#             reply = response.choices[0].message.content.strip()
-
-#             if "通過" in reply:
-#                 return JsonResponse({'result': 1})
-#             else:
-#                 return JsonResponse({'result': 0, 'reason': reply})
-
-#         except Exception as e:
-#             return JsonResponse({'result': 0, 'reason': f"系統錯誤：{str(e)}"})
-
-#     return JsonResponse({'result': 0, 'reason': '請使用 POST 請求'})
-###容易爆額度先關
-
 
 #================================================================================================
 #管理者登入
-from django.shortcuts import render, redirect
-from .models import Admins
-
-from django.shortcuts import render, redirect
-from .models import Admins
+from django.contrib.auth.hashers import check_password
 
 def admin_login(request):
     if request.method == 'POST':
@@ -1653,11 +1102,12 @@ def admin_login(request):
 
         try:
             admin = Admins.objects.get(admin_gmail=admin_gmail)
-            if admin.password == password:
+            # 使用 check_password 比對
+            if check_password(password, admin.password):
                 # 登入成功，寫入 session
                 request.session['admin_id'] = admin.admin_id
                 request.session['admin_name'] = admin.name
-                return redirect('admin_interview')  # 成功跳轉
+                return redirect('admin_interview')
             else:
                 return render(request, 'admin_login.html', {'error': '密碼錯誤'})
         except Admins.DoesNotExist:
@@ -1710,15 +1160,21 @@ def admin_logout(request):
 
 
 #---------------事件審核的--------------------------------------------------------------------
-# from django.shortcuts import render
-# from .models import PemapAll
-
-# def pemap_judge(request):
-#     all_data = PemapAll.objects.all().order_by('-time_created')  # 最新的在上
-#     return render(request, 'pemap_judge.html', {'data': all_data})
-from django.shortcuts import render, redirect
 from .models import PemapAll, Admins
 from .utils import get_unreviewed_counts
+from django.shortcuts import render, redirect
+from .models import StoreAll
+from .utils import get_unreviewed_counts
+from django.shortcuts import redirect
+from django.urls import reverse
+from django.utils import timezone
+from django.shortcuts import get_object_or_404, render
+from .models import PemapAll
+from django.shortcuts import render, get_object_or_404, redirect
+from django.utils import timezone
+from .models import StoreAll
+
+from .models import StoreAll, StoreAd
 
 def pemap_judge(request):
     admin_id = request.session.get('admin_id')
@@ -1740,9 +1196,6 @@ def pemap_judge(request):
 
 
 
-from django.shortcuts import render, redirect
-from .models import StoreAll
-from .utils import get_unreviewed_counts
 
 def store_judge(request):
     admin_id = request.session.get('admin_id')
@@ -1765,11 +1218,7 @@ def store_judge(request):
 
 #--step1
 
-from django.shortcuts import redirect
-from django.urls import reverse
-from django.utils import timezone
-from django.shortcuts import get_object_or_404, render
-from .models import PemapAll
+
 
 def pemap_judge_step1(request, p_id):
     form_data = get_object_or_404(PemapAll, p_id=p_id)
@@ -1801,11 +1250,7 @@ def pemap_judge_step1(request, p_id):
     context.update(get_unreviewed_counts())
     return render(request, 'pemap_judge_step1.html', context)
 
-from django.shortcuts import render, get_object_or_404, redirect
-from django.utils import timezone
-from .models import StoreAll
 
-from .models import StoreAll, StoreAd
 
 def store_judge_step1(request, st_id):
     store = get_object_or_404(StoreAll, st_id=st_id)
@@ -1870,11 +1315,7 @@ def store_judge_view(request, st_id):
     # GET 請求 → 顯示 step1 表單
     return render(request, 'store_judge_step1.html', {'store': store})
 
-    #     return redirect('store_judge')
-    
-    # context = {'store': store,}
-    # context.update(get_unreviewed_counts())
-    # return render(request, 'store_judge_step1.html', context)
+
 
 
 
@@ -1934,11 +1375,10 @@ def admin_index(request):
 
 #---------------管理員註冊-----------------------
 from django.shortcuts import render
-from .models import Admins  # 根據你的 models 路徑
-from django.contrib.auth.hashers import make_password
+from .models import Admins
+from django.contrib.auth.hashers import make_password, check_password
 
 def admin_register(request):
-    
     message = ""
     if request.method == "POST":
         name = request.POST.get("name")
@@ -1952,16 +1392,16 @@ def admin_register(request):
         valid_codes = ["12345654", "698417", "114502"]
 
         if security_code not in valid_codes:
-            message = "安全碼錯誤,註冊失敗"
+            message = "安全碼錯誤, 註冊失敗"
         else:
             # 檢查帳號是否已存在
             if Admins.objects.filter(admin_gmail=admin_gmail).exists():
                 message = "此 Email 已存在"
             else:
-                # 建立帳號
+                # 建立帳號並加密密碼存入資料庫
                 Admins.objects.create(
                     name=name,
-                    password=make_password(password),
+                    password=make_password(password),  # 🔑 加密密碼
                     phone=phone,
                     admin_gmail=admin_gmail,
                     bio=bio,
@@ -2084,11 +1524,6 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
 from .models import PemapWithSubkind, PemapAll
-
-
-# 可以跑分類的,但是有億點久
-
-
 from django.shortcuts import render
 from datetime import datetime, date
 
@@ -2117,7 +1552,6 @@ def map_view(request):
     })
 
 
-# 可以跑分類的,但是有億點久
 def reports_with_subkind_json(request):
     queryset = PemapAll.objects.filter(review_status='3').values(
         'p_id', 'display_name', 'kind', 'reason', 'address', 'latitude', 'longitude', 'img_url', 'time_created'
@@ -2147,10 +1581,6 @@ def reports_with_subkind_json(request):
 
     
 #-----------使用者 商家地圖-----------
-from django.http import JsonResponse
-from django.shortcuts import render
-from .models import StoreAll
-
 # 頁面：商家地圖顯示頁面
 def store_map_view(request):
     return render(request, 'store_map.html')
@@ -2196,6 +1626,7 @@ def stores_with_ads_api(request):
             'phone': store.phone,
             'latitude': store.latitude,
             'longitude': store.longitude,
+            'business_hours': store.business_hours,
             'ad_content': ad.ad_content if ad else '',
             'ad_radius': ad.ad_radius if ad else 200,
             'images': images
@@ -4023,33 +3454,6 @@ from django.contrib.auth.decorators import login_required
 from django.core.mail import send_mail
 from django.http import HttpResponse
 
-# from django.shortcuts import redirect, get_object_or_404
-# from django.contrib.auth.decorators import login_required
-# from django.core.mail import send_mail
-# from django.http import HttpResponse
-# from .models import PemapAll
-
-# # @login_required
-# def admin_send_email(request, p_id):
-#     item = get_object_or_404(PemapAll, p_id=p_id)
-
-#     if request.method == 'POST':
-#         to_email = item.poster_gmail
-#         subject = request.POST.get('subject', '關於您的報告審核結果')
-#         message = request.POST.get('message', '')
-
-#         try:
-#             send_mail(subject, message, '你的發信地址@example.com', [to_email])
-#             # 寄信成功後，跳轉到管理員審核列表頁
-#             return redirect('admin_decide')
-#         except Exception as e:
-#             return HttpResponse(f"寄信失敗: {str(e)}")
-
-#     return render(request, 'admin_send_email.html', {
-#         'item': item,
-#         'to_email': item.poster_gmail,
-#     })
-
 
 # @login_required
 def admin_send_email(request, p_id):
@@ -4158,64 +3562,6 @@ def ad_admin_send_email(request, history_id, action=None):
     })
 
 
-# from django.shortcuts import get_object_or_404, redirect, render
-# from django.contrib import messages
-# from django.core.mail import send_mail
-# from django.conf import settings
-# from django.utils import timezone
-# from django.contrib.auth.decorators import login_required
-# from .models import StoreAdHistory, StoreAll
-
-# @admin_login_required
-# def ad_admin_send_email(request, history_id, action=None):
-#     """
-#     統一的寄信 view
-#     - action=None : 一般通知
-#     - action='reject' : 拒絕廣告
-#     """
-#     ad_history = get_object_or_404(StoreAdHistory, pk=history_id)
-#     store = ad_history.st
-#     to_email = store.poster_gmail
-
-#     # 預設信件主題與訊息
-#     if action == 'reject':
-#         default_subject = "關於您的廣告申請被拒絕通知"
-#         default_message = f"您好，您的廣告（ID: {ad_history.history_id}）經審核後不符合規範，已被拒絕。"
-#     else:
-#         default_subject = "關於您的廣告通知"
-#         default_message = f"您好，您的廣告（ID: {ad_history.history_id}）有新的狀態更新。"
-
-#     if request.method == 'POST':
-#         subject = request.POST.get('subject', default_subject)
-#         message = request.POST.get('message', default_message)
-
-#         try:
-#             send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [to_email])
-#             messages.success(request, "信件已成功寄出！")
-
-#             # ✅ 如果是拒絕，更新狀態與審核時間
-#             if action == 'reject':
-#                 ad_history.status = 'rejected'
-#                 ad_history.reviewed_at = timezone.now()
-#                 ad_history.save()
-
-#             return redirect('admin_review_ads')
-
-#         except Exception as e:
-#             messages.error(request, f"寄信失敗: {str(e)}")
-#             return redirect('ad_admin_send_email', history_id=history_id)
-
-#     return render(request, 'ad_admin_send_email.html', {
-#         'item': ad_history,
-#         'to_email': to_email,
-#         'default_subject': default_subject,
-#         'default_message': default_message,
-#         'action': action,
-#     })
-
-
-
-
 #------------------------聊天室---------------------
 from .models import ThisUserProfile, ChatRoom, ChatMessage, FavoriteChatRoom
 from django.shortcuts import render, get_object_or_404
@@ -4230,7 +3576,7 @@ import google.generativeai as genai
 
 # 設定 API Key
 genai.configure(api_key=settings.GOOGLE_API_KEY)
-model = genai.GenerativeModel('gemini-1.5-flash')
+model = genai.GenerativeModel('gemini-2.5-flash')
 
 
 def chatrooms_api(request):
@@ -4839,69 +4185,6 @@ def pay_advertisement(request, payment_id):
 
 
 # -------------付費------------
-# def test_payment(request):
-#     user = ThisUserProfile.objects.first()  # 測試用
-#     default_amount = request.GET.get('amount', 0)
-#     item = request.GET.get('item', '未知品項')
-#     st_id = request.GET.get('st_id')  # 商家編號
-#     next_url = request.GET.get('next', '/')
-
-#     if request.method == "POST":
-#         amount = int(request.POST.get('amount', 0))
-#         item = request.POST.get('item', '未知品項')
-#         st_id = request.POST.get('st_id')
-#         next_url = request.POST.get('next', '/')
-#         transaction_id = str(uuid.uuid4())
-
-#         # 建立付款紀錄
-#         UserPayment.objects.create(
-#             user=user,
-#             amount=amount,
-#             item=item,
-#             st_id=st_id,
-#             transaction_id=transaction_id,
-#             is_used=True
-#         )
-
-#         # 更新會員等級
-#         user.total_paid += amount
-#         if user.total_paid >= 1111:
-#             user.membership_level = 5
-#         elif user.total_paid >= 900:
-#             user.membership_level = 4
-#         elif user.total_paid >= 600:
-#             user.membership_level = 3
-#         elif user.total_paid >= 300:
-#             user.membership_level = 2
-#         elif user.total_paid >= 30:
-#             user.membership_level = 1
-#         else:
-#             user.membership_level = 0
-#         user.save()
-
-#         # ✅ POST 成功後回傳 JS 通知父頁面
-#         return render(request, "test_payment_done.html", {
-#             "item": item,
-#             "amount": amount,
-#             "next": next_url
-#         })
-
-#     return render(request, "test_payment.html", {
-#         "default_amount": default_amount,
-#         "item": item,
-#         "st_id": st_id,
-#         "next": next_url,
-#         "user": user
-#     })
-
-
-
-
-# def test_payment_done(request):
-#     # 這裡可以做一些完成後的處理，例如顯示付款成功訊息
-#     return render(request, "test_payment_done.html")
-
-
 from django.shortcuts import render
 from .models import PemapAll, StoreAll, ChatInteraction
 from .models import ChatMessage, ChatRoomClick, FavoriteChatRoom
@@ -5011,7 +4294,7 @@ def ecpay_checkout(request):
         'TradeDesc': '廣告上架付款',
         'ItemName': item_name,
         'ReturnURL': 'http://127.0.0.1:8000/ecpay/return/',   # 綠界伺服器回呼
-        'OrderResultURL': 'http://127.0.0.1:8000/ecpay/done/',# 付款完成導回
+        'OrderResultURL': 'https://no-stranger-app-26102906571.asia-east1.run.app/ecpay/done/',# 付款完成導回
         'ClientBackURL': '',  # 不需要
         'NeedExtraPaidInfo': 'Y',
         'EncryptType': 1,
@@ -5057,6 +4340,13 @@ def ecpay_checkout(request):
         tb = traceback.format_exc()
         debug_msg = f"錯誤: {e}\n\norder_params = {order_params}\n\nTraceback:\n{tb}"
         return HttpResponse(debug_msg, content_type="text/plain")
+
+
+
+def show_judge_page(request):
+    return render(request, '99judge.html')
+
+
 
 
 # -------------------------------
@@ -5139,3 +4429,18 @@ def cancel_ad(request, history_id):
 def admin_list(request):
     admins = Admins.objects.all().values("admin_id", "name", "admin_gmail", "bio")
     return render(request, "admin_list.html", {"admins": admins})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

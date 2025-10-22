@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0" name="viewport">
-  <title>{% block title %}首頁{% endblock %}</title>
+  <title>{% block title %}管理員審核過的事件列表{% endblock %}</title>
   <meta content="" name="description">
   <meta content="" name="keywords">
 
@@ -70,9 +70,13 @@
             <ul>
               <li><a href="{% url 'admin_decide' %}">事件審核紀錄</a></li>
               <li><a href="{% url 'store_decide' %}">商家審核紀錄</a></li>
+              
+              <!-- 新增：交流區舉報審核紀錄 -->
               <li><a href="{% url 'report_decide' %}">交流區舉報審核紀錄</a></li>
-            </ul>
+              <li><a href="{% url 'my_ad_reviews' %}">商家廣告審核紀錄</a></li>
+            </ul> 
           </li>
+          <!-- ✅ 新增的下拉式選單 -->
           <li class="dropdown"><a href="#"><span>管理工具</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
             <ul>
               <li><a href="{% url 'user_admin_list' %}">用戶管理</a></li>
@@ -99,8 +103,8 @@
 
     <!-- Admin Profile Edit Section -->
     <section class="container my-5">
-    <!-- <h2>您好，{{ admin_name }}（ID：{{ admin_id }}）</h2>
-    <h3 class="mb-4">您審核過的事件列表</h3> -->
+    <h2>您好，{{ admin_name }}（ID：{{ admin_id }}）</h2>
+    <h3 class="mb-4">您審核過的事件列表</h3>
 
     {% if decided_list %}
     <table class="table table-bordered table-hover align-middle text-center">
